@@ -1,0 +1,8 @@
+id: tree7
+name: "Tree 7"
+description: "A sturdy tall tree. It can be chopped down."
+health: 1000
+image: "assets/images/environment/tree7.png"
+scale: 0.40
+footprint_width: 0.20
+footprint_height: 0.20

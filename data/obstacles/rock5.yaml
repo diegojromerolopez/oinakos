@@ -1,0 +1,8 @@
+id: rock5
+name: "Rock 5"
+description: "A large, solid rock. It cannot be destroyed."
+health: 0
+image: "assets/images/environment/rock5.png"
+scale: 0.40
+footprint_width: 0.40
+footprint_height: 0.40

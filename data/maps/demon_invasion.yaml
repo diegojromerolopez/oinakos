@@ -1,0 +1,6 @@
+id: demon_invasion
+name: Demon Invasion
+type: 2 # ObjSurvive
+difficulty: 2
+target_time: 180 # 3 minutes
+description: "Survive the assault for 3 minutes"

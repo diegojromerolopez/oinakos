@@ -1,0 +1,20 @@
+id: demon
+name: Demon
+stats:
+  health_min: 80
+  health_max: 120
+  base_attack: 65
+  base_defense: 15
+  speed: 0.05
+  attack_cooldown: 60
+weapon: Iron Broadsword
+sprites:
+  static: static.png
+  corpse: corpse.png
+  attack: attack.png
+footprint:
+  - { x: -0.3, y: -0.2 }
+  - { x: 0.3, y: -0.2 }
+  - { x: 0.4, y: 0.1 }
+  - { x: 0.0, y: 0.3 }
+  - { x: -0.4, y: 0.1 }

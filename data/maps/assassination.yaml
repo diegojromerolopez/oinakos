@@ -1,0 +1,5 @@
+id: assassination
+name: The Dark Ritual
+type: 0 # ObjKillVIP
+difficulty: 2
+description: "Hunt down and assassinate the VIP Target"

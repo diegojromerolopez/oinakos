@@ -1,0 +1,20 @@
+id: orc
+name: Orc
+stats:
+  health_min: 60
+  health_max: 80
+  base_attack: 50
+  base_defense: 5
+  speed: 0.025
+  attack_cooldown: 90
+weapon: Orcish Axe
+sprites:
+  static: static.png
+  corpse: corpse.png
+  attack: attack.png
+footprint:
+  - { x: -0.4, y: -0.2 }
+  - { x: 0.4, y: -0.2 }
+  - { x: 0.5, y: 0.1 }
+  - { x: 0.0, y: 0.3 }
+  - { x: -0.5, y: 0.1 }

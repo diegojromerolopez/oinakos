@@ -1,0 +1,8 @@
+id: house3
+name: "Manor"
+description: "A sprawling estate."
+health: 5000
+image: "assets/images/environment/house3.png"
+scale: 0.20
+footprint_width: 1.00
+footprint_height: 1.00

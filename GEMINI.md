@@ -1,0 +1,32 @@
+# Oinakos (Knight's Path)
+
+An infinite, isometric action combat game built with Go and Ebiten.
+
+## 🛠 Tech Stack
+-   **Language**: Go 1.21+
+-   **Graphics**: [Ebiten v2](https://ebiten.org/) (2D Game Library)
+-   **Assets**: Custom pixel art (isometric) and localized SFX.
+
+## 🚀 Key Features
+-   **Infinite Procedural World**: Chunk-based generation (10x10 tiles) creates an endless world of forests, ruins, and villages as you explore.
+-   **Isometric Engine**: custom `internal/engine` handling Cartesian-to-Isometric transforms, camera following, and polygon-based collision detection.
+-   **Dynamic Ambushes**: NPCs (Orcs, Demons, Peasants) spawn beyond the viewport and track the player, creating a persistent combat loop.
+-   **Depth-Correct Rendering**: implemented Y-sorting (Z-ordering) ensures correct occlusion between players, NPCs, and buildings.
+-   **Combat System**: Hit-detection with generous isometric radii and persistent kill tracking displayed in the HUD and Game Over screen.
+
+## 📁 Project Structure
+-   `/assets`: Organized by `images/` (player, npcs, environment) and `audio/`.
+-   `/internal/engine`: Platform-agnostic game engine logic (Iso, Camera, Collision, Renderer).
+-   `/internal/game`: Game-specific state, entities (NPC, Player, Obstacle), and level generation.
+
+## 📝 Pending Improvements
+-   [ ] **Animation System**: Implement sprite-sheet animation for walking and attacking (currently using static frames).
+-   [ ] **Advanced AI**: Replace simple lerp-tracking with A* pathfinding to handle obstacle navigation.
+-   [ ] **Biome Diversity**: Add new terrain types (Snow, Desert, Swamp) with unique obstacles and NPCs.
+-   [ ] **UI Overhaul**: Replace debug-print HUD elements with custom textured health bars and menus.
+-   [ ] **Savestate**: Implement JSON-based save/load for player position and kill count.
+
+## 🎮 Running the Game
+```bash
+go run main.go
+```

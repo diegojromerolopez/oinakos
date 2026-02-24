@@ -1,0 +1,8 @@
+id: farm
+name: "Farm"
+description: "An agricultural building with a silo."
+health: 5000
+image: "assets/images/environment/farm.png"
+scale: 0.20
+footprint_width: 1.00
+footprint_height: 1.00
