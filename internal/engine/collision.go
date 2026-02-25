@@ -141,6 +141,10 @@ func Transparentize(img image.Image) image.Image {
 		if r > whiteThreshold && g > whiteThreshold && b > whiteThreshold {
 			return true
 		}
+		// Catch bright lime green (AI generated backgrounds)
+		if g > uint32(200<<8) && r < uint32(150<<8) && b < uint32(150<<8) {
+			return true
+		}
 		return false
 	}
 

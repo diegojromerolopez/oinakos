@@ -1,5 +1,7 @@
 # Oinakos (Knight's Path) 🛡️🗡️
 
+> **⚠️ Warning:** This project has been vibecoded.
+
 An infinite, isometric action combat game built with **Go** and the **Ebiten v2** 2D game library.
 
 ## 📖 Game Overview
@@ -7,20 +9,26 @@ An infinite, isometric action combat game built with **Go** and the **Ebiten v2*
 **Oinakos** puts you in the boots of a lone knight in a vast, procedurally generated world. Your goal is simple: survive as long as possible while defeating the waves of Non-Player Characters (NPCs) that seek you out.
 
 ### Key Gameplay Features:
--   **Infinite Procedural World**: The world generates "on-the-fly" as you explore. Walk forever in any direction to discover new forests, ruins, and stone walls.
--   **Dynamic Ambush System**: NPCs don't just sit around; they spawn from the edges of your view and track you down, creating a consistent combat loop.
+-   **Infinite Procedural World**: Chunk-based generation creates an endless world of forests, ruins, and stone walls as you explore.
+-   **Dynamic Ambush System**: NPCs spawn from the edges of your view and track you down using specific behavior profiles (wander, hunter, etc.).
 -   **Combat & Progression**:
     -   Attack NPCs with a precise hitbox system.
     -   Collect **XP** and track your **Kills** to measure your progress.
-    -   Face different NPC types: **Orcs**, **Demons**, and **Peasants**, each with unique stats and rewards.
+    -   Face diverse NPC types: **Orcs**, **Demons**, **Peasants**, **Goblins**, **Lame Devils**, and **Magi**, each with unique stats, weapons, and behaviors.
+-   **Configurable Scenarios**: Maps and encounters are fully data-driven via YAML configuration files, allowing for easy content expansion.
+-   **Testable Engine Architecture**: Game logic is decoupled from the rendering engine using strict Dependency Injection, enabling 100% headless testing.
 -   **Survival Timer**: Every second counts. Your total survival time is tracked in real-time.
--   **High Fidelity Rendering**: An advanced isometric engine handles depth-sorting (Y-sorting), ensuring that characters correctly hide behind trees and buildings.
+-   **High Fidelity Isometric Rendering**: Custom cartesian-to-isometric math handles depth-sorting (Y-sorting), precise footprints, and polygon-based collisions.
 -   **Procedural Animations**: Characters feature dynamic directional mirroring, walking bob, and attack lunges calculated in real-time without relying on complex sprite sheets.
 -   **Embedded Assets**: All sprites and audio are baked directly into the binary, making the game fully portable across desktop and web (WASM) environments.
 
 ## 🚀 Getting Started
 
-### Prerequisites
+### 🤖 AI Generation Disclaimer
+
+**Please note:** This project has been heavily developed leveraging AI. Not only is the source code extensively written and refactored by AI, but **all** of the graphical assets (sprites, environments, items, UI elements) and sound effects have been created using AI generation models.
+
+## Prerequisites
 -   **Go 1.26+**
 -   A system with GPU support (required by Ebiten for native desktop builds)
 -   **Docker** (optional, for running the web server)
@@ -76,4 +84,4 @@ docker run -p 8081:8000 oinakos-wasm
 -   [ ] **UI/UX Overhaul**: Replace debug text HUD with custom-textured bars, icons, and menus.
 
 ## 📜 License
-This project is for educational/demonstration purposes. All assets are custom or used with permission.
+This project is licensed under the MIT License. All AI-generated assets and code are intended for demonstration and educational purposes.

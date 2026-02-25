@@ -19,6 +19,11 @@ An infinite, isometric action combat game built with Go and Ebiten.
 -   `/internal/engine`: Platform-agnostic game engine logic (Iso, Camera, Collision, Renderer).
 -   `/internal/game`: Game-specific state, entities (NPC, Player, Obstacle), and level generation.
 
+## 🏗 Development Patterns
+-   **Dependency Injection**: Code in `internal/game` must **not** import `github.com/hajimehoshi/ebiten/v2` directly. Instead, use the interfaces defined in `internal/engine` (e.g., `Graphics`, `Image`, `Input`). This ensures UI components can be mocked, enabling 100% headless unit testing.
+-   **Repository Pattern**: Use registries (e.g., `ArchetypeRegistry`, `MapTypeRegistry`) to manage configuration data, keeping data schemas decoupled from game simulation logic.
+-   **Data-Driven Design (YAML)**: Avoid hardcoding entity or map parameters. Stats, sprite paths, and behaviors are loaded from YAML configurations.
+
 ## 📝 Pending Improvements
 -   [ ] **Animation System**: Implement sprite-sheet animation for walking and attacking (currently using static frames).
 -   [ ] **Advanced AI**: Replace simple lerp-tracking with A* pathfinding to handle obstacle navigation.
