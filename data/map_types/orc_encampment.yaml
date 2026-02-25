@@ -1,0 +1,6 @@
+id: orc_encampment
+name: The Orc Encampment
+type: kill_count # ObjKillCount
+difficulty: 1
+target_kill_count: 200
+description: "Kill 15 Orcs in the camp"

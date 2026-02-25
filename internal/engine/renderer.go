@@ -3,17 +3,19 @@ package engine
 import (
 	_ "image/jpeg"
 	_ "image/png"
-
-	"github.com/hajimehoshi/ebiten/v2"
 )
 
-type Renderer struct{}
-
-func NewRenderer() *Renderer {
-	return &Renderer{}
+type Renderer struct {
+	grassOptions *DrawImageOptions
 }
 
-func (r *Renderer) DrawInfiniteGrass(screen *ebiten.Image, offsetX, offsetY float64, grassSprite *ebiten.Image) {
+func NewRenderer() *Renderer {
+	return &Renderer{
+		grassOptions: NewDrawImageOptions(),
+	}
+}
+
+func (r *Renderer) DrawInfiniteGrass(screen Image, offsetX, offsetY float64, grassSprite Image) {
 	if grassSprite == nil {
 		return
 	}
@@ -21,15 +23,10 @@ func (r *Renderer) DrawInfiniteGrass(screen *ebiten.Image, offsetX, offsetY floa
 	screenWidth, screenHeight := screen.Size()
 
 	// Convert camera center back to Cartesian to find the visible range
-	// Camera offset = screen/2 - cameraPos
-	// cameraPos = screen/2 - offset
 	camIsoX := float64(screenWidth)/2 - offsetX
 	camIsoY := float64(screenHeight)/2 - offsetY
 	camX, camY := IsoToCartesian(camIsoX, camIsoY)
 
-	// Determine range of tiles to draw.
-	// Isometric views need a wider range due to the diamond shape.
-	// 50x50 tiles roughly covers most reasonable screen sizes.
 	dim := 25
 	minX := int(camX) - dim
 	maxX := int(camX) + dim
@@ -51,10 +48,10 @@ func (r *Renderer) DrawInfiniteGrass(screen *ebiten.Image, offsetX, offsetY floa
 				continue
 			}
 
-			op := &ebiten.DrawImageOptions{}
-			op.GeoM.Scale(scaleX, scaleY)
-			op.GeoM.Translate(drawX-32, drawY)
-			screen.DrawImage(grassSprite, op)
+			r.grassOptions.GeoM.Reset()
+			r.grassOptions.GeoM.Scale(scaleX, scaleY)
+			r.grassOptions.GeoM.Translate(drawX-32, drawY)
+			screen.DrawImage(grassSprite, r.grassOptions)
 		}
 	}
 }

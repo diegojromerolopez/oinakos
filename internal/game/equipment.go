@@ -28,7 +28,7 @@ const (
 // Default weapons
 var (
 	WeaponFists          = &Weapon{Name: "Fists", MinDamage: 1, MaxDamage: 2}
-	WeaponRustySword     = &Weapon{Name: "Rusty Sword", MinDamage: 2, MaxDamage: 5}
+	WeaponTizon          = &Weapon{Name: "Tizon", MinDamage: 15, MaxDamage: 25}
 	WeaponIronBroadsword = &Weapon{Name: "Iron Broadsword", MinDamage: 5, MaxDamage: 10}
 	WeaponOrcishAxe      = &Weapon{Name: "Orcish Axe", MinDamage: 4, MaxDamage: 8}
 )

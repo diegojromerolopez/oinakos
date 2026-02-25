@@ -1,0 +1,28 @@
+id: orc_male
+name: Orc
+names:
+  - Grog
+  - Zog
+  - Bob
+  - Drok
+  - Gorak
+  - Mug
+  - Snarl
+  - Thrak
+  - Vrog
+  - Kurg
+behavior: hunter
+stats:
+  health_min: 30
+  health_max: 50
+  speed: 0.03
+  base_attack: 8
+  base_defense: 4
+  attack_cooldown: 60
+weapon: Axe
+sprites:
+  static: static.png
+  corpse: corpse.png
+scale: 1.0
+footprint_width: 0.3
+footprint_height: 0.3

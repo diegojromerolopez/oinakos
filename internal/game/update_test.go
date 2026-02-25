@@ -1,0 +1,255 @@
+package game
+
+import (
+	"testing"
+	"testing/fstest"
+)
+
+func init() {
+	isTestingEnvironment = true
+}
+
+func TestGame_Update(t *testing.T) {
+	mockFS := fstest.MapFS{
+		"data/map_types/type1.yaml": {
+			Data: []byte(`id: "type1"
+name: "Type One"
+type: "kill_count"
+difficulty: 1
+width_px: 1000
+height_px: 1000
+`),
+		},
+	}
+	g := NewGame(mockFS, "type1", "", NewMockInputManager(), NewMockAudioManager())
+
+	// 1. Test Paused state
+	g.isPaused = true
+	if err := g.Update(); err != nil {
+		t.Errorf("Update returned error while paused: %v", err)
+	}
+
+	// 2. Test Game Over state
+	g.isPaused = false
+	g.isGameOver = true
+	if err := g.Update(); err != nil {
+		t.Errorf("Update returned error while game over: %v", err)
+	}
+
+	// 3. Test Map Won state
+	g.isGameOver = false
+	g.isMapWon = true
+	if err := g.Update(); err != nil {
+		t.Errorf("Update returned error while map won: %v", err)
+	}
+
+	// 4. Test Normal Update
+	g.isMapWon = false
+	g.npcSpawnTimer = 0
+	g.currentMapType.SpawnFreq = 0 // Disable auto-spawning
+	if err := g.Update(); err != nil {
+		t.Errorf("Update failed: %v", err)
+	}
+
+	// 5. Test Entity Cleanup
+	g.npcs = []*NPC{{State: NPCDead}}
+	g.projectiles = []*Projectile{{Alive: false}}
+	g.floatingTexts = []*FloatingText{{Life: 0}}
+
+	if err := g.Update(); err != nil {
+		t.Errorf("Update failed during cleanup: %v", err)
+	}
+
+	if len(g.npcs) != 0 || len(g.projectiles) != 0 || len(g.floatingTexts) != 0 {
+		t.Errorf("Cleanup failed: npcs=%d, projectiles=%d, texts=%d", len(g.npcs), len(g.projectiles), len(g.floatingTexts))
+	}
+}
+
+func TestMainCharacterUpdate_Detailed(t *testing.T) {
+	mc := NewMainCharacter(0, 0, nil)
+	mc.Weapon = WeaponTizon
+
+	// Test drinking state
+	mc.State = StateDrinking
+	mc.Tick = 0
+	fts := []*FloatingText{}
+	mc.Update(NewMockInputManager(), nil, nil, nil, &fts, 100, 100)
+	if mc.State != StateDrinking {
+		t.Error("Should stay in drinking state")
+	}
+	mc.Tick = 60
+	mc.Update(NewMockInputManager(), nil, nil, nil, &fts, 100, 100)
+	if mc.State != StateIdle {
+		t.Error("Should transition to idle after drinking")
+	}
+}
+
+func TestNPCUpdate_Detailed(t *testing.T) {
+	n := NewNPC(0, 0, nil, 1)
+	n.Weapon = WeaponTizon
+	n.Speed = 1.0 // Manually set speed since Archetype is nil
+	mc := NewMainCharacter(10, 10, nil)
+	fts := []*FloatingText{}
+	projs := []*Projectile{}
+
+	// Test hunter behavior
+	n.Behavior = BehaviorKnightHunter
+	n.Update(mc, nil, nil, &projs, &fts, 100, 100, nil)
+	// Should move towards mc
+	if n.X == 0 && n.Y == 0 {
+		t.Error("Hunter NPC should move")
+	}
+
+	// Test fighter behavior with other NPCs
+	otherNpc := NewNPC(5, 5, nil, 1)
+	npcs := []*NPC{otherNpc, n} // allNPCs includes self
+	n.Behavior = BehaviorNpcFighter
+	n.X = 0
+	n.Y = 0
+	n.TargetPlayer = nil
+	n.TargetNPC = nil
+	n.Update(mc, nil, npcs, &projs, &fts, 100, 100, nil)
+	if n.X == 0 && n.Y == 0 {
+		t.Error("Fighter NPC should move towards other NPC")
+	}
+
+	// Test attack branch
+	n.X = otherNpc.X + 0.1
+	n.Y = otherNpc.Y + 0.1
+	n.TargetNPC = otherNpc // Ensure it still targets otherNpc
+	n.TargetPlayer = nil
+	n.AttackTimer = 0
+	n.Update(mc, nil, npcs, &projs, &fts, 100, 100, nil)
+	if n.State != NPCAttacking {
+		t.Errorf("NPC should be attacking, got state %v", n.State)
+	}
+}
+
+func TestCollisionDetailed(t *testing.T) {
+	mc := NewMainCharacter(0, 0, nil)
+	obs := []*Obstacle{NewObstacle(1, 0, &ObstacleArchetype{FootprintWidth: 2, FootprintHeight: 2})}
+
+	// Test collision detection
+	if !mc.checkCollisionAt(1, 0, obs) {
+		t.Error("Should detect collision with obstacle")
+	}
+}
+
+func TestNPCHitBranch_Detailed(t *testing.T) {
+	n := NewNPC(0, 0, nil, 1)
+	n.Weapon = WeaponTizon
+	mc := NewMainCharacter(1, 0, nil)
+	projs := []*Projectile{}
+	fts := []*FloatingText{}
+	npcs := []*NPC{n}
+
+	// Force a hit
+	n.AttackTimer = 0
+	n.State = NPCIdle
+	n.BaseAttack = 1000
+	mc.BaseDefense = 0
+
+	n.Update(mc, nil, npcs, &projs, &fts, 100, 100, nil)
+}
+
+func TestMainCharacterTakeDamageDetailed(t *testing.T) {
+	mc := NewMainCharacter(0, 0, nil)
+	mc.Health = 100
+	mc.TakeDamage(150, nil)
+	if mc.Health != 0 || mc.State != StateDead {
+		t.Errorf("Should be dead, health=%d, state=%v", mc.Health, mc.State)
+	}
+
+	// Take damage while dead
+	mc.TakeDamage(10, nil)
+	if mc.Health != 0 {
+		t.Error("Health should stay 0")
+	}
+}
+
+func TestObstacleUpdate_Detailed(t *testing.T) {
+	o := NewObstacle(0, 0, nil)
+	o.Update()
+
+	o.CooldownTicks = 10
+	o.Update()
+	if o.CooldownTicks != 9 {
+		t.Errorf("Obstacle Update: CooldownTicks should decrease, got %d", o.CooldownTicks)
+	}
+}
+
+func TestProjectileUpdate_Detailed(t *testing.T) {
+	p := NewProjectile(0, 0, 1, 0, 1.0, 10, true)
+	mc := NewMainCharacter(0, 0, nil)
+	fts := []*FloatingText{}
+
+	// Update until it hits nothing or expires
+	p.Update(mc, nil, &fts)
+
+	// Update with entities
+	targetMc := NewMainCharacter(2, 0, nil)
+	obstacles := []*Obstacle{NewObstacle(5, 0, &ObstacleArchetype{FootprintWidth: 1, FootprintHeight: 1})}
+
+	// Manually move projectile to hit targetMc
+	p.X = 2
+	p.Y = 0
+	p.Alive = true
+	p.Update(targetMc, obstacles, &fts)
+
+	// Manually move projectile to hit obstacle
+	p.Alive = true
+	p.X = 5
+	p.Y = 0
+	p.Update(targetMc, obstacles, &fts)
+}
+
+func TestFloatingTextUpdate_Detailed(t *testing.T) {
+	ft := &FloatingText{Life: 10}
+	alive := ft.Update()
+	if !alive {
+		t.Error("FloatingText should be alive")
+	}
+	if ft.Life != 9 {
+		t.Errorf("FloatingText life: got %d, want 9", ft.Life)
+	}
+
+	ft.Life = 1
+	alive = ft.Update()
+	if alive {
+		t.Error("FloatingText should be finished")
+	}
+}
+
+func TestObjKillVIP(t *testing.T) {
+	mockFS := fstest.MapFS{
+		"data/map_types/duel.yaml": {
+			Data: []byte(`id: "duel"
+name: "Demon Duel"
+type: "kill_vip"
+difficulty: 5
+spawn_frequency: 0
+`),
+		},
+	}
+	g := NewGame(mockFS, "duel", "", NewMockInputManager(), NewMockAudioManager())
+
+	// Spawn a boss (VIP)
+	boss := NewNPC(5, 5, nil, 10)
+	g.npcs = []*NPC{boss}
+
+	if err := g.Update(); err != nil {
+		t.Fatal(err)
+	}
+	if g.isMapWon {
+		t.Error("Map should not be won yet")
+	}
+
+	// Kill the boss
+	boss.State = NPCDead
+	if err := g.Update(); err != nil {
+		t.Fatal(err)
+	}
+	if !g.isMapWon {
+		t.Error("Map should be won after VIP death")
+	}
+}

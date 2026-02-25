@@ -1,0 +1,26 @@
+id: peasant_male
+name: Peasant
+names:
+  - Hicks
+  - Miller
+  - Cooper
+  - Smith
+  - Potter
+  - Baker
+  - Carter
+  - Fisher
+behavior: wander
+stats:
+  health_min: 15
+  health_max: 20
+  speed: 0.025
+  base_attack: 3
+  base_defense: 1
+  attack_cooldown: 80
+weapon: Dagger
+sprites:
+  static: static.png
+  corpse: corpse.png
+scale: 0.9
+footprint_width: 0.25
+footprint_height: 0.25

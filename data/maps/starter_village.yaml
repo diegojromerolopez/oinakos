@@ -1,0 +1,39 @@
+map:
+  id: safe_zone
+  width_px: 1000000
+  height_px: 1000000
+  level: 1
+  play_time: 0
+player:
+  x: 0
+  y: 0
+  health: 20
+  max_health: 20
+  xp: 0
+  level: 1
+  kills: 0
+  base_attack: 10
+  base_defense: 5
+npcs:
+  - archetype_id: peasant_male
+    x: 2
+    y: 2
+    health: 10
+    max_health: 10
+    level: 1
+    behavior: wander
+    name: "Old Man Jenkins"
+  - archetype_id: peasant_male
+    x: -2
+    y: 3
+    health: 10
+    max_health: 10
+    level: 1
+    behavior: wander
+    name: "Mary the Healer"
+obstacles:
+  - archetype_id: well
+    x: 0
+    y: 2
+    health: 100
+    cooldown_ticks: 0

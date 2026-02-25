@@ -1,0 +1,50 @@
+map:
+  id: orc_encampment
+  width_px: 2000000
+  height_px: 2000000
+  level: 5
+  play_time: 0
+player:
+  x: 0
+  y: 0
+  health: 50
+  max_health: 50
+  xp: 1500
+  level: 10
+  kills: 10
+  base_attack: 25
+  base_defense: 15
+npcs:
+  - archetype_id: orc_male
+    x: 10
+    y: 10
+    health: 100
+    max_health: 100
+    level: 15
+    behavior: hunter
+    name: "Ugluk"
+  - archetype_id: orc_male
+    x: 12
+    y: 8
+    health: 80
+    max_health: 80
+    level: 12
+    behavior: patrol
+    name: "Grunt"
+  - archetype_id: orc_male
+    x: 8
+    y: 12
+    health: 80
+    max_health: 80
+    level: 12
+    behavior: patrol
+    name: "Snagga"
+obstacles:
+  - archetype_id: tree1
+    x: 5
+    y: 5
+    health: 50
+  - archetype_id: rock1
+    x: 7
+    y: 6
+    health: 100

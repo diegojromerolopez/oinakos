@@ -1,0 +1,6 @@
+id: safe_zone
+name: The Safe Zone
+type: reach_zone # ObjReachZone
+difficulty: 2
+target_radius: 100
+description: "Reach the glowing Safe Zone"

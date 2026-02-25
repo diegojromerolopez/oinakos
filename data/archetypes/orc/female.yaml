@@ -1,0 +1,26 @@
+id: orc_female
+name: Orc female
+names:
+  - Gorza
+  - Ugak
+  - Mazoga
+  - Sharn
+  - Borba
+  - Mogak
+  - Ghorza
+  - Umbac
+behavior: hunter
+stats:
+  health_min: 25
+  health_max: 35
+  speed: 0.04
+  base_attack: 6
+  base_defense: 3
+  attack_cooldown: 50
+weapon: Cleaver
+sprites:
+  static: static.png
+  corpse: corpse.png
+scale: 0.95
+footprint_width: 0.3
+footprint_height: 0.3

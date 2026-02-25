@@ -1,0 +1,6 @@
+id: royal_magi_male
+name: The Royal Escort
+type: protect_npc # ObjProtectNPC
+difficulty: 3
+target_radius: 40
+description: "Escort the VIP safely to the destination"

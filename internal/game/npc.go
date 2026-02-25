@@ -5,14 +5,11 @@ import (
 	"image/color"
 	_ "image/jpeg"
 	_ "image/png"
+	"log"
 	"math"
 	"math/rand"
 
 	"oinakos/internal/engine"
-
-	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
-	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 // NPCType is kept for legacy compatibility if needed,
@@ -35,11 +32,12 @@ const (
 	BehaviorPatrol
 	BehaviorKnightHunter
 	BehaviorNpcFighter
+	BehaviorChaotic
 )
 
 type NPC struct {
 	X, Y           float64
-	Config         *NPCConfig
+	Archetype      *Archetype
 	State          NPCState
 	Facing         Direction
 	Tick           int
@@ -56,15 +54,18 @@ type NPC struct {
 	Weapon         *Weapon
 
 	// Behavior fields
-	Behavior                   BehaviorType
-	WanderDirX                 float64
-	WanderDirY                 float64
+	Behavior   BehaviorType
+	WanderDirX float64
+	WanderDirY float64
+	// Combat & Effects
+	BloodTimer                 int
 	PatrolStartX, PatrolStartY float64
 	PatrolEndX, PatrolEndY     float64
 	PatrolHeading              bool // true = toward End, false = toward Start
 
 	TargetNPC    *NPC
-	TargetPlayer *Player
+	TargetPlayer *MainCharacter
+	IsBoss       bool
 }
 
 var npcNames = []string{
@@ -72,25 +73,54 @@ var npcNames = []string{
 	"Hicks", "Miller", "Cooper", "Smith", "Potter", "Baker", "Carter", "Fisher",
 }
 
-func NewNPC(x, y float64, config *NPCConfig, level int) *NPC {
+func NewNPC(x, y float64, archetype *Archetype, level int) *NPC {
+	if archetype == nil {
+		archetype = &Archetype{
+			ID:   "unknown",
+			Name: "Unknown Entity",
+		}
+		archetype.Stats.HealthMin = 10
+		archetype.Stats.HealthMax = 10
+		archetype.Weapon = WeaponTizon
+	}
 	n := &NPC{
-		X:      x,
-		Y:      y,
-		Config: config,
-		State:  NPCIdle,
-		Facing: DirSE,
-		Level:  level,
+		X:         x,
+		Y:         y,
+		Archetype: archetype,
+		State:     NPCIdle,
+		Facing:    DirSE,
+		Level:     level,
 	}
 
-	n.Name = npcNames[rand.Intn(len(npcNames))]
+	if len(archetype.Names) > 0 {
+		n.Name = archetype.Names[rand.Intn(len(archetype.Names))]
+	} else {
+		n.Name = npcNames[rand.Intn(len(npcNames))]
+	}
 
-	// Load from config
-	n.Health = config.Stats.HealthMin + rand.Intn(config.Stats.HealthMax-config.Stats.HealthMin+1)
-	n.BaseAttack = config.Stats.BaseAttack
-	n.BaseDefense = config.Stats.BaseDefense
-	n.Speed = config.Stats.Speed
-	n.AttackCooldown = config.Stats.AttackCooldown
-	n.Weapon = config.Weapon
+	// Load from archetype
+	n.Health = archetype.Stats.HealthMin + rand.Intn(archetype.Stats.HealthMax-archetype.Stats.HealthMin+1)
+	n.BaseAttack = archetype.Stats.BaseAttack
+	n.BaseDefense = archetype.Stats.BaseDefense
+	n.Speed = archetype.Stats.Speed
+	n.AttackCooldown = archetype.Stats.AttackCooldown
+	n.Weapon = archetype.Weapon
+
+	// Set behavior from archetype
+	switch archetype.Behavior {
+	case "chaotic":
+		n.Behavior = BehaviorChaotic
+	case "fighter":
+		n.Behavior = BehaviorNpcFighter
+	case "hunter":
+		n.Behavior = BehaviorKnightHunter
+	case "wander":
+		n.Behavior = BehaviorWander
+	case "patrol":
+		n.Behavior = BehaviorPatrol
+	default:
+		n.Behavior = BehaviorKnightHunter // Default for enemies
+	}
 
 	// Dynamic scaling based on level
 	n.Health = n.calculateStat(n.Health, n.Level)
@@ -98,8 +128,10 @@ func NewNPC(x, y float64, config *NPCConfig, level int) *NPC {
 	n.BaseAttack = n.calculateStat(n.BaseAttack, n.Level)
 	n.BaseDefense = n.calculateStat(n.BaseDefense, n.Level)
 
-	// Initialize random behavior
-	n.Behavior = BehaviorType(rand.Intn(4))
+	// Initialize random behavior if none provided
+	if archetype == nil || archetype.Behavior == "" {
+		n.Behavior = BehaviorType(rand.Intn(4))
+	}
 
 	// Pre-calculations for behaviors
 	if n.Behavior == BehaviorWander {
@@ -138,10 +170,10 @@ func (n *NPC) calculateStat(base, level int) int {
 }
 
 func (n *NPC) checkCollisionAt(newX, newY float64, obstacles []*Obstacle) bool {
-	if n.Config == nil {
+	if n.Archetype == nil {
 		return false
 	}
-	nFootprint := n.Config.GetFootprint().Transformed(newX, newY)
+	nFootprint := n.Archetype.GetFootprint().Transformed(newX, newY)
 	for _, o := range obstacles {
 		if !o.Alive {
 			continue
@@ -154,13 +186,13 @@ func (n *NPC) checkCollisionAt(newX, newY float64, obstacles []*Obstacle) bool {
 }
 
 func (n *NPC) GetFootprint() engine.Polygon {
-	if n.Config == nil {
+	if n.Archetype == nil {
 		return engine.Polygon{}
 	}
-	return n.Config.GetFootprint().Transformed(n.X, n.Y)
+	return n.Archetype.GetFootprint().Transformed(n.X, n.Y)
 }
 
-func (n *NPC) Update(player *Player, obstacles []*Obstacle, allNPCs []*NPC, fts *[]*FloatingText) {
+func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPCs []*NPC, projectiles *[]*Projectile, fts *[]*FloatingText, mapW, mapH float64, audio AudioManager) {
 	if n.State == NPCDead {
 		return
 	}
@@ -168,8 +200,8 @@ func (n *NPC) Update(player *Player, obstacles []*Obstacle, allNPCs []*NPC, fts 
 	n.Tick++
 
 	// Custom Escort Logic
-	if n.Config != nil && n.Config.ID == "escort" {
-		n.updateEscort(player, obstacles)
+	if n.Archetype != nil && n.Archetype.ID == "escort" {
+		n.updateEscort(mainCharacter, obstacles)
 		return
 	}
 
@@ -192,7 +224,8 @@ func (n *NPC) Update(player *Player, obstacles []*Obstacle, allNPCs []*NPC, fts 
 	} else {
 		switch n.Behavior {
 		case BehaviorKnightHunter:
-			targetX, targetY = player.X, player.Y
+			n.TargetPlayer = mainCharacter
+			targetX, targetY = mainCharacter.X, mainCharacter.Y
 			hasTarget = true
 			isTargetPlayer = true
 		case BehaviorNpcFighter:
@@ -210,6 +243,34 @@ func (n *NPC) Update(player *Player, obstacles []*Obstacle, allNPCs []*NPC, fts 
 			}
 			if n.TargetNPC != nil {
 				targetX, targetY = n.TargetNPC.X, n.TargetNPC.Y
+				hasTarget = true
+			}
+		case BehaviorChaotic:
+			// Find nearest living actor (NPC or MainCharacter) that isn't me
+			var minDist = 999.0
+			var nearestNPC *NPC
+			var playerDist = math.Sqrt(math.Pow(n.X-mainCharacter.X, 2) + math.Pow(n.Y-mainCharacter.Y, 2))
+
+			for _, other := range allNPCs {
+				if other == n || !other.IsAlive() {
+					continue
+				}
+				dist := math.Sqrt(math.Pow(n.X-other.X, 2) + math.Pow(n.Y-other.Y, 2))
+				if dist < minDist {
+					minDist = dist
+					nearestNPC = other
+				}
+			}
+
+			if mainCharacter.IsAlive() && playerDist < minDist {
+				n.TargetPlayer = mainCharacter
+				n.TargetNPC = nil
+				targetX, targetY = mainCharacter.X, mainCharacter.Y
+				hasTarget = true
+			} else if nearestNPC != nil {
+				n.TargetNPC = nearestNPC
+				n.TargetPlayer = nil
+				targetX, targetY = nearestNPC.X, nearestNPC.Y
 				hasTarget = true
 			}
 		case BehaviorWander:
@@ -245,100 +306,163 @@ func (n *NPC) Update(player *Player, obstacles []*Obstacle, allNPCs []*NPC, fts 
 	dist := math.Sqrt(dx*dx + dy*dy)
 
 	attackRange := 1.0
+	if n.Archetype != nil && n.Archetype.Stats.AttackRange > 1.0 {
+		attackRange = n.Archetype.Stats.AttackRange
+	}
+
+	isRanged := attackRange > 1.0
+
 	if dist < attackRange {
+		if isRanged && dist < attackRange-2.0 {
+			// Kite away if too close
+			kMag := math.Sqrt(dx*dx + dy*dy)
+			if kMag > 0 {
+				moveX := -(dx / kMag) * n.Speed
+				moveY := -(dy / kMag) * n.Speed
+				// Sliding collision for NPC kiting
+				if !n.checkCollisionAt(n.X+moveX, n.Y+moveY, obstacles) {
+					n.X += moveX
+					n.Y += moveY
+				} else {
+					if !n.checkCollisionAt(n.X+moveX, n.Y, obstacles) {
+						n.X += moveX
+					}
+					if !n.checkCollisionAt(n.X, n.Y+moveY, obstacles) {
+						n.Y += moveY
+					}
+				}
+			}
+			n.State = NPCWalking
+			return
+		}
+
 		if n.State != NPCAttacking && isTargetPlayer {
-			// Chance to say a menace line when starting to attack the player
+			// Chance to say a menace line when starting to attack the mainCharacter
 			if rand.Float64() < 0.3 {
 				msgNum := rand.Intn(5) + 1
-				switch n.Config.ID {
-				case "orc":
-					engine.PlaySound(fmt.Sprintf("orc_menace_%d", msgNum))
-				case "demon":
-					engine.PlaySound(fmt.Sprintf("demon_menace_%d", msgNum))
-				case "peasant":
-					engine.PlaySound(fmt.Sprintf("peasant_menace_%d", msgNum))
+				if audio != nil {
+					switch n.Archetype.ID {
+					case "orc":
+						audio.PlaySound(fmt.Sprintf("orc_menace_%d", msgNum))
+					case "demon":
+						audio.PlaySound(fmt.Sprintf("demon_menace_%d", msgNum))
+					case "peasant":
+						audio.PlaySound(fmt.Sprintf("peasant_menace_%d", msgNum))
+					}
 				}
 			}
 		}
+
 		n.State = NPCAttacking
 		if n.AttackTimer >= n.AttackCooldown {
 			n.AttackTimer = 0
-			// HIT ROLL
-			var targetAttack, targetDefense int
-			var targetProtection int
 
-			if isTargetPlayer {
-				targetAttack = n.GetTotalAttack()
-				targetDefense = player.GetTotalDefense()
-				targetProtection = player.GetTotalProtection()
-				// We need a wrapper or cast if we want to use the same interface,
-				// but for now let's just do it directly.
-				hitChance := targetAttack - targetDefense
-				if hitChance < 5 {
-					hitChance = 5
+			if isRanged {
+				// Spawn Projectile
+				mag := math.Sqrt(dx*dx + dy*dy)
+				if mag > 0 {
+					pSpd := n.Archetype.Stats.ProjectileSpeed
+					if pSpd <= 0 {
+						pSpd = 0.15 // fallback default
+					}
+
+					proj := NewProjectile(n.X, n.Y, dx/mag, dy/mag, pSpd, n.GetTotalAttack(), false)
+					*projectiles = append(*projectiles, proj)
+					// Optional: bow shoot sound
+					// if audio != nil { audio.PlaySound("bow_shoot") }
 				}
-				if hitChance > 95 {
-					hitChance = 95
-				}
+			} else {
+				// MELEE HIT ROLL
+				var targetProtection int
 
-				roll := rand.Intn(100) + 1
-				if roll <= hitChance {
-					rawDmg := n.Weapon.RollDamage()
-					finalDmg := int(math.Max(1, float64(rawDmg-targetProtection)))
-					player.TakeDamage(finalDmg)
+				if isTargetPlayer {
+					targetProtection = mainCharacter.GetTotalProtection()
+					// We need a wrapper or cast if we want to use the same interface,
+					// but for now let's just do it directly.
+					attk := float64(n.GetTotalAttack())
+					def := float64(mainCharacter.GetTotalDefense())
+					if def <= 0 {
+						def = 1
+					}
+					hitChance := int(attk / (attk + def) * 100)
+					if hitChance < 5 {
+						hitChance = 5
+					}
+					if hitChance > 95 {
+						hitChance = 95
+					}
 
-					*fts = append(*fts, &FloatingText{
-						Text:  fmt.Sprintf("%d", finalDmg),
-						X:     player.X,
-						Y:     player.Y,
-						Life:  45,
-						Color: color.RGBA{255, 100, 100, 255},
-					})
+					roll := rand.Intn(100) + 1
+					if roll <= hitChance {
+						rawDmg := n.Weapon.RollDamage()
+						finalDmg := int(math.Max(1, float64(rawDmg-targetProtection)))
+						log.Printf("NPC %s attacks Player: HIT for %d damage (roll: %d/%d)", n.Name, finalDmg, roll, hitChance)
+						mainCharacter.TakeDamage(finalDmg, audio)
+
+						*fts = append(*fts, &FloatingText{
+							Text:  fmt.Sprintf("%d", finalDmg),
+							X:     mainCharacter.X,
+							Y:     mainCharacter.Y,
+							Life:  45,
+							Color: color.RGBA{255, 100, 100, 255},
+						})
+					} else {
+						// MISS
+						log.Printf("NPC %s attacks Player: MISS (roll: %d/%d)", n.Name, roll, hitChance)
+						*fts = append(*fts, &FloatingText{
+							Text:  "MISS",
+							X:     mainCharacter.X,
+							Y:     mainCharacter.Y,
+							Life:  45,
+							Color: color.RGBA{200, 200, 200, 255},
+						})
+					}
 				} else {
-					// MISS
-					*fts = append(*fts, &FloatingText{
-						Text:  "MISS",
-						X:     player.X,
-						Y:     player.Y,
-						Life:  45,
-						Color: color.RGBA{220, 220, 220, 255},
-					})
-				}
-			} else if n.TargetNPC != nil {
-				targetAttack = n.GetTotalAttack()
-				targetDefense = n.TargetNPC.GetTotalDefense()
-				targetProtection = n.TargetNPC.GetTotalProtection()
+					// NPC VS NPC
+					if n.TargetNPC == nil || !n.TargetNPC.IsAlive() {
+						n.TargetNPC = nil
+						return
+					}
+					targetProtection = n.TargetNPC.GetTotalProtection()
 
-				hitChance := targetAttack - targetDefense
-				if hitChance < 5 {
-					hitChance = 5
-				}
-				if hitChance > 95 {
-					hitChance = 95
-				}
+					attk := float64(n.GetTotalAttack())
+					def := float64(n.TargetNPC.GetTotalDefense())
+					if def <= 0 {
+						def = 1
+					}
+					hitChance := int(attk / (attk + def) * 100)
+					if hitChance < 5 {
+						hitChance = 5
+					}
+					if hitChance > 95 {
+						hitChance = 95
+					}
 
-				roll := rand.Intn(100) + 1
-				if roll <= hitChance {
-					rawDmg := n.Weapon.RollDamage()
-					finalDmg := int(math.Max(1, float64(rawDmg-targetProtection)))
-					n.TargetNPC.TakeDamage(finalDmg, nil, n)
+					roll := rand.Intn(100) + 1
+					if roll <= hitChance {
+						rawDmg := n.Weapon.RollDamage()
+						finalDmg := int(math.Max(1, float64(rawDmg-targetProtection)))
+						log.Printf("NPC %s attacks NPC %s: HIT for %d damage (roll: %d/%d)", n.Name, n.TargetNPC.Name, finalDmg, roll, hitChance)
+						n.TargetNPC.TakeDamage(finalDmg, nil, n, audio)
 
-					*fts = append(*fts, &FloatingText{
-						Text:  fmt.Sprintf("%d", finalDmg),
-						X:     n.TargetNPC.X,
-						Y:     n.TargetNPC.Y,
-						Life:  45,
-						Color: color.RGBA{255, 255, 255, 255},
-					})
-				} else {
-					// MISS
-					*fts = append(*fts, &FloatingText{
-						Text:  "MISS",
-						X:     n.TargetNPC.X,
-						Y:     n.TargetNPC.Y,
-						Life:  45,
-						Color: color.RGBA{150, 150, 150, 255},
-					})
+						*fts = append(*fts, &FloatingText{
+							Text:  fmt.Sprintf("%d", finalDmg),
+							X:     n.TargetNPC.X,
+							Y:     n.TargetNPC.Y,
+							Life:  45,
+							Color: color.RGBA{255, 100, 100, 255},
+						})
+					} else {
+						// MISS
+						log.Printf("NPC %s attacks NPC %s: MISS (roll: %d/%d)", n.Name, n.TargetNPC.Name, roll, hitChance)
+						*fts = append(*fts, &FloatingText{
+							Text:  "MISS",
+							X:     n.TargetNPC.X,
+							Y:     n.TargetNPC.Y,
+							Life:  45,
+							Color: color.RGBA{150, 150, 150, 255},
+						})
+					}
 				}
 			}
 		}
@@ -366,6 +490,22 @@ func (n *NPC) Update(player *Player, obstacles []*Obstacle, allNPCs []*NPC, fts 
 				}
 			}
 
+			// Clamp to map boundaries
+			halfW := mapW / 2
+			halfH := mapH / 2
+			if n.X < -halfW {
+				n.X = -halfW
+			}
+			if n.X > halfW {
+				n.X = halfW
+			}
+			if n.Y < -halfH {
+				n.Y = -halfH
+			}
+			if n.Y > halfH {
+				n.Y = halfH
+			}
+
 			// Facing direction
 			if ndx > 0 {
 				if ndy < 0 {
@@ -384,7 +524,7 @@ func (n *NPC) Update(player *Player, obstacles []*Obstacle, allNPCs []*NPC, fts 
 	}
 }
 
-func (n *NPC) TakeDamage(amount int, attackerPlayer *Player, attackerNPC *NPC) {
+func (n *NPC) TakeDamage(amount int, attackerPlayer *MainCharacter, attackerNPC *NPC, audio AudioManager) {
 	if n.State == NPCDead {
 		return
 	}
@@ -399,22 +539,26 @@ func (n *NPC) TakeDamage(amount int, attackerPlayer *Player, attackerNPC *NPC) {
 		n.TargetPlayer = nil
 	}
 
+	// Start blood effect
+	n.BloodTimer = 30
 	// Play hit sound
-	switch n.Config.ID {
-	case "orc":
-		engine.PlaySound("orc_hit")
-	case "demon":
-		engine.PlaySound("demon_hit")
-	case "peasant":
-		engine.PlaySound("peasant_hit")
+	if audio != nil && n.Archetype != nil {
+		switch n.Archetype.ID {
+		case "orc":
+			audio.PlaySound("orc_hit")
+		case "demon":
+			audio.PlaySound("demon_hit")
+		case "peasant":
+			audio.PlaySound("peasant_hit")
+		}
 	}
 
 	if n.Health <= 0 {
 		n.State = NPCDead
-		if attackerPlayer != nil {
+		if attackerPlayer != nil && n.Archetype != nil {
 			attackerPlayer.Kills++
 			// Award XP based on NPC type
-			switch n.Config.ID {
+			switch n.Archetype.ID {
 			case "orc":
 				attackerPlayer.XP += 8 + rand.Intn(8) // 8-15
 			case "demon":
@@ -423,13 +567,15 @@ func (n *NPC) TakeDamage(amount int, attackerPlayer *Player, attackerNPC *NPC) {
 				attackerPlayer.XP += 2 + rand.Intn(5) // 2-6
 			}
 		}
-		switch n.Config.ID {
-		case "orc":
-			engine.PlaySound("orc_death")
-		case "demon":
-			engine.PlaySound("demon_death")
-		case "peasant":
-			engine.PlaySound("peasant_death")
+		if audio != nil && n.Archetype != nil {
+			switch n.Archetype.ID {
+			case "orc":
+				audio.PlaySound("orc_death")
+			case "demon":
+				audio.PlaySound("demon_death")
+			case "peasant":
+				audio.PlaySound("peasant_death")
+			}
 		}
 	}
 }
@@ -438,17 +584,20 @@ func (n *NPC) IsAlive() bool {
 	return n.State != NPCDead
 }
 
-func (n *NPC) updateEscort(player *Player, obstacles []*Obstacle) {
-	dx := player.X - n.X
-	dy := player.Y - n.Y
+func (n *NPC) updateEscort(mainCharacter *MainCharacter, obstacles []*Obstacle) {
+	dx := mainCharacter.X - n.X
+	dy := mainCharacter.Y - n.Y
 	dist := math.Sqrt(dx*dx + dy*dy)
 
-	// Follow player if further than 5 units, but don't get closer than 3
+	// Follow mainCharacter if further than 5 units, but don't get closer than 3
 	if dist > 5.0 {
 		n.State = NPCWalking
-		speed := n.Config.Stats.Speed
-		if speed == 0 {
-			speed = 0.02
+		speed := 0.02
+		if n.Archetype != nil {
+			speed = n.Archetype.Stats.Speed
+			if speed == 0 {
+				speed = 0.02
+			}
 		}
 
 		vx := (dx / dist) * speed
@@ -486,92 +635,5 @@ func (n *NPC) updateEscort(player *Player, obstacles []*Obstacle) {
 		}
 	} else {
 		n.State = NPCIdle
-	}
-}
-
-func (n *NPC) Draw(screen *ebiten.Image, offsetX, offsetY float64) {
-	if n.Config == nil {
-		return
-	}
-
-	isoX, isoY := engine.CartesianToIso(n.X, n.Y)
-
-	drawSprite := n.Config.StaticImage
-	if n.State == NPCDead {
-		drawSprite = n.Config.CorpseImage
-	} else if n.State == NPCAttacking && n.Config.AttackImage != nil {
-		drawSprite = n.Config.AttackImage
-	}
-
-	if drawSprite == nil {
-		return
-	}
-
-	w, h := drawSprite.Size()
-	op := &ebiten.DrawImageOptions{}
-	scale := 0.25
-
-	flip := 1.0
-	if n.Facing == DirSE || n.Facing == DirNE {
-		flip = -1.0
-	}
-
-	op.GeoM.Scale(scale*flip, scale)
-
-	// Anchoring: if flipped, we need to translate differently
-	tx := isoX + offsetX
-	if flip < 0 {
-		tx += float64(w) * scale / 2
-	} else {
-		tx -= float64(w) * scale / 2
-	}
-
-	ty := isoY + offsetY - float64(h)*scale*0.85
-
-	// Procedural Animation Overrides
-	if n.State == NPCDead {
-		// Lie flat on the ground
-		ty = isoY + offsetY - float64(h)*scale*0.5
-	} else if n.State == NPCWalking {
-		// Bobbing effect
-		bob := math.Sin(float64(n.Tick)*0.2) * 2.0
-		ty += bob
-	} else if n.State == NPCAttacking {
-		// Lunge effect
-		lungeAmt := 0.0
-		attackPhase := float64(n.AttackTimer) / float64(n.AttackCooldown)
-		if attackPhase < 0.2 { // Quick forward lunge
-			lungeAmt = (attackPhase / 0.2) * 5.0
-		} else if attackPhase < 0.5 { // Hold slightly, then pull back
-			lungeAmt = 5.0 - ((attackPhase-0.2)/0.3)*5.0
-		}
-
-		if flip < 0 {
-			tx += lungeAmt // Lunge right
-		} else {
-			tx -= lungeAmt // Lunge left
-		}
-	}
-
-	op.GeoM.Translate(tx, ty)
-
-	screen.DrawImage(drawSprite, op)
-
-	// Only draw UI for living NPCs
-	if n.IsAlive() {
-		// Draw Name at feet
-		ebitenutil.DebugPrintAt(screen, n.Name, int(isoX+offsetX-20), int(isoY+offsetY+5))
-
-		// Draw Health Bar above NPC
-		barWidth := 40.0
-		barHeight := 4.0
-		bx := isoX + offsetX - barWidth/2
-		by := isoY + offsetY - float64(h)*scale*0.9 // Floating above head area
-
-		vector.DrawFilledRect(screen, float32(bx), float32(by), float32(barWidth), float32(barHeight), color.RGBA{100, 0, 0, 255}, false)
-		hpFrac := float32(n.Health) / float32(n.MaxHealth)
-		if hpFrac > 0 {
-			vector.DrawFilledRect(screen, float32(bx), float32(by), float32(barWidth)*hpFrac, float32(barHeight), color.RGBA{0, 255, 0, 255}, false)
-		}
 	}
 }

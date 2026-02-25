@@ -1,0 +1,11 @@
+id: "destroy_camp"
+name: "Destroy the Orc Camp"
+type: destroy_building # ObjDestroyBuilding
+description: "An Orc encampment has been established. Destroy their command post to stop the invasion!"
+difficulty: 2
+target_kills: {} # NA
+spawn_frequency: 3.0 # Quick respawns from the building
+spawn_amount: 3
+spawn_weights:
+  orc: 80
+  demon: 20

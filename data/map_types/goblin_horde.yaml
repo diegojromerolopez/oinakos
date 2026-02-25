@@ -1,0 +1,9 @@
+id: goblin_horde
+name: Goblin Horde
+type: survive
+difficulty: 4
+target_time: 120.0
+spawn_freq: 2.0
+spawn_amount: 10
+spawn_weights:
+  goblin: 100

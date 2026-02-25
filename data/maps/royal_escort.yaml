@@ -1,6 +1,0 @@
-id: royal_escort
-name: The Royal Escort
-type: 6 # ObjProtectNPC
-difficulty: 3
-target_radius: 40
-description: "Escort the VIP safely to the destination"

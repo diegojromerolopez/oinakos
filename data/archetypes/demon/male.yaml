@@ -1,0 +1,23 @@
+id: demon_male
+name: Demon
+names:
+  - Malphas
+  - Valac
+  - Orobas
+  - Amon
+  - Ronove
+behavior: hunter
+stats:
+  health_min: 50
+  health_max: 80
+  speed: 0.035
+  base_attack: 12
+  base_defense: 6
+  attack_cooldown: 45
+weapon: Trident
+sprites:
+  static: static.png
+  corpse: corpse.png
+scale: 1.2
+footprint_width: 0.4
+footprint_height: 0.4

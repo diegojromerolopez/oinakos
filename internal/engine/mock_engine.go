@@ -1,0 +1,82 @@
+package engine
+
+import (
+	"image"
+	"image/color"
+
+	"github.com/hajimehoshi/ebiten/v2"
+)
+
+// MockImage is a headless implementation of Image.
+type MockImage struct {
+	W, H int
+}
+
+func NewMockImage(w, h int) *MockImage {
+	return &MockImage{W: w, H: h}
+}
+
+func (m *MockImage) Size() (int, int)                               { return m.W, m.H }
+func (m *MockImage) Bounds() image.Rectangle                        { return image.Rect(0, 0, m.W, m.H) }
+func (m *MockImage) DrawImage(img Image, options *DrawImageOptions) {}
+func (m *MockImage) DrawTriangles(vertices []Vertex, indices []uint16, src Image, options *DrawTrianglesOptions) {
+}
+
+func (m *MockImage) SubImage(r image.Rectangle) Image {
+	return &MockImage{W: r.Dx(), H: r.Dy()}
+}
+func (m *MockImage) Clear()               {}
+func (m *MockImage) Fill(clr interface{}) {}
+
+// MockInput is a mock for engine.Input.
+type MockInput struct {
+	PressedKeys     map[ebiten.Key]bool
+	JustPressedKeys map[ebiten.Key]bool
+}
+
+func NewMockInput() *MockInput {
+	return &MockInput{
+		PressedKeys:     make(map[ebiten.Key]bool),
+		JustPressedKeys: make(map[ebiten.Key]bool),
+	}
+}
+
+func (m *MockInput) IsKeyPressed(key ebiten.Key) bool {
+	return m.PressedKeys[key]
+}
+
+func (m *MockInput) IsKeyJustPressed(key ebiten.Key) bool {
+	return m.JustPressedKeys[key]
+}
+
+func (m *MockInput) AppendJustPressedKeys(keys []ebiten.Key) []ebiten.Key {
+	for k, v := range m.JustPressedKeys {
+		if v {
+			keys = append(keys, k)
+		}
+	}
+	return keys
+}
+
+// MockGraphics is a mock for engine.Graphics.
+type MockGraphics struct{}
+
+func (m *MockGraphics) NewImage(width, height int) Image {
+	return &MockImage{W: width, H: height}
+}
+
+func (m *MockGraphics) NewImageFromImage(img image.Image) Image {
+	if img == nil {
+		return nil
+	}
+	b := img.Bounds()
+	return &MockImage{W: b.Dx(), H: b.Dy()}
+}
+
+func (m *MockGraphics) DebugPrintAt(screen Image, str string, x, y int) {}
+func (m *MockGraphics) DrawFilledRect(screen Image, x, y, width, height float32, clr color.Color, antiAlias bool) {
+}
+func (m *MockGraphics) DrawFilledCircle(screen Image, x, y, radius float32, clr color.Color, antiAlias bool) {
+}
+func (m *MockGraphics) DrawTriangles(screen Image, vertices []Vertex, indices []uint16, src Image, options *DrawTrianglesOptions) {
+}

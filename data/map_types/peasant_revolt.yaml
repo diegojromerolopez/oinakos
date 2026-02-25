@@ -1,0 +1,6 @@
+id: peasant_revolt
+name: Peasant Revolt
+type: kill_count # ObjKillCount
+difficulty: 4
+target_kill_count: 300
+description: "Quell the uprising by defeating 300 peasants"

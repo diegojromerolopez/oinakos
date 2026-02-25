@@ -1,0 +1,38 @@
+map:
+  id: demon_invasion
+  width_px: 500000
+  height_px: 500000
+  level: 10
+  play_time: 0
+player:
+  x: 0
+  y: 0
+  health: 100
+  max_health: 100
+  xp: 5000
+  level: 20
+  kills: 1000
+  base_attack: 50
+  base_defense: 30
+npcs:
+  - archetype_id: demon_male
+    x: 5
+    y: 5
+    health: 500
+    max_health: 500
+    level: 50
+    behavior: hunter
+    name: "Astaroth the Cruel"
+    base_attack: 80
+    base_defense: 60
+  - archetype_id: demon_male
+    x: -5
+    y: -5
+    health: 400
+    max_health: 400
+    level: 45
+    behavior: fighter
+    name: "Malphas the Deceiver"
+    base_attack: 70
+    base_defense: 50
+obstacles: []

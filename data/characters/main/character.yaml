@@ -1,0 +1,23 @@
+id: main
+name: Knight
+stats:
+  health_min: 100
+  health_max: 100
+  base_attack: 60
+  base_defense: 5
+  speed: 0.07
+  attack_cooldown: 30
+weapon: Tizon
+sprites:
+  static: static.png
+  corpse: corpse.png
+  attack: attack.png
+footprint:
+  - { x: -0.2, y: -0.1 }
+  - { x: 0.2, y: -0.1 }
+  - { x: 0.3, y: 0 }
+  - { x: 0.2, y: 0.1 }
+  - { x: -0.2, y: 0.1 }
+  - { x: -0.3, y: 0 }
+footprint_width: 0.6
+footprint_height: 0.3

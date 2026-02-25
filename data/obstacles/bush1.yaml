@@ -2,7 +2,7 @@ id: bush1
 name: "Bush 1"
 description: "A small bush. Can be easily cut through."
 health: 10
-image: "assets/images/environment/bush.png"
+image: "assets/images/environment/bush1.png"
 scale: 0.30
 footprint_width: 0.30
 footprint_height: 0.20

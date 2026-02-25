@@ -2,7 +2,7 @@ id: tree5
 name: "Tree 5"
 description: "A sturdy tall tree. It can be chopped down."
 health: 1000
-image: "assets/images/environment/tree5.png"
+image: "assets/images/environment/tree1.png"
 scale: 0.40
 footprint_width: 0.20
 footprint_height: 0.20

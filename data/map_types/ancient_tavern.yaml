@@ -1,0 +1,5 @@
+id: ancient_tavern
+name: The Ancient Tavern
+type: reach_building # ObjReachBuilding
+difficulty: 1
+description: "Find shelter at the marked building"

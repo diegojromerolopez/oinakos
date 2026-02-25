@@ -1,0 +1,6 @@
+id: duel
+name: Demon Duel
+type: kill_vip
+difficulty: 5
+description: "Defeat the Demon Lord in a one-on-one duel."
+spawn_frequency: 0

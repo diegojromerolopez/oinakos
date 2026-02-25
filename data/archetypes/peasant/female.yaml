@@ -1,0 +1,24 @@
+id: peasant_female
+name: Peasant female
+names:
+  - Maria
+  - Elena
+  - Sofia
+  - Isabella
+  - Lucia
+  - Beatrice
+behavior: wander
+stats:
+  health_min: 10
+  health_max: 15
+  speed: 0.025
+  base_attack: 2
+  base_defense: 0
+  attack_cooldown: 100
+weapon: Dagger
+sprites:
+  static: static.png
+  corpse: corpse.png
+scale: 0.85
+footprint_width: 0.2
+footprint_height: 0.2

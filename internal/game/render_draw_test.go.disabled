@@ -1,0 +1,111 @@
+package game
+
+import (
+	"image/color"
+	"testing"
+
+	"github.com/hajimehoshi/ebiten/v2"
+)
+
+func TestMainCharacterDraw(t *testing.T) {
+	if isTestingEnvironment {
+		t.Skip("Skipping Ebiten UI tests in headless environment")
+	}
+	mc := NewMainCharacter(0, 0, nil)
+	screen := ebiten.NewImage(100, 100)
+
+	sprite := ebiten.NewImage(32, 32)
+	mc.SpriteSheet = sprite
+	mc.AttackSprite = sprite
+	mc.CorpseSprite = sprite
+
+	// Test drawing in various states
+	states := []MainCharacterState{StateIdle, StateWalking, StateAttacking, StateDead, StateDrinking}
+	for _, s := range states {
+		mc.State = s
+		mc.Facing = DirSE // Trigger flip
+		mc.Tick = 10
+		mc.Draw(screen, 0, 0)
+
+		mc.Facing = DirNW // No flip
+		mc.Draw(screen, 0, 0)
+	}
+}
+
+func TestNPCDraw(t *testing.T) {
+	if isTestingEnvironment {
+		t.Skip("Skipping Ebiten UI tests in headless environment")
+	}
+	n := NewNPC(0, 0, nil, 1)
+	screen := ebiten.NewImage(100, 100)
+	sprite := ebiten.NewImage(32, 32)
+
+	// Manually set sprites since we are in headless test
+	n.Archetype = &Archetype{
+		StaticImage: sprite,
+		CorpseImage: sprite,
+		AttackImage: sprite,
+	}
+
+	states := []NPCState{NPCIdle, NPCWalking, NPCAttacking, NPCDead}
+	for _, s := range states {
+		n.State = s
+		n.Facing = DirSE
+		n.Draw(screen, 0, 0)
+
+		n.Facing = DirNW
+		n.Draw(screen, 0, 0)
+	}
+}
+
+func TestObstacleDraw(t *testing.T) {
+	if isTestingEnvironment {
+		t.Skip("Skipping Ebiten UI tests in headless environment")
+	}
+	screen := ebiten.NewImage(100, 100)
+	sprite := ebiten.NewImage(32, 32)
+
+	config := &ObstacleArchetype{
+		ID:    "tree",
+		Image: sprite,
+	}
+	o := NewObstacle(0, 0, config)
+	o.Draw(screen, 0, 0)
+
+	o.Alive = false
+	o.Draw(screen, 0, 0)
+
+	// Test without image
+	o.Archetype.Image = nil
+	o.Draw(screen, 0, 0)
+}
+
+func TestProjectileDraw(t *testing.T) {
+	if isTestingEnvironment {
+		t.Skip("Skipping Ebiten UI tests in headless environment")
+	}
+	screen := ebiten.NewImage(100, 100)
+	p := NewProjectile(0, 0, 1, 0, 1.0, 10, true)
+	p.Draw(screen, 0, 0)
+}
+
+func TestFloatingTextDraw(t *testing.T) {
+	if isTestingEnvironment {
+		t.Skip("Skipping Ebiten UI tests in headless environment")
+	}
+	screen := ebiten.NewImage(100, 100)
+	ft := &FloatingText{
+		Text:  "Hello",
+		X:     0,
+		Y:     0,
+		Life:  30,
+		Color: color.RGBA{R: 255, G: 0, B: 0, A: 255},
+	}
+
+	// Test full opacity
+	ft.Draw(screen, 0, 0)
+
+	// Test fade out branch
+	ft.Life = 10
+	ft.Draw(screen, 0, 0)
+}
