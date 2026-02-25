@@ -316,6 +316,20 @@ func (g *Game) loadMapLevel() {
 		}
 	}
 
+	// Spawn PreSpawns (Corpses, specific encounter targets, etc.)
+	for _, ps := range g.currentMapType.PreSpawns {
+		if config, ok := g.archetypeRegistry.Archetypes[ps.Archetype]; ok {
+			npc := NewNPC(ps.X, ps.Y, config, g.mapLevel)
+			if ps.State == "dead" {
+				npc.Health = 0
+				npc.State = NPCDead
+			}
+			g.npcs = append(g.npcs, npc)
+		} else {
+			log.Printf("WARNING: PreSpawn archetype not found: %s", ps.Archetype)
+		}
+	}
+
 	log.Printf("Starting Map Level %d: %s", g.mapLevel, g.currentMapType.Name)
 }
 
@@ -560,15 +574,12 @@ func (g *Game) Update() error {
 		g.isGameOver = true
 	}
 
-	// Update all NPCs and filter dead ones
-	activeNPCs := make([]*NPC, 0, len(g.npcs))
+	// Update all NPCs (keep corpses indefinitely per user request)
 	for _, n := range g.npcs {
 		if n.IsAlive() {
 			n.Update(g.mainCharacter, g.obstacles, g.npcs, &g.projectiles, &g.floatingTexts, g.currentMapType.MapWidth, g.currentMapType.MapHeight, g.audio)
-			activeNPCs = append(activeNPCs, n)
 		}
 	}
-	g.npcs = activeNPCs
 
 	// Update floating texts
 	activeTexts := make([]*FloatingText, 0)
@@ -733,9 +744,8 @@ func (g *Game) updateNPCSpawning() {
 					activeNPCs = append(activeNPCs, n)
 				}
 			} else {
-				if dist < 25 {
-					activeNPCs = append(activeNPCs, n)
-				}
+				// Per user request, NEVER remove corpses
+				activeNPCs = append(activeNPCs, n)
 			}
 		}
 		g.npcs = activeNPCs

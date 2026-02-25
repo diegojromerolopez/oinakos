@@ -24,8 +24,10 @@ func (n *NPC) Draw(screen engine.Image, textRenderer engine.TextRenderer, vector
 	if n.State == NPCDead {
 		if img, ok := n.Archetype.CorpseImage.(engine.Image); ok {
 			drawSprite = img
+		} else {
+			drawSprite = nil // Complete removal (invisibility) if no corpse
 		}
-	} else if n.State == NPCAttacking && n.Archetype.AttackImage != nil {
+	} else if n.State == NPCAttacking {
 		if img, ok := n.Archetype.AttackImage.(engine.Image); ok {
 			drawSprite = img
 		}

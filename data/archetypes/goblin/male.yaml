@@ -11,9 +11,6 @@ stats:
   attack_range: 8.0
   projectile_speed: 4.5
 weapon: Bow
-sprites:
-  static: static.png
-  corpse: corpse.png
 scale: 0.8
 footprint_width: 0.2
 footprint_height: 0.2

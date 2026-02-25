@@ -9,9 +9,6 @@ stats:
   base_defense: 1
   attack_cooldown: 30
 weapon: Dagger
-sprites:
-  static: static.png
-  corpse: corpse.png
 scale: 0.7
 footprint_width: 0.2
 footprint_height: 0.2

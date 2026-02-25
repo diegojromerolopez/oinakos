@@ -2,6 +2,7 @@ package game
 
 import (
 	"math"
+	"oinakos/internal/engine"
 	"testing"
 )
 
@@ -285,5 +286,68 @@ func TestNPC_RangedAttack(t *testing.T) {
 	}
 	if n.State != NPCWalking {
 		t.Error("Kiting NPC should be walking")
+	}
+}
+
+type trackingImage struct {
+	engine.Image
+	drawnImages []engine.Image
+}
+
+func (t *trackingImage) DrawImage(img engine.Image, options *engine.DrawImageOptions) {
+	t.drawnImages = append(t.drawnImages, img)
+}
+
+func TestNPCDraw_AttackAndDeadBehavior(t *testing.T) {
+	staticImg := engine.NewMockImage(10, 10)
+	attackImg := engine.NewMockImage(10, 10)
+	corpseImg := engine.NewMockImage(10, 10)
+
+	n := NewNPC(0, 0, &Archetype{
+		StaticImage: staticImg,
+		AttackImage: attackImg,
+		CorpseImage: corpseImg,
+	}, 1)
+
+	// 1. Attack WITH image
+	n.State = NPCAttacking
+	track1 := &trackingImage{}
+	n.Draw(track1, nil, nil, 0, 0)
+	if len(track1.drawnImages) != 1 || track1.drawnImages[0] != attackImg {
+		t.Error("NPCDraw: failed to use AttackImage during attack")
+	}
+
+	// 2. Attack WITHOUT image (should fallback to static)
+	n2 := NewNPC(0, 0, &Archetype{
+		StaticImage: staticImg,
+	}, 1)
+	n2.State = NPCAttacking
+	track2 := &trackingImage{}
+	n2.Draw(track2, nil, nil, 0, 0)
+	if len(track2.drawnImages) != 1 || track2.drawnImages[0] != staticImg {
+		t.Error("NPCDraw: failed to fallback to StaticImage when AttackImage is missing")
+	}
+
+	// 3. Dead WITH image
+	n3 := NewNPC(0, 0, &Archetype{
+		StaticImage: staticImg,
+		CorpseImage: corpseImg,
+	}, 1)
+	n3.State = NPCDead
+	track3 := &trackingImage{}
+	n3.Draw(track3, nil, nil, 0, 0)
+	if len(track3.drawnImages) != 1 || track3.drawnImages[0] != corpseImg {
+		t.Error("NPCDraw: failed to use CorpseImage during death")
+	}
+
+	// 4. Dead WITHOUT image (should draw nothing)
+	n4 := NewNPC(0, 0, &Archetype{
+		StaticImage: staticImg,
+	}, 1)
+	n4.State = NPCDead
+	track4 := &trackingImage{}
+	n4.Draw(track4, nil, nil, 0, 0)
+	if len(track4.drawnImages) != 0 {
+		t.Error("NPCDraw: should not draw anything when CorpseImage is missing")
 	}
 }

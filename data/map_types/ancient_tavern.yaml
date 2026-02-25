@@ -3,3 +3,20 @@ name: The Ancient Tavern
 type: reach_building # ObjReachBuilding
 difficulty: 1
 description: "Find shelter at the marked building"
+pre_spawns:
+  - archetype: peasant_male
+    x: -8.0
+    y: 5.0
+    state: dead
+  - archetype: demon_female
+    x: 12.0
+    y: 2.0
+    state: dead
+  - archetype: orc_female
+    x: -2.0
+    y: -10.0
+    state: dead
+  - archetype: lame_devil_male
+    x: 6.0
+    y: 9.0
+    state: dead

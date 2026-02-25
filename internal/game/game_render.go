@@ -51,10 +51,19 @@ func (gr *GameRenderer) LoadAssets(assets fs.FS) {
 	mc := gr.game.mainCharacter
 	if mc != nil && mc.Config != nil {
 		imgDir := "assets/images/characters/main"
-		mc.Config.StaticImage = gr.graphics.LoadSprite(assets, path.Join(imgDir, mc.Config.Sprites.Static), true)
-		mc.Config.CorpseImage = gr.graphics.LoadSprite(assets, path.Join(imgDir, mc.Config.Sprites.Corpse), true)
-		if mc.Config.Sprites.Attack != "" {
-			mc.Config.AttackImage = gr.graphics.LoadSprite(assets, path.Join(imgDir, mc.Config.Sprites.Attack), true)
+		staticPath := path.Join(imgDir, "static.png")
+		if _, err := fs.Stat(assets, staticPath); err == nil {
+			mc.Config.StaticImage = gr.graphics.LoadSprite(assets, staticPath, true)
+		}
+
+		corpsePath := path.Join(imgDir, "corpse.png")
+		if _, err := fs.Stat(assets, corpsePath); err == nil {
+			mc.Config.CorpseImage = gr.graphics.LoadSprite(assets, corpsePath, true)
+		}
+
+		attackPath := path.Join(imgDir, "attack.png")
+		if _, err := fs.Stat(assets, attackPath); err == nil {
+			mc.Config.AttackImage = gr.graphics.LoadSprite(assets, attackPath, true)
 		}
 	}
 }

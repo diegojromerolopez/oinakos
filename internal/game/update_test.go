@@ -51,7 +51,7 @@ height_px: 1000
 		t.Errorf("Update failed: %v", err)
 	}
 
-	// 5. Test Entity Cleanup
+	// 5. Test Entity Cleanup (Corpses should be retained, others cleaned up)
 	g.npcs = []*NPC{{State: NPCDead}}
 	g.projectiles = []*Projectile{{Alive: false}}
 	g.floatingTexts = []*FloatingText{{Life: 0}}
@@ -60,8 +60,8 @@ height_px: 1000
 		t.Errorf("Update failed during cleanup: %v", err)
 	}
 
-	if len(g.npcs) != 0 || len(g.projectiles) != 0 || len(g.floatingTexts) != 0 {
-		t.Errorf("Cleanup failed: npcs=%d, projectiles=%d, texts=%d", len(g.npcs), len(g.projectiles), len(g.floatingTexts))
+	if len(g.npcs) != 1 || len(g.projectiles) != 0 || len(g.floatingTexts) != 0 {
+		t.Errorf("Cleanup failed: npcs=%d (expected 1), projectiles=%d (expected 0), texts=%d (expected 0)", len(g.npcs), len(g.projectiles), len(g.floatingTexts))
 	}
 }
 
@@ -251,5 +251,56 @@ spawn_frequency: 0
 	}
 	if !g.isMapWon {
 		t.Error("Map should be won after VIP death")
+	}
+}
+
+func TestCombatCorpseRetention(t *testing.T) {
+	mockFS := fstest.MapFS{
+		"data/map_types/test.yaml": {
+			Data: []byte(`id: "test"
+name: "Test"
+type: "kill_count"
+difficulty: 1
+`),
+		},
+	}
+	g := NewGame(mockFS, "test", "", NewMockInputManager(), NewMockAudioManager())
+	mc := g.mainCharacter
+
+	npc := NewNPC(0, 0, &Archetype{
+		ID: "test_npc",
+		Stats: struct {
+			HealthMin       int     `yaml:"health_min"`
+			HealthMax       int     `yaml:"health_max"`
+			Speed           float64 `yaml:"speed"`
+			BaseAttack      int     `yaml:"base_attack"`
+			BaseDefense     int     `yaml:"base_defense"`
+			AttackCooldown  int     `yaml:"attack_cooldown"`
+			AttackRange     float64 `yaml:"attack_range"`
+			ProjectileSpeed float64 `yaml:"projectile_speed"`
+		}{HealthMin: 5, HealthMax: 5, BaseDefense: 0},
+	}, 1)
+
+	npc.Health = 5
+	g.npcs = []*NPC{npc}
+
+	// Deal fatal damage
+	npc.TakeDamage(100, mc, nil, NewMockAudioManager())
+
+	if npc.State != NPCDead {
+		t.Fatalf("NPC should be dead")
+	}
+
+	g.Update() // Run one frame of the game loop
+
+	found := false
+	for _, n := range g.npcs {
+		if n == npc {
+			found = true
+		}
+	}
+
+	if !found {
+		t.Fatalf("NPC Corpse was deleted from g.npcs during Update() loop!")
 	}
 }

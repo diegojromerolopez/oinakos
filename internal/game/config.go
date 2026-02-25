@@ -70,6 +70,13 @@ func (t *ObjectiveType) UnmarshalYAML(value *yaml.Node) error {
 	return fmt.Errorf("unknown objective type: %v", value.Value)
 }
 
+type PreSpawn struct {
+	Archetype string  `yaml:"archetype"`
+	X         float64 `yaml:"x"`
+	Y         float64 `yaml:"y"`
+	State     string  `yaml:"state"` // e.g. "dead"
+}
+
 type MapType struct {
 	ID              string         `yaml:"id"`
 	Name            string         `yaml:"name"`
@@ -85,6 +92,7 @@ type MapType struct {
 	SpawnWeights    map[string]int `yaml:"spawn_weights"`
 	WidthPixels     int            `yaml:"width_px"`
 	HeightPixels    int            `yaml:"height_px"`
+	PreSpawns       []PreSpawn     `yaml:"pre_spawns"`
 	MapWidth        float64        `yaml:"-"` // Cartesian width
 	MapHeight       float64        `yaml:"-"` // Cartesian height
 
@@ -174,11 +182,7 @@ type EntityConfig struct {
 		ProjectileSpeed float64 `yaml:"projectile_speed"`
 	} `yaml:"stats"`
 	WeaponName string `yaml:"weapon"`
-	Sprites    struct {
-		Static string `yaml:"static"`
-		Corpse string `yaml:"corpse"`
-		Attack string `yaml:"attack"`
-	} `yaml:"sprites"`
+
 	FootprintWidth  float64 `yaml:"footprint_width"`
 	FootprintHeight float64 `yaml:"footprint_height"`
 	Footprint       []struct {
@@ -213,14 +217,19 @@ func (r *ArchetypeRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics) {
 		if config.AssetDir == "" {
 			continue
 		}
-		if config.Sprites.Static != "" {
-			config.StaticImage = graphics.LoadSprite(assets, path.Join(config.AssetDir, config.Sprites.Static), true)
+		staticPath := path.Join(config.AssetDir, "static.png")
+		if _, err := fs.Stat(assets, staticPath); err == nil {
+			config.StaticImage = graphics.LoadSprite(assets, staticPath, true)
 		}
-		if config.Sprites.Corpse != "" {
-			config.CorpseImage = graphics.LoadSprite(assets, path.Join(config.AssetDir, config.Sprites.Corpse), true)
+
+		corpsePath := path.Join(config.AssetDir, "corpse.png")
+		if _, err := fs.Stat(assets, corpsePath); err == nil {
+			config.CorpseImage = graphics.LoadSprite(assets, corpsePath, true)
 		}
-		if config.Sprites.Attack != "" {
-			config.AttackImage = graphics.LoadSprite(assets, path.Join(config.AssetDir, config.Sprites.Attack), true)
+
+		attackPath := path.Join(config.AssetDir, "attack.png")
+		if _, err := fs.Stat(assets, attackPath); err == nil {
+			config.AttackImage = graphics.LoadSprite(assets, attackPath, true)
 		}
 	}
 }

@@ -59,6 +59,7 @@ type NPC struct {
 	WanderDirY float64
 	// Combat & Effects
 	BloodTimer                 int
+	DeadTimer                  int
 	PatrolStartX, PatrolStartY float64
 	PatrolEndX, PatrolEndY     float64
 	PatrolHeading              bool // true = toward End, false = toward Start
@@ -194,6 +195,7 @@ func (n *NPC) GetFootprint() engine.Polygon {
 
 func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPCs []*NPC, projectiles *[]*Projectile, fts *[]*FloatingText, mapW, mapH float64, audio AudioManager) {
 	if n.State == NPCDead {
+		n.DeadTimer++
 		return
 	}
 
@@ -554,6 +556,7 @@ func (n *NPC) TakeDamage(amount int, attackerPlayer *MainCharacter, attackerNPC 
 	}
 
 	if n.Health <= 0 {
+		log.Printf("NPC %s has been killed!", n.Name)
 		n.State = NPCDead
 		if attackerPlayer != nil && n.Archetype != nil {
 			attackerPlayer.Kills++

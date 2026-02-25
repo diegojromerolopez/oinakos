@@ -135,13 +135,8 @@ func Transparentize(img image.Image) image.Image {
 				return true
 			}
 		}
-		// Also catch literal white/near-white
-		r, g, b, _ := c.RGBA()
-		whiteThreshold := uint32(230 << 8) // Slightly lower to catch off-whites
-		if r > whiteThreshold && g > whiteThreshold && b > whiteThreshold {
-			return true
-		}
 		// Catch bright lime green (AI generated backgrounds)
+		r, g, b, _ := c.RGBA()
 		if g > uint32(200<<8) && r < uint32(150<<8) && b < uint32(150<<8) {
 			return true
 		}
