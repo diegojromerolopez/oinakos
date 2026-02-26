@@ -2,6 +2,8 @@ name: Release Oinakos
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
   workflow_dispatch:
@@ -78,49 +80,3 @@ jobs:
         with:
           name: oinakos-wasm
           path: web-dist/
-
-  release:
-    name: Create Release
-    needs: [build-desktop, build-wasm]
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
-    steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-
-      - name: Prepare Release Assets
-        run: |
-          mkdir assets
-          cp oinakos-linux/oinakos-linux-amd64 assets/
-          cp oinakos-macos/oinakos-macos-amd64 assets/
-          cp oinakos-windows/oinakos-windows-amd64.exe assets/
-          zip -r assets/oinakos-web.zip oinakos-wasm/*
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            assets/oinakos-linux-amd64
-            assets/oinakos-macos-amd64
-            assets/oinakos-windows-amd64.exe
-            assets/oinakos-web.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  deploy-pages:
-    name: Deploy to GitHub Pages
-    needs: build-wasm
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
-    steps:
-      - name: Download WASM artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: oinakos-wasm
-          path: web-dist
-
-      - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: web-dist
-          branch: gh-pages
