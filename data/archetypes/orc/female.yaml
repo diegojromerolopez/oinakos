@@ -18,6 +18,5 @@ stats:
   base_defense: 3
   attack_cooldown: 50
 weapon: Cleaver
-scale: 0.95
 footprint_width: 0.3
 footprint_height: 0.3

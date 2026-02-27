@@ -1,0 +1,18 @@
+id: giant_male
+name: Giant
+names:
+  - Gromm
+  - Thrum
+  - Bolg
+  - Hodor
+behavior: hunter
+stats:
+  health_min: 250
+  health_max: 350
+  speed: 0.025
+  base_attack: 25
+  base_defense: 10
+  attack_cooldown: 120
+weapon: Greatclub
+footprint_width: 0.6
+footprint_height: 0.6

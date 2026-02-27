@@ -18,6 +18,5 @@ stats:
   base_defense: 1
   attack_cooldown: 80
 weapon: Dagger
-scale: 0.9
 footprint_width: 0.25
 footprint_height: 0.25

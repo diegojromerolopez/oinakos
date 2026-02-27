@@ -1,0 +1,15 @@
+id: goblin_female
+name: Goblin Huntress
+behavior: hunter
+stats:
+  health_min: 12
+  health_max: 20
+  speed: 0.05
+  base_attack: 3
+  base_defense: 1
+  attack_cooldown: 60
+  attack_range: 7.0
+  projectile_speed: 5.0
+weapon: Bow
+footprint_width: 0.18
+footprint_height: 0.18

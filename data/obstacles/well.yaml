@@ -5,6 +5,5 @@ description: A magical well that restores health when drank from. Takes 5 minute
 health: 0
 cooldown_time: 5.0
 image: "assets/images/environment/well.png"
-scale: 0.8
 footprint_width: 0.4
 footprint_height: 0.4

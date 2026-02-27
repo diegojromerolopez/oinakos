@@ -11,6 +11,5 @@ stats:
   attack_range: 8.0
   projectile_speed: 4.5
 weapon: Bow
-scale: 0.8
 footprint_width: 0.2
 footprint_height: 0.2

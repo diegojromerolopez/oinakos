@@ -24,6 +24,7 @@ An infinite, isometric action combat game built with Go and Ebiten.
 -   **Repository Pattern**: Use registries (e.g., `ArchetypeRegistry`, `MapTypeRegistry`) to manage configuration data, keeping data schemas decoupled from game simulation logic.
 -   **Data-Driven Design (YAML)**: Avoid hardcoding entity or map parameters. Stats, sprite paths, and behaviors are loaded from YAML configurations.
 -   **Asset Generation Rules**: Archetype and character images *must* have a solid lime green background (`#00FF00`). They must also feature realistic human proportions and follow a dark, medieval RPG aesthetic similar to Diablo, Baldur's Gate, or Hades. Corpse images must specifically be just the body without any ground base or platform.
+-   **Python Tools**: Any Python scripts located in the `tools/` directory must be executed within a virtual environment. You must use `uv` for dependency management with Python 3.14. Define all dependencies inside the `pyproject.toml` file. Never run Python tools globally.
 
 ## 📝 Pending Improvements
 -   [ ] **Animation System**: Implement sprite-sheet animation for walking and attacking (currently using static frames).

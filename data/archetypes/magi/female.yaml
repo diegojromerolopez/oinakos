@@ -1,0 +1,17 @@
+id: magi_female
+name: Magi
+names:
+  - Seraphina
+  - Morgana
+  - Lysandra
+behavior: wander
+stats:
+  health_min: 100
+  health_max: 100
+  speed: 0.02
+  base_attack: 0
+  base_defense: 5
+  attack_cooldown: 1000
+weapon: None
+footprint_width: 0.3
+footprint_height: 0.3

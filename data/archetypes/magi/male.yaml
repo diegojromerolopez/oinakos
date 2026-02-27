@@ -13,6 +13,5 @@ stats:
   base_defense: 5
   attack_cooldown: 1000
 weapon: None
-scale: 1.0
 footprint_width: 0.3
 footprint_height: 0.3

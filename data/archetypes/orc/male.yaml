@@ -20,6 +20,5 @@ stats:
   base_defense: 4
   attack_cooldown: 60
 weapon: Axe
-scale: 1.0
 footprint_width: 0.3
 footprint_height: 0.3

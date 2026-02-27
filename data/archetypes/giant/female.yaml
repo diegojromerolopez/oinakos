@@ -1,0 +1,17 @@
+id: giant_female
+name: Giantess
+names:
+  - Grilla
+  - Thraxa
+  - Helga
+behavior: hunter
+stats:
+  health_min: 240
+  health_max: 330
+  speed: 0.028
+  base_attack: 22
+  base_defense: 8
+  attack_cooldown: 110
+weapon: Greataxe
+footprint_width: 0.55
+footprint_height: 0.55
