@@ -275,56 +275,27 @@ func (gr *GameRenderer) isEntityObscured(ex, ey float64) bool {
 			continue
 		}
 
-		// 1. Precise Foundation Projection
-		fp := o.GetFootprint()
-		if len(fp.Points) < 4 {
-			continue
-		}
-
-		// Map foundation points to screen
-		minScaX, maxScaX := 1e9, -1e9
-		minScaY, maxScaY := 1e9, -1e9
-		maxDepth := -1e9
-
-		for _, p := range fp.Points {
-			sx, sy := engine.CartesianToIso(p.X, p.Y)
-			if sx < minScaX {
-				minScaX = sx
-			}
-			if sx > maxScaX {
-				maxScaX = sx
-			}
-			if sy > maxScaY {
-				maxScaY = sy
-			}
-			if sy < minScaY {
-				minScaY = sy
-			}
-
-			depth := p.X + p.Y
-			if depth > maxDepth {
-				maxDepth = depth
-			}
-		}
-
-		// 3. Screen Height Projection (The "Shadow")
-		_, sh := img.Size()
-		// Total vertical height of the building's sprite
-		topScaY := maxScaY - float64(sh)
-
-		// 4. Distance check based on user request:
-		// "character and npcs must be seen until the middle of the house"
-		// The middle of the house geometrically matches the object's X,Y coordinate base limit
+		// Distance check: entity must be "behind" the obstacle in Y-sort depth
 		if ex+ey > o.X+o.Y {
 			continue
 		}
 
-		// 5. Additional Horizontal check (character is within visual margins of the sprite)
-		if eIsoX >= minScaX && eIsoX <= maxScaX {
-			// Vertical projection bounding matching visual limits
-			if eIsoY >= topScaY && eIsoY <= maxScaY {
-				return true
-			}
+		sw, sh := img.Size()
+		scale := 1.0
+
+		// Find where this obstacle was actually drawn on screen
+		oIsoX, oIsoY := engine.CartesianToIso(o.X, o.Y)
+		pivotX := float64(sw) * scale / 2
+		pivotY := float64(sh) * scale * 0.85
+
+		left := oIsoX - pivotX
+		right := left + float64(sw)*scale
+		top := oIsoY - pivotY
+		bottom := top + float64(sh)*scale // The base anchor essentially
+
+		// Horizontal and vertical visual intersection check
+		if eIsoX >= left && eIsoX <= right && eIsoY >= top && eIsoY <= bottom {
+			return true
 		}
 	}
 	return false

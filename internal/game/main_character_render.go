@@ -113,8 +113,8 @@ func (mc *MainCharacter) DrawSilhouette(screen engine.Image, offsetX, offsetY fl
 	op := engine.NewDrawImageOptions()
 	op.Scale(scale*flip, scale)
 
-	// User request: Paint black when behind.
-	op.SetColorScale(0, 0, 0, 1)
+	// User request: Paint grey when behind to create a visible shadow silhouette.
+	op.SetColorScale(0.4, 0.4, 0.4, 1)
 
 	tx := isoX + offsetX
 	if flip < 0 {
