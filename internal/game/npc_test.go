@@ -2,6 +2,7 @@ package game
 
 import (
 	"math"
+	"math/rand"
 	"oinakos/internal/engine"
 	"testing"
 )
@@ -194,6 +195,7 @@ func TestNPCUpdate_Behaviors(t *testing.T) {
 }
 
 func TestNPC_MeleeAttack(t *testing.T) {
+	rand.Seed(1)                        // Ensure deterministic attack rolls so hit guarantees do not flip on the 5% margin within CI
 	mc := NewMainCharacter(0.5, 0, nil) // Very close
 	fts := []*FloatingText{}
 	projs := []*Projectile{}
@@ -221,14 +223,21 @@ func TestNPC_MeleeAttack(t *testing.T) {
 	n.Weapon = &Weapon{MinDamage: 10, MaxDamage: 10}
 	n.AttackTimer = 60 // Ready to attack
 
+	// Loop until a hit connects (due to built-in 5% miss chance RNG)
 	startHealth := mc.Health
-	n.Update(mc, nil, []*NPC{n}, &projs, &fts, 100, 100, nil)
+	for i := 0; i < 100; i++ {
+		n.AttackTimer = 60
+		n.Update(mc, nil, []*NPC{n}, &projs, &fts, 100, 100, nil)
+		if mc.Health < startHealth {
+			break
+		}
+	}
 
 	if n.State != NPCAttacking {
 		t.Error("NPC should transition to Attacking state")
 	}
 	if mc.Health >= startHealth {
-		t.Error("MC should have taken damage from guaranteed hit test")
+		t.Error("MC should have taken damage from guaranteed hit test after multiple attempts")
 	}
 
 	// Test NPC vs NPC attack
@@ -237,10 +246,16 @@ func TestNPC_MeleeAttack(t *testing.T) {
 	n.TargetNPC = targetNPC
 	n.AttackTimer = 60
 	startNpcHealth := targetNPC.Health
-	n.Update(mc, nil, []*NPC{n, targetNPC}, &projs, &fts, 100, 100, nil)
+	for i := 0; i < 100; i++ {
+		n.AttackTimer = 60
+		n.Update(mc, nil, []*NPC{n, targetNPC}, &projs, &fts, 100, 100, nil)
+		if targetNPC.Health < startNpcHealth {
+			break
+		}
+	}
 
 	if targetNPC.Health >= startNpcHealth {
-		t.Error("Target NPC should have taken damage")
+		t.Error("Target NPC should have taken damage after multiple attempts")
 	}
 }
 
