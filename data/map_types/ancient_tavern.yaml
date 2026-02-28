@@ -20,3 +20,36 @@ pre_spawns:
     x: 6.0
     y: 9.0
     state: dead
+floor_tile: "grass.png"
+obstacles:
+  - id: tavern_main
+    archetype: house1
+    x: 10.0
+    y: 10.0
+  - id: community_well
+    archetype: well
+    x: -5.0
+    y: -5.0
+  - id: storage
+    archetype: warehouse
+    x: -15.0
+    y: 0.0
+  - id: forge
+    archetype: smithery
+    x: 0.0
+    y: -25.0
+  - archetype: bush1
+    x: -10.0
+    y: -10.0
+  - archetype: bush2
+    x: 5.0
+    y: -15.0
+  - archetype: bush3
+    x: 20.0
+    y: 0.0
+  - archetype: bush4
+    x: -5.0
+    y: 5.0
+  - archetype: bush5
+    x: 15.0
+    y: 15.0

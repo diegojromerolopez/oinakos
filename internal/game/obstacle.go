@@ -62,13 +62,31 @@ func (o *Obstacle) GetFootprint() engine.Polygon {
 	}
 
 	// Fallback to width/height
-	hw, hh := 0.3, 0.3 // Default
+	hw, hh := 0.5, 0.5
 	if o.Archetype != nil {
 		if o.Archetype.FootprintWidth > 0 {
 			hw = o.Archetype.FootprintWidth / 2
 		}
 		if o.Archetype.FootprintHeight > 0 {
 			hh = o.Archetype.FootprintHeight / 2
+		}
+
+		// Building foundations are strictly computed from visual dimensions
+		if o.Archetype.Type == "static" || o.Archetype.Type == "well" {
+			// Ensure buildings are significant obstacles in Cartesian space
+			if hw < 2.0 {
+				hw = 2.0
+			}
+			if hh < 2.0 {
+				hh = 2.0
+			}
+
+			return engine.Polygon{Points: []engine.Point{
+				{X: -hw, Y: -hh},
+				{X: hw, Y: -hh},
+				{X: hw, Y: hh},
+				{X: -hw, Y: hh},
+			}}.Transformed(o.X, o.Y)
 		}
 	}
 

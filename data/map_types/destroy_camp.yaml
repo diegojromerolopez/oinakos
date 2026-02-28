@@ -1,11 +1,34 @@
-id: "destroy_camp"
-name: "Destroy the Orc Camp"
+id: destroy_camp
+name: Destroy the Encampment
 type: destroy_building # ObjDestroyBuilding
-description: "An Orc encampment has been established. Destroy their command post to stop the invasion!"
 difficulty: 2
-target_kills: {} # NA
-spawn_frequency: 3.0 # Quick respawns from the building
-spawn_amount: 3
-spawn_weights:
-  orc: 80
-  demon: 20
+description: "Destroy the enemy warehouse"
+floor_tile: "grass.png"
+obstacles:
+  - archetype: warehouse
+    x: 20.0
+    y: 20.0
+  - archetype: smithery
+    x: 18.0
+    y: 22.0
+  - archetype: house1
+    x: 22.0
+    y: 18.0
+  - archetype: well
+    x: 15.0
+    y: 15.0
+  - archetype: bush1
+    x: 30.0
+    y: 25.0
+  - archetype: bush2
+    x: 25.0
+    y: 30.0
+  - archetype: bush3
+    x: 10.0
+    y: 10.0
+  - archetype: bush4
+    x: 10.0
+    y: 20.0
+  - archetype: bush5
+    x: 20.0
+    y: 10.0

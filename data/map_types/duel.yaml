@@ -1,6 +1,37 @@
 id: duel
-name: Demon Duel
-type: kill_vip
-difficulty: 5
-description: "Defeat the Demon Lord in a one-on-one duel."
-spawn_frequency: 0
+name: The Honor Dual
+type: kill_vip # ObjKillVIP
+difficulty: 4
+description: "Defeat the champion in single combat"
+floor_tile: "grass.png"
+obstacles:
+  - archetype: rock1
+    x: 5.0
+    y: 5.0
+  - archetype: rock2
+    x: -5.0
+    y: 5.0
+  - archetype: rock3
+    x: 5.0
+    y: -5.0
+  - archetype: rock4
+    x: -5.0
+    y: -5.0
+  - archetype: temple
+    x: 0.0
+    y: 25.0
+  - archetype: bush1
+    x: 8.0
+    y: 0.0
+  - archetype: bush2
+    x: 0.0
+    y: 8.0
+  - archetype: bush3
+    x: -8.0
+    y: 0.0
+  - archetype: bush4
+    x: 0.0
+    y: -8.0
+  - archetype: bush5
+    x: 10.0
+    y: 10.0

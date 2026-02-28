@@ -18,14 +18,15 @@ import (
 
 // GameRenderer handles the Ebiten-dependent rendering of the game.
 type GameRenderer struct {
-	game         *Game
-	renderer     *engine.Renderer
-	graphics     engine.Graphics
-	grassSprite  engine.Image
-	portalSprite engine.Image
-	crownSprite  engine.Image
-	zoneSprite   engine.Image
-	emptyImage   engine.Image
+	game          *Game
+	renderer      *engine.Renderer
+	graphics      engine.Graphics
+	grassSprite   engine.Image
+	portalSprite  engine.Image
+	crownSprite   engine.Image
+	zoneSprite    engine.Image
+	emptyImage    engine.Image
+	lastFloorPath string
 }
 
 func NewGameRenderer(g *Game, assets fs.FS, graphics engine.Graphics) *GameRenderer {
@@ -33,7 +34,7 @@ func NewGameRenderer(g *Game, assets fs.FS, graphics engine.Graphics) *GameRende
 		game:         g,
 		renderer:     engine.NewRenderer(),
 		graphics:     graphics,
-		grassSprite:  graphics.LoadSprite(assets, "assets/images/environment/grass_tile.png", true),
+		grassSprite:  graphics.LoadSprite(assets, "assets/images/environment/grass.png", true),
 		portalSprite: graphics.LoadSprite(assets, "assets/images/scenario/portal.png", true),
 		crownSprite:  graphics.LoadSprite(assets, "assets/images/scenario/crown.png", true),
 		zoneSprite:   graphics.LoadSprite(assets, "assets/images/scenario/zone_marker.png", true),
@@ -76,6 +77,15 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 	// log.Printf("GameRenderer.Draw Frame") // No longer needed
 	g := gr.game
 	offsetX, offsetY := g.camera.GetOffsets(g.width, g.height)
+
+	if g.currentMapType.FloorTile != "" && g.currentMapType.FloorTile != gr.lastFloorPath {
+		floorPath := path.Join("assets/images/floors", g.currentMapType.FloorTile)
+		tile := gr.graphics.LoadSprite(g.assets, floorPath, true)
+		if tile != nil {
+			gr.grassSprite = tile
+			gr.lastFloorPath = g.currentMapType.FloorTile
+		}
+	}
 
 	if gr.grassSprite != nil {
 		gr.renderer.DrawInfiniteGrass(screen, offsetX, offsetY, gr.grassSprite)
@@ -151,10 +161,14 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 		return tasks[i].y < tasks[j].y
 	})
 
-	// Execute draw tasks
+	// Execute draw tasks (everything including buildings, projectiles, etc.)
 	for _, t := range tasks {
 		t.draw()
 	}
+
+	// EXECUTE SILHOUETTE PASS SECOND
+	// Character silhouettes ON TOP of buildings
+	gr.drawSilhouettes(screen, offsetX, offsetY)
 
 	// Draw floating texts (always on top of entities)
 	for _, ft := range g.floatingTexts {
@@ -228,6 +242,92 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 	} else {
 		gr.drawHUD(screen)
 	}
+}
+
+func (gr *GameRenderer) drawSilhouettes(screen engine.Image, offsetX, offsetY float64) {
+	g := gr.game
+	// NPC Silhouettes
+	for _, n := range g.npcs {
+		if n.State == NPCDead { // Skip if completely gone
+			continue
+		}
+		if gr.isEntityObscured(n.X, n.Y) {
+			n.DrawSilhouette(screen, offsetX, offsetY)
+		}
+	}
+	// Player Silhouette
+	if gr.isEntityObscured(g.mainCharacter.X, g.mainCharacter.Y) {
+		g.mainCharacter.DrawSilhouette(screen, offsetX, offsetY)
+	}
+}
+
+func (gr *GameRenderer) isEntityObscured(ex, ey float64) bool {
+	g := gr.game
+	eIsoX, eIsoY := engine.CartesianToIso(ex, ey)
+
+	for _, o := range g.obstacles {
+		if !o.Alive || o.Archetype == nil {
+			continue
+		}
+
+		img, ok := o.Archetype.Image.(engine.Image)
+		if !ok || img == nil {
+			continue
+		}
+
+		// 1. Precise Foundation Projection
+		fp := o.GetFootprint()
+		if len(fp.Points) < 4 {
+			continue
+		}
+
+		// Map foundation points to screen
+		minScaX, maxScaX := 1e9, -1e9
+		minScaY, maxScaY := 1e9, -1e9
+		maxDepth := -1e9
+
+		for _, p := range fp.Points {
+			sx, sy := engine.CartesianToIso(p.X, p.Y)
+			if sx < minScaX {
+				minScaX = sx
+			}
+			if sx > maxScaX {
+				maxScaX = sx
+			}
+			if sy > maxScaY {
+				maxScaY = sy
+			}
+			if sy < minScaY {
+				minScaY = sy
+			}
+
+			depth := p.X + p.Y
+			if depth > maxDepth {
+				maxDepth = depth
+			}
+		}
+
+		// 3. Screen Height Projection (The "Shadow")
+		_, sh := img.Size()
+		// Total vertical height of the building's sprite
+		topScaY := maxScaY - float64(sh)
+
+		// 4. Distance check based on user request:
+		// "character and npcs must be seen until the middle of the house"
+		// The middle of the house geometrically matches the object's X,Y coordinate base limit
+		if ex+ey > o.X+o.Y {
+			continue
+		}
+
+		// 5. Additional Horizontal check (character is within visual margins of the sprite)
+		if eIsoX >= minScaX && eIsoX <= maxScaX {
+			// Vertical projection bounding matching visual limits
+			if eIsoY >= topScaY && eIsoY <= maxScaY {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (gr *GameRenderer) drawPauseMenu(screen engine.Image) {

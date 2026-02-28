@@ -41,7 +41,7 @@ func (n *NPC) Draw(screen engine.Image, textRenderer engine.TextRenderer, vector
 
 	w, h := drawSprite.Size()
 	op := engine.NewDrawImageOptions()
-	scale := 0.25
+	scale := 1.0
 
 	flip := 1.0
 	if n.Facing == DirSE || n.Facing == DirNE {
@@ -86,8 +86,6 @@ func (n *NPC) Draw(screen engine.Image, textRenderer engine.TextRenderer, vector
 	}
 
 	op.Translate(tx, ty)
-	log.Printf("NPC %s: Drawing at tx=%f, ty=%f, state=%d", n.Name, tx, ty, n.State)
-
 	screen.DrawImage(drawSprite, op)
 
 	// Only draw UI for living NPCs
@@ -110,4 +108,62 @@ func (n *NPC) Draw(screen engine.Image, textRenderer engine.TextRenderer, vector
 			}
 		}
 	}
+}
+func (n *NPC) DrawSilhouette(screen engine.Image, offsetX, offsetY float64) {
+	if screen == nil || n.Archetype == nil {
+		return
+	}
+	isoX, isoY := engine.CartesianToIso(n.X, n.Y)
+	// log.Printf("Drawing NPC %s Silhouette at %.2f, %.2f", n.Name, n.X, n.Y)
+
+	var drawSprite engine.Image
+	if img, ok := n.Archetype.StaticImage.(engine.Image); ok {
+		drawSprite = img
+	}
+	if n.State == NPCDead {
+		if img, ok := n.Archetype.CorpseImage.(engine.Image); ok {
+			drawSprite = img
+		} else {
+			return
+		}
+	} else if n.State == NPCAttacking {
+		if img, ok := n.Archetype.AttackImage.(engine.Image); ok {
+			drawSprite = img
+		}
+	}
+
+	if drawSprite == nil {
+		return
+	}
+
+	w, h := drawSprite.Size()
+	op := engine.NewDrawImageOptions()
+	scale := 1.0
+	flip := 1.0
+	if n.Facing == DirSE || n.Facing == DirNE {
+		flip = -1.0
+	}
+
+	op.Scale(scale*flip, scale)
+	// User request: Paint black when behind.
+	op.SetColorScale(0, 0, 0, 1)
+
+	tx := isoX + offsetX
+	if flip < 0 {
+		tx += float64(w) * scale / 2
+	} else {
+		tx -= float64(w) * scale / 2
+	}
+
+	ty := isoY + offsetY - float64(h)*scale*0.85
+
+	if n.State == NPCDead {
+		ty = isoY + offsetY - float64(h)*scale*0.5
+	} else if n.State == NPCWalking {
+		bob := math.Sin(float64(n.Tick)*0.2) * 2.0
+		ty += bob
+	}
+
+	op.Translate(tx, ty)
+	screen.DrawImage(drawSprite, op)
 }

@@ -2,6 +2,7 @@ id: house3
 name: "Manor"
 description: "A sprawling estate."
 health: 5000
-image: "assets/images/environment/house3.png"
-footprint_width: 1.00
-footprint_height: 1.00
+image: "assets/images/obstacles/house3.png"
+footprint_width: 6.00
+footprint_height: 4.00
+type: static

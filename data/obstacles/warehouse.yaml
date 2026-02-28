@@ -1,7 +1,13 @@
 id: warehouse
 name: "Warehouse"
-description: "A large storage facility."
+description: "A large storage building."
 health: 5000
-image: "assets/images/environment/warehouse.png"
-footprint_width: 1.00
-footprint_height: 1.00
+image: "assets/images/obstacles/warehouse.png"
+footprint_width: 10.00
+footprint_height: 6.00
+footprint:
+  - {x: -8, y: -5}
+  - {x: 8, y: -5}
+  - {x: 8, y: 5}
+  - {x: -8, y: 5}
+type: static

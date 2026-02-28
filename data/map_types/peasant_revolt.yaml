@@ -1,6 +1,22 @@
 id: peasant_revolt
-name: Peasant Revolt
-type: kill_count # ObjKillCount
-difficulty: 4
-target_kill_count: 300
-description: "Quell the uprising by defeating 300 peasants"
+name: Village Uprising
+type: reach_building # ObjReachBuilding
+difficulty: 1
+description: "Reach the village center"
+floor_tile: "grass.png"
+obstacles:
+  - archetype: house1
+    x: -15.0
+    y: 20.0
+  - archetype: house2
+    x: 5.0
+    y: 18.0
+  - archetype: house3
+    x: -5.0
+    y: 22.0
+  - archetype: well
+    x: 15.0
+    y: 25.0
+  - archetype: farm
+    x: 10.0
+    y: 30.0

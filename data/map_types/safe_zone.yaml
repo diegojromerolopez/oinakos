@@ -1,6 +1,20 @@
 id: safe_zone
-name: The Safe Zone
-type: reach_zone # ObjReachZone
-difficulty: 2
-target_radius: 100
-description: "Reach the glowing Safe Zone"
+name: The Sanctuary
+type: pacifist # ObjPacifist
+difficulty: 1
+target_time: 60.0
+description: "Walk in peace, do not spill blood"
+floor_tile: "grass.png"
+obstacles:
+  - archetype: temple
+    x: -10.0
+    y: -10.0
+  - archetype: well
+    x: 2.0
+    y: 12.0
+  - archetype: smithery
+    x: -10.0
+    y: 5.0
+  - archetype: house1
+    x: 10.0
+    y: 5.0

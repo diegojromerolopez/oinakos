@@ -2,6 +2,7 @@ id: rock3
 name: "Rock 3"
 description: "A large, solid rock. It cannot be destroyed."
 health: 0
-image: "assets/images/environment/rock3.png"
+image: "assets/images/obstacles/rock3.png"
 footprint_width: 0.40
 footprint_height: 0.40
+type: static

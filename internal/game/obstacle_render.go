@@ -13,7 +13,7 @@ func (o *Obstacle) Draw(screen engine.Image, vectorRenderer engine.VectorRendere
 	isoX, isoY := engine.CartesianToIso(o.X, o.Y)
 
 	op := engine.NewDrawImageOptions()
-	scale := o.Archetype.Scale
+	scale := 1.0
 
 	img, ok := o.Archetype.Image.(engine.Image)
 	if !ok || img == nil {

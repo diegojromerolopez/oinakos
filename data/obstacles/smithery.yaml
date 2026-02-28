@@ -2,6 +2,12 @@ id: smithery
 name: "Smithery"
 description: "A place where weapons are forged."
 health: 5000
-image: "assets/images/environment/smithery.png"
-footprint_width: 1.00
-footprint_height: 1.00
+image: "assets/images/obstacles/smithery.png"
+footprint_width: 8.00
+footprint_height: 4.00
+footprint:
+  - {x: -7, y: -4}
+  - {x: 7, y: -4}
+  - {x: 7, y: 4}
+  - {x: -7, y: 4}
+type: static

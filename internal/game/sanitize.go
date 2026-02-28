@@ -89,16 +89,8 @@ func sanitizeObstacleArchetype(c *ObstacleArchetype, source string) {
 		c.Name = c.ID
 	}
 	if c.Health < 0 {
-		log.Printf("Warning [%s]: obstacle %q has health=%d (negative), clamping to 0 (indestructible)", source, c.ID, c.Health)
+		log.Printf("Warning [%s]: obstacle %q has negative health, clamping to 0", source, c.ID)
 		c.Health = 0
-	}
-	if c.Scale <= 0 {
-		log.Printf("Warning [%s]: obstacle %q has scale=%v, clamping to 1.0", source, c.ID, c.Scale)
-		c.Scale = 1.0
-	}
-	if c.Scale > 10 {
-		log.Printf("Warning [%s]: obstacle %q has scale=%v (suspiciously large), clamping to 10", source, c.ID, c.Scale)
-		c.Scale = 10
 	}
 	if c.FootprintWidth <= 0 && len(c.Footprint) == 0 {
 		log.Printf("Warning [%s]: obstacle %q has no footprint_width and no custom footprint, clamping to 0.3", source, c.ID)

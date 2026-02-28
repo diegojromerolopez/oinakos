@@ -74,110 +74,37 @@ func (p Polygon) Project(axis Point) (float64, float64) {
 
 const ()
 
-// Transparentize returns a new image where the background is made transparent.
-// It uses a flood-fill approach from the edges to identify background pixels,
-// sampling edge colors to handle checkered or solid backgrounds.
+// Transparentize returns a new image where the solid lime green (#00FF00) background is made transparent.
+// This matches the project's standard for asset generation.
 func Transparentize(img image.Image) image.Image {
 	if img == nil {
 		return nil
 	}
 	bounds := img.Bounds()
-	width, height := bounds.Dx(), bounds.Dy()
 	newImg := image.NewRGBA(bounds)
 
-	// Copy original image first
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
-			newImg.Set(x, y, img.At(x, y))
-		}
-	}
+			c := img.At(x, y)
+			r, g, b, a := c.RGBA()
 
-	// backgroundMask marks pixels to be made transparent
-	backgroundMask := make([][]bool, height)
-	for i := range backgroundMask {
-		backgroundMask[i] = make([]bool, width)
-	}
-
-	// Helper to calculate color distance
-	colorDist := func(c1, c2 color.Color) float64 {
-		r1, g1, b1, _ := c1.RGBA()
-		r2, g2, b2, _ := c2.RGBA()
-		dr := float64(int32(r1) - int32(r2))
-		dg := float64(int32(g1) - int32(g2))
-		db := float64(int32(b1) - int32(b2))
-		return math.Sqrt(dr*dr + dg*dg + db*db)
-	}
-
-	// Sample edge colors to identify likely background colors
-	bgSamples := []color.Color{}
-	// Take samples from the corners and multiple points along edges
-	for i := 0; i <= 4; i++ {
-		f := float64(i) / 4.0
-		samplePoints := []image.Point{
-			{bounds.Min.X + int(f*float64(width-1)), bounds.Min.Y},
-			{bounds.Min.X + int(f*float64(width-1)), bounds.Max.Y - 1},
-			{bounds.Min.X, bounds.Min.Y + int(f*float64(height-1))},
-			{bounds.Max.X - 1, bounds.Min.Y + int(f*float64(height-1))},
-		}
-		for _, p := range samplePoints {
-			bgSamples = append(bgSamples, img.At(p.X, p.Y))
-		}
-	}
-
-	// 10% tolerance for background matching
-	tolerance := 0.10 * 65535.0 * math.Sqrt(3)
-
-	isBackgroundAt := func(x, y int) bool {
-		c := img.At(bounds.Min.X+x, bounds.Min.Y+y)
-		// Check if it matches any of our edge samples
-		for _, bgc := range bgSamples {
-			if colorDist(c, bgc) < tolerance {
-				return true
+			// PROJECT STANDARD: Solid lime green background (#00FF00) removal.
+			// Ebiten/Go use 16-bit RGBA (0-65535).
+			// We use a robust ratio-based approach to catch AI-generated lime.
+			isLime := false
+			if a > 0 {
+				r8, g8, b8 := uint8(r>>8), uint8(g>>8), uint8(b>>8)
+				// Pure lime is (0, 255, 0). AI lime is very bright green, low red/blue.
+				// Leaves are usually darker and have higher red/blue ratios.
+				if g8 > 150 && g8 > r8*2 && g8 > b8*2 {
+					isLime = true
+				}
 			}
-		}
-		// Catch bright lime green (AI generated backgrounds)
-		r, g, b, _ := c.RGBA()
-		if g > uint32(200<<8) && r < uint32(150<<8) && b < uint32(150<<8) {
-			return true
-		}
-		return false
-	}
 
-	// BFS for flood fill
-	type pt struct{ x, y int }
-	queue := []pt{}
-
-	// Seed from all four edges
-	for x := 0; x < width; x++ {
-		queue = append(queue, pt{x, 0}, pt{x, height - 1})
-	}
-	for y := 1; y < height-1; y++ {
-		queue = append(queue, pt{0, y}, pt{width - 1, y})
-	}
-
-	for len(queue) > 0 {
-		curr := queue[0]
-		queue = queue[1:]
-
-		if curr.x < 0 || curr.x >= width || curr.y < 0 || curr.y >= height {
-			continue
-		}
-		if backgroundMask[curr.y][curr.x] {
-			continue
-		}
-
-		if isBackgroundAt(curr.x, curr.y) {
-			backgroundMask[curr.y][curr.x] = true
-			// Add neighbors
-			queue = append(queue, pt{curr.x + 1, curr.y}, pt{curr.x - 1, curr.y}, pt{curr.x, curr.y + 1}, pt{curr.x, curr.y - 1})
-		}
-	}
-
-	// Apply mask
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
-			if backgroundMask[y][x] {
-				newImg.Set(bounds.Min.X+x, bounds.Min.Y+y, color.RGBA{0, 0, 0, 0})
+			if isLime {
+				newImg.Set(x, y, color.Transparent)
+			} else {
+				newImg.Set(x, y, c)
 			}
 		}
 	}

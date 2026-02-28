@@ -33,7 +33,7 @@ func (mc *MainCharacter) Draw(screen engine.Image, offsetX, offsetY float64) {
 
 	w, h := drawSprite.Size()
 
-	scale := 0.25
+	scale := 1.0
 
 	flip := 1.0
 	if mc.Facing == DirSE || mc.Facing == DirNE {
@@ -73,6 +73,63 @@ func (mc *MainCharacter) Draw(screen engine.Image, offsetX, offsetY float64) {
 		} else {
 			tx -= lungeAmt // Lunge left
 		}
+	}
+
+	op.Translate(tx, ty)
+	screen.DrawImage(drawSprite, op)
+}
+func (mc *MainCharacter) DrawSilhouette(screen engine.Image, offsetX, offsetY float64) {
+	if screen == nil || mc.Config == nil {
+		return
+	}
+	// log.Printf("Drawing Main Character Silhouette at %.2f, %.2f", mc.X, mc.Y)
+	isoX, isoY := engine.CartesianToIso(mc.X, mc.Y)
+
+	var drawSprite engine.Image
+	if img, ok := mc.Config.StaticImage.(engine.Image); ok {
+		drawSprite = img
+	}
+	if mc.State == StateAttacking {
+		if img, ok := mc.Config.AttackImage.(engine.Image); ok {
+			drawSprite = img
+		}
+	} else if mc.State == StateDead {
+		if img, ok := mc.Config.CorpseImage.(engine.Image); ok {
+			drawSprite = img
+		}
+	}
+
+	if drawSprite == nil {
+		return
+	}
+
+	w, h := drawSprite.Size()
+	scale := 1.0
+	flip := 1.0
+	if mc.Facing == DirSE || mc.Facing == DirNE {
+		flip = -1.0
+	}
+
+	op := engine.NewDrawImageOptions()
+	op.Scale(scale*flip, scale)
+
+	// User request: Paint black when behind.
+	op.SetColorScale(0, 0, 0, 1)
+
+	tx := isoX + offsetX
+	if flip < 0 {
+		tx += float64(w) * scale / 2
+	} else {
+		tx -= float64(w) * scale / 2
+	}
+
+	ty := isoY + offsetY - float64(h)*scale*0.85
+
+	if mc.State == StateDead {
+		ty = isoY + offsetY - float64(h)*scale*0.5
+	} else if mc.State == StateWalking {
+		bob := math.Sin(float64(mc.Tick)*0.3) * 3.0
+		ty += bob
 	}
 
 	op.Translate(tx, ty)

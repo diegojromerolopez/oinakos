@@ -1,7 +1,13 @@
 id: temple
 name: "Temple"
-description: "A holy site for worship."
-health: 5000
-image: "assets/images/environment/temple.png"
-footprint_width: 1.00
-footprint_height: 1.00
+description: "An ancient place of worship."
+health: 10000
+image: "assets/images/obstacles/temple.png"
+footprint_width: 10.00
+footprint_height: 6.00
+footprint:
+  - {x: -8, y: -5}
+  - {x: 8, y: -5}
+  - {x: 8, y: 5}
+  - {x: -8, y: 5}
+type: static

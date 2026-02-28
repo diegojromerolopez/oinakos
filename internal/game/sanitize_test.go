@@ -93,32 +93,19 @@ func TestSanitizeEntityConfig(t *testing.T) {
 
 func TestSanitizeObstacleArchetype(t *testing.T) {
 	tests := []struct {
-		name    string
-		input   ObstacleArchetype
-		wantID  string
-		wantHP  int
-		wantScl float64
+		name   string
+		input  ObstacleArchetype
+		wantID string
+		wantHP int
 	}{
 		{
 			name: "invalid values",
 			input: ObstacleArchetype{
 				ID:     "",
 				Health: -10,
-				Scale:  -1.0,
 			},
-			wantID:  "unknown",
-			wantHP:  0,
-			wantScl: 1.0,
-		},
-		{
-			name: "excessive scale",
-			input: ObstacleArchetype{
-				ID:    "rock",
-				Scale: 15.0,
-			},
-			wantID:  "rock",
-			wantHP:  0,
-			wantScl: 10.0,
+			wantID: "unknown",
+			wantHP: 0,
 		},
 	}
 
@@ -131,9 +118,6 @@ func TestSanitizeObstacleArchetype(t *testing.T) {
 			}
 			if config.Health != tt.wantHP {
 				t.Errorf("Health: got %d, want %d", config.Health, tt.wantHP)
-			}
-			if config.Scale != tt.wantScl {
-				t.Errorf("Scale: got %f, want %f", config.Scale, tt.wantScl)
 			}
 		})
 	}

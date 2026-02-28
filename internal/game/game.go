@@ -197,6 +197,8 @@ func (g *Game) loadMapLevel() {
 	// Reset map-specific state
 	g.playTime = 0
 	g.npcs = make([]*NPC, 0)
+	g.obstacles = make([]*Obstacle, 0)
+	g.floatingTexts = make([]*FloatingText, 0)
 	g.currentMapType.StartTime = 0
 	g.mainCharacter.MapKills = make(map[string]int) // reset per-map kills
 	g.mapWonMenuIndex = 0
@@ -327,6 +329,25 @@ func (g *Game) loadMapLevel() {
 			g.npcs = append(g.npcs, npc)
 		} else {
 			log.Printf("WARNING: PreSpawn archetype not found: %s", ps.Archetype)
+		}
+	}
+
+	// Spawn PreSpawn Obstacles
+	for _, po := range g.currentMapType.Obstacles {
+		if po.Disabled {
+			continue
+		}
+		if config, ok := g.obstacleRegistry.Archetypes[po.Archetype]; ok {
+			px, py := 0.0, 0.0
+			if po.X != nil {
+				px = *po.X
+			}
+			if po.Y != nil {
+				py = *po.Y
+			}
+			g.obstacles = append(g.obstacles, NewObstacle(px, py, config))
+		} else {
+			log.Printf("WARNING: PreSpawn obstacle archetype not found: %s", po.Archetype)
 		}
 	}
 
@@ -594,6 +615,18 @@ func (g *Game) Update() error {
 	pIsoX, pIsoY := engine.CartesianToIso(g.mainCharacter.X, g.mainCharacter.Y)
 	g.camera.Follow(pIsoX, pIsoY, 0.1)
 
+	// Final safety check: ensure player is not stuck in a newly loaded obstacle
+	for i := 0; i < 50; i++ {
+		if !g.mainCharacter.checkCollisionAt(g.mainCharacter.X, g.mainCharacter.Y, g.obstacles) {
+			break
+		}
+		g.mainCharacter.X += rand.Float64()*2 - 1
+		g.mainCharacter.Y += rand.Float64()*2 - 1
+		// Update camera to match new position
+		ncX, ncY := engine.CartesianToIso(g.mainCharacter.X, g.mainCharacter.Y)
+		g.camera.SnapTo(ncX, ncY)
+	}
+
 	return nil
 }
 
@@ -602,21 +635,24 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 }
 
 func (g *Game) updateChunks() {
-	const chunkSize = 10
-	cpX := int(math.Floor(g.mainCharacter.X / float64(chunkSize)))
-	cpY := int(math.Floor(g.mainCharacter.Y / float64(chunkSize)))
+	// Procedural spawning disabled per user request: "obstacles MUST NOT spawn at all"
+	/*
+		const chunkSize = 10
+		cpX := int(math.Floor(g.mainCharacter.X / float64(chunkSize)))
+		cpY := int(math.Floor(g.mainCharacter.Y / float64(chunkSize)))
 
-	// Check 9x9 grid around mainCharacter (radius 4)
-	// With chunkSize=10, this covers ±40 tiles, well beyond renderer's 25-tile limit.
-	for dy := -4; dy <= 4; dy++ {
-		for dx := -4; dx <= 4; dx++ {
-			chunk := image.Point{cpX + dx, cpY + dy}
-			if !g.generatedChunks[chunk] {
-				g.spawnObstaclesInChunk(chunk.X, chunk.Y)
-				g.generatedChunks[chunk] = true
+		// Check 9x9 grid around mainCharacter (radius 4)
+		// With chunkSize=10, this covers ±40 tiles, well beyond renderer's 25-tile limit.
+		for dy := -4; dy <= 4; dy++ {
+			for dx := -4; dx <= 4; dx++ {
+				chunk := image.Point{cpX + dx, cpY + dy}
+				if !g.generatedChunks[chunk] {
+					g.spawnObstaclesInChunk(chunk.X, chunk.Y)
+					g.generatedChunks[chunk] = true
+				}
 			}
 		}
-	}
+	*/
 }
 
 func (g *Game) spawnObstaclesInChunk(cx, cy int) {
@@ -660,15 +696,36 @@ func (g *Game) spawnObstaclesInChunk(cx, cy int) {
 	}
 
 	// 3. Buildings
-	if r.Float64() < 0.1 {
+	if r.Float64() < 0.08 {
 		bx := startX + r.Float64()*chunkSize
 		by := startY + r.Float64()*chunkSize
 		// Don't spawn on top of mainCharacter's initial position
-		if math.Abs(bx) > 3 || math.Abs(by) > 3 {
-			types := []string{"house1", "house2", "house3", "farm", "smithery", "temple", "warehouse", "house_burned"}
-			ot := types[r.Intn(len(types))]
-			if config, ok := g.obstacleRegistry.Archetypes[ot]; ok {
-				g.obstacles = append(g.obstacles, NewObstacle(bx, by, config))
+		if math.Abs(bx) > 5 || math.Abs(by) > 5 {
+			// Ensure buildings are far from each other
+			tooClose := false
+			const minBuildingDist = 16.0 // ~1024 pixels (16 * 64)
+			for _, obs := range g.obstacles {
+				if obs.Archetype == nil {
+					continue
+				}
+				// Simple check for building types
+				id := obs.Archetype.ID
+				isBuilding := strings.HasPrefix(id, "house") || id == "farm" || id == "smithery" || id == "temple" || id == "warehouse" || id == "house_burned"
+				if isBuilding {
+					distSq := (obs.X-bx)*(obs.X-bx) + (obs.Y-by)*(obs.Y-by)
+					if distSq < minBuildingDist*minBuildingDist {
+						tooClose = true
+						break
+					}
+				}
+			}
+
+			if !tooClose {
+				types := []string{"house1", "house2", "house3", "farm", "smithery", "temple", "warehouse", "house_burned"}
+				ot := types[r.Intn(len(types))]
+				if config, ok := g.obstacleRegistry.Archetypes[ot]; ok {
+					g.obstacles = append(g.obstacles, NewObstacle(bx, by, config))
+				}
 			}
 		}
 	}
@@ -789,7 +846,25 @@ func (g *Game) spawnNPCNear(x, y float64) {
 
 	npcID := g.pickNPCIDToSpawn()
 	npcConfig := g.archetypeRegistry.Archetypes[npcID]
-	g.npcs = append(g.npcs, NewNPC(ex, ey, npcConfig, g.mapLevel))
+	npc := NewNPC(ex, ey, npcConfig, g.mapLevel)
+
+	// Collision retry
+	for i := 0; i < 10; i++ {
+		collides := false
+		for _, o := range g.obstacles {
+			if o.Alive && engine.CheckCollision(npc.GetFootprint(), o.GetFootprint()) {
+				collides = true
+				break
+			}
+		}
+		if !collides {
+			break
+		}
+		angle := rand.Float64() * 2 * math.Pi
+		npc.X = x + math.Cos(angle)*(spawnRadius+rand.Float64())
+		npc.Y = y + math.Sin(angle)*(spawnRadius+rand.Float64())
+	}
+	g.npcs = append(g.npcs, npc)
 }
 
 func (g *Game) spawnNPCAtEdges() {
@@ -805,6 +880,24 @@ func (g *Game) spawnNPCAtEdges() {
 	// Pick a random NPC config based on weights
 	npcID := g.pickNPCIDToSpawn()
 	npcConfig := g.archetypeRegistry.Archetypes[npcID]
+	npc := NewNPC(ex, ey, npcConfig, g.mapLevel)
 
-	g.npcs = append(g.npcs, NewNPC(ex, ey, npcConfig, g.mapLevel))
+	// Edges usually clear but let's check anyway
+	for i := 0; i < 10; i++ {
+		collides := false
+		for _, o := range g.obstacles {
+			if o.Alive && engine.CheckCollision(npc.GetFootprint(), o.GetFootprint()) {
+				collides = true
+				break
+			}
+		}
+		if !collides {
+			break
+		}
+		angle := rand.Float64() * 2 * math.Pi
+		npc.X = g.mainCharacter.X + math.Cos(angle)*(spawnDist+rand.Float64()*2)
+		npc.Y = g.mainCharacter.Y + math.Sin(angle)*(spawnDist+rand.Float64()*2)
+	}
+
+	g.npcs = append(g.npcs, npc)
 }

@@ -3,3 +3,32 @@ name: The Dark Ritual
 type: kill_vip # ObjKillVIP
 difficulty: 2
 description: "Hunt down and assassinate the VIP Target"
+floor_tile: "grass.png"
+obstacles:
+  - archetype: temple
+    x: 10.0
+    y: 10.0
+  - archetype: house_burned
+    x: 12.0
+    y: 8.0
+  - archetype: house_burned
+    x: 8.0
+    y: 12.0
+  - archetype: well
+    x: 15.0
+    y: 15.0
+  - archetype: bush1
+    x: -5.0
+    y: 0.0
+  - archetype: bush2
+    x: 0.0
+    y: -10.0
+  - archetype: bush3
+    x: 15.0
+    y: -5.0
+  - archetype: bush4
+    x: -10.0
+    y: 15.0
+  - archetype: bush5
+    x: 20.0
+    y: 25.0

@@ -39,11 +39,13 @@ type NPCSaveData struct {
 }
 
 type ObstacleSaveData struct {
-	ArchetypeID   string  `yaml:"archetype_id"`
-	X             float64 `yaml:"x"`
-	Y             float64 `yaml:"y"`
-	Health        int     `yaml:"health"`
-	CooldownTicks int     `yaml:"cooldown_ticks"`
+	ID            string   `yaml:"id,omitempty"`
+	ArchetypeID   string   `yaml:"archetype_id"`
+	X             *float64 `yaml:"x,omitempty"`
+	Y             *float64 `yaml:"y,omitempty"`
+	Health        int      `yaml:"health,omitempty"`
+	CooldownTicks int      `yaml:"cooldown_ticks,omitempty"`
+	Disabled      bool     `yaml:"disabled,omitempty"`
 }
 
 type SaveData struct {
@@ -64,6 +66,7 @@ type SaveData struct {
 			Name            string         `yaml:"name,omitempty"`
 			Description     string         `yaml:"description,omitempty"`
 		} `yaml:"overrides,omitempty"`
+		FloorTile string `yaml:"floor_tile,omitempty"`
 	} `yaml:"map"`
 	Player    PlayerSaveData     `yaml:"player"`
 	NPCs      []NPCSaveData      `yaml:"npcs"`
@@ -127,10 +130,12 @@ func (g *Game) Save(path string) error {
 		if o.Archetype == nil {
 			continue
 		}
+		// Capture position as pointers for save data
+		xVal, yVal := o.X, o.Y
 		data.Obstacles = append(data.Obstacles, ObstacleSaveData{
 			ArchetypeID:   o.Archetype.ID,
-			X:             o.X,
-			Y:             o.Y,
+			X:             &xVal,
+			Y:             &yVal,
 			Health:        o.Health,
 			CooldownTicks: o.CooldownTicks,
 		})
@@ -209,6 +214,9 @@ func (g *Game) Load(fpath string) error {
 	if ov.Description != "" {
 		g.currentMapType.Description = ov.Description
 	}
+	if data.Map.FloorTile != "" {
+		g.currentMapType.FloorTile = data.Map.FloorTile
+	}
 
 	// Restore Player
 	g.mainCharacter.X = data.Player.X
@@ -285,21 +293,88 @@ func (g *Game) Load(fpath string) error {
 		g.npcs = append(g.npcs, n)
 	}
 
-	// Restore Obstacles
+	// Restore Obstacles with merging logic
 	g.obstacles = nil
+
+	// Index pre-spawn obstacles from the base map type by ID
+	preSpawns := make(map[string]PreSpawnObstacle)
+	for _, ps := range g.currentMapType.Obstacles {
+		if ps.ID != "" {
+			preSpawns[ps.ID] = ps
+		}
+	}
+
+	// Track which pre-spawns were handled by overrides in the save file
+	handledPreSpawns := make(map[string]bool)
+
 	for _, oData := range data.Obstacles {
-		config, ok := g.obstacleRegistry.Archetypes[oData.ArchetypeID]
-		if !ok {
-			log.Printf("Warning: saved obstacle archetype ID %s not found", oData.ArchetypeID)
+		// Matching logic: if save data has an ID, look for a matching pre-spawn
+		var base *PreSpawnObstacle
+		if oData.ID != "" {
+			if ps, ok := preSpawns[oData.ID]; ok {
+				base = &ps
+				handledPreSpawns[oData.ID] = true
+			}
+		}
+
+		if oData.Disabled {
 			continue
 		}
-		o := NewObstacle(oData.X, oData.Y, config)
-		o.Health = oData.Health
+
+		// Determine archetype
+		archID := oData.ArchetypeID
+		if archID == "" && base != nil {
+			archID = base.Archetype
+		}
+
+		config, ok := g.obstacleRegistry.Archetypes[archID]
+		if !ok {
+			log.Printf("Warning: saved obstacle archetype ID %s not found", archID)
+			continue
+		}
+
+		// Determine Position
+		px, py := 0.0, 0.0
+		if oData.X != nil {
+			px = *oData.X
+		} else if base != nil && base.X != nil {
+			px = *base.X
+		}
+
+		if oData.Y != nil {
+			py = *oData.Y
+		} else if base != nil && base.Y != nil {
+			py = *base.Y
+		}
+
+		o := NewObstacle(px, py, config)
+		if oData.Health > 0 || oData.X != nil { // Use save data health if provided
+			o.Health = oData.Health
+		} else if config.Health > 0 {
+			o.Health = config.Health
+		}
+
 		o.CooldownTicks = oData.CooldownTicks
 		if o.Health <= 0 && config.Health > 0 {
 			o.Alive = false
 		}
 		g.obstacles = append(g.obstacles, o)
+	}
+
+	// Add any pre-spawns that were NOT explicitly overriden or disabled in the save file
+	for _, ps := range g.currentMapType.Obstacles {
+		if !handledPreSpawns[ps.ID] && !ps.Disabled {
+			if config, ok := g.obstacleRegistry.Archetypes[ps.Archetype]; ok {
+				px, py := 0.0, 0.0
+				if ps.X != nil {
+					px = *ps.X
+				}
+				if ps.Y != nil {
+					py = *ps.Y
+				}
+				g.obstacles = append(g.obstacles, NewObstacle(px, py, config))
+			}
+		}
 	}
 
 	return nil

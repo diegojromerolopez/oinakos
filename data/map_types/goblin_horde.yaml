@@ -1,9 +1,20 @@
 id: goblin_horde
-name: Goblin Horde
-type: survive
-difficulty: 4
-target_time: 120.0
-spawn_freq: 2.0
-spawn_amount: 10
-spawn_weights:
-  goblin: 100
+name: The Goblin Tide
+type: kill_count # ObjKillCount
+difficulty: 2
+target_kill_count: 30
+description: "Kill 30 enemies to stop the raid"
+floor_tile: "grass.png"
+obstacles:
+  - archetype: farm
+    x: -10.0
+    y: -10.0
+  - archetype: farm
+    x: 10.0
+    y: 10.0
+  - archetype: house2
+    x: 0.0
+    y: 20.0
+  - archetype: house3
+    x: 12.0
+    y: 0.0

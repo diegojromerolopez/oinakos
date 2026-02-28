@@ -1,6 +1,19 @@
 id: orc_encampment
-name: The Orc Encampment
-type: kill_count # ObjKillCount
-difficulty: 1
-target_kill_count: 200
-description: "Kill 15 Orcs in the camp"
+name: Orcish Encampment
+type: kill_vip # ObjKillVIP
+difficulty: 3
+description: "Slay the Orc Chieftain"
+floor_tile: "grass.png"
+obstacles:
+  - archetype: smithery
+    x: 15.0
+    y: 15.0
+  - archetype: house2
+    x: 13.0
+    y: 17.0
+  - archetype: house3
+    x: 17.0
+    y: 13.0
+  - archetype: warehouse
+    x: 10.0
+    y: 10.0

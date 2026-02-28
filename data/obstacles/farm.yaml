@@ -2,6 +2,7 @@ id: farm
 name: "Farm"
 description: "An agricultural building with a silo."
 health: 5000
-image: "assets/images/environment/farm.png"
+image: "assets/images/obstacles/farm.png"
 footprint_width: 1.00
 footprint_height: 1.00
+type: static

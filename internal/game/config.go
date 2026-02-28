@@ -77,24 +77,34 @@ type PreSpawn struct {
 	State     string  `yaml:"state"` // e.g. "dead"
 }
 
+type PreSpawnObstacle struct {
+	ID        string   `yaml:"id"`
+	Archetype string   `yaml:"archetype"`
+	X         *float64 `yaml:"x,omitempty"`
+	Y         *float64 `yaml:"y,omitempty"`
+	Disabled  bool     `yaml:"disabled,omitempty"`
+}
+
 type MapType struct {
-	ID              string         `yaml:"id"`
-	Name            string         `yaml:"name"`
-	Type            ObjectiveType  `yaml:"type"`
-	Description     string         `yaml:"description"`
-	Difficulty      int            `yaml:"difficulty"`
-	TargetRadius    float64        `yaml:"target_radius"`
-	TargetTime      float64        `yaml:"target_time"`
-	TargetKillCount int            `yaml:"target_kill_count"`
-	TargetKills     map[string]int `yaml:"target_kills"`
-	SpawnFreq       float64        `yaml:"spawn_frequency"`
-	SpawnAmount     int            `yaml:"spawn_amount"`
-	SpawnWeights    map[string]int `yaml:"spawn_weights"`
-	WidthPixels     int            `yaml:"width_px"`
-	HeightPixels    int            `yaml:"height_px"`
-	PreSpawns       []PreSpawn     `yaml:"pre_spawns"`
-	MapWidth        float64        `yaml:"-"` // Cartesian width
-	MapHeight       float64        `yaml:"-"` // Cartesian height
+	ID              string             `yaml:"id"`
+	Name            string             `yaml:"name"`
+	Type            ObjectiveType      `yaml:"type"`
+	Description     string             `yaml:"description"`
+	Difficulty      int                `yaml:"difficulty"`
+	TargetRadius    float64            `yaml:"target_radius"`
+	TargetTime      float64            `yaml:"target_time"`
+	TargetKillCount int                `yaml:"target_kill_count"`
+	TargetKills     map[string]int     `yaml:"target_kills"`
+	SpawnFreq       float64            `yaml:"spawn_frequency"`
+	SpawnAmount     int                `yaml:"spawn_amount"`
+	SpawnWeights    map[string]int     `yaml:"spawn_weights"`
+	WidthPixels     int                `yaml:"width_px"`
+	HeightPixels    int                `yaml:"height_px"`
+	PreSpawns       []PreSpawn         `yaml:"pre_spawns"`
+	Obstacles       []PreSpawnObstacle `yaml:"obstacles"`
+	FloorTile       string             `yaml:"floor_tile"`
+	MapWidth        float64            `yaml:"-"` // Cartesian width
+	MapHeight       float64            `yaml:"-"` // Cartesian height
 
 	TargetNPC      *EntityConfig `yaml:"-"`
 	TargetObstacle *Obstacle     `yaml:"-"`
@@ -157,6 +167,10 @@ func (r *MapTypeRegistry) LoadAll(assets fs.FS) error {
 		}
 		config.MapWidth = float64(config.WidthPixels) / float64(engine.TileWidth)
 		config.MapHeight = float64(config.HeightPixels) / float64(engine.TileHeight)
+
+		if config.FloorTile == "" {
+			config.FloorTile = "grass.png"
+		}
 
 		r.Types[config.ID] = &config
 		r.IDs = append(r.IDs, config.ID)
@@ -308,7 +322,6 @@ type ObstacleArchetype struct {
 	Health          int     `yaml:"health"`        // Base health
 	CooldownTime    float64 `yaml:"cooldown_time"` // Base cooldown in minutes
 	ImagePath       string  `yaml:"image"`         // Relative path from data/obstacles/<id>/
-	Scale           float64 `yaml:"scale"`
 	FootprintWidth  float64 `yaml:"footprint_width"`
 	FootprintHeight float64 `yaml:"footprint_height"`
 	Footprint       []struct {
@@ -415,6 +428,10 @@ func LoadMainCharacterConfig(assets fs.FS) (*EntityConfig, error) {
 	}
 	const configPath = "data/characters/main/character.yaml"
 	data, err := fs.ReadFile(assets, configPath)
+	if err != nil {
+		// Fallback to direct OS read if embedded FS fails or is not complete
+		data, err = os.ReadFile(configPath)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to read main character config %s: %w", configPath, err)
 	}

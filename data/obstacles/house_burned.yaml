@@ -2,6 +2,7 @@ id: house_burned
 name: "Burned House"
 description: "The ruined remains of a house."
 health: 5000
-image: "assets/images/environment/house1.png"
-footprint_width: 1.00
-footprint_height: 1.00
+image: "assets/images/obstacles/house1.png"
+footprint_width: 6.00
+footprint_height: 4.00
+type: static

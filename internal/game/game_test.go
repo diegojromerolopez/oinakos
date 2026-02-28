@@ -31,20 +31,10 @@ func TestUpdateChunks(t *testing.T) {
 	g.mainCharacter.X = 100
 	g.mainCharacter.Y = 100
 
-	// Initial chunks
+	// Procedural updateChunks is now a no-op (disabled per user request)
 	g.updateChunks()
-	initialCount := len(g.generatedChunks)
-	if initialCount == 0 {
-		t.Error("No chunks created")
-	}
-
-	// Move player
-	g.mainCharacter.X = 500
-	g.mainCharacter.Y = 500
-	g.updateChunks()
-
-	if len(g.generatedChunks) == 0 {
-		t.Error("Chunks disappeared after move")
+	if len(g.generatedChunks) != 0 {
+		t.Error("No chunks should be created (procedural spawning disabled)")
 	}
 }
 

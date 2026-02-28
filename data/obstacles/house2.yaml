@@ -2,6 +2,7 @@ id: house2
 name: "Large House"
 description: "A spacious two-story home."
 health: 5000
-image: "assets/images/environment/house2.png"
-footprint_width: 1.00
-footprint_height: 1.00
+image: "assets/images/obstacles/house2.png"
+footprint_width: 6.00
+footprint_height: 4.00
+type: static

@@ -4,6 +4,7 @@ map:
   height_px: 500000
   level: 10
   play_time: 0
+  floor_tile: "yellow_grass.png"
 player:
   x: 0
   y: 0
