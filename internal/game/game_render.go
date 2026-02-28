@@ -34,7 +34,7 @@ func NewGameRenderer(g *Game, assets fs.FS, graphics engine.Graphics) *GameRende
 		game:         g,
 		renderer:     engine.NewRenderer(),
 		graphics:     graphics,
-		grassSprite:  graphics.LoadSprite(assets, "assets/images/environment/grass.png", true),
+		grassSprite:  graphics.LoadSprite(assets, "assets/images/floors/grass.png", true),
 		portalSprite: graphics.LoadSprite(assets, "assets/images/scenario/portal.png", true),
 		crownSprite:  graphics.LoadSprite(assets, "assets/images/scenario/crown.png", true),
 		zoneSprite:   graphics.LoadSprite(assets, "assets/images/scenario/zone_marker.png", true),
