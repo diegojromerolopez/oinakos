@@ -40,10 +40,16 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libasound2-dev libgl1-mesa-dev libx11-dev libxrandr-dev libxi-dev libxcursor-dev libxinerama-dev libxkbcommon-dev libxxf86vm-dev
+          sudo apt-get install -y libasound2-dev libgl1-mesa-dev libx11-dev libxrandr-dev libxi-dev libxcursor-dev libxinerama-dev libxkbcommon-dev libxxf86vm-dev xvfb
 
       - name: Run Tests
-        run: go test -v ./...
+        shell: bash
+        run: |
+          if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
+            xvfb-run -a go test -v ./...
+          else
+            go test -v ./...
+          fi
 
       - name: Build
         run: |
