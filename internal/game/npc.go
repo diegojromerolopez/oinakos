@@ -34,6 +34,19 @@ const (
 	AlignmentAlly
 )
 
+func (a Alignment) String() string {
+	switch a {
+	case AlignmentEnemy:
+		return "ENEMY"
+	case AlignmentNeutral:
+		return "NEUTRAL"
+	case AlignmentAlly:
+		return "ALLY"
+	default:
+		return "UNKNOWN"
+	}
+}
+
 const (
 	BehaviorWander BehaviorType = iota
 	BehaviorPatrol
@@ -596,6 +609,12 @@ func (n *NPC) TakeDamage(amount int, attackerPlayer *MainCharacter, attackerNPC 
 	if attackerPlayer != nil {
 		n.TargetPlayer = attackerPlayer
 		n.TargetNPC = nil
+		// Neutral or Ally NPCs become enemies if hit by the player
+		if n.Alignment != AlignmentEnemy {
+			log.Printf("NPC %s was %s and is now an ENEMY due to player attack!", n.Name, n.Alignment)
+			n.Alignment = AlignmentEnemy
+			n.Behavior = BehaviorKnightHunter
+		}
 	} else if attackerNPC != nil {
 		n.TargetNPC = attackerNPC
 		n.TargetPlayer = nil
