@@ -1,6 +1,7 @@
 package game
 
 import (
+	"oinakos/internal/engine"
 	"testing"
 	"testing/fstest"
 )
@@ -81,6 +82,65 @@ func TestMainCharacterUpdate_Detailed(t *testing.T) {
 	mc.Update(NewMockInputManager(), nil, nil, nil, &fts, 100, 100)
 	if mc.State != StateIdle {
 		t.Error("Should transition to idle after drinking")
+	}
+}
+
+func TestGame_BoundariesToggle(t *testing.T) {
+	mockFS := fstest.MapFS{
+		"data/map_types/type1.yaml": {
+			Data: []byte(`id: "type1"
+name: "Type One"
+type: "all"
+difficulty: 1
+width_px: 1000
+height_px: 1000
+`),
+		},
+	}
+	mockInput := NewMockInputManager()
+	g := NewGame(mockFS, "type1", "", mockInput, NewMockAudioManager(), false)
+
+	// Test Initial state
+	if g.showBoundaries {
+		t.Error("Initially showBoundaries should be false")
+	}
+
+	// 1. Test Toggle ON during Game
+	mockInput.JustPressedKeys[engine.KeyTab] = true
+	g.Update()
+	if !g.showBoundaries {
+		t.Error("showBoundaries should be true after first Tab press")
+	}
+
+	// Reset mock input for next update
+	mockInput.JustPressedKeys[engine.KeyTab] = false
+	g.Update()
+	if !g.showBoundaries {
+		t.Error("showBoundaries should stay true if Tab is NOT pressed")
+	}
+
+	// 2. Test Toggle OFF during Game
+	mockInput.JustPressedKeys[engine.KeyTab] = true
+	g.Update()
+	if g.showBoundaries {
+		t.Error("showBoundaries should be false after second Tab press")
+	}
+
+	// 3. Test Toggle while Paused
+	g.isPaused = true
+	mockInput.JustPressedKeys[engine.KeyTab] = true
+	g.Update()
+	if !g.showBoundaries {
+		t.Error("showBoundaries should toggle even when game is paused")
+	}
+
+	// 4. Test Toggle during Game Over
+	g.isPaused = false
+	g.isGameOver = true
+	mockInput.JustPressedKeys[engine.KeyTab] = true
+	g.Update()
+	if g.showBoundaries {
+		t.Error("showBoundaries should toggle to false during GameOver")
 	}
 }
 

@@ -211,7 +211,7 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 	}
 
 	// Draw debug information if enabled
-	if g.debug {
+	if g.debug || g.showBoundaries {
 		gr.drawDebug(screen, offsetX, offsetY)
 	}
 
@@ -433,29 +433,37 @@ func (gr *GameRenderer) drawHUD(screen engine.Image) {
 
 func (gr *GameRenderer) drawDebug(screen engine.Image, offsetX, offsetY float64) {
 	red := color.RGBA{255, 0, 0, 255}
+	green := color.RGBA{0, 255, 0, 255}
+	cyan := color.RGBA{0, 255, 255, 255}
 
 	// Helper to draw a Cartesian polygon in Isometric space
-	drawPolygon := func(poly engine.Polygon) {
+	drawPolygon := func(poly engine.Polygon, clr color.Color) {
 		isoPoints := make([]engine.Point, len(poly.Points))
 		for i, p := range poly.Points {
 			ix, iy := engine.CartesianToIso(p.X, p.Y)
 			isoPoints[i] = engine.Point{X: ix + offsetX, Y: iy + offsetY}
 		}
-		gr.graphics.DrawPolygon(screen, isoPoints, red, 1.0)
+		gr.graphics.DrawPolygon(screen, isoPoints, clr, 1.0)
 	}
 
-	// Obstacles
+	// Obstacles: Cyan
 	for _, o := range gr.game.obstacles {
-		drawPolygon(o.GetFootprint())
+		drawPolygon(o.GetFootprint(), cyan)
 	}
 
 	// NPCs
 	for _, n := range gr.game.npcs {
-		drawPolygon(n.GetFootprint())
+		clr := red // Default: Enemy
+		if n.Alignment == AlignmentAlly {
+			clr = green
+		} else if n.Alignment == AlignmentNeutral {
+			clr = cyan
+		}
+		drawPolygon(n.GetFootprint(), clr)
 	}
 
-	// Player
-	drawPolygon(gr.game.mainCharacter.GetFootprint())
+	// Player: Green
+	drawPolygon(gr.game.mainCharacter.GetFootprint(), green)
 
 	// Draw Names on top (since they are in debug mode and always on top)
 	for _, n := range gr.game.npcs {

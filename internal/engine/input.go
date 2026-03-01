@@ -17,6 +17,7 @@ const (
 	KeyLeft
 	KeyRight
 	KeyF9
+	KeyTab
 )
 
 // Input defines an interface for all input operations to allow mocking.

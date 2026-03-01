@@ -52,6 +52,7 @@ type Game struct {
 	initialMapID      string
 	lastSavePath      string
 	input             engine.Input
+	showBoundaries    bool
 	audio             AudioManager
 }
 
@@ -385,6 +386,11 @@ func (g *Game) loadMapLevel() {
 }
 
 func (g *Game) Update() error {
+	// Handle debug boundaries toggle
+	if g.input.IsKeyJustPressed(engine.KeyTab) {
+		g.showBoundaries = !g.showBoundaries
+	}
+
 	if g.isGameOver {
 		if g.input.IsKeyJustPressed(engine.KeyEscape) {
 			os.Exit(0)

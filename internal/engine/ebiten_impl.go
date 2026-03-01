@@ -179,6 +179,8 @@ func toEbitenKey(key Key) ebiten.Key {
 		return ebiten.KeyRight
 	case KeyF9:
 		return ebiten.KeyF9
+	case KeyTab:
+		return ebiten.KeyTab
 	}
 	return -1
 }
@@ -209,6 +211,8 @@ func fromEbitenKey(key ebiten.Key) Key {
 		return KeyRight
 	case ebiten.KeyF9:
 		return KeyF9
+	case ebiten.KeyTab:
+		return KeyTab
 	}
 	return -1
 }
