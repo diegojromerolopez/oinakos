@@ -1,4 +1,4 @@
-.PHONY: all build build-wasm run serve-wasm clean
+.PHONY: all build build-wasm run serve-wasm bundle-mac bundle-windows bundle-linux bundle-all clean
 
 # Default name for the native binary
 APP_NAME=oinakos
@@ -35,6 +35,24 @@ run: build
 serve-wasm: build-wasm
 	@echo "Serving WASM on port 8000..."
 	@cd $(BIN_DIR) && python3 -m http.server 8000
+
+bundle-mac:
+	@echo "Bundling for macOS..."
+	@chmod +x scripts/bundle_mac.sh
+	@./scripts/bundle_mac.sh
+
+bundle-windows:
+	@echo "Bundling for Windows..."
+	@chmod +x scripts/bundle_windows.sh
+	@./scripts/bundle_windows.sh
+
+bundle-linux:
+	@echo "Bundling for Linux..."
+	@chmod +x scripts/bundle_linux.sh
+	@./scripts/bundle_linux.sh
+
+bundle-all: bundle-mac bundle-windows bundle-linux
+	@echo "All platforms bundled successfully."
 
 clean:
 	@echo "Cleaning up..."

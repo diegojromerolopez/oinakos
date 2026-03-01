@@ -1,0 +1,22 @@
+# Start with the official Go image
+FROM golang:1.24-bookworm
+
+# Install Ebiten dependencies for Linux
+# https://ebitengine.org/en/documents/install.html#Linux
+RUN apt-get update && apt-get install -y \
+    libc6-dev \
+    libgl1-mesa-dev \
+    libxcursor-dev \
+    libxi-dev \
+    libxinerama-dev \
+    libxrandr-dev \
+    libxxf86vm-dev \
+    libasound2-dev \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /src
+
+# Command to build the binary
+# We use CGO_ENABLED=1 because Ebiten requires it on Linux
+CMD ["go", "build", "-o", "bin/Oinakos_Linux/oinakos", "main.go"]

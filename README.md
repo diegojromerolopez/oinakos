@@ -63,6 +63,25 @@ docker run -p 8081:8000 oinakos-wasm
 # Then visit http://localhost:8081 in your browser
 ```
 
+## 📦 Deployment & Distribution
+
+Oinakos features a robust multi-platform bundling system that generates production-ready, standalone packages with all assets (images, audio, data) embedded directly into the binary.
+
+### Build Targets:
+- **macOS Bundle**: `make bundle-mac`
+  - Generates `bin/Oinakos.app`. A native, double-clickable application with high-resolution Retina icons.
+- **Windows Package**: `make bundle-windows`
+  - Generates `bin/Oinakos_Windows.zip`. Contains a standalone `.exe` built in "GUI mode" (no terminal window).
+- **Linux Package**: `make bundle-linux`
+  - Generates `bin/Oinakos_Linux.tar.gz`. Uses **Docker** to cross-compile a native binary linked against Linux graphics headers (X11/OpenGL/ALSA). Includes a `.desktop` integration file.
+- **All Platforms**: `make bundle-all`
+
+### Portability & Dependencies:
+- **Windows**: 100% static binary. No DLLs or runtimes required.
+- **macOS**: Dynamically linked to standard system frameworks (Metal/Cocoa). Fully portable.
+- **Linux**: Dynamically linked to standard desktop libraries (Mesa/X11). Requires a desktop environment. 
+- **Zero Assets Folder**: Because assets are embedded using `go:embed`, the binary is the only file the user needs to play the game.
+
 ## 🎮 Controls:
 -   **WASD / Arrow Keys**: Move the Knight
 -   **SPACE**: Attack
