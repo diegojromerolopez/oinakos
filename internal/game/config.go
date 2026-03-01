@@ -234,13 +234,22 @@ type FootprintPoint struct {
 // key. gopkg.in/yaml.v3 quotes 'y' by default because it is a YAML 1.1 boolean
 // synonym. Using explicit !!float tags prevents that behaviour.
 func (p FootprintPoint) MarshalYAML() (interface{}, error) {
+	// Helper to ensure values always have a decimal point (e.g., 2 -> 2.0)
+	// without using the explicit !!float tag.
+	format := func(f float64) string {
+		s := fmt.Sprintf("%g", f)
+		if !strings.Contains(s, ".") && !strings.Contains(s, "e") {
+			return s + ".0"
+		}
+		return s
+	}
 	return &yaml.Node{
 		Kind: yaml.MappingNode,
 		Content: []*yaml.Node{
 			{Kind: yaml.ScalarNode, Value: "x"},
-			{Kind: yaml.ScalarNode, Tag: "!!float", Value: fmt.Sprintf("%g", p.X)},
+			{Kind: yaml.ScalarNode, Value: format(p.X)},
 			{Kind: yaml.ScalarNode, Value: "y"},
-			{Kind: yaml.ScalarNode, Tag: "!!float", Value: fmt.Sprintf("%g", p.Y)},
+			{Kind: yaml.ScalarNode, Value: format(p.Y)},
 		},
 	}, nil
 }

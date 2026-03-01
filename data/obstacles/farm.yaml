@@ -5,12 +5,21 @@ destructible: true
 description: An agricultural building with a silo.
 health: 5000
 footprint:
-  - x: -0.5
-    y: -0.5
-  - x: 0.5
-    y: -0.5
-  - x: 0.5
-    y: 0.5
-  - x: -0.5
-    y: 0.5
-
+  - x: -3.25
+    y: -12.25
+  - x: 1.33
+    y: -12.14
+  - x: 1.81
+    y: 1.88
+  - x: -12.09
+    y: 1.84
+  - x: -12.33
+    y: -4.67
+  - x: -18.98
+    y: -4.27
+  - x: -20.31
+    y: -19.94
+  - x: -12.22
+    y: -19.22
+  - x: -3.2
+    y: -18.3

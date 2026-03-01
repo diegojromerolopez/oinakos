@@ -1,4 +1,4 @@
-.PHONY: all build build-wasm build-tools run run-debug view-boundaries serve-wasm bundle-mac bundle-windows bundle-linux bundle-all clean
+.PHONY: all build build-wasm build-tools run run-debug boundaries-editor serve-wasm bundle-mac bundle-windows bundle-linux bundle-all clean
 
 # Default name for the native binary
 APP_NAME=oinakos
@@ -28,13 +28,13 @@ build-wasm:
 	cp "$$(go env GOROOT)/lib/wasm/wasm_exec.js" $(BIN_DIR)/
 	@echo "Built: $(BIN_DIR)/$(APP_NAME).wasm"
 
-build-tools: tools/bin/view_boundaries
+build-tools: tools/bin/boundaries_editor
 
-tools/bin/view_boundaries: ./tools/view_boundaries/main.go
-	@echo "Building view_boundaries..."
+tools/bin/boundaries_editor: ./tools/boundaries_editor/main.go
+	@echo "Building boundaries_editor..."
 	@mkdir -p tools/bin
-	$(GOBUILD) -o tools/bin/view_boundaries ./tools/view_boundaries/main.go
-	@echo "Tool built: tools/bin/view_boundaries"
+	$(GOBUILD) -o tools/bin/boundaries_editor ./tools/boundaries_editor/main.go
+	@echo "Tool built: tools/bin/boundaries_editor"
 
 run: build
 	./$(BIN_DIR)/$(APP_NAME)
@@ -42,12 +42,13 @@ run: build
 run-debug: build
 	./$(BIN_DIR)/$(APP_NAME) -debug
 
-view-boundaries: tools/bin/view_boundaries
-	@if [ -z "$(OBSTACLE)$(NPC)$(CHARACTER)" ]; then echo "Usage: make view-boundaries [OBSTACLE=id | NPC=id | CHARACTER=main]"; exit 1; fi
-	./tools/bin/view_boundaries \
+boundaries-editor: tools/bin/boundaries_editor
+	@if [ -z "$(OBSTACLE)$(NPC)$(CHARACTER)" ]; then ./tools/bin/boundaries_editor; else \
+	./tools/bin/boundaries_editor \
 		$(if $(OBSTACLE),--obstacle $(OBSTACLE)) \
 		$(if $(NPC),--npc $(NPC)) \
-		$(if $(CHARACTER),--character $(CHARACTER))
+		$(if $(CHARACTER),--character $(CHARACTER)); \
+	fi
 
 serve-wasm: build-wasm
 	@echo "Serving WASM on port 8000..."

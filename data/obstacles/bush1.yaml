@@ -5,12 +5,11 @@ destructible: true
 description: A small bush. Can be easily cut through.
 health: 10
 footprint:
-  - x: -0.15
-    y: -0.1
-  - x: 0.15
-    y: -0.1
-  - x: 0.15
-    y: 0.1
-  - x: -0.15
-    y: 0.1
-
+  - x: -1.16
+    y: -1.16
+  - x: 0.19
+    y: -1.44
+  - x: 0.67
+    y: 0.58
+  - x: -1.8
+    y: 0.11

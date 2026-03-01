@@ -85,8 +85,33 @@ Oinakos features a robust multi-platform bundling system that generates producti
 ## 🎮 Controls:
 -   **WASD / Arrow Keys**: Move the Knight
 -   **SPACE**: Attack
+-   **TAB**: Toggle Entity Boundaries (Debug View)
 -   **ESC**: Pause / Exit confirmation
 -   **ENTER**: Restart (on Game Over screen)
+
+## 🛠️ Development Tools
+
+### Boundaries Editor
+Oinakos includes a dedicated graphical tool for visualising and editing the collision footprints of all entities (obstacles, NPCs, and the player) in isometric space.
+
+#### Running the Editor
+```bash
+make boundaries-editor
+```
+This will open a standalone window with a selection sidebar on the left.
+
+#### Editor Controls
+- **Sidebar (Left)**: 
+  - **Click**: Select an entity to edit.
+  - **Mouse Wheel**: Scroll through the list of archetypes.
+- **Main View (Right)**:
+  - **Yellow Circles**: Drag these vertices to refine the isometric footprint.
+  - **Shift + Click**: Remove a vertex (minimum 3 required).
+  - **CTRL / CMD + Click**: Add a new vertex exactly at the mouse position.
+  - **ADD POINT Button**: Adds a new vertex to the polygon.
+  - **Arrow Keys**: Pan the camera to inspect different parts of the sprite.
+  - **Cyan Lines**: Visual representation of the collision boundary.
+- **Saving**: Changes are automatically saved to the corresponding `.yaml` file in `data/` whenever a vertex is moved or modified.
 
 ## 📁 Technical Architecture
 -   **`internal/engine`**: The platform-agnostic core handling isometric transforms, camera lerping, and polygon-based collision detection.

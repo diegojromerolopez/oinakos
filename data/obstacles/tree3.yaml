@@ -5,12 +5,13 @@ destructible: true
 description: A sturdy tall tree. It can be chopped down.
 health: 1000
 footprint:
-  - x: -0.1
-    y: -0.1
-  - x: 0.1
-    y: -0.1
-  - x: 0.1
-    y: 0.1
-  - x: -0.1
-    y: 0.1
-
+  - x: 0.33
+    y: 1.36
+  - x: 2.16
+    y: -1.53
+  - x: -0.7
+    y: -0.73
+  - x: -2.56
+    y: 0.56
+  - x: -2.14
+    y: 1.08
