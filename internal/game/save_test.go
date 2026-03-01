@@ -6,7 +6,7 @@ import (
 )
 
 func TestSaveLoad(t *testing.T) {
-	g := NewGame(nil, "", "", NewMockInputManager(), NewMockAudioManager())
+	g := NewGame(nil, "data/maps/test_save.yaml", "", &MockInputManager{}, &MockAudioManager{}, false)
 	g.mainCharacter.X = 123.45
 	g.mainCharacter.Y = 67.89
 	g.mainCharacter.Kills = 10
@@ -22,7 +22,7 @@ func TestSaveLoad(t *testing.T) {
 	}
 
 	// Create a new game and load
-	g2 := NewGame(nil, "", "", NewMockInputManager(), NewMockAudioManager())
+	g2 := NewGame(nil, "", "", NewMockInputManager(), NewMockAudioManager(), false)
 	if err := g2.Load(testPath); err != nil {
 		t.Fatalf("Failed to load: %v", err)
 	}

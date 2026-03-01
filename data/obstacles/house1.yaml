@@ -1,13 +1,16 @@
 id: house1
 name: "House"
+type: building
+destructible: true
 description: "A simple villager home."
 health: 5000
-image: "assets/images/obstacles/house1.png"
-footprint_width: 8.0
-footprint_height: 4.0
 footprint:
-  - {x: -4, y: -2}
-  - {x: 4, y: -2}
-  - {x: 4, y: 2}
-  - {x: -4, y: 2}
-type: static
+  - x: -4
+    y: -2
+  - x: 4
+    y: -2
+  - x: 4
+    y: 2
+  - x: -4
+    y: 2
+

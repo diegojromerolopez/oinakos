@@ -13,5 +13,8 @@ stats:
   base_defense: 5
   attack_cooldown: 1000
 weapon: None
-footprint_width: 0.3
-footprint_height: 0.3
+footprint:
+  - { x: -0.15, y: -0.15 }
+  - { x: 0.15, y: -0.15 }
+  - { x: 0.15, y: 0.15 }
+  - { x: -0.15, y: 0.15 }

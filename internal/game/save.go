@@ -73,7 +73,7 @@ type SaveData struct {
 	Obstacles []ObstacleSaveData `yaml:"obstacles"`
 }
 
-func (g *Game) Save(path string) error {
+func (g *Game) Save(fpath string) error {
 	data := SaveData{}
 	data.Map.ID = g.currentMapType.ID
 	data.Map.WidthPixels = g.currentMapType.WidthPixels
@@ -146,7 +146,7 @@ func (g *Game) Save(path string) error {
 		return err
 	}
 
-	return os.WriteFile(path, bytes, 0644)
+	return os.WriteFile(fpath, bytes, 0644)
 }
 
 func (g *Game) Load(fpath string) error {
@@ -198,12 +198,6 @@ func (g *Game) Load(fpath string) error {
 	}
 	if ov.Difficulty > 0 {
 		g.currentMapType.Difficulty = ov.Difficulty
-	}
-	if ov.SpawnFrequency > 0 {
-		g.currentMapType.SpawnFreq = ov.SpawnFrequency
-	}
-	if ov.SpawnAmount > 0 {
-		g.currentMapType.SpawnAmount = ov.SpawnAmount
 	}
 	if len(ov.TargetKills) > 0 {
 		g.currentMapType.TargetKills = ov.TargetKills

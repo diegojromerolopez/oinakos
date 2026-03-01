@@ -47,8 +47,7 @@ func TestProjectileUpdate_SkipsIfDead(t *testing.T) {
 func TestProjectileUpdate_HitsObstacle(t *testing.T) {
 	// Place projectile and obstacle at same location
 	arch := makeObstacleArchetype(100)
-	arch.FootprintWidth = 1.0
-	arch.FootprintHeight = 1.0
+	arch.Footprint = []FootprintPoint{{-0.5, -0.5}, {0.5, -0.5}, {0.5, 0.5}, {-0.5, 0.5}}
 	obs := NewObstacle(0, 0, arch)
 	p := NewProjectile(0, 0, 1, 0, 0.0, 5, true) // speed=0, won't move past
 	var fts []*FloatingText
@@ -60,8 +59,7 @@ func TestProjectileUpdate_HitsObstacle(t *testing.T) {
 
 func TestProjectileUpdate_ObstacleDead(t *testing.T) {
 	arch := makeObstacleArchetype(100)
-	arch.FootprintWidth = 1.0
-	arch.FootprintHeight = 1.0
+	arch.Footprint = []FootprintPoint{{-0.5, -0.5}, {0.5, -0.5}, {0.5, 0.5}, {-0.5, 0.5}}
 	obs := NewObstacle(0, 0, arch)
 	obs.Alive = false
 	p := NewProjectile(0, 0, 1, 0, 0.0, 5, true)

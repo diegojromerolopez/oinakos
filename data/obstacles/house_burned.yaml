@@ -1,8 +1,16 @@
 id: house_burned
-name: "Burned House"
-description: "The ruined remains of a house."
+name: Burned House
+type: building
+destructible: true
+description: The ruined remains of a house.
 health: 5000
-image: "assets/images/obstacles/house1.png"
-footprint_width: 6.00
-footprint_height: 4.00
-type: static
+footprint:
+  - x: -3
+    y: -2
+  - x: 3
+    y: -2
+  - x: 3
+    y: 2
+  - x: -3
+    y: 2
+

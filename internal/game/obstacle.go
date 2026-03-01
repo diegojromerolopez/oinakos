@@ -41,8 +41,8 @@ func (o *Obstacle) TakeDamage(amount int) {
 	if !o.Alive {
 		return
 	}
-	// Indestructible obstacles have 0 or negative health starting point
-	if o.Archetype == nil || o.Archetype.Health <= 0 {
+	// If the archetype marks the obstacle as indestructible, ignore all damage.
+	if o.Archetype == nil || !o.Archetype.Destructible {
 		return
 	}
 
@@ -60,37 +60,8 @@ func (o *Obstacle) GetFootprint() engine.Polygon {
 		}
 		return poly.Transformed(o.X, o.Y)
 	}
-
-	// Fallback to width/height
-	hw, hh := 0.5, 0.5
-	if o.Archetype != nil {
-		if o.Archetype.FootprintWidth > 0 {
-			hw = o.Archetype.FootprintWidth / 2
-		}
-		if o.Archetype.FootprintHeight > 0 {
-			hh = o.Archetype.FootprintHeight / 2
-		}
-
-		// Building foundations are strictly computed from visual dimensions
-		if o.Archetype.Type == "static" || o.Archetype.Type == "well" {
-			// Ensure buildings are significant obstacles in Cartesian space
-			if hw < 2.0 {
-				hw = 2.0
-			}
-			if hh < 2.0 {
-				hh = 2.0
-			}
-
-			return engine.Polygon{Points: []engine.Point{
-				{X: -hw, Y: -hh},
-				{X: hw, Y: -hh},
-				{X: hw, Y: hh},
-				{X: -hw, Y: hh},
-			}}.Transformed(o.X, o.Y)
-		}
-	}
-
+	// Absolute fallback for nil archetype or empty footprint.
 	return engine.Polygon{Points: []engine.Point{
-		{X: -hw, Y: -hh}, {X: hw, Y: -hh}, {X: hw, Y: hh}, {X: -hw, Y: hh},
+		{X: -0.2, Y: -0.2}, {X: 0.2, Y: -0.2}, {X: 0.2, Y: 0.2}, {X: -0.2, Y: 0.2},
 	}}.Transformed(o.X, o.Y)
 }

@@ -21,7 +21,7 @@ height_px: 1000
 `),
 		},
 	}
-	g := NewGame(mockFS, "type1", "", NewMockInputManager(), NewMockAudioManager())
+	g := NewGame(mockFS, "type1", "", NewMockInputManager(), NewMockAudioManager(), false)
 
 	// 1. Test Paused state
 	g.isPaused = true
@@ -46,7 +46,7 @@ height_px: 1000
 	// 4. Test Normal Update
 	g.isMapWon = false
 	g.npcSpawnTimer = 0
-	g.currentMapType.SpawnFreq = 0 // Disable auto-spawning
+	g.currentMapType.Spawns = nil // Ensure no auto-spawning
 	if err := g.Update(); err != nil {
 		t.Errorf("Update failed: %v", err)
 	}
@@ -127,7 +127,7 @@ func TestNPCUpdate_Detailed(t *testing.T) {
 
 func TestCollisionDetailed(t *testing.T) {
 	mc := NewMainCharacter(0, 0, nil)
-	obs := []*Obstacle{NewObstacle(1, 0, &ObstacleArchetype{FootprintWidth: 2, FootprintHeight: 2})}
+	obs := []*Obstacle{NewObstacle(1, 0, &ObstacleArchetype{ID: "test", Footprint: []FootprintPoint{{-1, -1}, {1, -1}, {1, 1}, {-1, 1}}})}
 
 	// Test collision detection
 	if !mc.checkCollisionAt(1, 0, obs) {
@@ -188,7 +188,7 @@ func TestProjectileUpdate_Detailed(t *testing.T) {
 
 	// Update with entities
 	targetMc := NewMainCharacter(2, 0, nil)
-	obstacles := []*Obstacle{NewObstacle(5, 0, &ObstacleArchetype{FootprintWidth: 1, FootprintHeight: 1})}
+	obstacles := []*Obstacle{NewObstacle(5, 0, &ObstacleArchetype{ID: "test", Footprint: []FootprintPoint{{-0.5, -0.5}, {0.5, -0.5}, {0.5, 0.5}, {-0.5, 0.5}}})}
 
 	// Manually move projectile to hit targetMc
 	p.X = 2
@@ -231,7 +231,7 @@ spawn_frequency: 0
 `),
 		},
 	}
-	g := NewGame(mockFS, "duel", "", NewMockInputManager(), NewMockAudioManager())
+	g := NewGame(mockFS, "duel", "", NewMockInputManager(), NewMockAudioManager(), false)
 
 	// Spawn a boss (VIP)
 	boss := NewNPC(5, 5, nil, 10)
@@ -264,7 +264,7 @@ difficulty: 1
 `),
 		},
 	}
-	g := NewGame(mockFS, "test", "", NewMockInputManager(), NewMockAudioManager())
+	g := NewGame(mockFS, "test", "", NewMockInputManager(), NewMockAudioManager(), false)
 	mc := g.mainCharacter
 
 	npc := NewNPC(0, 0, &Archetype{

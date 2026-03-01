@@ -11,5 +11,8 @@ stats:
   attack_range: 7.0
   projectile_speed: 5.0
 weapon: Bow
-footprint_width: 0.18
-footprint_height: 0.18
+footprint:
+  - { x: -0.09, y: -0.09 }
+  - { x: 0.09, y: -0.09 }
+  - { x: 0.09, y: 0.09 }
+  - { x: -0.09, y: 0.09 }

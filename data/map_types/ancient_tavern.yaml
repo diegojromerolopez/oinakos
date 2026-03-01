@@ -3,24 +3,66 @@ name: The Ancient Tavern
 type: reach_building # ObjReachBuilding
 difficulty: 1
 description: "Find shelter at the marked building"
-pre_spawns:
-  - archetype: peasant_male
+inhabitants:
+  - name: "Silas the Unfortunate"
+    archetype: peasant_male
     x: -8.0
     y: 5.0
     state: dead
-  - archetype: demon_female
+    alignment: neutral
+  - name: "Lyra the Fallen"
+    archetype: demon_female
     x: 12.0
     y: 2.0
     state: dead
-  - archetype: orc_female
+    alignment: neutral
+  - name: "Kael Ironfist"
+    archetype: orc_female
     x: -2.0
     y: -10.0
     state: dead
-  - archetype: lame_devil_male
+    alignment: neutral
+  - name: "Aris the Wicked"
+    archetype: lame_devil_male
     x: 6.0
     y: 9.0
     state: dead
+    alignment: neutral
+  - name: "Barnaby the Barkeeper"
+    archetype: peasant_male
+    x: 10.0
+    y: 12.0
+    alignment: neutral
+  - name: "Old Tom"
+    archetype: peasant_male
+    x: 12.0
+    y: 11.0
+    alignment: neutral
+  - name: "Brave Elara"
+    archetype: magi_female
+    x: 8.0
+    y: 10.0
+    alignment: ally
 floor_tile: "grass.png"
+spawns:
+  - archetype: orc_male
+    probability: 0.8
+    frequency: 12.0 # seconds
+    alignment: enemy # Hunting orcs roam the area
+  - archetype: orc_male
+    probability: 1.0
+    frequency: 30.0
+    alignment: enemy
+    x: 20.0 # Fixed ambush point
+    y: -10.0
+  - archetype: peasant_male
+    probability: 0.5
+    frequency: 20.0
+    alignment: neutral
+  - archetype: magi_female
+    probability: 0.2
+    frequency: 45.0
+    alignment: ally
 obstacles:
   - id: tavern_main
     archetype: house1

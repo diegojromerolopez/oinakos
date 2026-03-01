@@ -1,10 +1,9 @@
 package game
 
 import (
+	"oinakos/internal/engine"
 	"testing"
 	"testing/fstest"
-
-	"github.com/hajimehoshi/ebiten/v2"
 )
 
 func TestMainCharacterStats(t *testing.T) {
@@ -167,8 +166,8 @@ func TestMainCharacterUpdate_Full(t *testing.T) {
 
 	// Movement Input checks
 	mc.State = StateIdle
-	mockInput.PressedKeys[ebiten.KeyW] = true
-	mockInput.PressedKeys[ebiten.KeyD] = true
+	mockInput.PressedKeys[engine.KeyW] = true
+	mockInput.PressedKeys[engine.KeyD] = true
 	mc.Update(mockInput, nil, nil, nil, fts, 100, 100)
 	if mc.State != StateWalking {
 		t.Error("Should be walking on input")
@@ -179,8 +178,8 @@ func TestMainCharacterUpdate_Full(t *testing.T) {
 
 	mc.X = 0
 	mc.Y = 0
-	delete(mockInput.PressedKeys, ebiten.KeyW)
-	mockInput.PressedKeys[ebiten.KeyS] = true
+	delete(mockInput.PressedKeys, engine.KeyW)
+	mockInput.PressedKeys[engine.KeyS] = true
 	mc.Update(mockInput, nil, nil, nil, fts, 100, 100)
 	if mc.Facing != DirSE {
 		t.Errorf("Expected Facing DirSE, got %v", mc.Facing)
@@ -189,7 +188,7 @@ func TestMainCharacterUpdate_Full(t *testing.T) {
 	// Test clamp boundaries
 	mc.X = 1000
 	mc.Y = 1000
-	mockInput.PressedKeys[ebiten.KeyD] = true // Move right edge
+	mockInput.PressedKeys[engine.KeyD] = true // Move right edge
 	mc.Update(mockInput, nil, nil, nil, fts, 100, 100)
 	if mc.X > 50 || mc.Y > 50 {
 		t.Error("Position not clamped correctly")

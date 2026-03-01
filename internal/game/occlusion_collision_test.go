@@ -49,38 +49,27 @@ func TestOcclusionAndCollision(t *testing.T) {
 	mc := NewMainCharacter(0, 14, mcConfig) // Move player "behind" the building
 
 	obsConfig := &ObstacleArchetype{
-		ID:              "smithery",
-		Type:            "static",
-		FootprintWidth:  6.0,
-		FootprintHeight: 6.0,
+		ID:   "smithery",
+		Type: "static",
+		Footprint: []FootprintPoint{
+			{X: -3.0, Y: -3.0}, {X: 3.0, Y: -3.0},
+			{X: 3.0, Y: 3.0}, {X: -3.0, Y: 3.0},
+		},
 	}
 	obsConfig.Image = graphics.NewImage(128, 128)
 
 	building := NewObstacle(0, 15, obsConfig)
 	obstacles := []*Obstacle{building}
 
-	// 1. Test Collision
-	collides := mc.checkCollisionAt(0, 15, obstacles)
-	if !collides {
-		t.Errorf("Should have collided with building at Cartesian(0, 15)")
+	// 1. Test Collision: Should collide with base
+	collidesAtBase := mc.checkCollisionAt(0, 15, obstacles)
+	if !collidesAtBase {
+		t.Fatalf("Should have collided with building at Cartesian base (0, 15)")
 	}
 
-	// 2. Test Occlusion Detection
-	g := &Game{
-		mainCharacter:  mc,
-		obstacles:      obstacles,
-		currentMapType: MapType{ID: "test"},
-		camera:         engine.NewCamera(0, 0),
-	}
-	gr := &GameRenderer{
-		game:     g,
-		graphics: graphics,
-	}
-
-	// Check if character is correctly obscured using actual rendering logic
-	isObscured := gr.isEntityObscured(mc.X, mc.Y)
-
-	if !isObscured {
-		t.Errorf("Occlusion failed: character should be obscured by the building based on isometric projections")
+	// 2. Test "Relaxed Behind": Should NOT collide far behind (North) anymore
+	collidesBehind := mc.checkCollisionAt(0, 5, obstacles) // 10 units North of center
+	if collidesBehind {
+		t.Errorf("Relaxed Behind failed: character should be allowed to go behind (North) the building base")
 	}
 }

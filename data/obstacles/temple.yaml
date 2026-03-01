@@ -1,13 +1,16 @@
 id: temple
-name: "Temple"
-description: "An ancient place of worship."
+name: Temple
+type: building
+destructible: false
+description: An ancient place of worship.
 health: 10000
-image: "assets/images/obstacles/temple.png"
-footprint_width: 10.00
-footprint_height: 6.00
 footprint:
-  - {x: -8, y: -5}
-  - {x: 8, y: -5}
-  - {x: 8, y: 5}
-  - {x: -8, y: 5}
-type: static
+  - x: -5
+    y: -3
+  - x: 5
+    y: -3
+  - x: 5
+    y: 3
+  - x: -5
+    y: 3
+

@@ -1,8 +1,16 @@
 id: tree6
-name: "Tree 6"
-description: "A sturdy tall tree. It can be chopped down."
+name: Tree 6
+type: tree
+destructible: true
+description: A sturdy tall tree. It can be chopped down.
 health: 1000
-image: "assets/images/obstacles/tree2.png"
-footprint_width: 0.20
-footprint_height: 0.20
-type: static
+footprint:
+  - x: -0.1
+    y: -0.1
+  - x: 0.1
+    y: -0.1
+  - x: 0.1
+    y: 0.1
+  - x: -0.1
+    y: 0.1
+

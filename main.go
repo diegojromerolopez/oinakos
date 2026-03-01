@@ -3,6 +3,7 @@ package main
 import (
 	"embed"
 	"flag"
+	"image"
 	_ "image/jpeg"
 	_ "image/png"
 	"log"
@@ -20,9 +21,11 @@ func main() {
 	var initialMap string
 	var initialMapType string
 	var loadGame string
+	var debug bool
 	flag.StringVar(&initialMap, "map", "", "Map YAML file to load (save/instance)")
 	flag.StringVar(&initialMapType, "map-type", "", "Named map type to generate from")
 	flag.StringVar(&loadGame, "load-game", "", "Saved game file to load (e.g. quicksaves/save_20240101_120000.yaml)")
+	flag.BoolVar(&debug, "debug", false, "Show collision perimeters (red borders)")
 	flag.Parse()
 
 	// --load-game overrides --map
@@ -68,13 +71,30 @@ func main() {
 	eg := engine.NewEbitenGraphics()
 	ei := engine.NewEbitenInput()
 
-	g := game.NewGame(assets, initialMap, initialMapType, ei, &game.DefaultAudioManager{})
+	g := game.NewGame(assets, initialMap, initialMapType, ei, &game.DefaultAudioManager{}, debug)
 	gr := game.NewGameRenderer(g, assets, eg)
 	gr.LoadAssets(assets)
 
 	ebiten.SetWindowSize(1280, 720)
 	ebiten.SetWindowTitle("Oinakos - Isometric RPG")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
+
+	// Set Window Icon from player character sprite
+	f, err := assets.Open("assets/images/characters/main/static.png")
+	if err != nil {
+		log.Printf("Warning: failed to open icon file: %v", err)
+	} else {
+		defer f.Close()
+		iconImg, _, err := image.Decode(f)
+		if err != nil {
+			log.Printf("Warning: failed to decode icon image: %v", err)
+		} else {
+			// Apply project standard transparency (removing lime green)
+			transparentIcon := engine.Transparentize(iconImg)
+			ebiten.SetWindowIcon([]image.Image{transparentIcon})
+			log.Println("Success: Window icon set from player character sprite.")
+		}
+	}
 
 	// Create a single screen wrapper to avoid reflecting/allocating every frame
 	screenWrapper := engine.NewEbitenImageWrapper(nil)

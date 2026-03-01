@@ -1,4 +1,4 @@
-.PHONY: all build build-wasm run serve-wasm bundle-mac bundle-windows bundle-linux bundle-all clean
+.PHONY: all build build-wasm build-tools run run-debug view-boundaries serve-wasm bundle-mac bundle-windows bundle-linux bundle-all clean
 
 # Default name for the native binary
 APP_NAME=oinakos
@@ -12,7 +12,7 @@ GOCLEAN=$(GOCMD) clean
 # Output directory
 BIN_DIR=bin
 
-all: build build-wasm
+all: build build-wasm build-tools
 
 build:
 	@echo "Building native binary..."
@@ -28,9 +28,26 @@ build-wasm:
 	cp "$$(go env GOROOT)/lib/wasm/wasm_exec.js" $(BIN_DIR)/
 	@echo "Built: $(BIN_DIR)/$(APP_NAME).wasm"
 
+build-tools: tools/bin/view_boundaries
+
+tools/bin/view_boundaries: ./tools/view_boundaries/main.go
+	@echo "Building view_boundaries..."
+	@mkdir -p tools/bin
+	$(GOBUILD) -o tools/bin/view_boundaries ./tools/view_boundaries/main.go
+	@echo "Tool built: tools/bin/view_boundaries"
+
 run: build
-	@echo "Running native game..."
 	./$(BIN_DIR)/$(APP_NAME)
+
+run-debug: build
+	./$(BIN_DIR)/$(APP_NAME) -debug
+
+view-boundaries: tools/bin/view_boundaries
+	@if [ -z "$(OBSTACLE)$(NPC)$(CHARACTER)" ]; then echo "Usage: make view-boundaries [OBSTACLE=id | NPC=id | CHARACTER=main]"; exit 1; fi
+	./tools/bin/view_boundaries \
+		$(if $(OBSTACLE),--obstacle $(OBSTACLE)) \
+		$(if $(NPC),--npc $(NPC)) \
+		$(if $(CHARACTER),--character $(CHARACTER))
 
 serve-wasm: build-wasm
 	@echo "Serving WASM on port 8000..."
@@ -58,4 +75,5 @@ clean:
 	@echo "Cleaning up..."
 	$(GOCLEAN)
 	rm -rf $(BIN_DIR)
+	rm -rf tools/bin
 	@echo "Cleaned."

@@ -65,15 +65,8 @@ func sanitizeEntityConfig(c *EntityConfig, source string) {
 		c.Stats.ProjectileSpeed = 0
 		changed = true
 	}
-	if c.FootprintWidth <= 0 && len(c.Footprint) == 0 {
-		log.Printf("Warning [%s]: archetype %q has no footprint_width and no custom footprint, clamping to 0.3", source, c.ID)
-		c.FootprintWidth = 0.3
-		changed = true
-	}
-	if c.FootprintHeight <= 0 && len(c.Footprint) == 0 {
-		log.Printf("Warning [%s]: archetype %q has no footprint_height and no custom footprint, clamping to 0.3", source, c.ID)
-		c.FootprintHeight = 0.3
-		changed = true
+	if len(c.Footprint) == 0 {
+		log.Printf("Warning [%s]: archetype %q has no custom footprint", source, c.ID)
 	}
 	_ = changed
 }
@@ -88,17 +81,12 @@ func sanitizeObstacleArchetype(c *ObstacleArchetype, source string) {
 		log.Printf("Warning [%s]: obstacle %q has empty name, using id", source, c.ID)
 		c.Name = c.ID
 	}
-	if c.Health < 0 {
-		log.Printf("Warning [%s]: obstacle %q has negative health, clamping to 0", source, c.ID)
+	if c.Health < -1 {
+		log.Printf("Warning [%s]: obstacle %q has negative health (%d), clamping to 0", source, c.ID, c.Health)
 		c.Health = 0
 	}
-	if c.FootprintWidth <= 0 && len(c.Footprint) == 0 {
-		log.Printf("Warning [%s]: obstacle %q has no footprint_width and no custom footprint, clamping to 0.3", source, c.ID)
-		c.FootprintWidth = 0.3
-	}
-	if c.FootprintHeight <= 0 && len(c.Footprint) == 0 {
-		log.Printf("Warning [%s]: obstacle %q has no footprint_height and no custom footprint, clamping to 0.3", source, c.ID)
-		c.FootprintHeight = 0.3
+	if len(c.Footprint) == 0 {
+		log.Printf("Warning [%s]: obstacle %q has no custom footprint", source, c.ID)
 	}
 	if c.CooldownTime < 0 {
 		log.Printf("Warning [%s]: obstacle %q has cooldown_time=%v, clamping to 0", source, c.ID, c.CooldownTime)
@@ -128,13 +116,16 @@ func sanitizeMapType(m *MapType, source string) {
 		log.Printf("Warning [%s]: map_type %q has target_time=%v, clamping to 0", source, m.ID, m.TargetTime)
 		m.TargetTime = 0
 	}
-	if m.SpawnFreq < 0 {
-		log.Printf("Warning [%s]: map_type %q has spawn_frequency=%v, clamping to 0", source, m.ID, m.SpawnFreq)
-		m.SpawnFreq = 0
-	}
-	if m.SpawnAmount < 0 {
-		log.Printf("Warning [%s]: map_type %q has spawn_amount=%d, clamping to 0", source, m.ID, m.SpawnAmount)
-		m.SpawnAmount = 0
+	for i := range m.Spawns {
+		s := &m.Spawns[i]
+		if s.Probability < 0 {
+			s.Probability = 0
+		} else if s.Probability > 1.0 {
+			s.Probability = 1.0
+		}
+		if s.Frequency < 0 {
+			s.Frequency = 0
+		}
 	}
 	if m.TargetRadius < 0 {
 		log.Printf("Warning [%s]: map_type %q has target_radius=%v, clamping to 0", source, m.ID, m.TargetRadius)

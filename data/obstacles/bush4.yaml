@@ -1,8 +1,16 @@
 id: bush4
-name: "Bush 4"
-description: "A small bush. Can be easily cut through."
+name: Bush 4
+type: bush
+destructible: true
+description: A small bush. Can be easily cut through.
 health: 10
-image: "assets/images/obstacles/bush4.png"
-footprint_width: 0.30
-footprint_height: 0.20
-type: static
+footprint:
+  - x: -0.15
+    y: -0.1
+  - x: 0.15
+    y: -0.1
+  - x: 0.15
+    y: 0.1
+  - x: -0.15
+    y: 0.1
+

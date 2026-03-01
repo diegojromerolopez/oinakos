@@ -100,17 +100,53 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 
 	// Add obstacles
 	for _, o := range g.obstacles {
+		img, _ := o.Archetype.Image.(engine.Image)
+		if img == nil {
+			continue
+		}
+		sw, sh := img.Size()
+
 		isoX, isoY := engine.CartesianToIso(o.X, o.Y)
 		drawX := isoX + offsetX
 		drawY := isoY + offsetY
-		// Aggressive Culling for obstacles
-		if drawX < -256 || drawX > float64(g.width)+256 || drawY < -256 || drawY > float64(g.height)+256 {
+
+		// Dynamic culling: use sprite dimensions to ensure large buildings don't flicker
+		marginW := float64(sw)
+		marginH := float64(sh)
+		if drawX < -marginW || drawX > float64(g.width)+marginW || drawY < -marginH || drawY > float64(g.height)+marginH {
 			continue
 		}
 
 		obj := o // local copy
+		sortY := obj.X + obj.Y
+		if obj.Archetype.Type == "static" || obj.Archetype.Type == "well" {
+			sortY += 2.0
+		} else {
+			// Center of footprint
+			p := obj.GetFootprint()
+			if len(p.Points) > 0 {
+				var minX, maxX, minY, maxY float64
+				for i, pt := range p.Points {
+					if i == 0 || pt.X < minX {
+						minX = pt.X
+					}
+					if i == 0 || pt.X > maxX {
+						maxX = pt.X
+					}
+					if i == 0 || pt.Y < minY {
+						minY = pt.Y
+					}
+					if i == 0 || pt.Y > maxY {
+						maxY = pt.Y
+					}
+				}
+				// The footprint is already absolute, so we convert back to world "depth"
+				sortY = (minX + maxX + minY + maxY) / 2
+			}
+		}
+
 		tasks = append(tasks, drawTask{
-			y: obj.X + obj.Y,
+			y: sortY,
 			draw: func() {
 				obj.Draw(screen, gr.graphics, offsetX, offsetY)
 			},
@@ -128,8 +164,12 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 		}
 
 		npc := n // local copy
+		sortY := npc.X + npc.Y
+		if npc.State == NPCDead {
+			sortY -= 100.0 // Push corpses behind a lot of things
+		}
 		tasks = append(tasks, drawTask{
-			y: npc.X + npc.Y,
+			y: sortY,
 			draw: func() {
 				npc.Draw(screen, gr.graphics, gr.graphics, offsetX, offsetY)
 			},
@@ -137,8 +177,12 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 	}
 
 	// Add mainCharacter
+	mcSortY := g.mainCharacter.X + g.mainCharacter.Y
+	if g.mainCharacter.State == StateDead {
+		mcSortY -= 100.0
+	}
 	tasks = append(tasks, drawTask{
-		y: g.mainCharacter.X + g.mainCharacter.Y,
+		y: mcSortY,
 		draw: func() {
 			g.mainCharacter.Draw(screen, offsetX, offsetY)
 		},
@@ -166,9 +210,10 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 		t.draw()
 	}
 
-	// EXECUTE SILHOUETTE PASS SECOND
-	// Character silhouettes ON TOP of buildings
-	gr.drawSilhouettes(screen, offsetX, offsetY)
+	// Draw debug information if enabled
+	if g.debug {
+		gr.drawDebug(screen, offsetX, offsetY)
+	}
 
 	// Draw floating texts (always on top of entities)
 	for _, ft := range g.floatingTexts {
@@ -242,63 +287,6 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 	} else {
 		gr.drawHUD(screen)
 	}
-}
-
-func (gr *GameRenderer) drawSilhouettes(screen engine.Image, offsetX, offsetY float64) {
-	g := gr.game
-	// NPC Silhouettes
-	for _, n := range g.npcs {
-		if n.State == NPCDead { // Skip if completely gone
-			continue
-		}
-		if gr.isEntityObscured(n.X, n.Y) {
-			n.DrawSilhouette(screen, offsetX, offsetY)
-		}
-	}
-	// Player Silhouette
-	if gr.isEntityObscured(g.mainCharacter.X, g.mainCharacter.Y) {
-		g.mainCharacter.DrawSilhouette(screen, offsetX, offsetY)
-	}
-}
-
-func (gr *GameRenderer) isEntityObscured(ex, ey float64) bool {
-	g := gr.game
-	eIsoX, eIsoY := engine.CartesianToIso(ex, ey)
-
-	for _, o := range g.obstacles {
-		if !o.Alive || o.Archetype == nil {
-			continue
-		}
-
-		img, ok := o.Archetype.Image.(engine.Image)
-		if !ok || img == nil {
-			continue
-		}
-
-		// Distance check: entity must be "behind" the obstacle in Y-sort depth
-		if ex+ey > o.X+o.Y {
-			continue
-		}
-
-		sw, sh := img.Size()
-		scale := 1.0
-
-		// Find where this obstacle was actually drawn on screen
-		oIsoX, oIsoY := engine.CartesianToIso(o.X, o.Y)
-		pivotX := float64(sw) * scale / 2
-		pivotY := float64(sh) * scale * 0.85
-
-		left := oIsoX - pivotX
-		right := left + float64(sw)*scale
-		top := oIsoY - pivotY
-		bottom := top + float64(sh)*scale // The base anchor essentially
-
-		// Horizontal and vertical visual intersection check
-		if eIsoX >= left && eIsoX <= right && eIsoY >= top && eIsoY <= bottom {
-			return true
-		}
-	}
-	return false
 }
 
 func (gr *GameRenderer) drawPauseMenu(screen engine.Image) {
@@ -441,4 +429,53 @@ func (gr *GameRenderer) drawHUD(screen engine.Image) {
 		screen.DrawTriangles(evs, is, gr.emptyImage.SubImage(image.Rect(1, 1, 2, 2)), opTri)
 		gr.graphics.DebugPrintAt(screen, "OBJ", int(arrowX)-10, int(arrowY)+25)
 	}
+}
+
+func (gr *GameRenderer) drawDebug(screen engine.Image, offsetX, offsetY float64) {
+	red := color.RGBA{255, 0, 0, 255}
+
+	// Helper to draw a Cartesian polygon in Isometric space
+	drawPolygon := func(poly engine.Polygon) {
+		isoPoints := make([]engine.Point, len(poly.Points))
+		for i, p := range poly.Points {
+			ix, iy := engine.CartesianToIso(p.X, p.Y)
+			isoPoints[i] = engine.Point{X: ix + offsetX, Y: iy + offsetY}
+		}
+		gr.graphics.DrawPolygon(screen, isoPoints, red, 1.0)
+	}
+
+	// Obstacles
+	for _, o := range gr.game.obstacles {
+		drawPolygon(o.GetFootprint())
+	}
+
+	// NPCs
+	for _, n := range gr.game.npcs {
+		drawPolygon(n.GetFootprint())
+	}
+
+	// Player
+	drawPolygon(gr.game.mainCharacter.GetFootprint())
+
+	// Draw Names on top (since they are in debug mode and always on top)
+	for _, n := range gr.game.npcs {
+		if n.IsAlive() {
+			isoX, isoY := engine.CartesianToIso(n.X, n.Y)
+			name := n.Name
+			if name == "" && n.Archetype != nil {
+				name = n.Archetype.Name
+			}
+			// Draw at an offset to float BELOW current pos (footprint base)
+			gr.graphics.DebugPrintAt(screen, name, int(isoX+offsetX)-20, int(isoY+offsetY)+10)
+		}
+	}
+
+	// Player Name
+	mc := gr.game.mainCharacter
+	pIsoX, pIsoY := engine.CartesianToIso(mc.X, mc.Y)
+	mcName := "Player"
+	if mc.Config != nil && mc.Config.Name != "" {
+		mcName = mc.Config.Name
+	}
+	gr.graphics.DebugPrintAt(screen, mcName, int(pIsoX+offsetX)-20, int(pIsoY+offsetY)+10)
 }

@@ -94,9 +94,9 @@ func Transparentize(img image.Image) image.Image {
 			isLime := false
 			if a > 0 {
 				r8, g8, b8 := uint8(r>>8), uint8(g>>8), uint8(b>>8)
-				// Pure lime is (0, 255, 0). AI lime is very bright green, low red/blue.
-				// Leaves are usually darker and have higher red/blue ratios.
-				if g8 > 150 && g8 > r8*2 && g8 > b8*2 {
+				// Robust lime detection for AI-generated assets:
+				// High green dominance over both red and blue.
+				if g8 > 140 && g8 > uint8(float64(r8)*1.2) && g8 > b8*2 {
 					isLime = true
 				}
 			}

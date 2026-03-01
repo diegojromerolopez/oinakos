@@ -14,5 +14,8 @@ stats:
   base_defense: 10
   attack_cooldown: 120
 weapon: Greatclub
-footprint_width: 0.6
-footprint_height: 0.6
+footprint:
+  - { x: -0.3, y: -0.3 }
+  - { x: 0.3, y: -0.3 }
+  - { x: 0.3, y: 0.3 }
+  - { x: -0.3, y: 0.3 }

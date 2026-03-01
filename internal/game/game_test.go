@@ -9,7 +9,7 @@ func TestGameInitialization(t *testing.T) {
 	// Mock embed.FS (empty)
 	var assets embed.FS
 
-	g := NewGame(assets, "", "", NewMockInputManager(), NewMockAudioManager())
+	g := NewGame(assets, "", "", NewMockInputManager(), NewMockAudioManager(), false)
 	if g == nil {
 		t.Fatal("NewGame returned nil")
 	}
@@ -25,7 +25,7 @@ func TestGameInitialization(t *testing.T) {
 
 func TestUpdateChunks(t *testing.T) {
 	var assets embed.FS
-	g := NewGame(assets, "", "", NewMockInputManager(), NewMockAudioManager())
+	g := NewGame(assets, "", "", NewMockInputManager(), NewMockAudioManager(), false)
 
 	// Set player position
 	g.mainCharacter.X = 100
@@ -40,7 +40,7 @@ func TestUpdateChunks(t *testing.T) {
 
 func TestLayout(t *testing.T) {
 	var assets embed.FS
-	g := NewGame(assets, "", "", NewMockInputManager(), NewMockAudioManager())
+	g := NewGame(assets, "", "", NewMockInputManager(), NewMockAudioManager(), false)
 
 	w, h := g.Layout(800, 600)
 	if w != 1280 || h != 720 {
@@ -48,30 +48,7 @@ func TestLayout(t *testing.T) {
 	}
 }
 
-func TestPickNPCIDToSpawn(t *testing.T) {
-	archReg := NewArchetypeRegistry()
-	archReg.Archetypes["orc_male"] = &Archetype{ID: "orc_male"}
-	archReg.Archetypes["demon_female"] = &Archetype{ID: "demon_female"}
-	archReg.Archetypes["peasant_male"] = &Archetype{ID: "peasant_male"}
-
-	g := &Game{
-		archetypeRegistry: archReg,
-		currentMapType: MapType{
-			SpawnWeights: map[string]int{"orc_male": 100, "demon_female": 10},
-		},
-	}
-
-	id := g.pickNPCIDToSpawn()
-	if id != "orc_male" && id != "demon_female" {
-		t.Errorf("Unexpected NPC ID: %s", id)
-	}
-
-	g.currentMapType.SpawnWeights = map[string]int{"peasant_male": 1}
-	id = g.pickNPCIDToSpawn()
-	if id != "peasant_male" {
-		t.Errorf("Expected peasant_male, got %s", id)
-	}
-}
+// pickSpawnConfig test removed as method was deleted
 
 func TestGameWinMenu(t *testing.T) {
 	g := &Game{
@@ -89,22 +66,22 @@ func TestGameWinMenu(t *testing.T) {
 
 func TestSpawningLogic(t *testing.T) {
 	var assets embed.FS
-	g := NewGame(assets, "", "", NewMockInputManager(), NewMockAudioManager())
+	g := NewGame(assets, "", "", NewMockInputManager(), NewMockAudioManager(), false)
 
 	// Mock map with frequent spawning
-	g.currentMapType.SpawnFreq = 0.0001 // frequent
-	g.currentMapType.SpawnAmount = 5
-	g.currentMapType.SpawnWeights = map[string]int{"orc_male": 1}
+	g.currentMapType.Spawns = []SpawnConfig{
+		{Archetype: "orc_male", Probability: 1.0, Frequency: 0.016, Alignment: AlignmentEnemy},
+	}
 	g.archetypeRegistry.Archetypes["orc_male"] = &Archetype{ID: "orc_male"}
 	g.archetypeRegistry.IDs = []string{"orc_male"}
 
-	// Trigger spawning
-	g.npcSpawnTimer = 1000
-	g.updateNPCSpawning()
+	// Trigger spawn cycle
+	// The new logic requires ticking until threshold
+	for i := 0; i < 10; i++ {
+		g.updateNPCSpawning()
+	}
 
-	// Test spawning near
-	g.spawnNPCNear(10, 10)
-
-	// Test spawning at edges
-	g.spawnNPCAtEdges()
+	if len(g.npcs) == 0 {
+		t.Error("Should have spawned NPCs")
+	}
 }

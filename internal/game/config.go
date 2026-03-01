@@ -13,6 +13,16 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type ObstacleType string
+
+const (
+	TypeBuilding ObstacleType = "building"
+	TypeTree     ObstacleType = "tree"
+	TypeRock     ObstacleType = "rock"
+	TypeResource ObstacleType = "resource"
+	TypeBush     ObstacleType = "bush"
+)
+
 type ObjectiveType int
 
 const (
@@ -70,11 +80,37 @@ func (t *ObjectiveType) UnmarshalYAML(value *yaml.Node) error {
 	return fmt.Errorf("unknown objective type: %v", value.Value)
 }
 
-type PreSpawn struct {
-	Archetype string  `yaml:"archetype"`
-	X         float64 `yaml:"x"`
-	Y         float64 `yaml:"y"`
-	State     string  `yaml:"state"` // e.g. "dead"
+func (a *Alignment) UnmarshalYAML(value *yaml.Node) error {
+	var s string
+	if err := value.Decode(&s); err == nil {
+		switch s {
+		case "enemy":
+			*a = AlignmentEnemy
+			return nil
+		case "neutral":
+			*a = AlignmentNeutral
+			return nil
+		case "ally":
+			*a = AlignmentAlly
+			return nil
+		}
+	}
+	var i int
+	if err := value.Decode(&i); err == nil {
+		*a = Alignment(i)
+		return nil
+	}
+	return fmt.Errorf("unknown alignment: %v", value.Value)
+}
+
+type Inhabitant struct {
+	ID        string    `yaml:"id,omitempty"` // For internal mapping if needed
+	Name      string    `yaml:"name,omitempty"`
+	Archetype string    `yaml:"archetype"`
+	X         float64   `yaml:"x"`
+	Y         float64   `yaml:"y"`
+	State     string    `yaml:"state,omitempty"` // e.g. "dead", empty means alive
+	Alignment Alignment `yaml:"alignment"`
 }
 
 type PreSpawnObstacle struct {
@@ -83,6 +119,17 @@ type PreSpawnObstacle struct {
 	X         *float64 `yaml:"x,omitempty"`
 	Y         *float64 `yaml:"y,omitempty"`
 	Disabled  bool     `yaml:"disabled,omitempty"`
+}
+
+type SpawnConfig struct {
+	Archetype   string    `yaml:"archetype"`
+	Alignment   Alignment `yaml:"alignment"`
+	Probability float64   `yaml:"probability"` // 0.0 to 1.0
+	Frequency   float64   `yaml:"frequency"`   // seconds
+	X           *float64  `yaml:"x,omitempty"`
+	Y           *float64  `yaml:"y,omitempty"`
+
+	Timer int `yaml:"-"` // Internal tick counter
 }
 
 type MapType struct {
@@ -95,12 +142,10 @@ type MapType struct {
 	TargetTime      float64            `yaml:"target_time"`
 	TargetKillCount int                `yaml:"target_kill_count"`
 	TargetKills     map[string]int     `yaml:"target_kills"`
-	SpawnFreq       float64            `yaml:"spawn_frequency"`
-	SpawnAmount     int                `yaml:"spawn_amount"`
-	SpawnWeights    map[string]int     `yaml:"spawn_weights"`
 	WidthPixels     int                `yaml:"width_px"`
 	HeightPixels    int                `yaml:"height_px"`
-	PreSpawns       []PreSpawn         `yaml:"pre_spawns"`
+	Inhabitants     []Inhabitant       `yaml:"inhabitants"`
+	Spawns          []SpawnConfig      `yaml:"spawns"`
 	Obstacles       []PreSpawnObstacle `yaml:"obstacles"`
 	FloorTile       string             `yaml:"floor_tile"`
 	MapWidth        float64            `yaml:"-"` // Cartesian width
@@ -180,6 +225,26 @@ func (r *MapTypeRegistry) LoadAll(assets fs.FS) error {
 	return nil
 }
 
+type FootprintPoint struct {
+	X float64 `yaml:"x"`
+	Y float64 `yaml:"y"`
+}
+
+// MarshalYAML emits the point as a plain YAML mapping without quoting the 'y'
+// key. gopkg.in/yaml.v3 quotes 'y' by default because it is a YAML 1.1 boolean
+// synonym. Using explicit !!float tags prevents that behaviour.
+func (p FootprintPoint) MarshalYAML() (interface{}, error) {
+	return &yaml.Node{
+		Kind: yaml.MappingNode,
+		Content: []*yaml.Node{
+			{Kind: yaml.ScalarNode, Value: "x"},
+			{Kind: yaml.ScalarNode, Tag: "!!float", Value: fmt.Sprintf("%g", p.X)},
+			{Kind: yaml.ScalarNode, Value: "y"},
+			{Kind: yaml.ScalarNode, Tag: "!!float", Value: fmt.Sprintf("%g", p.Y)},
+		},
+	}, nil
+}
+
 type EntityConfig struct {
 	ID       string   `yaml:"id"`
 	Name     string   `yaml:"name"`
@@ -197,12 +262,7 @@ type EntityConfig struct {
 	} `yaml:"stats"`
 	WeaponName string `yaml:"weapon"`
 
-	FootprintWidth  float64 `yaml:"footprint_width"`
-	FootprintHeight float64 `yaml:"footprint_height"`
-	Footprint       []struct {
-		X float64 `yaml:"x"`
-		Y float64 `yaml:"y"`
-	} `yaml:"footprint"`
+	Footprint []FootprintPoint `yaml:"footprint"`
 
 	// Run-time loaded assets
 	AssetDir    string      `yaml:"-"`
@@ -315,20 +375,19 @@ func (r *ArchetypeRegistry) LoadAll(assets fs.FS) error {
 }
 
 type ObstacleArchetype struct {
-	ID              string  `yaml:"id"`
-	Name            string  `yaml:"name"`
-	Type            string  `yaml:"type"` // "static", "well"
-	Description     string  `yaml:"description"`
-	Health          int     `yaml:"health"`        // Base health
-	CooldownTime    float64 `yaml:"cooldown_time"` // Base cooldown in minutes
-	ImagePath       string  `yaml:"image"`         // Relative path from data/obstacles/<id>/
-	FootprintWidth  float64 `yaml:"footprint_width"`
-	FootprintHeight float64 `yaml:"footprint_height"`
-	Footprint       []struct {
-		X float64 `yaml:"x"`
-		Y float64 `yaml:"y"`
-	} `yaml:"footprint"`
-	Image interface{} `yaml:"-"`
+	ID           string           `yaml:"id"`
+	Name         string           `yaml:"name"`
+	Type         ObstacleType     `yaml:"type"`
+	Destructible bool             `yaml:"destructible"` // If false, cannot be damaged
+	Description  string           `yaml:"description"`
+	Health       int              `yaml:"health"`        // Base health (ignored if Destructible is false)
+	CooldownTime float64          `yaml:"cooldown_time"` // Base cooldown in minutes
+	Footprint    []FootprintPoint `yaml:"footprint"`
+	Image        interface{}      `yaml:"-"`
+}
+
+func (a *ObstacleArchetype) IsWell() bool {
+	return a.CooldownTime > 0
 }
 
 type ObstacleRegistry struct {
@@ -389,31 +448,19 @@ func (r *ObstacleRegistry) LoadAll(assets fs.FS) error {
 }
 func (r *ObstacleRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics) {
 	for _, config := range r.Archetypes {
-		if config.ImagePath != "" {
-			config.Image = graphics.LoadSprite(assets, config.ImagePath, true)
-		}
+		// Derive image path from ID: assets/images/obstacles/<id>.png
+		imagePath := path.Join("assets/images/obstacles", config.ID+".png")
+		config.Image = graphics.LoadSprite(assets, imagePath, true)
 	}
 }
 
 func (c *EntityConfig) GetFootprint() engine.Polygon {
 	if len(c.Footprint) == 0 {
-		// Default rectangular footprint based on width/height
-		w := c.FootprintWidth
-		if w <= 0 {
-			w = 0.3 // default fallback
-		}
-		h := c.FootprintHeight
-		if h <= 0 {
-			h = 0.3 // default fallback
-		}
-		return engine.Polygon{
-			Points: []engine.Point{
-				{X: -w / 2, Y: -h / 2},
-				{X: w / 2, Y: -h / 2},
-				{X: w / 2, Y: h / 2},
-				{X: -w / 2, Y: h / 2},
-			},
-		}
+		// Fallback for missing footprint
+		return engine.Polygon{Points: []engine.Point{
+			{X: -0.15, Y: -0.15}, {X: 0.15, Y: -0.15},
+			{X: 0.15, Y: 0.15}, {X: -0.15, Y: 0.15},
+		}}
 	}
 	poly := engine.Polygon{Points: make([]engine.Point, len(c.Footprint))}
 	for i, p := range c.Footprint {

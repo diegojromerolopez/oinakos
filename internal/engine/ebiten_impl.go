@@ -130,20 +130,87 @@ func (w *EbitenImageWrapper) GetRaw() *ebiten.Image {
 // EbitenInput implements engine.Input using the actual ebiten package.
 type EbitenInput struct{}
 
-func (e *EbitenInput) IsKeyPressed(key ebiten.Key) bool {
-	return ebiten.IsKeyPressed(key)
+func (e *EbitenInput) IsKeyPressed(key Key) bool {
+	return ebiten.IsKeyPressed(toEbitenKey(key))
 }
 
-func (e *EbitenInput) IsKeyJustPressed(key ebiten.Key) bool {
-	return inpututil.IsKeyJustPressed(key)
+func (e *EbitenInput) IsKeyJustPressed(key Key) bool {
+	return inpututil.IsKeyJustPressed(toEbitenKey(key))
 }
 
-func (e *EbitenInput) AppendJustPressedKeys(keys []ebiten.Key) []ebiten.Key {
-	return inpututil.AppendJustPressedKeys(keys)
+func (e *EbitenInput) AppendJustPressedKeys(keys []Key) []Key {
+	ebKeys := inpututil.AppendJustPressedKeys(nil)
+	for _, k := range ebKeys {
+		ek := fromEbitenKey(k)
+		if ek != -1 {
+			keys = append(keys, ek)
+		}
+	}
+	return keys
 }
 
 func NewEbitenInput() *EbitenInput {
 	return &EbitenInput{}
+}
+
+func toEbitenKey(key Key) ebiten.Key {
+	switch key {
+	case KeyW:
+		return ebiten.KeyW
+	case KeyA:
+		return ebiten.KeyA
+	case KeyS:
+		return ebiten.KeyS
+	case KeyD:
+		return ebiten.KeyD
+	case KeySpace:
+		return ebiten.KeySpace
+	case KeyEscape:
+		return ebiten.KeyEscape
+	case KeyEnter:
+		return ebiten.KeyEnter
+	case KeyUp:
+		return ebiten.KeyUp
+	case KeyDown:
+		return ebiten.KeyDown
+	case KeyLeft:
+		return ebiten.KeyLeft
+	case KeyRight:
+		return ebiten.KeyRight
+	case KeyF9:
+		return ebiten.KeyF9
+	}
+	return -1
+}
+
+func fromEbitenKey(key ebiten.Key) Key {
+	switch key {
+	case ebiten.KeyW:
+		return KeyW
+	case ebiten.KeyA:
+		return KeyA
+	case ebiten.KeyS:
+		return KeyS
+	case ebiten.KeyD:
+		return KeyD
+	case ebiten.KeySpace:
+		return KeySpace
+	case ebiten.KeyEscape:
+		return KeyEscape
+	case ebiten.KeyEnter:
+		return KeyEnter
+	case ebiten.KeyUp:
+		return KeyUp
+	case ebiten.KeyDown:
+		return KeyDown
+	case ebiten.KeyLeft:
+		return KeyLeft
+	case ebiten.KeyRight:
+		return KeyRight
+	case ebiten.KeyF9:
+		return KeyF9
+	}
+	return -1
 }
 
 // EbitenGraphics implements engine.Graphics using Ebiten's utility functions.
@@ -200,6 +267,29 @@ func (e *EbitenGraphics) DrawFilledCircle(screen Image, x, y, radius float32, cl
 	wrapper, ok := screen.(*EbitenImageWrapper)
 	if ok && wrapper != nil && wrapper.img != nil {
 		vector.DrawFilledCircle(wrapper.img, x, y, radius, clr, antiAlias)
+	}
+}
+
+func (e *EbitenGraphics) DrawLine(screen Image, x1, y1, x2, y2 float32, clr color.Color, width float32) {
+	wrapper, ok := screen.(*EbitenImageWrapper)
+	if ok && wrapper != nil && wrapper.img != nil {
+		vector.StrokeLine(wrapper.img, x1, y1, x2, y2, width, clr, true)
+	}
+}
+
+func (e *EbitenGraphics) DrawPolygon(screen Image, points []Point, clr color.Color, width float32) {
+	if len(points) < 2 {
+		return
+	}
+	wrapper, ok := screen.(*EbitenImageWrapper)
+	if !ok || wrapper == nil || wrapper.img == nil {
+		return
+	}
+	// We use ebitenutil.DrawLine for simplicity across versions
+	for i := 0; i < len(points); i++ {
+		p1 := points[i]
+		p2 := points[(i+1)%len(points)]
+		ebitenutil.DrawLine(wrapper.img, float64(p1.X), float64(p1.Y), float64(p2.X), float64(p2.Y), clr)
 	}
 }
 

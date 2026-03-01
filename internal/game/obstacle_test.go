@@ -4,11 +4,14 @@ import "testing"
 
 func makeObstacleArchetype(health int) *ObstacleArchetype {
 	return &ObstacleArchetype{
-		ID:              "test",
-		Name:            "Test",
-		Health:          health,
-		FootprintWidth:  0.5,
-		FootprintHeight: 0.5,
+		ID:           "test",
+		Name:         "Test",
+		Health:       health,
+		Destructible: true,
+		Footprint: []FootprintPoint{
+			{X: -0.25, Y: -0.25}, {X: 0.25, Y: -0.25},
+			{X: 0.25, Y: 0.25}, {X: -0.25, Y: 0.25},
+		},
 	}
 }
 
@@ -81,10 +84,11 @@ func TestObstacleTakeDamage_Lethal(t *testing.T) {
 }
 
 func TestObstacleTakeDamage_Indestructible(t *testing.T) {
-	arch := makeObstacleArchetype(0) // 0 = indestructible
+	arch := makeObstacleArchetype(1000)
+	arch.Destructible = false // explicitly mark as indestructible
 	o := NewObstacle(0, 0, arch)
 	o.TakeDamage(9999)
-	if !o.Alive || o.Health != 0 {
+	if !o.Alive || o.Health != 1000 {
 		t.Error("Indestructible obstacle should take no damage")
 	}
 }
@@ -113,18 +117,18 @@ func TestObstacleGetFootprint_DefaultSize(t *testing.T) {
 
 func TestObstacleGetFootprint_WithArchetype(t *testing.T) {
 	arch := makeObstacleArchetype(10)
-	arch.FootprintWidth = 1.0
-	arch.FootprintHeight = 0.5
 	o := NewObstacle(2, 3, arch)
 	fp := o.GetFootprint()
-	// The footprint is centered at (2, 3) with half-widths 1.0/0.5
-	// Points should be within expected range
+	if len(fp.Points) != 4 {
+		t.Errorf("Footprint should have 4 points, got %d", len(fp.Points))
+	}
+	// Footprint from archetype is ±0.25 centered at (2, 3)
 	for _, pt := range fp.Points {
-		if pt.X < 1 || pt.X > 3 {
-			t.Errorf("Footprint X out of range: %v (center=2, hw=1)", pt.X)
+		if pt.X < 1.74 || pt.X > 2.26 {
+			t.Errorf("Footprint X out of expected range: %v", pt.X)
 		}
-		if pt.Y < 2.5 || pt.Y > 3.5 {
-			t.Errorf("Footprint Y out of range: %v (center=3, hh=0.5)", pt.Y)
+		if pt.Y < 2.74 || pt.Y > 3.26 {
+			t.Errorf("Footprint Y out of expected range: %v", pt.Y)
 		}
 	}
 }

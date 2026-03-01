@@ -26,6 +26,13 @@ const (
 )
 
 type BehaviorType int
+type Alignment int
+
+const (
+	AlignmentEnemy Alignment = iota
+	AlignmentNeutral
+	AlignmentAlly
+)
 
 const (
 	BehaviorWander BehaviorType = iota
@@ -67,6 +74,7 @@ type NPC struct {
 	TargetNPC    *NPC
 	TargetPlayer *MainCharacter
 	IsBoss       bool
+	Alignment    Alignment
 }
 
 var npcNames = []string{
@@ -91,6 +99,7 @@ func NewNPC(x, y float64, archetype *Archetype, level int) *NPC {
 		State:     NPCIdle,
 		Facing:    DirSE,
 		Level:     level,
+		Alignment: AlignmentEnemy, // Default to Enemy
 	}
 
 	if len(archetype.Names) > 0 {
@@ -215,86 +224,137 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 	var hasTarget bool
 	var isTargetPlayer bool
 
-	// Behavior Logic
-	if n.TargetPlayer != nil && n.TargetPlayer.IsAlive() {
-		targetX, targetY = n.TargetPlayer.X, n.TargetPlayer.Y
-		hasTarget = true
-		isTargetPlayer = true
-	} else if n.TargetNPC != nil && n.TargetNPC.IsAlive() {
-		targetX, targetY = n.TargetNPC.X, n.TargetNPC.Y
-		hasTarget = true
-	} else {
-		switch n.Behavior {
-		case BehaviorKnightHunter:
-			n.TargetPlayer = mainCharacter
-			targetX, targetY = mainCharacter.X, mainCharacter.Y
+	// Override behavior based on alignment
+	if n.Alignment == AlignmentAlly {
+		// Try to find nearest enemy NPC
+		var nearestEnemy *NPC
+		var minDist = 999.0
+		for _, other := range allNPCs {
+			if other == n || !other.IsAlive() || other.Alignment != AlignmentEnemy {
+				continue
+			}
+			dist := math.Sqrt(math.Pow(n.X-other.X, 2) + math.Pow(n.Y-other.Y, 2))
+			if dist < 15.0 && dist < minDist { // 15 unit range for allies to notice enemies
+				minDist = dist
+				nearestEnemy = other
+			}
+		}
+
+		if nearestEnemy != nil {
+			n.TargetNPC = nearestEnemy
+			n.TargetPlayer = nil
+			targetX, targetY = nearestEnemy.X, nearestEnemy.Y
 			hasTarget = true
-			isTargetPlayer = true
-		case BehaviorNpcFighter:
-			// Find nearest living NPC that isn't me
-			var minDist = 999.0
-			for _, other := range allNPCs {
-				if other == n || !other.IsAlive() {
-					continue
-				}
-				dist := math.Sqrt(math.Pow(n.X-other.X, 2) + math.Pow(n.Y-other.Y, 2))
-				if dist < minDist {
-					minDist = dist
-					n.TargetNPC = other
-				}
-			}
-			if n.TargetNPC != nil {
-				targetX, targetY = n.TargetNPC.X, n.TargetNPC.Y
-				hasTarget = true
-			}
-		case BehaviorChaotic:
-			// Find nearest living actor (NPC or MainCharacter) that isn't me
-			var minDist = 999.0
-			var nearestNPC *NPC
-			var playerDist = math.Sqrt(math.Pow(n.X-mainCharacter.X, 2) + math.Pow(n.Y-mainCharacter.Y, 2))
-
-			for _, other := range allNPCs {
-				if other == n || !other.IsAlive() {
-					continue
-				}
-				dist := math.Sqrt(math.Pow(n.X-other.X, 2) + math.Pow(n.Y-other.Y, 2))
-				if dist < minDist {
-					minDist = dist
-					nearestNPC = other
-				}
-			}
-
-			if mainCharacter.IsAlive() && playerDist < minDist {
-				n.TargetPlayer = mainCharacter
-				n.TargetNPC = nil
+		} else {
+			// No enemies, follow player
+			distToPlayer := math.Sqrt(math.Pow(n.X-mainCharacter.X, 2) + math.Pow(n.Y-mainCharacter.Y, 2))
+			if distToPlayer > 3.0 {
 				targetX, targetY = mainCharacter.X, mainCharacter.Y
 				hasTarget = true
-			} else if nearestNPC != nil {
-				n.TargetNPC = nearestNPC
-				n.TargetPlayer = nil
-				targetX, targetY = nearestNPC.X, nearestNPC.Y
-				hasTarget = true
-			}
-		case BehaviorWander:
-			if n.Tick%120 == 0 {
-				n.WanderDirX = rand.Float64()*2 - 1
-				n.WanderDirY = rand.Float64()*2 - 1
-			}
-			targetX, targetY = n.X+n.WanderDirX, n.Y+n.WanderDirY
-			hasTarget = true
-		case BehaviorPatrol:
-			if n.PatrolHeading {
-				targetX, targetY = n.PatrolEndX, n.PatrolEndY
-				if math.Sqrt(math.Pow(n.X-n.PatrolEndX, 2)+math.Pow(n.Y-n.PatrolEndY, 2)) < 0.5 {
-					n.PatrolHeading = false
-				}
 			} else {
-				targetX, targetY = n.PatrolStartX, n.PatrolStartY
-				if math.Sqrt(math.Pow(n.X-n.PatrolStartX, 2)+math.Pow(n.Y-n.PatrolStartY, 2)) < 0.5 {
-					n.PatrolHeading = true
+				n.State = NPCIdle
+				return
+			}
+		}
+	} else if n.Alignment == AlignmentNeutral {
+		// Strictly wander, ignore player and NPCs unless we add retaliation logic later
+		if n.Tick%120 == 0 {
+			n.WanderDirX = rand.Float64()*2 - 1
+			n.WanderDirY = rand.Float64()*2 - 1
+		}
+		targetX, targetY = n.X+n.WanderDirX, n.Y+n.WanderDirY
+		hasTarget = true
+	}
+
+	if !hasTarget {
+		// Behavior Logic (Traditional Enemy behavior)
+		if n.TargetPlayer != nil && n.TargetPlayer.IsAlive() {
+			targetX, targetY = n.TargetPlayer.X, n.TargetPlayer.Y
+			hasTarget = true
+			isTargetPlayer = true
+		} else if n.TargetNPC != nil && n.TargetNPC.IsAlive() {
+			targetX, targetY = n.TargetNPC.X, n.TargetNPC.Y
+			hasTarget = true
+		} else {
+			switch n.Behavior {
+			case BehaviorKnightHunter:
+				n.TargetPlayer = mainCharacter
+				targetX, targetY = mainCharacter.X, mainCharacter.Y
+				hasTarget = true
+				isTargetPlayer = true
+			case BehaviorNpcFighter:
+				// Find nearest living NPC that isn't me
+				var minDist = 999.0
+				for _, other := range allNPCs {
+					if other == n || !other.IsAlive() {
+						continue
+					}
+					dist := math.Sqrt(math.Pow(n.X-other.X, 2) + math.Pow(n.Y-other.Y, 2))
+					if dist < minDist {
+						minDist = dist
+						n.TargetNPC = other
+					}
+				}
+				if n.TargetNPC != nil {
+					targetX, targetY = n.TargetNPC.X, n.TargetNPC.Y
+					hasTarget = true
+				}
+			case BehaviorChaotic:
+				// Find nearest living actor (NPC or MainCharacter) that isn't me
+				var minDist = 999.0
+				var nearestNPC *NPC
+				var playerDist = math.Sqrt(math.Pow(n.X-mainCharacter.X, 2) + math.Pow(n.Y-mainCharacter.Y, 2))
+
+				for _, other := range allNPCs {
+					if other == n || !other.IsAlive() {
+						continue
+					}
+					dist := math.Sqrt(math.Pow(n.X-other.X, 2) + math.Pow(n.Y-other.Y, 2))
+					if dist < minDist {
+						minDist = dist
+						nearestNPC = other
+					}
+				}
+
+				if mainCharacter.IsAlive() && playerDist < minDist {
+					n.TargetPlayer = mainCharacter
+					n.TargetNPC = nil
+					targetX, targetY = mainCharacter.X, mainCharacter.Y
+					hasTarget = true
+				} else if nearestNPC != nil {
+					n.TargetNPC = nearestNPC
+					n.TargetPlayer = nil
+					targetX, targetY = nearestNPC.X, nearestNPC.Y
+					hasTarget = true
+				}
+			case BehaviorWander:
+				if n.Tick%120 == 0 {
+					n.WanderDirX = rand.Float64()*2 - 1
+					n.WanderDirY = rand.Float64()*2 - 1
+				}
+				targetX, targetY = n.X+n.WanderDirX, n.Y+n.WanderDirY
+				hasTarget = true
+			case BehaviorPatrol:
+				if n.PatrolHeading {
+					targetX, targetY = n.PatrolEndX, n.PatrolEndY
+					if math.Sqrt(math.Pow(n.X-n.PatrolEndX, 2)+math.Pow(n.Y-n.PatrolEndY, 2)) < 0.5 {
+						n.PatrolHeading = false
+					}
+				} else {
+					targetX, targetY = n.PatrolStartX, n.PatrolStartY
+					if math.Sqrt(math.Pow(n.X-n.PatrolStartX, 2)+math.Pow(n.Y-n.PatrolStartY, 2)) < 0.5 {
+						n.PatrolHeading = true
+					}
+				}
+				hasTarget = true
+			default:
+				// Fallback for generic Enemy alignment: attack player
+				if n.Alignment == AlignmentEnemy {
+					targetX, targetY = mainCharacter.X, mainCharacter.Y
+					hasTarget = true
+					isTargetPlayer = true
 				}
 			}
-			hasTarget = true
 		}
 	}
 

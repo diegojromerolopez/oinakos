@@ -15,8 +15,6 @@ import (
 	_ "image/png"
 
 	"oinakos/internal/engine"
-
-	"github.com/hajimehoshi/ebiten/v2"
 )
 
 const (
@@ -38,6 +36,7 @@ type Game struct {
 	currentMapType   MapType
 	mapLevel         int
 	initialMapTypeID string
+	debug            bool
 
 	generatedChunks map[image.Point]bool
 	npcSpawnTimer   int
@@ -56,34 +55,27 @@ type Game struct {
 	audio             AudioManager
 }
 
-func NewGame(assets fs.FS, initialMapID, initialMapTypeID string, input engine.Input, audio AudioManager) *Game {
+func NewGame(assets fs.FS, initialMapID, initialMapTypeID string, input engine.Input, audio AudioManager, debug bool) *Game {
 	rand.Seed(time.Now().UnixNano())
 
 	// Load mainCharacter config
 	pConfig, err := LoadMainCharacterConfig(assets)
 	if err != nil {
 		log.Printf("Warning: failed to load main character: %v. Using default values.", err)
-		// We can still run without it using hardcoded defaults, but we should log it
 	}
 
 	mainCharacter := NewMainCharacter(0, 0, pConfig)
 	pIsoX, pIsoY := engine.CartesianToIso(mainCharacter.X, mainCharacter.Y)
 
-	// Select map type
-	mapTypeRegistry := NewMapTypeRegistry()
-	if err := mapTypeRegistry.LoadAll(assets); err != nil {
-		log.Printf("Error loading Map Type configs: %v", err)
-	}
-
+	// Registries
 	archetypeRegistry := NewArchetypeRegistry()
-	if err := archetypeRegistry.LoadAll(assets); err != nil {
-		log.Printf("Error loading Archetype configs: %v", err)
-	}
+	archetypeRegistry.LoadAll(assets)
+
+	mapTypeRegistry := NewMapTypeRegistry()
+	mapTypeRegistry.LoadAll(assets)
 
 	obstacleRegistry := NewObstacleRegistry()
-	if err := obstacleRegistry.LoadAll(assets); err != nil {
-		log.Printf("Error loading Obstacle configs: %v", err)
-	}
+	obstacleRegistry.LoadAll(assets)
 
 	var selectedMapType MapType
 	if len(mapTypeRegistry.IDs) > 0 {
@@ -107,6 +99,7 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID string, input engine.I
 		initialMapTypeID:  initialMapTypeID,
 		input:             input,
 		audio:             audio,
+		debug:             debug,
 	}
 
 	// Trigger map loading if requested
@@ -143,7 +136,7 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID string, input engine.I
 				g.currentMapType = *m
 				log.Printf("Using initial map type: %s", g.initialMapID)
 			} else {
-				log.Printf("Warning: requested map %s not found in any search path or as map type", g.initialMapID)
+				log.Printf("Warning: requested map %s not found", g.initialMapID)
 			}
 		}
 	} else if g.initialMapTypeID != "" {
@@ -318,21 +311,28 @@ func (g *Game) loadMapLevel() {
 		}
 	}
 
-	// Spawn PreSpawns (Corpses, specific encounter targets, etc.)
-	for _, ps := range g.currentMapType.PreSpawns {
+	// Spawn Inhabitants (Corpses, specific encounter targets, etc.)
+	for _, ps := range g.currentMapType.Inhabitants {
 		if config, ok := g.archetypeRegistry.Archetypes[ps.Archetype]; ok {
 			npc := NewNPC(ps.X, ps.Y, config, g.mapLevel)
+			npc.Alignment = ps.Alignment
+			if ps.Name != "" {
+				npc.Name = ps.Name
+			}
 			if ps.State == "dead" {
 				npc.Health = 0
 				npc.State = NPCDead
+			} else {
+				// Default to alive/active
+				npc.State = NPCIdle
 			}
 			g.npcs = append(g.npcs, npc)
 		} else {
-			log.Printf("WARNING: PreSpawn archetype not found: %s", ps.Archetype)
+			log.Printf("WARNING: Inhabitant archetype not found: %s", ps.Archetype)
 		}
 	}
 
-	// Spawn PreSpawn Obstacles
+	// Spawn PreSpawn Obstacles — MUST BE LOADED BEFORE NPC/PC SAFE SPAWN
 	for _, po := range g.currentMapType.Obstacles {
 		if po.Disabled {
 			continue
@@ -351,30 +351,60 @@ func (g *Game) loadMapLevel() {
 		}
 	}
 
-	log.Printf("Starting Map Level %d: %s", g.mapLevel, g.currentMapType.Name)
+	// Ensure NPCs start in a safe spot (not inside my new huge building shadows)
+	for _, n := range g.npcs {
+		if !n.IsAlive() {
+			continue
+		}
+		const maxTries = 500
+		for i := 0; i < maxTries; i++ {
+			if !n.checkCollisionAt(n.X, n.Y, g.obstacles) {
+				break
+			}
+			// Push southward/outward more aggressively
+			n.X += 0.5
+			n.Y += 0.5
+		}
+	}
+
+	// Ensure MainCharacter starts in a safe (non-colliding) spot
+	const maxTries = 500
+	radius := 1.0
+	for i := 0; i < maxTries; i++ {
+		if !g.mainCharacter.checkCollisionAt(g.mainCharacter.X, g.mainCharacter.Y, g.obstacles) {
+			break // Safe!
+		}
+		// Spiraling outward search for a safe spot — larger steps for huge building shadows
+		angle := float64(i) * 0.3
+		dist := radius + (float64(i) * 0.2)
+		g.mainCharacter.X += math.Cos(angle) * dist
+		g.mainCharacter.Y += math.Sin(angle) * dist
+	}
+
+	log.Printf("Starting Map Level %d: %s at safe pos %.2f,%.2f", g.mapLevel, g.currentMapType.Name, g.mainCharacter.X, g.mainCharacter.Y)
 }
 
 func (g *Game) Update() error {
 	if g.isGameOver {
-		if g.input.IsKeyJustPressed(ebiten.KeyEscape) {
+		if g.input.IsKeyJustPressed(engine.KeyEscape) {
 			os.Exit(0)
 		}
-		if g.input.IsKeyJustPressed(ebiten.KeyEnter) {
-			*g = *NewGame(g.assets, g.initialMapID, g.initialMapTypeID, g.input, g.audio)
+		if g.input.IsKeyJustPressed(engine.KeyEnter) {
+			*g = *NewGame(g.assets, g.initialMapID, g.initialMapTypeID, g.input, g.audio, g.debug)
 		}
 		return nil
 	}
 
 	if g.isMapWon {
 		// Player beat the map — wait for ENTER or ESC or Up/Down
-		if g.input.IsKeyJustPressed(ebiten.KeyUp) || g.input.IsKeyJustPressed(ebiten.KeyW) {
+		if g.input.IsKeyJustPressed(engine.KeyUp) || g.input.IsKeyJustPressed(engine.KeyW) {
 			g.mapWonMenuIndex = 0
 		}
-		if g.input.IsKeyJustPressed(ebiten.KeyDown) || g.input.IsKeyJustPressed(ebiten.KeyS) {
+		if g.input.IsKeyJustPressed(engine.KeyDown) || g.input.IsKeyJustPressed(engine.KeyS) {
 			g.mapWonMenuIndex = 1
 		}
 
-		if g.input.IsKeyJustPressed(ebiten.KeyEnter) {
+		if g.input.IsKeyJustPressed(engine.KeyEnter) {
 			if g.mapWonMenuIndex == WinMenuContinue {
 				// Advance to next map
 				g.mapLevel++
@@ -389,13 +419,13 @@ func (g *Game) Update() error {
 				os.Exit(0)
 			}
 		}
-		if g.input.IsKeyJustPressed(ebiten.KeyEscape) {
+		if g.input.IsKeyJustPressed(engine.KeyEscape) {
 			os.Exit(0)
 		}
 		return nil
 	}
 
-	if g.input.IsKeyJustPressed(ebiten.KeyEscape) {
+	if g.input.IsKeyJustPressed(engine.KeyEscape) {
 		if g.isPaused {
 			os.Exit(0)
 		}
@@ -459,6 +489,36 @@ func (g *Game) Update() error {
 	}
 
 	g.mainCharacter.Update(g.input, g.audio, g.obstacles, g.npcs, &g.floatingTexts, g.currentMapType.MapWidth, g.currentMapType.MapHeight)
+
+	// Real-time position tracking for the USER and Agent
+	if g.mainCharacter.Tick%30 == 0 {
+		isIllegal := g.mainCharacter.checkCollisionAt(g.mainCharacter.X, g.mainCharacter.Y, g.obstacles)
+		status := "OK"
+		if isIllegal {
+			status = "ILLEGAL POSITION (INSIDE BUILDING)"
+		}
+
+		// Find nearest building
+		nearestDist := 999.0
+		nearestName := "None"
+		for _, o := range g.obstacles {
+			dist := math.Sqrt(math.Pow(g.mainCharacter.X-o.X, 2) + math.Pow(g.mainCharacter.Y-o.Y, 2))
+			if dist < nearestDist {
+				nearestDist = dist
+				if o.Archetype != nil {
+					nearestName = o.Archetype.Name
+				}
+			}
+		}
+
+		log.Printf("[REALTIME] Player Pos: X=%.2f, Y=%.2f | Status: %s | Nearest: %s (Dist: %.2f)",
+			g.mainCharacter.X, g.mainCharacter.Y, status, nearestName, nearestDist)
+	}
+	// Write to a dedicated file for the agent to poll
+	os.WriteFile("/tmp/oinakos_pos.txt", []byte(fmt.Sprintf("%.2f,%.2f", g.mainCharacter.X, g.mainCharacter.Y)), 0644)
+
+	// Dynamic spawning
+	g.updateNPCSpawning()
 
 	for _, o := range g.obstacles {
 		o.Update()
@@ -755,53 +815,50 @@ func (g *Game) spawnObstaclesInChunk(cx, cy int) {
 }
 
 func (g *Game) updateNPCSpawning() {
-	g.npcSpawnTimer++
-
-	// Base spawn rate is every 180 ticks (3 seconds)
-	// Difficulty modifier reduces this time (makes them spawn faster)
-	// Example: level 1 = 180, level 2 = 150, level 3 = 120... (clamp to minimum 30)
-	spawnThreshold := 180 - (g.currentMapType.Difficulty * 20) - (g.mapLevel * 10)
-	if spawnThreshold < 30 {
-		spawnThreshold = 30
-	}
-	if g.currentMapType.SpawnFreq > 0 {
-		spawnThreshold = int(g.currentMapType.SpawnFreq * 60)
-	}
-
-	if g.npcSpawnTimer >= spawnThreshold {
-		g.npcSpawnTimer = 0
-		maxNPCs := 15 + (g.mapLevel * 5) // More max enemies in higher levels
-		if maxNPCs > 50 {
-			maxNPCs = 50
-		}
-
-		if len(g.npcs) < maxNPCs {
-			spawnAmount := 1
-			if g.currentMapType.SpawnAmount > 0 {
-				spawnAmount = g.currentMapType.SpawnAmount
+	// 1. Process individual spawn configurations
+	if len(g.currentMapType.Spawns) > 0 {
+		for i := range g.currentMapType.Spawns {
+			s := &g.currentMapType.Spawns[i]
+			if s.Frequency <= 0 {
+				continue // Skip if no frequency set
 			}
 
-			for i := 0; i < spawnAmount; i++ {
-				if g.currentMapType.Type == ObjDestroyBuilding && g.currentMapType.TargetObstacle != nil && g.currentMapType.TargetObstacle.Alive {
-					g.spawnNPCNear(g.currentMapType.TargetObstacle.X, g.currentMapType.TargetObstacle.Y)
-				} else {
-					g.spawnNPCAtEdges()
+			s.Timer++
+			// Convert frequency from seconds to ticks (60fps)
+			threshold := int(s.Frequency * 60)
+			if s.Timer >= threshold {
+				s.Timer = 0
+
+				// Check individual probability
+				if rand.Float64() <= s.Probability {
+					// Maximum NPC limit check (stay under 100 for performance)
+					if len(g.npcs) < 100 {
+						if s.X != nil && s.Y != nil {
+							g.spawnNPCNearPosition(*s.X, *s.Y, s)
+						} else {
+							g.spawnNPCAtMapEdges(s)
+						}
+					}
 				}
 			}
 		}
 	}
 
-	// Periodic cleanup of far away NPCs
-	if g.npcSpawnTimer == 90 {
+	// 2. Periodic cleanup of far away NPCs
+	// We check every 5 seconds (300 ticks) roughly
+	g.npcSpawnTimer++
+	if g.npcSpawnTimer >= 300 {
+		g.npcSpawnTimer = 0
 		activeNPCs := make([]*NPC, 0)
 		for _, n := range g.npcs {
 			dist := math.Sqrt(math.Pow(n.X-g.mainCharacter.X, 2) + math.Pow(n.Y-g.mainCharacter.Y, 2))
+			// Only cull if it's far away AND not a corpse
+			// Corpses remain forever per user rule
 			if n.IsAlive() {
 				if dist < 40 {
 					activeNPCs = append(activeNPCs, n)
 				}
 			} else {
-				// Per user request, NEVER remove corpses
 				activeNPCs = append(activeNPCs, n)
 			}
 		}
@@ -809,34 +866,8 @@ func (g *Game) updateNPCSpawning() {
 	}
 }
 
-func (g *Game) pickNPCIDToSpawn() string {
-	if g.archetypeRegistry == nil {
-		return ""
-	}
-	if len(g.currentMapType.SpawnWeights) > 0 {
-		totalWeight := 0
-		for _, w := range g.currentMapType.SpawnWeights {
-			totalWeight += w
-		}
-		if totalWeight > 0 {
-			roll := rand.Intn(totalWeight)
-			curr := 0
-			for id, w := range g.currentMapType.SpawnWeights {
-				curr += w
-				if roll < curr {
-					if _, ok := g.archetypeRegistry.Archetypes[id]; ok {
-						return id
-					}
-				}
-			}
-		}
-	}
-	// Fallback
-	return g.archetypeRegistry.IDs[rand.Intn(len(g.archetypeRegistry.IDs))]
-}
-
-func (g *Game) spawnNPCNear(x, y float64) {
-	if len(g.archetypeRegistry.IDs) == 0 {
+func (g *Game) spawnNPCNearPosition(x, y float64, sc *SpawnConfig) {
+	if len(g.archetypeRegistry.IDs) == 0 || sc == nil {
 		return
 	}
 	const spawnRadius = 2.0
@@ -844,9 +875,12 @@ func (g *Game) spawnNPCNear(x, y float64) {
 	ex := x + math.Cos(angle)*spawnRadius
 	ey := y + math.Sin(angle)*spawnRadius
 
-	npcID := g.pickNPCIDToSpawn()
-	npcConfig := g.archetypeRegistry.Archetypes[npcID]
+	npcConfig := g.archetypeRegistry.Archetypes[sc.Archetype]
+	if npcConfig == nil {
+		return
+	}
 	npc := NewNPC(ex, ey, npcConfig, g.mapLevel)
+	npc.Alignment = sc.Alignment
 
 	// Collision retry
 	for i := 0; i < 10; i++ {
@@ -867,8 +901,8 @@ func (g *Game) spawnNPCNear(x, y float64) {
 	g.npcs = append(g.npcs, npc)
 }
 
-func (g *Game) spawnNPCAtEdges() {
-	if len(g.archetypeRegistry.IDs) == 0 {
+func (g *Game) spawnNPCAtMapEdges(sc *SpawnConfig) {
+	if len(g.archetypeRegistry.IDs) == 0 || sc == nil {
 		return
 	}
 
@@ -877,10 +911,12 @@ func (g *Game) spawnNPCAtEdges() {
 	ex := g.mainCharacter.X + math.Cos(angle)*spawnDist
 	ey := g.mainCharacter.Y + math.Sin(angle)*spawnDist
 
-	// Pick a random NPC config based on weights
-	npcID := g.pickNPCIDToSpawn()
-	npcConfig := g.archetypeRegistry.Archetypes[npcID]
+	npcConfig := g.archetypeRegistry.Archetypes[sc.Archetype]
+	if npcConfig == nil {
+		return
+	}
 	npc := NewNPC(ex, ey, npcConfig, g.mapLevel)
+	npc.Alignment = sc.Alignment
 
 	// Edges usually clear but let's check anyway
 	for i := 0; i < 10; i++ {

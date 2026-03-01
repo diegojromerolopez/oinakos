@@ -18,5 +18,8 @@ stats:
   base_defense: 1
   attack_cooldown: 80
 weapon: Dagger
-footprint_width: 0.25
-footprint_height: 0.25
+footprint:
+  - { x: -0.125, y: -0.125 }
+  - { x: 0.125, y: -0.125 }
+  - { x: 0.125, y: 0.125 }
+  - { x: -0.125, y: 0.125 }

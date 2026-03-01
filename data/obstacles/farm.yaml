@@ -1,8 +1,16 @@
 id: farm
-name: "Farm"
-description: "An agricultural building with a silo."
+name: Farm
+type: building
+destructible: true
+description: An agricultural building with a silo.
 health: 5000
-image: "assets/images/obstacles/farm.png"
-footprint_width: 1.00
-footprint_height: 1.00
-type: static
+footprint:
+  - x: -0.5
+    y: -0.5
+  - x: 0.5
+    y: -0.5
+  - x: 0.5
+    y: 0.5
+  - x: -0.5
+    y: 0.5
+

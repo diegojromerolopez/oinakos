@@ -13,8 +13,6 @@ import (
 	"os"
 
 	"oinakos/internal/engine"
-
-	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type MainCharacterState int
@@ -217,20 +215,20 @@ func (mc *MainCharacter) Update(input engine.Input, audio AudioManager, obstacle
 
 	var dx, dy float64
 	if input != nil {
-		if input.IsKeyPressed(ebiten.KeyW) || input.IsKeyPressed(ebiten.KeyUp) {
+		if input.IsKeyPressed(engine.KeyW) || input.IsKeyPressed(engine.KeyUp) {
 			dy -= 1
 		}
-		if input.IsKeyPressed(ebiten.KeyS) || input.IsKeyPressed(ebiten.KeyDown) {
+		if input.IsKeyPressed(engine.KeyS) || input.IsKeyPressed(engine.KeyDown) {
 			dy += 1
 		}
-		if input.IsKeyPressed(ebiten.KeyA) || input.IsKeyPressed(ebiten.KeyLeft) {
+		if input.IsKeyPressed(engine.KeyA) || input.IsKeyPressed(engine.KeyLeft) {
 			dx -= 1
 		}
-		if input.IsKeyPressed(ebiten.KeyD) || input.IsKeyPressed(ebiten.KeyRight) {
+		if input.IsKeyPressed(engine.KeyD) || input.IsKeyPressed(engine.KeyRight) {
 			dx += 1
 		}
 
-		if input.IsKeyPressed(ebiten.KeySpace) {
+		if input.IsKeyPressed(engine.KeySpace) {
 			// Check for well interaction first
 			for _, o := range obstacles {
 				if o.Alive && o.Archetype != nil && o.Archetype.Type == "well" && o.CooldownTicks <= 0 {
