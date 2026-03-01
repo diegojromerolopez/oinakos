@@ -1,0 +1,23 @@
+id: marcus_ardea
+name: Marcus Ardea
+description: "Marcus Ardea is a low-IQ soldier. Very strong and very poor. He works for a shop, but likes to train all the time because he wants to forget that he is at the low end of the social pyramid. He has white hair and a squared face. He likes to go bare-chest."
+unique: true
+behavior: wander
+stats:
+  health_min: 500
+  health_max: 500
+  speed: 0.04
+  base_attack: 45
+  base_defense: 30
+  attack_cooldown: 40
+  attack_range: 1.0
+weapon: Fists
+footprint:
+  - x: -0.3
+    y: -0.15
+  - x: 0.3
+    y: -0.15
+  - x: 0.3
+    y: 0.15
+  - x: -0.3
+    y: 0.15

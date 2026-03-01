@@ -54,6 +54,7 @@ type Game struct {
 	input             engine.Input
 	showBoundaries    bool
 	audio             AudioManager
+	npcRegistry       *NPCRegistry
 }
 
 func NewGame(assets fs.FS, initialMapID, initialMapTypeID string, input engine.Input, audio AudioManager, debug bool) *Game {
@@ -78,8 +79,13 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID string, input engine.I
 	obstacleRegistry := NewObstacleRegistry()
 	obstacleRegistry.LoadAll(assets)
 
+	npcRegistry := NewNPCRegistry()
+	npcRegistry.LoadAll(assets)
+
 	var selectedMapType MapType
-	if len(mapTypeRegistry.IDs) > 0 {
+	if m, ok := mapTypeRegistry.Types["safe_zone"]; ok {
+		selectedMapType = *m
+	} else if len(mapTypeRegistry.IDs) > 0 {
 		selectedMapType = *mapTypeRegistry.Types[mapTypeRegistry.IDs[0]]
 	}
 
@@ -94,6 +100,7 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID string, input engine.I
 		archetypeRegistry: archetypeRegistry,
 		mapTypeRegistry:   mapTypeRegistry,
 		obstacleRegistry:  obstacleRegistry,
+		npcRegistry:       npcRegistry,
 		currentMapType:    selectedMapType,
 		mapLevel:          1,
 		initialMapID:      initialMapID,
@@ -314,7 +321,16 @@ func (g *Game) loadMapLevel() {
 
 	// Spawn Inhabitants (Corpses, specific encounter targets, etc.)
 	for _, ps := range g.currentMapType.Inhabitants {
-		if config, ok := g.archetypeRegistry.Archetypes[ps.Archetype]; ok {
+		var config *EntityConfig
+		var ok bool
+
+		if ps.NPC != "" {
+			config, ok = g.npcRegistry.NPCs[ps.NPC]
+		} else if ps.Archetype != "" {
+			config, ok = g.archetypeRegistry.Archetypes[ps.Archetype]
+		}
+
+		if ok {
 			npc := NewNPC(ps.X, ps.Y, config, g.mapLevel)
 			npc.Alignment = ps.Alignment
 			if ps.Name != "" {
@@ -328,8 +344,13 @@ func (g *Game) loadMapLevel() {
 				npc.State = NPCIdle
 			}
 			g.npcs = append(g.npcs, npc)
+			log.Printf("Spawned Inhabitant: %s at (%.2f, %.2f) - NPC type: %s", npc.Name, npc.X, npc.Y, ps.NPC)
 		} else {
-			log.Printf("WARNING: Inhabitant archetype not found: %s", ps.Archetype)
+			id := ps.Archetype
+			if ps.NPC != "" {
+				id = ps.NPC
+			}
+			log.Printf("WARNING: Inhabitant archetype/NPC not found: %s", id)
 		}
 	}
 
@@ -885,6 +906,19 @@ func (g *Game) spawnNPCNearPosition(x, y float64, sc *SpawnConfig) {
 	if npcConfig == nil {
 		return
 	}
+
+	// 5% chance to check for elite variants in npcRegistry
+	if rand.Float64() < 0.05 {
+		var variants []*EntityConfig
+		for _, v := range g.npcRegistry.NPCs {
+			if v.ArchetypeID == sc.Archetype && !v.Unique {
+				variants = append(variants, v)
+			}
+		}
+		if len(variants) > 0 {
+			npcConfig = variants[rand.Intn(len(variants))]
+		}
+	}
 	npc := NewNPC(ex, ey, npcConfig, g.mapLevel)
 	npc.Alignment = sc.Alignment
 
@@ -920,6 +954,19 @@ func (g *Game) spawnNPCAtMapEdges(sc *SpawnConfig) {
 	npcConfig := g.archetypeRegistry.Archetypes[sc.Archetype]
 	if npcConfig == nil {
 		return
+	}
+
+	// 5% chance to check for elite variants in npcRegistry
+	if rand.Float64() < 0.05 {
+		var variants []*EntityConfig
+		for _, v := range g.npcRegistry.NPCs {
+			if v.ArchetypeID == sc.Archetype && !v.Unique {
+				variants = append(variants, v)
+			}
+		}
+		if len(variants) > 0 {
+			npcConfig = variants[rand.Intn(len(variants))]
+		}
 	}
 	npc := NewNPC(ex, ey, npcConfig, g.mapLevel)
 	npc.Alignment = sc.Alignment

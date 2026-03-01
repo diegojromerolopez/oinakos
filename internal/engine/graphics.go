@@ -13,9 +13,12 @@ type Graphics interface {
 	NewImage(width, height int) Image
 	NewImageFromImage(img image.Image) Image
 	LoadSprite(assets fs.FS, path string, removeBg bool) Image
-	DrawLine(screen Image, x1, y1, x2, y2 float32, clr color.Color, width float32)
 	DrawPolygon(screen Image, points []Point, clr color.Color, width float32)
+	NewShader(src []byte) (Shader, error)
+	DrawImageWithShader(screen Image, img Image, shader Shader, uniforms map[string]interface{}, options *DrawImageOptions)
 }
+
+type Shader interface{}
 
 // VectorRenderer defines basic primitive drawing operations.
 type VectorRenderer interface {
@@ -27,5 +30,5 @@ type VectorRenderer interface {
 
 // TextRenderer defines text drawing operations.
 type TextRenderer interface {
-	DebugPrintAt(screen Image, str string, x, y int)
+	DebugPrintAt(screen Image, str string, x, y int, clr color.Color)
 }

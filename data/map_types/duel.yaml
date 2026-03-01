@@ -2,8 +2,13 @@ id: duel
 name: The Honor Dual
 type: kill_vip # ObjKillVIP
 difficulty: 4
-description: "Defeat the champion in single combat"
+description: "Defeat Stultus the Shouter in single combat"
 floor_tile: "grass.png"
+inhabitants:
+  - npc: stultus
+    x: 0.0
+    y: 15.0
+    alignment: enemy # The champion is our enemy
 obstacles:
   - archetype: rock1
     x: 5.0

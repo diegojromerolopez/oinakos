@@ -25,4 +25,5 @@ type Input interface {
 	IsKeyPressed(key Key) bool
 	IsKeyJustPressed(key Key) bool
 	AppendJustPressedKeys(keys []Key) []Key
+	MousePosition() (x, y int)
 }

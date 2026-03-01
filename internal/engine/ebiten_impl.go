@@ -149,6 +149,10 @@ func (e *EbitenInput) AppendJustPressedKeys(keys []Key) []Key {
 	return keys
 }
 
+func (e *EbitenInput) MousePosition() (x, y int) {
+	return ebiten.CursorPosition()
+}
+
 func NewEbitenInput() *EbitenInput {
 	return &EbitenInput{}
 }
@@ -241,7 +245,7 @@ func (e *EbitenGraphics) NewImageFromImage(img image.Image) Image {
 	return &EbitenImageWrapper{img: ebiten.NewImageFromImage(img)}
 }
 
-func (e *EbitenGraphics) DebugPrintAt(screen Image, str string, x, y int) {
+func (e *EbitenGraphics) DebugPrintAt(screen Image, str string, x, y int, clr color.Color) {
 	wrapper, ok := screen.(*EbitenImageWrapper)
 	if ok && wrapper != nil && wrapper.img != nil {
 		ebitenutil.DebugPrintAt(wrapper.img, str, x, y)
@@ -295,6 +299,45 @@ func (e *EbitenGraphics) DrawPolygon(screen Image, points []Point, clr color.Col
 		p2 := points[(i+1)%len(points)]
 		ebitenutil.DrawLine(wrapper.img, float64(p1.X), float64(p1.Y), float64(p2.X), float64(p2.Y), clr)
 	}
+}
+
+type EbitenShaderWrapper struct {
+	shader *ebiten.Shader
+}
+
+func (e *EbitenGraphics) NewShader(src []byte) (Shader, error) {
+	s, err := ebiten.NewShader(src)
+	if err != nil {
+		return nil, err
+	}
+	return &EbitenShaderWrapper{shader: s}, nil
+}
+
+func (e *EbitenGraphics) DrawImageWithShader(screen Image, img Image, shader Shader, uniforms map[string]interface{}, options *DrawImageOptions) {
+	screenWrapper, ok := screen.(*EbitenImageWrapper)
+	if !ok || screenWrapper == nil || screenWrapper.img == nil {
+		return
+	}
+	imgWrapper, ok := img.(*EbitenImageWrapper)
+	if !ok || imgWrapper == nil || imgWrapper.img == nil {
+		return
+	}
+	shaderWrapper, ok := shader.(*EbitenShaderWrapper)
+	if !ok || shaderWrapper == nil || shaderWrapper.shader == nil {
+		return
+	}
+
+	w, h := imgWrapper.img.Size()
+	op := &ebiten.DrawRectShaderOptions{
+		Uniforms: uniforms,
+	}
+	if options != nil {
+		op.GeoM = toEbitenGeoM(options.GeoM)
+		op.ColorScale = toEbitenColorScale(options.ColorScale)
+	}
+	op.Images[0] = imgWrapper.img
+
+	screenWrapper.img.DrawRectShader(w, h, shaderWrapper.shader, op)
 }
 
 func (e *EbitenGraphics) DrawTriangles(screen Image, vertices []Vertex, indices []uint16, src Image, options *DrawTrianglesOptions) {
@@ -358,4 +401,20 @@ func LoadSprite(assets fs.FS, path string, removeBg bool) Image {
 	}
 
 	return &EbitenImageWrapper{img: ebiten.NewImageFromImage(img)}
+}
+func toEbitenGeoM(m Matrix) ebiten.GeoM {
+	var g ebiten.GeoM
+	g.SetElement(0, 0, m.m[0][0])
+	g.SetElement(0, 1, m.m[0][1])
+	g.SetElement(0, 2, m.m[0][2])
+	g.SetElement(1, 0, m.m[1][0])
+	g.SetElement(1, 1, m.m[1][1])
+	g.SetElement(1, 2, m.m[1][2])
+	return g
+}
+
+func toEbitenColorScale(c ColorScale) ebiten.ColorScale {
+	var g ebiten.ColorScale
+	g.Scale(c.R, c.G, c.B, c.A)
+	return g
 }

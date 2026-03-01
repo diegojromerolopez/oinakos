@@ -115,8 +115,13 @@ func NewNPC(x, y float64, archetype *Archetype, level int) *NPC {
 		Alignment: AlignmentEnemy, // Default to Enemy
 	}
 
-	if len(archetype.Names) > 0 {
+	if archetype.Unique {
+		n.Name = archetype.Name
+		n.IsBoss = true
+	} else if len(archetype.Names) > 0 {
 		n.Name = archetype.Names[rand.Intn(len(archetype.Names))]
+	} else if archetype.Name != "" {
+		n.Name = archetype.Name
 	} else {
 		n.Name = npcNames[rand.Intn(len(npcNames))]
 	}
@@ -142,7 +147,11 @@ func NewNPC(x, y float64, archetype *Archetype, level int) *NPC {
 	case "patrol":
 		n.Behavior = BehaviorPatrol
 	default:
-		n.Behavior = BehaviorKnightHunter // Default for enemies
+		if archetype.Unique {
+			n.Behavior = BehaviorWander
+		} else {
+			n.Behavior = BehaviorKnightHunter
+		}
 	}
 
 	// Dynamic scaling based on level
@@ -443,8 +452,16 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 
 					proj := NewProjectile(n.X, n.Y, dx/mag, dy/mag, pSpd, n.GetTotalAttack(), false)
 					*projectiles = append(*projectiles, proj)
-					// Optional: bow shoot sound
-					// if audio != nil { audio.PlaySound("bow_shoot") }
+
+					if n.Archetype != nil && n.Archetype.ID == "stultus" {
+						*fts = append(*fts, &FloatingText{
+							Text:  "SHOUT!",
+							X:     n.X,
+							Y:     n.Y,
+							Life:  30,
+							Color: color.RGBA{255, 255, 0, 255},
+						})
+					}
 				}
 			} else {
 				// MELEE HIT ROLL

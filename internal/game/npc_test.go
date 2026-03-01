@@ -327,7 +327,7 @@ func TestNPCDraw_AttackAndDeadBehavior(t *testing.T) {
 	// 1. Attack WITH image
 	n.State = NPCAttacking
 	track1 := &trackingImage{}
-	n.Draw(track1, nil, nil, 0, 0)
+	n.Draw(track1, nil, nil, nil, 0, 0)
 	if len(track1.drawnImages) != 1 || track1.drawnImages[0] != attackImg {
 		t.Error("NPCDraw: failed to use AttackImage during attack")
 	}
@@ -338,7 +338,7 @@ func TestNPCDraw_AttackAndDeadBehavior(t *testing.T) {
 	}, 1)
 	n2.State = NPCAttacking
 	track2 := &trackingImage{}
-	n2.Draw(track2, nil, nil, 0, 0)
+	n2.Draw(track2, nil, nil, nil, 0, 0)
 	if len(track2.drawnImages) != 1 || track2.drawnImages[0] != staticImg {
 		t.Error("NPCDraw: failed to fallback to StaticImage when AttackImage is missing")
 	}
@@ -350,7 +350,7 @@ func TestNPCDraw_AttackAndDeadBehavior(t *testing.T) {
 	}, 1)
 	n3.State = NPCDead
 	track3 := &trackingImage{}
-	n3.Draw(track3, nil, nil, 0, 0)
+	n3.Draw(track3, nil, nil, nil, 0, 0)
 	if len(track3.drawnImages) != 1 || track3.drawnImages[0] != corpseImg {
 		t.Error("NPCDraw: failed to use CorpseImage during death")
 	}
@@ -361,7 +361,7 @@ func TestNPCDraw_AttackAndDeadBehavior(t *testing.T) {
 	}, 1)
 	n4.State = NPCDead
 	track4 := &trackingImage{}
-	n4.Draw(track4, nil, nil, 0, 0)
+	n4.Draw(track4, nil, nil, nil, 0, 0)
 	if len(track4.drawnImages) != 0 {
 		t.Error("NPCDraw: should not draw anything when CorpseImage is missing")
 	}

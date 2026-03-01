@@ -106,7 +106,8 @@ func (a *Alignment) UnmarshalYAML(value *yaml.Node) error {
 type Inhabitant struct {
 	ID        string    `yaml:"id,omitempty"` // For internal mapping if needed
 	Name      string    `yaml:"name,omitempty"`
-	Archetype string    `yaml:"archetype"`
+	Archetype string    `yaml:"archetype,omitempty"`
+	NPC       string    `yaml:"npc,omitempty"`
 	X         float64   `yaml:"x"`
 	Y         float64   `yaml:"y"`
 	State     string    `yaml:"state,omitempty"` // e.g. "dead", empty means alive
@@ -255,11 +256,12 @@ func (p FootprintPoint) MarshalYAML() (interface{}, error) {
 }
 
 type EntityConfig struct {
-	ID       string   `yaml:"id"`
-	Name     string   `yaml:"name"`
-	Names    []string `yaml:"names"`
-	Behavior string   `yaml:"behavior"`
-	Stats    struct {
+	ID          string   `yaml:"id"`
+	Name        string   `yaml:"name"`
+	Names       []string `yaml:"names"`
+	ArchetypeID string   `yaml:"archetype,omitempty"`
+	Behavior    string   `yaml:"behavior"`
+	Stats       struct {
 		HealthMin       int     `yaml:"health_min"`
 		HealthMax       int     `yaml:"health_max"`
 		Speed           float64 `yaml:"speed"`
@@ -271,7 +273,11 @@ type EntityConfig struct {
 	} `yaml:"stats"`
 	WeaponName string `yaml:"weapon"`
 
-	Footprint []FootprintPoint `yaml:"footprint"`
+	Footprint      []FootprintPoint `yaml:"footprint"`
+	Description    string           `yaml:"description,omitempty"`
+	Unique         bool             `yaml:"unique,omitempty"`
+	PrimaryColor   string           `yaml:"primary_color,omitempty"`
+	SecondaryColor string           `yaml:"secondary_color,omitempty"`
 
 	// Run-time loaded assets
 	AssetDir    string      `yaml:"-"`
@@ -364,19 +370,123 @@ func (r *ArchetypeRegistry) LoadAll(assets fs.FS) error {
 		variantName := filepath.Base(fpath[:len(fpath)-len(filepath.Ext(fpath))])
 		config.AssetDir = path.Join("assets/images/archetypes", subDir, variantName)
 
-		// Load images assuming consistent asset folder naming: assets/images/archetypes/<subDir>/<variantFilenameRoot>/
-		// If path is orc/female.yaml, imgDir should be assets/images/archetypes/orc/female/
-		// imgDir := path.Join("assets/images/archetypes", subDir, filepath.Base(fpath[:len(fpath)-len(filepath.Ext(fpath))]))
-
-		// config.StaticImage = loadSprite(assets, path.Join(imgDir, config.Sprites.Static), true)
-		// config.CorpseImage = loadSprite(assets, path.Join(imgDir, config.Sprites.Corpse), true)
-
 		// Link weapon
 		config.Weapon = GetWeaponByName(config.WeaponName)
 
 		r.Archetypes[config.ID] = &config
 		r.IDs = append(r.IDs, config.ID)
 		log.Printf("Loaded Archetype: %s (%s) from %s with AssetDir: %s", config.ID, config.Name, fpath, config.AssetDir)
+		return nil
+	})
+
+	return err
+}
+
+type NPCRegistry struct {
+	NPCs map[string]*EntityConfig
+	IDs  []string
+}
+
+func NewNPCRegistry() *NPCRegistry {
+	return &NPCRegistry{
+		NPCs: make(map[string]*EntityConfig),
+		IDs:  make([]string, 0),
+	}
+}
+
+func (r *NPCRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *ArchetypeRegistry) {
+	for _, config := range r.NPCs {
+		// Inheritance from Archetype
+		if config.ArchetypeID != "" && archs != nil {
+			if arch, ok := archs.Archetypes[config.ArchetypeID]; ok {
+				// Copy missing metadata/stats
+				if config.Behavior == "" {
+					config.Behavior = arch.Behavior
+				}
+				if config.Stats.HealthMin == 0 {
+					config.Stats = arch.Stats
+				}
+				if len(config.Footprint) == 0 {
+					config.Footprint = arch.Footprint
+				}
+				if config.WeaponName == "" {
+					config.WeaponName = arch.WeaponName
+					config.Weapon = arch.Weapon
+				}
+
+				// Copy images if NPC doesn't have its own
+				staticPath := path.Join(config.AssetDir, "static.png")
+				if _, err := fs.Stat(assets, staticPath); err != nil {
+					config.StaticImage = arch.StaticImage
+				}
+				corpsePath := path.Join(config.AssetDir, "corpse.png")
+				if _, err := fs.Stat(assets, corpsePath); err != nil {
+					config.CorpseImage = arch.CorpseImage
+				}
+				attackPath := path.Join(config.AssetDir, "attack.png")
+				if _, err := fs.Stat(assets, attackPath); err != nil {
+					config.AttackImage = arch.AttackImage
+				}
+			}
+		}
+
+		// Load unique assets if they exist (overriding or initial)
+		staticPath := path.Join(config.AssetDir, "static.png")
+		if _, err := fs.Stat(assets, staticPath); err == nil {
+			config.StaticImage = graphics.LoadSprite(assets, staticPath, true)
+		}
+		corpsePath := path.Join(config.AssetDir, "corpse.png")
+		if _, err := fs.Stat(assets, corpsePath); err == nil {
+			config.CorpseImage = graphics.LoadSprite(assets, corpsePath, true)
+		}
+		attackPath := path.Join(config.AssetDir, "attack.png")
+		if _, err := fs.Stat(assets, attackPath); err == nil {
+			config.AttackImage = graphics.LoadSprite(assets, attackPath, true)
+		}
+	}
+}
+
+func (r *NPCRegistry) LoadAll(assets fs.FS) error {
+	if assets == nil {
+		return nil
+	}
+	const baseDir = "data/npcs"
+
+	err := fs.WalkDir(assets, baseDir, func(fpath string, d fs.DirEntry, err error) error {
+		if err != nil {
+			if os.IsNotExist(err) || strings.Contains(err.Error(), "no such file or directory") {
+				return nil
+			}
+			return err
+		}
+		if d.IsDir() || (filepath.Ext(fpath) != ".yaml" && filepath.Ext(fpath) != ".yml") {
+			return nil
+		}
+
+		data, err := fs.ReadFile(assets, fpath)
+		if err != nil {
+			log.Printf("Warning: failed to read %s: %v", fpath, err)
+			return nil
+		}
+
+		var config EntityConfig
+		if err := yaml.Unmarshal(data, &config); err != nil {
+			log.Printf("Warning: failed to unmarshal %s: %v", fpath, err)
+			return nil
+		}
+
+		sanitizeEntityConfig(&config, fpath)
+
+		// Set AssetDir for unique NPC sprites:
+		// assets/images/npcs/<id>/
+		config.AssetDir = path.Join("assets/images/npcs", config.ID)
+
+		// Link weapon
+		config.Weapon = GetWeaponByName(config.WeaponName)
+
+		r.NPCs[config.ID] = &config
+		r.IDs = append(r.IDs, config.ID)
+		log.Printf("Loaded Unique NPC: %s (%s) from %s", config.ID, config.Name, fpath)
 		return nil
 	})
 
@@ -525,6 +635,8 @@ func GetWeaponByName(name string) *Weapon {
 		return &Weapon{Name: "Bow", MinDamage: 3, MaxDamage: 6}
 	case "Dagger":
 		return &Weapon{Name: "Dagger", MinDamage: 2, MaxDamage: 5}
+	case "Shouts":
+		return &Weapon{Name: "Shouts", MinDamage: 10, MaxDamage: 50}
 	default:
 		return WeaponFists
 	}

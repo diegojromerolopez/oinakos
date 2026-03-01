@@ -1,0 +1,32 @@
+id: man_at_arms_male
+name: Man-at-Arms
+names:
+  - Alden
+  - Barret
+  - Cedric
+  - Desmond
+  - Elric
+  - Falco
+  - Garrick
+  - Halden
+  - Ivan
+  - Jarek
+behavior: fighter
+stats:
+  health_min: 60
+  health_max: 90
+  speed: 0.035
+  base_attack: 15
+  base_defense: 10
+  attack_cooldown: 55
+primary_color: "#0000FF" # Default Blue band
+weapon: Sword
+footprint:
+  - x: -0.3
+    y: -0.3
+  - x: 0.3
+    y: -0.3
+  - x: 0.3
+    y: 0.3
+  - x: -0.3
+    y: 0.3

@@ -11,6 +11,7 @@ import (
 	"sort"
 
 	"oinakos/internal/engine"
+	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
@@ -27,6 +28,7 @@ type GameRenderer struct {
 	zoneSprite    engine.Image
 	emptyImage    engine.Image
 	lastFloorPath string
+	PaletteShader engine.Shader
 }
 
 func NewGameRenderer(g *Game, assets fs.FS, graphics engine.Graphics) *GameRenderer {
@@ -47,6 +49,13 @@ func NewGameRenderer(g *Game, assets fs.FS, graphics engine.Graphics) *GameRende
 func (gr *GameRenderer) LoadAssets(assets fs.FS) {
 	gr.game.archetypeRegistry.LoadAssets(assets, gr.graphics)
 	gr.game.obstacleRegistry.LoadAssets(assets, gr.graphics)
+	gr.game.npcRegistry.LoadAssets(assets, gr.graphics, gr.game.archetypeRegistry)
+
+	var err error
+	gr.PaletteShader, err = gr.graphics.NewShader(paletteSwapShaderSource)
+	if err != nil {
+		log.Printf("Error building palette shader: %v", err)
+	}
 
 	// Load player assets
 	mc := gr.game.mainCharacter
@@ -171,7 +180,7 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 		tasks = append(tasks, drawTask{
 			y: sortY,
 			draw: func() {
-				npc.Draw(screen, gr.graphics, gr.graphics, offsetX, offsetY)
+				npc.Draw(screen, gr.graphics, gr.graphics, gr.PaletteShader, offsetX, offsetY)
 			},
 		})
 	}
@@ -184,7 +193,7 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 	tasks = append(tasks, drawTask{
 		y: mcSortY,
 		draw: func() {
-			g.mainCharacter.Draw(screen, offsetX, offsetY)
+			g.mainCharacter.Draw(screen, gr.graphics, offsetX, offsetY)
 		},
 	})
 
@@ -286,15 +295,16 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 		gr.drawPauseMenu(screen)
 	} else {
 		gr.drawHUD(screen)
+		gr.drawHoverInfo(screen)
 	}
 }
 
 func (gr *GameRenderer) drawPauseMenu(screen engine.Image) {
 	g := gr.game
 	gr.graphics.DrawFilledRect(screen, 0, 0, float32(g.width), float32(g.height), color.RGBA{0, 0, 0, 180}, false)
-	gr.graphics.DebugPrintAt(screen, "GAME PAUSED", g.width/2-40, g.height/2-30)
-	gr.graphics.DebugPrintAt(screen, "Press S to SAVE and QUIT", g.width/2-70, g.height/2)
-	gr.graphics.DebugPrintAt(screen, "Press any other key to RESUME", g.width/2-95, g.height/2+20)
+	gr.graphics.DebugPrintAt(screen, "GAME PAUSED", g.width/2-40, g.height/2-30, color.White)
+	gr.graphics.DebugPrintAt(screen, "Press S to SAVE and QUIT", g.width/2-70, g.height/2, color.White)
+	gr.graphics.DebugPrintAt(screen, "Press any other key to RESUME", g.width/2-95, g.height/2+20, color.White)
 }
 
 func (gr *GameRenderer) drawGameOver(screen engine.Image) {
@@ -302,10 +312,10 @@ func (gr *GameRenderer) drawGameOver(screen engine.Image) {
 	gr.graphics.DrawFilledRect(screen, 0, 0, float32(g.width), float32(g.height), color.RGBA{0, 0, 0, 180}, false)
 	minutes := int(g.playTime) / 60
 	seconds := int(g.playTime) % 60
-	gr.graphics.DebugPrintAt(screen, "GAME OVER", g.width/2-30, g.height/2-45)
-	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("Kills: %d", g.mainCharacter.Kills), g.width/2-25, g.height/2-15)
-	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("Time: %02d:%02d", minutes, seconds), g.width/2-30, g.height/2+15)
-	gr.graphics.DebugPrintAt(screen, "Press ESC to exit, or ENTER to restart", g.width/2-110, g.height/2+45)
+	gr.graphics.DebugPrintAt(screen, "GAME OVER", g.width/2-30, g.height/2-45, color.White)
+	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("Kills: %d", g.mainCharacter.Kills), g.width/2-25, g.height/2-15, color.White)
+	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("Time: %02d:%02d", minutes, seconds), g.width/2-30, g.height/2+15, color.White)
+	gr.graphics.DebugPrintAt(screen, "Press ESC to exit, or ENTER to restart", g.width/2-110, g.height/2+45, color.White)
 }
 
 func (gr *GameRenderer) drawMapWon(screen engine.Image) {
@@ -315,9 +325,9 @@ func (gr *GameRenderer) drawMapWon(screen engine.Image) {
 	for _, k := range g.mainCharacter.MapKills {
 		mapKillTotal += k
 	}
-	gr.graphics.DebugPrintAt(screen, "MAP WON!", g.width/2-30, g.height/2-45)
-	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("Map Kills: %d", mapKillTotal), g.width/2-40, g.height/2-15)
-	gr.graphics.DebugPrintAt(screen, "Press ENTER to continue, ESC to quit", g.width/2-110, g.height/2+45)
+	gr.graphics.DebugPrintAt(screen, "MAP WON!", g.width/2-30, g.height/2-45, color.White)
+	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("Map Kills: %d", mapKillTotal), g.width/2-40, g.height/2-15, color.White)
+	gr.graphics.DebugPrintAt(screen, "Press ENTER to continue, ESC to quit", g.width/2-110, g.height/2+45, color.White)
 }
 
 func (gr *GameRenderer) drawHUD(screen engine.Image) {
@@ -325,7 +335,7 @@ func (gr *GameRenderer) drawHUD(screen engine.Image) {
 	// Use DrawFilledRect instead of NewImage every frame to avoid Metal leaks
 	gr.graphics.DrawFilledRect(screen, 10, 10, 350, 150, color.RGBA{0, 0, 0, 180}, false)
 
-	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("HP: %d/%d", g.mainCharacter.Health, g.mainCharacter.MaxHealth), 20, 20)
+	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("HP: %d/%d", g.mainCharacter.Health, g.mainCharacter.MaxHealth), 20, 20, color.White)
 
 	// Health bar background
 	gr.graphics.DrawFilledRect(screen, 100, 22, 200, 10, color.RGBA{100, 0, 0, 255}, false)
@@ -343,18 +353,24 @@ func (gr *GameRenderer) drawHUD(screen engine.Image) {
 		gr.graphics.DrawFilledRect(screen, 100, 22, float32(200*healthPct), 10, healthColor, false)
 	}
 
-	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("LVL: %d  XP: %d", g.mainCharacter.Level, g.mainCharacter.XP), 20, 45)
-	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("OBJ: %s", g.currentMapType.Description), 20, 57)
+	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("LVL: %d  XP: %d", g.mainCharacter.Level, g.mainCharacter.XP), 20, 45, color.White)
+	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("OBJ: %s", g.currentMapType.Description), 20, 57, color.White)
 	minutes := int(g.playTime) / 60
 	seconds := int(g.playTime) % 60
-	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("POS %.1f,%.1f  KILLS: %d  XP: %d  LVL: %d", g.mainCharacter.X, g.mainCharacter.Y, g.mainCharacter.Kills, g.mainCharacter.XP, g.mainCharacter.Level), 20, 77)
-	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("ATK: %d  DEF: %d  SHIELD: %d", g.mainCharacter.GetTotalAttack(), g.mainCharacter.GetTotalDefense(), g.mainCharacter.GetTotalProtection()), 20, 92)
+	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("POS %.1f,%.1f  KILLS: %d  XP: %d  LVL: %d", g.mainCharacter.X, g.mainCharacter.Y, g.mainCharacter.Kills, g.mainCharacter.XP, g.mainCharacter.Level), 20, 77, color.White)
+	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("ATK: %d  DEF: %d  SHIELD: %d", g.mainCharacter.GetTotalAttack(), g.mainCharacter.GetTotalDefense(), g.mainCharacter.GetTotalProtection()), 20, 92, color.White)
 	weaponText := fmt.Sprintf("WEAPON: %s (%d-%d)", g.mainCharacter.Weapon.Name, g.mainCharacter.Weapon.MinDamage, g.mainCharacter.Weapon.MaxDamage)
 	if g.mainCharacter.Weapon.Bonus > 0 {
 		weaponText += fmt.Sprintf(" +%d", g.mainCharacter.Weapon.Bonus)
 	}
-	gr.graphics.DebugPrintAt(screen, weaponText, 20, 107)
-	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("TIME: %02d:%02d", minutes, seconds), 20, 122)
+	gr.graphics.DebugPrintAt(screen, weaponText, 20, 107, color.White)
+	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("TIME: %02d:%02d", minutes, seconds), 20, 122, color.White)
+
+	// Map Name at top right
+	mapTitle := strings.ToUpper(g.currentMapType.Name)
+	// Approximate width calculation: ~7 pixels per char
+	tw := len(mapTitle) * 7
+	gr.graphics.DebugPrintAt(screen, mapTitle, g.width-tw-20, 20, color.RGBA{218, 165, 32, 255})
 
 	var tx, ty float64
 	hasTarget := false
@@ -427,7 +443,7 @@ func (gr *GameRenderer) drawHUD(screen engine.Image) {
 		}
 
 		screen.DrawTriangles(evs, is, gr.emptyImage.SubImage(image.Rect(1, 1, 2, 2)), opTri)
-		gr.graphics.DebugPrintAt(screen, "OBJ", int(arrowX)-10, int(arrowY)+25)
+		gr.graphics.DebugPrintAt(screen, "OBJ", int(arrowX)-10, int(arrowY)+25, color.White)
 	}
 }
 
@@ -464,26 +480,61 @@ func (gr *GameRenderer) drawDebug(screen engine.Image, offsetX, offsetY float64)
 
 	// Player: Green
 	drawPolygon(gr.game.mainCharacter.GetFootprint(), green)
+}
 
-	// Draw Names on top (since they are in debug mode and always on top)
-	for _, n := range gr.game.npcs {
-		if n.IsAlive() {
-			isoX, isoY := engine.CartesianToIso(n.X, n.Y)
-			name := n.Name
-			if name == "" && n.Archetype != nil {
-				name = n.Archetype.Name
+func (gr *GameRenderer) drawHoverInfo(screen engine.Image) {
+	g := gr.game
+	mx, my := g.input.MousePosition()
+	offsetX, offsetY := g.camera.GetOffsets(g.width, g.height)
+
+	// Check NPCs
+	for _, n := range g.npcs {
+		if !n.IsAlive() {
+			continue
+		}
+		isoX, isoY := engine.CartesianToIso(n.X, n.Y)
+		scrX, scrY := isoX+offsetX, isoY+offsetY
+
+		// Radius check for hover (offset by head height roughly)
+		dist := math.Sqrt(math.Pow(float64(mx)-scrX, 2) + math.Pow(float64(my)-scrY+40, 2))
+		if dist < 40 {
+			if n.Archetype != nil && n.Archetype.Description != "" {
+				gr.drawInfoBox(screen, n.Name, n.Archetype.Description, mx, my)
+				return // Only one info box at a time
 			}
-			// Draw at an offset to float BELOW current pos (footprint base)
-			gr.graphics.DebugPrintAt(screen, name, int(isoX+offsetX)-20, int(isoY+offsetY)+10)
 		}
 	}
+}
 
-	// Player Name
-	mc := gr.game.mainCharacter
-	pIsoX, pIsoY := engine.CartesianToIso(mc.X, mc.Y)
-	mcName := "Player"
-	if mc.Config != nil && mc.Config.Name != "" {
-		mcName = mc.Config.Name
+func (gr *GameRenderer) drawInfoBox(screen engine.Image, title, desc string, x, y int) {
+	// Draw a dark translucent box
+	boxW, boxH := 300.0, 160.0
+	bx, by := float32(x+20), float32(y+20)
+
+	// Keep on screen
+	if float64(bx)+boxW > float64(gr.game.width) {
+		bx = float32(float64(x) - boxW - 20)
 	}
-	gr.graphics.DebugPrintAt(screen, mcName, int(pIsoX+offsetX)-20, int(pIsoY+offsetY)+10)
+	if float64(by)+boxH > float64(gr.game.height) {
+		by = float32(float64(y) - boxH - 20)
+	}
+
+	gr.graphics.DrawFilledRect(screen, bx-2, by-2, float32(boxW+4), float32(boxH+4), color.RGBA{218, 165, 32, 255}, false)
+	gr.graphics.DrawFilledRect(screen, bx, by, float32(boxW), float32(boxH), color.RGBA{0, 0, 0, 240}, false)
+	gr.graphics.DebugPrintAt(screen, title, int(bx)+10, int(by)+10, color.RGBA{218, 165, 32, 255})
+
+	// Wrap text manually for DebugPrint (it doesn't wrap)
+	words := strings.Fields(desc)
+	line := ""
+	lineNum := 0
+	for _, w := range words {
+		if len(line)+len(w) > 35 {
+			gr.graphics.DebugPrintAt(screen, line, int(bx)+10, int(by)+35+lineNum*15, color.White)
+			line = w + " "
+			lineNum++
+		} else {
+			line += w + " "
+		}
+	}
+	gr.graphics.DebugPrintAt(screen, line, int(bx)+10, int(by)+35+lineNum*15, color.White)
 }

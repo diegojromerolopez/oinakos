@@ -38,3 +38,7 @@ func (m *MockInputManager) AppendJustPressedKeys(keys []engine.Key) []engine.Key
 	}
 	return keys
 }
+
+func (m *MockInputManager) MousePosition() (x, y int) {
+	return 0, 0
+}

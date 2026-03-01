@@ -2,7 +2,29 @@ package game
 
 import (
 	"log"
+	"strconv"
 )
+
+// HexToRGBA converts a hex string like "#FF00FF" to [4]float32 RGBA components (0.0 to 1.0).
+func HexToRGBA(hex string) [4]float32 {
+	if len(hex) > 0 && hex[0] == '#' {
+		hex = hex[1:]
+	}
+	if len(hex) != 6 {
+		return [4]float32{1, 1, 1, 1} // Fallback to white
+	}
+
+	r, _ := strconv.ParseUint(hex[0:2], 16, 8)
+	g, _ := strconv.ParseUint(hex[2:4], 16, 8)
+	b, _ := strconv.ParseUint(hex[4:6], 16, 8)
+
+	return [4]float32{
+		float32(r) / 255.0,
+		float32(g) / 255.0,
+		float32(b) / 255.0,
+		1.0,
+	}
+}
 
 // sanitizeEntityConfig validates and clamps all fields loaded from an archetype YAML.
 // Any invalid value is fixed and a warning is logged.

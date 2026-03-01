@@ -5,6 +5,15 @@ difficulty: 1
 target_time: 60.0
 description: "Walk in peace, do not spill blood"
 floor_tile: "grass.png"
+inhabitants:
+  - npc: marcus_ardea
+    x: 0.5
+    y: 0.5
+    alignment: neutral
+  - npc: lieutenant_varrick
+    x: 1.5
+    y: 0.5
+    alignment: neutral
 obstacles:
   - archetype: temple
     x: -10.0

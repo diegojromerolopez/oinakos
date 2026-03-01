@@ -3,6 +3,7 @@ package engine
 import (
 	"image"
 	"image/color"
+	"io/fs"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -58,6 +59,10 @@ func (m *MockInput) AppendJustPressedKeys(keys []ebiten.Key) []ebiten.Key {
 	return keys
 }
 
+func (m *MockInput) MousePosition() (x, y int) {
+	return 0, 0
+}
+
 // MockGraphics is a mock for engine.Graphics.
 type MockGraphics struct{}
 
@@ -73,10 +78,24 @@ func (m *MockGraphics) NewImageFromImage(img image.Image) Image {
 	return &MockImage{W: b.Dx(), H: b.Dy()}
 }
 
-func (m *MockGraphics) DebugPrintAt(screen Image, str string, x, y int) {}
+func (m *MockGraphics) DebugPrintAt(screen Image, str string, x, y int, clr color.Color) {}
 func (m *MockGraphics) DrawFilledRect(screen Image, x, y, width, height float32, clr color.Color, antiAlias bool) {
 }
 func (m *MockGraphics) DrawFilledCircle(screen Image, x, y, radius float32, clr color.Color, antiAlias bool) {
 }
 func (m *MockGraphics) DrawTriangles(screen Image, vertices []Vertex, indices []uint16, src Image, options *DrawTrianglesOptions) {
+}
+
+func (m *MockGraphics) NewShader(src []byte) (Shader, error) {
+	return nil, nil
+}
+
+func (m *MockGraphics) DrawImageWithShader(screen Image, img Image, shader Shader, uniforms map[string]interface{}, options *DrawImageOptions) {
+}
+
+func (m *MockGraphics) LoadSprite(assets fs.FS, path string, removeBg bool) Image {
+	return &MockImage{W: 160, H: 160}
+}
+
+func (m *MockGraphics) DrawPolygon(screen Image, points []Point, clr color.Color, width float32) {
 }

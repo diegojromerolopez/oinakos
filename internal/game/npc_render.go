@@ -7,7 +7,7 @@ import (
 	"oinakos/internal/engine"
 )
 
-func (n *NPC) Draw(screen engine.Image, textRenderer engine.TextRenderer, vectorRenderer engine.VectorRenderer, offsetX, offsetY float64) {
+func (n *NPC) Draw(screen engine.Image, textRenderer engine.TextRenderer, vectorRenderer engine.VectorRenderer, paletteShader engine.Shader, offsetX, offsetY float64) {
 	if screen == nil {
 		return
 	}
@@ -86,7 +86,24 @@ func (n *NPC) Draw(screen engine.Image, textRenderer engine.TextRenderer, vector
 	}
 
 	op.Translate(tx, ty)
-	screen.DrawImage(drawSprite, op)
+
+	// Palette Swapping
+	hasPalette := n.Archetype.PrimaryColor != "" || n.Archetype.SecondaryColor != ""
+	if hasPalette && paletteShader != nil {
+		uniforms := make(map[string]interface{})
+		pColor := HexToRGBA(n.Archetype.PrimaryColor)
+		sColor := HexToRGBA(n.Archetype.SecondaryColor)
+		uniforms["PrimaryColor"] = pColor
+		uniforms["SecondaryColor"] = sColor
+
+		if g, ok := vectorRenderer.(engine.Graphics); ok {
+			g.DrawImageWithShader(screen, drawSprite, paletteShader, uniforms, op)
+		} else {
+			screen.DrawImage(drawSprite, op)
+		}
+	} else {
+		screen.DrawImage(drawSprite, op)
+	}
 
 	// Only draw UI for living NPCs
 	if n.IsAlive() {
@@ -101,6 +118,17 @@ func (n *NPC) Draw(screen engine.Image, textRenderer engine.TextRenderer, vector
 			hpFrac := float32(n.Health) / float32(n.MaxHealth)
 			if hpFrac > 0 {
 				vectorRenderer.DrawFilledRect(screen, float32(bx), float32(by), float32(barWidth)*hpFrac, float32(barHeight), color.RGBA{0, 255, 0, 255}, false)
+			}
+		}
+
+		// Draw Name below feet
+		if textRenderer != nil {
+			nameX := int(isoX + offsetX - float64(len(n.Name))*3.5)
+			nameY := int(isoY + offsetY + 5)
+			if n.Archetype.Unique {
+				textRenderer.DebugPrintAt(screen, n.Name, nameX, nameY, color.RGBA{218, 165, 32, 255})
+			} else {
+				textRenderer.DebugPrintAt(screen, n.Name, nameX, nameY, color.White)
 			}
 		}
 	}

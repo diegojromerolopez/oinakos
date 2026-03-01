@@ -15,6 +15,9 @@ An infinite, isometric action combat game built with **Go** and the **Ebiten v2*
     -   Attack NPCs with a precise hitbox system.
     -   Collect **XP** and track your **Kills** to measure your progress.
     -   Face diverse NPC types: **Orcs**, **Demons**, **Peasants**, **Goblins**, **Lame Devils**, and **Magi**, each with unique stats, weapons, and behaviors.
+-   **Unique NPC System**: Encounter unique "Boss" characters like **Stultus** or **Marcus Ardea** with custom descriptions, names, and gold-trimmed info boxes.
+-   **Elite Variants**: Enemies have a chance to spawn as "Elites" with boosted stats and unique color palettes.
+-   **Dynamic Palette Swapping**: Engine uses GPU shaders to dynamically change NPC colors (e.g., unit armbands or capes) using primary/secondary color masks.
 -   **Configurable Scenarios**: Maps and encounters are fully data-driven via YAML configuration files, allowing for easy content expansion.
 -   **Testable Engine Architecture**: Game logic is decoupled from the rendering engine using strict Dependency Injection, enabling 100% headless testing.
 -   **Survival Timer**: Every second counts. Your total survival time is tracked in real-time.
@@ -112,6 +115,20 @@ This will open a standalone window with a selection sidebar on the left.
   - **Arrow Keys**: Pan the camera to inspect different parts of the sprite.
   - **Cyan Lines**: Visual representation of the collision boundary.
 - **Saving**: Changes are automatically saved to the corresponding `.yaml` file in `data/` whenever a vertex is moved or modified.
+
+### Asset Processor
+A utility located in `tools/asset_processor` to prepare AI-generated sprites for the game.
+
+#### Features:
+- **Resizing**: Scales any image to the standard 160x160 character size.
+- **Background Removal**: Replaces non-character pixels with pure Lime Green (#00FF00) for the engine's transparency system.
+- **Hex-Snapping**: Corrects near-magenta and near-yellow pixels to their pure hex values (#FF00FF / #FFFF00) to ensure the palette swap shader works reliably.
+
+#### Usage:
+```bash
+# Process a new static sprite
+uv run tools/asset_processor/main.py input.png output.png
+```
 
 ## 📁 Technical Architecture
 -   **`internal/engine`**: The platform-agnostic core handling isometric transforms, camera lerping, and polygon-based collision detection.

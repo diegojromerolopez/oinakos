@@ -327,7 +327,7 @@ func (v *Viewer) Draw(screen *ebiten.Image) {
 			}
 			v.graphics.DrawFilledCircle(eImg, float32(p.X), float32(p.Y), r, c, true)
 			cp := poly.Points[i]
-			v.graphics.DebugPrintAt(eImg, fmt.Sprintf("(%.2f, %.2f)", cp.X, cp.Y), int(p.X)+5, int(p.Y)+5)
+			v.graphics.DebugPrintAt(eImg, fmt.Sprintf("(%.2f, %.2f)", cp.X, cp.Y), int(p.X)+5, int(p.Y)+5, color.White)
 		}
 
 		v.drawUI(eImg, ee)
@@ -363,25 +363,25 @@ func (v *Viewer) drawSidebar(screen *ebiten.Image) {
 		}
 
 		// Label
-		v.graphics.DebugPrintAt(eImg, ee.ID, thumbnailSize+20, y+25)
-		v.graphics.DebugPrintAt(eImg, ee.Type, thumbnailSize+20, y+45)
+		v.graphics.DebugPrintAt(eImg, ee.ID, thumbnailSize+20, y+25, color.White)
+		v.graphics.DebugPrintAt(eImg, ee.Type, thumbnailSize+20, y+45, color.White)
 	}
 }
 
 func (v *Viewer) drawUI(screen engine.Image, ee *EditorEntity) {
 	title := fmt.Sprintf("[%s] %s", ee.Type, ee.ID)
-	v.graphics.DebugPrintAt(screen, title, sidebarWidth+10, 10)
-	v.graphics.DebugPrintAt(screen, fmt.Sprintf("Camera: (%.1f, %.1f)", v.camX, v.camY), sidebarWidth+10, 25)
+	v.graphics.DebugPrintAt(screen, title, sidebarWidth+10, 10, color.White)
+	v.graphics.DebugPrintAt(screen, fmt.Sprintf("Camera: (%.1f, %.1f)", v.camX, v.camY), sidebarWidth+10, 25, color.White)
 
 	mx, my := ebiten.CursorPosition()
-	v.graphics.DebugPrintAt(screen, fmt.Sprintf("Mouse: (%d, %d)", mx, my), sidebarWidth+10, 40)
+	v.graphics.DebugPrintAt(screen, fmt.Sprintf("Mouse: (%d, %d)", mx, my), sidebarWidth+10, 40, color.White)
 	if v.hoverIdx != -1 {
-		v.graphics.DebugPrintAt(screen, fmt.Sprintf("Hover: Vertex %d", v.hoverIdx), sidebarWidth+110, 40)
+		v.graphics.DebugPrintAt(screen, fmt.Sprintf("Hover: Vertex %d", v.hoverIdx), sidebarWidth+110, 40, color.White)
 	}
 
 	v.graphics.DrawFilledRect(screen, float32(v.addBtnRect.Min.X), float32(v.addBtnRect.Min.Y), float32(v.addBtnRect.Dx()), float32(v.addBtnRect.Dy()), buttonColor, false)
-	v.graphics.DebugPrintAt(screen, " ADD POINT ", v.addBtnRect.Min.X+5, v.addBtnRect.Min.Y+8)
-	v.graphics.DebugPrintAt(screen, "Drag (Move) | Shift+Click (Remove) | CTRL/CMD+Click (Add at Mouse) | ADD POINT button | Arrows (Cam) | Wheel (Sidebar) | ESC (Exit)", sidebarWidth+10, v.height-20)
+	v.graphics.DebugPrintAt(screen, " ADD POINT ", v.addBtnRect.Min.X+5, v.addBtnRect.Min.Y+8, color.White)
+	v.graphics.DebugPrintAt(screen, "Drag (Move) | Shift+Click (Remove) | CTRL/CMD+Click (Add at Mouse) | ADD POINT button | Arrows (Cam) | Wheel (Sidebar) | ESC (Exit)", sidebarWidth+10, v.height-20, color.White)
 }
 
 func (v *Viewer) Layout(_, _ int) (int, int) {
@@ -436,7 +436,7 @@ func main() {
 				Footprint: &arch.Footprint,
 				YamlPath:  findArchetypeYAML(id),
 				DrawMain: func(screen engine.Image, g engine.Graphics, offsetX, offsetY float64) {
-					npc.Draw(screen, nil, g, offsetX, offsetY)
+					npc.Draw(screen, g, g, nil, offsetX, offsetY)
 				},
 			})
 		}
@@ -463,7 +463,7 @@ func main() {
 			Footprint: &mcConfig.Footprint,
 			YamlPath:  "data/characters/main/character.yaml",
 			DrawMain: func(screen engine.Image, g engine.Graphics, offsetX, offsetY float64) {
-				mc.Draw(screen, offsetX, offsetY)
+				mc.Draw(screen, g, offsetX, offsetY)
 			},
 		})
 	}

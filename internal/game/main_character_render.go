@@ -1,11 +1,12 @@
 package game
 
 import (
+	"image/color"
 	"math"
 	"oinakos/internal/engine"
 )
 
-func (mc *MainCharacter) Draw(screen engine.Image, offsetX, offsetY float64) {
+func (mc *MainCharacter) Draw(screen engine.Image, textRenderer engine.TextRenderer, offsetX, offsetY float64) {
 	if screen == nil {
 		return
 	}
@@ -77,4 +78,15 @@ func (mc *MainCharacter) Draw(screen engine.Image, offsetX, offsetY float64) {
 
 	op.Translate(tx, ty)
 	screen.DrawImage(drawSprite, op)
+
+	// Draw Name below feet
+	if textRenderer != nil && mc.State != StateDead {
+		name := "Player"
+		if mc.Config != nil && mc.Config.Name != "" {
+			name = mc.Config.Name
+		}
+		nameX := int(isoX + offsetX - float64(len(name))*3.5)
+		nameY := int(isoY + offsetY + 5)
+		textRenderer.DebugPrintAt(screen, name, nameX, nameY, color.White)
+	}
 }
