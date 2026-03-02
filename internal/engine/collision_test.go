@@ -113,9 +113,10 @@ func TestTransparentizeNil(t *testing.T) {
 func TestTransparentizeSolidWhite(t *testing.T) {
 	// 4x4 solid white image — all pixels should be made transparent
 	img := image.NewRGBA(image.Rect(0, 0, 4, 4))
+	lime := color.RGBA{0, 255, 0, 255}
 	for y := 0; y < 4; y++ {
 		for x := 0; x < 4; x++ {
-			img.Set(x, y, color.White)
+			img.Set(x, y, lime)
 		}
 	}
 	result := Transparentize(img)
@@ -132,10 +133,11 @@ func TestTransparentizeSolidWhite(t *testing.T) {
 func TestTransparentizePreservesNonBackground(t *testing.T) {
 	// Image with a solid red center on white background
 	img := image.NewRGBA(image.Rect(0, 0, 8, 8))
-	// Fill with white
+	lime := color.RGBA{0, 255, 0, 255}
+	// Fill with lime
 	for y := 0; y < 8; y++ {
 		for x := 0; x < 8; x++ {
-			img.Set(x, y, color.White)
+			img.Set(x, y, lime)
 		}
 	}
 	// Draw a red square in the middle (not touching edges)
