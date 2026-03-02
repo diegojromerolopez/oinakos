@@ -4,11 +4,17 @@ type: building
 destructible: false
 description: "A somber stone entrance to a subterranean jail or dungeon."
 footprint:
-  - x: 3.0
-    y: 3.0
-  - x: -3.0
-    y: 3.0
-  - x: -3.0
-    y: -3.0
-  - x: 3.0
-    y: -3.0
+  - x: -5.09
+    y: 3.34
+  - x: -7.27
+    y: 2.2
+  - x: -7.56
+    y: -7.38
+  - x: 3.19
+    y: -6.13
+  - x: 3.73
+    y: 1.02
+  - x: 2.58
+    y: 2.73
+  - x: -2.8
+    y: 3.86

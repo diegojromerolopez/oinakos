@@ -4,11 +4,13 @@ type: building
 destructible: false
 description: "A dark, welcoming tavern where heroes and scoundrels gather."
 footprint:
-  - x: 4.0
-    y: 4.0
-  - x: -4.0
-    y: 4.0
-  - x: -4.0
-    y: -4.0
-  - x: 4.0
-    y: -4.0
+  - x: 2.69
+    y: 1.94
+  - x: -7.66
+    y: 1.91
+  - x: -7.98
+    y: -7.33
+  - x: 1.95
+    y: -7.39
+  - x: 3.44
+    y: -4.63

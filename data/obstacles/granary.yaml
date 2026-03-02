@@ -4,11 +4,21 @@ type: building
 destructible: false
 description: "A tall, weathered wooden structure once used for storing grain, now empty and echoing."
 footprint:
-  - x: 2.5
-    y: 2.5
-  - x: -2.5
-    y: 2.5
+  - x: -2.94
+    y: 3.31
+  - x: -6.17
+    y: 0.86
   - x: -2.5
     y: -2.5
-  - x: 2.5
-    y: -2.5
+  - x: 1.63
+    y: -5.38
+  - x: 3.13
+    y: -3.81
+  - x: 3.55
+    y: -0.92
+  - x: 2.22
+    y: 1.47
+  - x: 0.75
+    y: 2.63
+  - x: -1.42
+    y: 3.42

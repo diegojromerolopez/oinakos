@@ -4,11 +4,21 @@ type: monument
 destructible: false
 description: "An ancient altar stained with the blood of countless offerings. Use for dark rituals."
 footprint:
-  - x: 2.0
-    y: 2.0
-  - x: -2.0
-    y: 2.0
-  - x: -2.0
-    y: -2.0
-  - x: 2.0
-    y: -2.0
+  - x: -19.64
+    y: -14.17
+  - x: -16.64
+    y: -17.36
+  - x: -10.44
+    y: -15.25
+  - x: -7.22
+    y: -13.91
+  - x: -3.61
+    y: -10.2
+  - x: -3.44
+    y: -6.38
+  - x: -6.33
+    y: -3.8
+  - x: -10.66
+    y: -4.59
+  - x: -14.44
+    y: -8.25
