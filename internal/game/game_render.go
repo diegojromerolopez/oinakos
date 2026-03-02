@@ -2,7 +2,6 @@ package game
 
 import (
 	"fmt"
-	"image"
 	"image/color"
 	"io/fs"
 	"log"
@@ -12,9 +11,6 @@ import (
 
 	"oinakos/internal/engine"
 	"strings"
-
-	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 // GameRenderer handles the Ebiten-dependent rendering of the game.
@@ -366,84 +362,45 @@ func (gr *GameRenderer) drawHUD(screen engine.Image) {
 	gr.graphics.DebugPrintAt(screen, weaponText, 20, 107, color.White)
 	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("TIME: %02d:%02d", minutes, seconds), 20, 122, color.White)
 
-	// Map Name at top right
+	// Menu Button (Top-Right)
+	gr.graphics.DrawFilledRect(screen, float32(g.width-110), 20, 100, 30, color.RGBA{50, 50, 50, 200}, false)
+	gr.graphics.DebugPrintAt(screen, "MENU", g.width-90, 28, color.White)
+
+	// Map Name below Menu
 	mapTitle := strings.ToUpper(g.currentMapType.Name)
 	// Approximate width calculation: ~7 pixels per char
 	tw := len(mapTitle) * 7
-	gr.graphics.DebugPrintAt(screen, mapTitle, g.width-tw-20, 20, color.RGBA{218, 165, 32, 255})
+	gr.graphics.DebugPrintAt(screen, mapTitle, g.width-tw-20, 60, color.RGBA{218, 165, 32, 255})
 
-	var tx, ty float64
-	hasTarget := false
-	switch g.currentMapType.Type {
-	case ObjKillVIP:
-		if len(g.npcs) > 0 && g.npcs[0].IsAlive() {
-			tx, ty = g.npcs[0].X, g.npcs[0].Y
-			hasTarget = true
+	// Menu Overlay
+	if g.isMenuOpen {
+		mw, mh := 400, 250
+		mx, my := (g.width-mw)/2, (g.height-mh)/2
+		// Border & Backdrop
+		gr.graphics.DrawFilledRect(screen, float32(mx-2), float32(my-2), float32(mw+4), float32(mh+4), color.RGBA{218, 165, 32, 255}, false)
+		gr.graphics.DrawFilledRect(screen, float32(mx), float32(my), float32(mw), float32(mh), color.RGBA{0, 0, 0, 240}, false)
+
+		gr.graphics.DebugPrintAt(screen, "GAME MENU", mx+mw/2-40, my+20, color.RGBA{218, 165, 32, 255})
+
+		options := []string{"Resume", "Quicksave (Q)", "Load", "Quit"}
+		for i, opt := range options {
+			var clr color.Color = color.White
+			prefix := "  "
+			if g.menuIndex == i {
+				clr = color.RGBA{255, 255, 0, 255}
+				prefix = "> "
+			}
+			gr.graphics.DebugPrintAt(screen, prefix+opt, mx+100, my+70+i*35, clr)
 		}
-	case ObjProtectNPC:
-		if len(g.npcs) > 0 && g.npcs[0].IsAlive() {
-			tx, ty = g.currentMapType.TargetPoint.X, g.currentMapType.TargetPoint.Y
-			hasTarget = true
-		}
-	case ObjDestroyBuilding, ObjReachBuilding, ObjReachPortal, ObjReachZone:
-		tx, ty = g.currentMapType.TargetPoint.X, g.currentMapType.TargetPoint.Y
-		hasTarget = true
+		gr.graphics.DebugPrintAt(screen, "Press ENTER to select", mx+mw/2-70, my+mh-30, color.RGBA{136, 136, 136, 255})
 	}
 
-	if hasTarget {
-		dx := tx - g.mainCharacter.X
-		dy := ty - g.mainCharacter.Y
-		isoDx := dx - dy
-		isoDy := (dx + dy) * 0.5
-		angle := math.Atan2(isoDy, isoDx)
-		arrowX := float32(g.width - 50)
-		arrowY := float32(50)
-		size := float32(20.0)
-		var path vector.Path
-		path.MoveTo(size, 0)
-		path.LineTo(-size, -size*0.6)
-		path.LineTo(-size*0.5, 0)
-		path.LineTo(-size, size*0.6)
-		path.Close()
-		opArr := &ebiten.DrawTrianglesOptions{}
-		opArr.FillRule = ebiten.EvenOdd
-		cosA := float32(math.Cos(angle))
-		sinA := float32(math.Sin(angle))
-		var vs []ebiten.Vertex
-		var is []uint16
-		vs, is = path.AppendVerticesAndIndicesForFilling(vs, is)
-		for i := range vs {
-			rx := vs[i].DstX*cosA - vs[i].DstY*sinA
-			ry := vs[i].DstX*sinA + vs[i].DstY*cosA
-			vs[i].DstX = rx + arrowX
-			vs[i].DstY = ry + arrowY
-			vs[i].SrcX = 0
-			vs[i].SrcY = 0
-			vs[i].ColorR = 1.0
-			vs[i].ColorG = 0.2
-			vs[i].ColorB = 0.2
-			vs[i].ColorA = 1.0
-		}
-
-		var evs []engine.Vertex
-		for _, v := range vs {
-			evs = append(evs, engine.Vertex{
-				DstX:   v.DstX,
-				DstY:   v.DstY,
-				SrcX:   v.SrcX,
-				SrcY:   v.SrcY,
-				ColorR: v.ColorR,
-				ColorG: v.ColorG,
-				ColorB: v.ColorB,
-				ColorA: v.ColorA,
-			})
-		}
-		opTri := &engine.DrawTrianglesOptions{
-			FillRule: engine.FillRuleEvenOdd,
-		}
-
-		screen.DrawTriangles(evs, is, gr.emptyImage.SubImage(image.Rect(1, 1, 2, 2)), opTri)
-		gr.graphics.DebugPrintAt(screen, "OBJ", int(arrowX)-10, int(arrowY)+25, color.White)
+	// Save Message (Bottom Center)
+	if g.saveMessageTimer > 0 {
+		msg := g.saveMessage
+		// Approximate width calculation: ~7 pixels per char
+		tw := len(msg) * 7
+		gr.graphics.DebugPrintAt(screen, msg, (g.width-tw)/2, g.height-40, color.RGBA{218, 165, 32, 255})
 	}
 }
 

@@ -2,7 +2,7 @@
 set -e
 
 APP_NAME="Oinakos"
-BUNDLE_DIR="bin/${APP_NAME}.app"
+BUNDLE_DIR="dist/${APP_NAME}.app"
 CONTENTS_DIR="${BUNDLE_DIR}/Contents"
 MAC_DIR="${CONTENTS_DIR}/MacOS"
 RES_DIR="${CONTENTS_DIR}/Resources"

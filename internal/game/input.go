@@ -42,3 +42,7 @@ func (m *MockInputManager) AppendJustPressedKeys(keys []engine.Key) []engine.Key
 func (m *MockInputManager) MousePosition() (x, y int) {
 	return 0, 0
 }
+
+func (m *MockInputManager) IsMouseButtonJustPressed(button engine.MouseButton) bool {
+	return false
+}

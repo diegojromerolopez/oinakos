@@ -2,6 +2,7 @@ package game
 
 import (
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -42,4 +43,28 @@ func TestSaveLoad(t *testing.T) {
 	if g2.playTime != g.playTime {
 		t.Errorf("PlayTime mismatch: expected %f, got %f", g.playTime, g2.playTime)
 	}
+}
+
+func TestQuickSave(t *testing.T) {
+	g := NewGame(nil, "", "", NewMockInputManager(), NewMockAudioManager(), false)
+	g.performQuicksave()
+
+	// Check if 'saves' dir exists
+	if _, err := os.Stat("saves"); os.IsNotExist(err) {
+		t.Error("'saves' directory was not created")
+	}
+
+	// Verify a .oinakos file was created in saves/
+	files, _ := os.ReadDir("saves")
+	found := false
+	for _, f := range files {
+		if strings.HasPrefix(f.Name(), "quicksave-") && strings.HasSuffix(f.Name(), ".oinakos.yaml") {
+			found = true
+			os.Remove("saves/" + f.Name())
+		}
+	}
+	if !found {
+		t.Error("No .oinakos quicksave file found")
+	}
+	os.Remove("saves") // Clean up if empty
 }

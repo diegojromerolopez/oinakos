@@ -3,8 +3,8 @@ set -e
 
 APP_NAME="oinakos"
 RELEASE_NAME="Oinakos_Linux"
-DIST_DIR="bin/${RELEASE_NAME}"
-BIN_DIR="bin"
+DIST_DIR="dist/${RELEASE_NAME}"
+BIN_DIR="dist"
 
 echo "Creating Linux distribution directory..."
 mkdir -p "${DIST_DIR}"
@@ -49,4 +49,4 @@ cd "${BIN_DIR}"
 tar -czf "${RELEASE_NAME}.tar.gz" "${RELEASE_NAME}"
 cd ..
 
-echo "Linux distribution created: bin/${RELEASE_NAME}.tar.gz"
+echo "Linux distribution created: dist/${RELEASE_NAME}.tar.gz"

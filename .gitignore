@@ -2,6 +2,7 @@
 # https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
 #
 bin/
+dist/
 tools/bin/
 *.exe
 *.exe~
@@ -39,3 +40,6 @@ go.work.sum
 
 # Python tooling
 .venv/
+
+# Game saves
+saves/

@@ -4,8 +4,6 @@ import (
 	"image"
 	"image/color"
 	"io/fs"
-
-	"github.com/hajimehoshi/ebiten/v2"
 )
 
 // MockImage is a headless implementation of Image.
@@ -31,26 +29,26 @@ func (m *MockImage) Fill(clr interface{}) {}
 
 // MockInput is a mock for engine.Input.
 type MockInput struct {
-	PressedKeys     map[ebiten.Key]bool
-	JustPressedKeys map[ebiten.Key]bool
+	PressedKeys     map[Key]bool
+	JustPressedKeys map[Key]bool
 }
 
 func NewMockInput() *MockInput {
 	return &MockInput{
-		PressedKeys:     make(map[ebiten.Key]bool),
-		JustPressedKeys: make(map[ebiten.Key]bool),
+		PressedKeys:     make(map[Key]bool),
+		JustPressedKeys: make(map[Key]bool),
 	}
 }
 
-func (m *MockInput) IsKeyPressed(key ebiten.Key) bool {
+func (m *MockInput) IsKeyPressed(key Key) bool {
 	return m.PressedKeys[key]
 }
 
-func (m *MockInput) IsKeyJustPressed(key ebiten.Key) bool {
+func (m *MockInput) IsKeyJustPressed(key Key) bool {
 	return m.JustPressedKeys[key]
 }
 
-func (m *MockInput) AppendJustPressedKeys(keys []ebiten.Key) []ebiten.Key {
+func (m *MockInput) AppendJustPressedKeys(keys []Key) []Key {
 	for k, v := range m.JustPressedKeys {
 		if v {
 			keys = append(keys, k)
@@ -61,6 +59,10 @@ func (m *MockInput) AppendJustPressedKeys(keys []ebiten.Key) []ebiten.Key {
 
 func (m *MockInput) MousePosition() (x, y int) {
 	return 0, 0
+}
+
+func (m *MockInput) IsMouseButtonJustPressed(button MouseButton) bool {
+	return false
 }
 
 // MockGraphics is a mock for engine.Graphics.

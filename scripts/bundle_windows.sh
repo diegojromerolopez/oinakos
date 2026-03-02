@@ -3,8 +3,8 @@ set -e
 
 APP_NAME="oinakos"
 RELEASE_NAME="Oinakos_Windows"
-DIST_DIR="bin/${RELEASE_NAME}"
-BIN_DIR="bin"
+DIST_DIR="dist/${RELEASE_NAME}"
+BIN_DIR="dist"
 
 echo "Creating Windows distribution directory..."
 mkdir -p "${DIST_DIR}"
@@ -24,4 +24,4 @@ cd "${BIN_DIR}"
 zip -r "${RELEASE_NAME}.zip" "${RELEASE_NAME}"
 cd ..
 
-echo "Windows distribution created: bin/${RELEASE_NAME}.zip"
+echo "Windows distribution created: dist/${RELEASE_NAME}.zip"

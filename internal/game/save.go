@@ -7,6 +7,8 @@ import (
 	"oinakos/internal/engine"
 	"os"
 	"path"
+	"path/filepath"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -74,6 +76,47 @@ type SaveData struct {
 }
 
 func (g *Game) Save(fpath string) error {
+	bytes, err := g.serialize()
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(fpath, bytes, 0644)
+}
+
+func (g *Game) performQuicksave() {
+	if g.isWasm() {
+		data, err := g.serialize()
+		if err != nil {
+			log.Printf("Failed to serialize game: %v", err)
+			return
+		}
+		if err := g.saveToLocalStorage(data); err == nil {
+			g.saveMessage = "Saved in Browser Storage"
+			g.saveMessageTimer = 300
+		}
+		return
+	}
+
+	if err := os.MkdirAll("saves", 0755); err == nil {
+		savePath := fmt.Sprintf("saves/quicksave-%s.oinakos.yaml", time.Now().Format("2006-01-02T15:04:05"))
+		if err := g.Save(savePath); err == nil {
+			log.Printf("Game quicksaved: %s", savePath)
+			g.lastSavePath = savePath
+			absPath, err := filepath.Abs(savePath)
+			if err != nil {
+				absPath = savePath // Fallback
+			}
+			g.saveMessage = "Saved in " + absPath
+			g.saveMessageTimer = 300 // 5 seconds at 60fps
+		} else {
+			log.Printf("Failed to quicksave: %v", err)
+		}
+	} else {
+		log.Printf("Failed to create saves directory: %v", err)
+	}
+}
+
+func (g *Game) serialize() ([]byte, error) {
 	data := SaveData{}
 	data.Map.ID = g.currentMapType.ID
 	data.Map.WidthPixels = g.currentMapType.WidthPixels
@@ -130,7 +173,6 @@ func (g *Game) Save(fpath string) error {
 		if o.Archetype == nil {
 			continue
 		}
-		// Capture position as pointers for save data
 		xVal, yVal := o.X, o.Y
 		data.Obstacles = append(data.Obstacles, ObstacleSaveData{
 			ArchetypeID:   o.Archetype.ID,
@@ -141,17 +183,21 @@ func (g *Game) Save(fpath string) error {
 		})
 	}
 
-	bytes, err := yaml.Marshal(data)
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(fpath, bytes, 0644)
+	return yaml.Marshal(data)
 }
 
 func (g *Game) Load(fpath string) error {
 	var bytes []byte
 	var err error
+
+	// WASM LocalStorage check
+	if g.isWasm() && (fpath == "" || fpath == "quicksave") {
+		bytes, err = g.loadFromLocalStorage()
+		if err == nil && bytes != nil {
+			log.Printf("Loaded from Browser Storage")
+			return g.unmarshal(bytes, fpath)
+		}
+	}
 
 	// Try reading from embedded assets first (for map instances in WASM)
 	if g.assets != nil {
@@ -169,6 +215,10 @@ func (g *Game) Load(fpath string) error {
 		return fmt.Errorf("failed to read save file %s: %w", fpath, err)
 	}
 
+	return g.unmarshal(bytes, fpath)
+}
+
+func (g *Game) unmarshal(bytes []byte, fpath string) error {
 	var data SaveData
 	if err := yaml.Unmarshal(bytes, &data); err != nil {
 		return fmt.Errorf("failed to unmarshal save data: %w", err)

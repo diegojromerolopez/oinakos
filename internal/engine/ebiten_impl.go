@@ -153,6 +153,20 @@ func (e *EbitenInput) MousePosition() (x, y int) {
 	return ebiten.CursorPosition()
 }
 
+func (e *EbitenInput) IsMouseButtonJustPressed(button MouseButton) bool {
+	return inpututil.IsMouseButtonJustPressed(toEbitenMouseButton(button))
+}
+
+func toEbitenMouseButton(button MouseButton) ebiten.MouseButton {
+	switch button {
+	case MouseButtonLeft:
+		return ebiten.MouseButtonLeft
+	case MouseButtonRight:
+		return ebiten.MouseButtonRight
+	}
+	return ebiten.MouseButtonLeft
+}
+
 func NewEbitenInput() *EbitenInput {
 	return &EbitenInput{}
 }
@@ -185,6 +199,8 @@ func toEbitenKey(key Key) ebiten.Key {
 		return ebiten.KeyF9
 	case KeyTab:
 		return ebiten.KeyTab
+	case KeyQ:
+		return ebiten.KeyQ
 	}
 	return -1
 }
@@ -217,6 +233,8 @@ func fromEbitenKey(key ebiten.Key) Key {
 		return KeyF9
 	case ebiten.KeyTab:
 		return KeyTab
+	case ebiten.KeyQ:
+		return KeyQ
 	}
 	return -1
 }

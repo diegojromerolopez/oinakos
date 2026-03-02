@@ -18,6 +18,7 @@ const (
 	KeyRight
 	KeyF9
 	KeyTab
+	KeyQ
 )
 
 // Input defines an interface for all input operations to allow mocking.
@@ -26,4 +27,12 @@ type Input interface {
 	IsKeyJustPressed(key Key) bool
 	AppendJustPressedKeys(keys []Key) []Key
 	MousePosition() (x, y int)
+	IsMouseButtonJustPressed(button MouseButton) bool
 }
+
+type MouseButton int
+
+const (
+	MouseButtonLeft MouseButton = iota
+	MouseButtonRight
+)

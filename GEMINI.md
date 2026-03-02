@@ -1,46 +1,52 @@
-# Oinakos (Knight's Path)
+# Oinakos (Knight's Path) - Agent Memo 🛡️
 
-An infinite, isometric action combat game built with Go and Ebiten.
+Oinakos is a performance-optimized, infinite isometric action RPG built in Go. This memo serves as a technical source of truth for AI agents working on the codebase.
 
-## 🛠 Tech Stack
--   **Language**: Go 1.21+
--   **Graphics**: [Ebiten v2](https://ebiten.org/) (2D Game Library)
--   **Assets**: Custom pixel art (isometric) and localized SFX.
+## ⚙️ Technical Core
+- **Engine**: Custom `internal/engine` using [Ebiten v2](https://ebiten.org/).
+- **Coordinate Systems**:
+  - **Cartesian**: Used for all physics, AI, and collision logic.
+  - **Isometric**: Used strictly for rendering. Transform: `isoX = (x - y)`, `isoY = (x + y) * 0.5`.
+- **Concurrency**: Simulation runs at a locked 60 Ticks Per Second (TPS).
 
-## 🚀 Key Features
--   **Infinite Procedural World**: Chunk-based generation (10x10 tiles) creates an endless world of forests, ruins, and villages as you explore.
--   **Isometric Engine**: custom `internal/engine` handling Cartesian-to-Isometric transforms, camera following, and polygon-based collision detection. No scaling allowed at runtime (all assets must be pre-scaled).
--   **Dynamic Ambushes & Elites**: NPCs (Orcs, Demons, Peasants) spawn beyond the viewport. A 5% chance triggers "Elite" variants using unique color palettes and boosted stats.
--   **Unique NPCs & Bosses**: Unique characters like *Marcus Ardea* or *Stultus* feature unique descriptions, boss bars, and names.
--   **Depth-Correct Rendering**: implemented Y-sorting (Z-ordering) ensures correct occlusion between players, NPCs, and buildings.
--   **Combat System**: Hit-detection with generous isometric radii and persistent kill tracking. Supporting both melee and ranged (shouting) attacks.
--   **Dynamic Palette Swapping**: GPU-based shaders allow NPCs to share archetypes while maintaining unique identity via primary/secondary color masking.
+## 🚀 Architectural Pillars
+- **Strict Dependency Injection**: Components in `internal/game` must use `engine` interfaces (`Graphics`, `Input`, `Audio`). Never import `ebiten` directly outside of `internal/engine` or `main.go`. This enables 100% headless unit testing.
+- **Data-Driven Registry**: Entities (NPCs, Obstacles) are defined via YAML. The `ArchetypeRegistry` is the authority on shared stats and assets.
+- **Y-Sorting (Z-Ordering)**: The renderer maintains depth-correct occlusion by sorting all drawable entities by their `Y+X` cartesian coordinate before drawing.
 
-## 📁 Project Structure
--   `/assets`: Organized by `images/` (player, npcs, environment) and `audio/`.
--   `/internal/engine`: Platform-agnostic game engine logic (Iso, Camera, Collision, Renderer).
--   `/internal/game`: Game-specific state, entities (NPC, Player, Obstacle), and level generation.
+## 💾 Persistence System
+- **Format**: YAML-based serialization (`SaveData` struct). File extension: `.oinakos.yaml`.
+- **Native Implementation**: Saves to the `saves/` directory (ignored by Git).
+- **WASM Implementation**: Saves to browser `localStorage` under the key `quicksave`. Feature includes auto-resumption on page load.
+- **Platform Bridge**: Split via build tags in `persistence_js.go` and `persistence_native.go`.
 
-## 🏗 Development Patterns
--   **Dependency Injection**: Code in `internal/game` must **not** import `github.com/hajimehoshi/ebiten/v2` directly. Instead, use the interfaces defined in `internal/engine` (e.g., `Graphics`, `Image`, `Input`). This ensures UI components can be mocked, enabling 100% headless unit testing.
--   **Repository Pattern**: Use registries (e.g., `ArchetypeRegistry`, `MapTypeRegistry`) to manage configuration data, keeping data schemas decoupled from game simulation logic.
--   **Data-Driven Design (YAML)**: Avoid hardcoding entity or map parameters. Stats, sprite paths, and behaviors are loaded from YAML configurations.
--   **Asset Generation Rules**: Archetype and character images *must* have a solid lime green background (`#00FF00`).
-    -   **Style**: Realistic human proportions and dark, medieval RPG aesthetic (Diablo/Hades).
-    -   **Corpse Rules**: Just the body without any ground base or platform.
-    -   **Palette Masking**: Use **Magenta (#FF00FF)** for primary color areas (e.g., armbands, capes) and **Yellow (#FFFF00)** for secondary areas. Shaders replace these at runtime.
-    -   **Sizing**: No runtime scaling allowed; all assets must be 160x160 for characters.
--   **Python Tools**: Any Python scripts located in the `tools/` directory must be executed within a virtual environment. You must use `uv` for dependency management with Python 3.14.
-    -   `tools/asset_processor`: Essential for preparing AI-generated images (BG removal, hex-snapping).
+## 🎨 Asset Generation Standards
+- **Characters**: 160x160 pixels, solid `#00FF00` background. Proportions: Realistic human.
+- **Palette Masking**:
+  - **Magenta (#FF00FF)**: Primary color area (Shader-swappable).
+  - **Yellow (#FFFF00)**: Secondary color area (Shader-swappable).
+- **Collision Footprints**: Defined as polygons in the archetype YAML. Must be refined using `make boundaries-editor`.
 
-## 📝 Pending Improvements
--   [ ] **Animation System**: Implement sprite-sheet animation for walking and attacking (currently using static frames).
--   [ ] **Advanced AI**: Replace simple lerp-tracking with A* pathfinding to handle obstacle navigation.
--   [ ] **Biome Diversity**: Add new terrain types (Snow, Desert, Swamp) with unique obstacles and NPCs.
--   [ ] **UI Overhaul**: Replace debug-print HUD elements with custom textured health bars and menus.
--   [ ] **Savestate**: Implement JSON-based save/load for player position and kill count.
+## 📁 Project Layout
+- `/bin`: Native development binaries (`oinakos`, `boundaries_editor`).
+- `/dist`: Distribution packages (WASM, Minimal `index.html`, Native Bundles).
+- `/internal/engine`: Low-level Ebiten abstractions and isometric math.
+- `/internal/game`: Game loop, entity logic, and HUD rendering.
+- `/scripts`: Platform-specific bundling and audio generation scripts.
 
-## 🎮 Running the Game
-```bash
-go run main.go
-```
+## 🛠 Makefile Commands (Standard Workflow)
+- `make run`: Compile and run natively.
+- `make dist`: Generate minimal WASM package (Inlined JS, 2 files total).
+- `make bundle-all`: Build standalone installers for macOS, Windows, and Linux.
+- `make boundaries-editor OBSTACLE=tree_oak`: Launch footprint editor.
+- `make clean`: Purge `bin/` and `dist/` folders.
+
+## 📝 Pending Roadmap
+- [ ] **Animation System**: Implement sprite-sheet support for walk/atk/death states.
+- [ ] **A* Navigation**: Move beyond linear lerp-tracking for NPCs.
+- [ ] **Dynamic Biomes**: Procedural background changes based on chunk distance.
+- [ ] **UI Refresh**: Replace debug-print HUD with textured elements and icons.
+
+---
+**Current Lead Character**: `Oinakos`
+**Development Rule**: Always execute Python tools via `uv` in a virtual environment.

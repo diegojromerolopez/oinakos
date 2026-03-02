@@ -8,6 +8,8 @@ import (
 	"math"
 	"math/rand"
 	"os"
+	"os/exec"
+	"runtime"
 	"strings"
 	"time"
 
@@ -55,6 +57,14 @@ type Game struct {
 	showBoundaries    bool
 	audio             AudioManager
 	npcRegistry       *NPCRegistry
+
+	isMenuOpen       bool
+	menuIndex        int // 0: Resume, 1: Quicksave, 2: Load, 3: Quit
+	loadDialogActive bool
+	loadPathInput    string
+
+	saveMessage      string
+	saveMessageTimer int // Ticks to show the message
 }
 
 func NewGame(assets fs.FS, initialMapID, initialMapTypeID string, input engine.Input, audio AudioManager, debug bool) *Game {
@@ -108,6 +118,14 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID string, input engine.I
 		input:             input,
 		audio:             audio,
 		debug:             debug,
+	}
+
+	// WASM Auto-resumption from localStorage
+	if g.isWasm() {
+		if err := g.Load("quicksave"); err == nil {
+			log.Printf("Successfully Resumed Game from Browser Storage")
+			return g
+		}
 	}
 
 	// Trigger map loading if requested
@@ -452,21 +470,71 @@ func (g *Game) Update() error {
 		return nil
 	}
 
-	if g.input.IsKeyJustPressed(engine.KeyEscape) {
-		if g.isPaused {
-			os.Exit(0)
+	// Menu Button Detection (Top-Right)
+	if !g.isMenuOpen && !g.isGameOver && !g.isMapWon {
+		mx, my := g.input.MousePosition()
+		// Button is at Width-110 to Width-10, Y: 40 to 70
+		if g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft) {
+			if mx >= g.width-110 && mx <= g.width-10 && my >= 40 && my <= 70 {
+				g.isMenuOpen = true
+			}
 		}
-		g.isPaused = true
+	}
+
+	if g.loadDialogActive {
+		path := g.openFilePicker()
+		if path != "" {
+			if err := g.Load(path); err != nil {
+				log.Printf("Failed to load map: %v", err)
+			}
+		}
+		g.loadDialogActive = false
 		return nil
 	}
 
-	if g.isPaused {
-		// If any other key is pressed, resume
-		keys := g.input.AppendJustPressedKeys(nil)
-		if len(keys) > 0 {
-			g.isPaused = false
+	if g.isMenuOpen {
+		if g.input.IsKeyJustPressed(engine.KeyEscape) {
+			g.isMenuOpen = false
+			return nil
+		}
+		if g.input.IsKeyJustPressed(engine.KeyUp) || g.input.IsKeyJustPressed(engine.KeyW) {
+			g.menuIndex--
+			if g.menuIndex < 0 {
+				g.menuIndex = 3
+			}
+		}
+		if g.input.IsKeyJustPressed(engine.KeyDown) || g.input.IsKeyJustPressed(engine.KeyS) {
+			g.menuIndex++
+			if g.menuIndex > 3 {
+				g.menuIndex = 0
+			}
+		}
+
+		if g.input.IsKeyJustPressed(engine.KeyEnter) {
+			switch g.menuIndex {
+			case 0: // Resume
+				g.isMenuOpen = false
+			case 1: // Quicksave
+				g.performQuicksave()
+				g.isMenuOpen = false
+			case 2: // Load
+				g.loadDialogActive = true
+				g.isMenuOpen = false
+			case 3: // Quit
+				os.Exit(0)
+			}
 		}
 		return nil
+	}
+
+	if g.input.IsKeyJustPressed(engine.KeyEscape) {
+		g.isMenuOpen = true
+		return nil
+	}
+
+	// Handle 'Q' key for QuickSave
+	if g.input.IsKeyJustPressed(engine.KeyQ) {
+		g.performQuicksave()
 	}
 
 	// Handle Save (S) / Load (F9)
@@ -513,6 +581,9 @@ func (g *Game) Update() error {
 
 	if !g.isPaused && !g.isGameOver {
 		g.playTime += 1.0 / 60.0
+		if g.saveMessageTimer > 0 {
+			g.saveMessageTimer--
+		}
 	}
 
 	g.mainCharacter.Update(g.input, g.audio, g.obstacles, g.npcs, &g.floatingTexts, g.currentMapType.MapWidth, g.currentMapType.MapHeight)
@@ -989,4 +1060,16 @@ func (g *Game) spawnNPCAtMapEdges(sc *SpawnConfig) {
 	}
 
 	g.npcs = append(g.npcs, npc)
+}
+
+func (g *Game) openFilePicker() string {
+	if runtime.GOOS == "darwin" {
+		cmd := exec.Command("osascript", "-e", `POSIX path of (choose file with prompt "Select an .oinakos.yaml save file:" of type {"oinakos.yaml", "yaml"})`)
+		out, err := cmd.Output()
+		if err != nil {
+			return ""
+		}
+		return strings.TrimSpace(string(out))
+	}
+	return ""
 }
