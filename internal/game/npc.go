@@ -117,7 +117,6 @@ func NewNPC(x, y float64, archetype *Archetype, level int) *NPC {
 
 	if archetype.Unique {
 		n.Name = archetype.Name
-		n.IsBoss = true
 	} else if len(archetype.Names) > 0 {
 		n.Name = archetype.Names[rand.Intn(len(archetype.Names))]
 	} else if archetype.Name != "" {

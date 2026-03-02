@@ -1,0 +1,14 @@
+id: sacrifice_altar
+name: "Sacrifice Altar"
+type: monument
+destructible: false
+description: "An ancient altar stained with the blood of countless offerings. Use for dark rituals."
+footprint:
+  - x: 2.0
+    y: 2.0
+  - x: -2.0
+    y: 2.0
+  - x: -2.0
+    y: -2.0
+  - x: 2.0
+    y: -2.0

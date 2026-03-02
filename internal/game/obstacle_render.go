@@ -1,6 +1,7 @@
 package game
 
 import (
+	"image"
 	"image/color"
 	"oinakos/internal/engine"
 )
@@ -21,14 +22,42 @@ func (o *Obstacle) Draw(screen engine.Image, vectorRenderer engine.VectorRendere
 	}
 	sw, sh := img.Size()
 
+	frameWidth := sw
+	frameHeight := sh
+	if o.Archetype.FrameCount > 1 {
+		fpr := o.Archetype.FramesPerRow
+		if fpr <= 0 {
+			fpr = o.Archetype.FrameCount
+		}
+		numRows := (o.Archetype.FrameCount + fpr - 1) / fpr
+		frameWidth = sw / fpr
+		frameHeight = sh / numRows
+	}
+
+	currentFrame := 0
+	if o.Archetype.FrameCount > 1 && o.Archetype.AnimationSpeed > 0 {
+		currentFrame = (o.TickCounter / o.Archetype.AnimationSpeed) % o.Archetype.FrameCount
+	}
+
 	// Pivot point for isometric depth
-	pivotX := float64(sw) * scale / 2
-	pivotY := float64(sh) * scale * 0.85
+	pivotX := float64(frameWidth) * scale / 2
+	pivotY := float64(frameHeight) * scale * 0.85
 
 	op.Scale(scale, scale)
 	op.Translate(isoX+offsetX-pivotX, isoY+offsetY-pivotY)
 
-	screen.DrawImage(img, op)
+	if o.Archetype.FrameCount > 1 {
+		fpr := o.Archetype.FramesPerRow
+		if fpr <= 0 {
+			fpr = o.Archetype.FrameCount
+		}
+		col := currentFrame % fpr
+		row := currentFrame / fpr
+		rect := image.Rect(col*frameWidth, row*frameHeight, (col+1)*frameWidth, (row+1)*frameHeight)
+		screen.DrawImage(img.SubImage(rect), op)
+	} else {
+		screen.DrawImage(img, op)
+	}
 
 	// Draw Cooldown Bar for wells
 	if o.Archetype.Type == "well" && o.CooldownTicks > 0 {

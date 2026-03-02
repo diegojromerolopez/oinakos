@@ -1,0 +1,18 @@
+id: campfire
+name: "Campfire"
+type: decoration
+destructible: true
+health: 10
+description: "A flickering fire that provides warmth and a small amount of light."
+footprint:
+  - x: 0.5
+    y: 0.5
+  - x: -0.5
+    y: 0.5
+  - x: -0.5
+    y: -0.5
+  - x: 0.5
+    y: -0.5
+frame_count: 4
+frames_per_row: 2
+animation_speed: 10

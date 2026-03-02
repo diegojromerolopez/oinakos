@@ -1,0 +1,14 @@
+id: granary
+name: "Abandoned Granary"
+type: building
+destructible: false
+description: "A tall, weathered wooden structure once used for storing grain, now empty and echoing."
+footprint:
+  - x: 2.5
+    y: 2.5
+  - x: -2.5
+    y: 2.5
+  - x: -2.5
+    y: -2.5
+  - x: 2.5
+    y: -2.5

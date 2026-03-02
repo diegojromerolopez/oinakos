@@ -1,0 +1,14 @@
+id: bookshop
+name: "The Forbidden Tome"
+type: building
+destructible: false
+description: "A dark stone building housing dusty manuscripts and forbidden lore."
+footprint:
+  - x: 3.0
+    y: 3.0
+  - x: -3.0
+    y: 3.0
+  - x: -3.0
+    y: -3.0
+  - x: 3.0
+    y: -3.0

@@ -1,0 +1,14 @@
+id: leper_colony
+name: "Leper Colony Shacks"
+type: building
+destructible: false
+description: "A cluster of rotting wooden shacks, home to the outcasts and the plague-stricken."
+footprint:
+  - x: 4.0
+    y: 4.0
+  - x: -4.0
+    y: 4.0
+  - x: -4.0
+    y: -4.0
+  - x: 4.0
+    y: -4.0

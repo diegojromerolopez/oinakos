@@ -14,12 +14,15 @@ func Fragment(dstPos vec4, srcPos vec2, color vec4) vec4 {
 		return imgColor
 	}
 
+	// Normalize color for mask checking (ignore alpha)
+	rawRGB := imgColor.rgb / imgColor.a
+
 	// Primary (Magenta #FF00FF)
-	if abs(imgColor.r - 1.0) < 0.01 && abs(imgColor.g - 0.0) < 0.01 && abs(imgColor.b - 1.0) < 0.01 {
+	if distance(rawRGB, vec3(1.0, 0.0, 1.0)) < 0.1 {
 		return PrimaryColor * imgColor.a
 	}
 	// Secondary (Yellow #FFFF00)
-	if abs(imgColor.r - 1.0) < 0.01 && abs(imgColor.g - 1.0) < 0.01 && abs(imgColor.b - 0.0) < 0.01 {
+	if distance(rawRGB, vec3(1.0, 1.0, 0.0)) < 0.1 {
 		return SecondaryColor * imgColor.a
 	}
 

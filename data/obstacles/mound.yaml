@@ -1,0 +1,14 @@
+id: mound
+name: "Burial Mound"
+type: terrain
+destructible: false
+description: "An ancient burial mound overgrown with moss and shadows."
+footprint:
+  - x: 1.5
+    y: 1.5
+  - x: -1.5
+    y: 1.5
+  - x: -1.5
+    y: -1.5
+  - x: 1.5
+    y: -1.5

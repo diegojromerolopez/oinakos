@@ -1,0 +1,14 @@
+id: hung_tree
+name: "The Gallowtree"
+type: terrain
+destructible: false
+description: "An ancient, withered oak with a heavy branch that has seen many a final judgment."
+footprint:
+  - x: 1.0
+    y: 1.0
+  - x: -1.0
+    y: 1.0
+  - x: -1.0
+    y: -1.0
+  - x: 1.0
+    y: -1.0

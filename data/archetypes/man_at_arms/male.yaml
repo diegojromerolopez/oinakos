@@ -20,6 +20,7 @@ stats:
   base_defense: 10
   attack_cooldown: 55
 primary_color: "#0000FF" # Default Blue band
+secondary_color: "#303030" # Default Dark metal/leather
 weapon: Sword
 footprint:
   - x: -0.3

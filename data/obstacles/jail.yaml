@@ -1,0 +1,14 @@
+id: jail
+name: "Dungeon Jail"
+type: building
+destructible: false
+description: "A somber stone entrance to a subterranean jail or dungeon."
+footprint:
+  - x: 3.0
+    y: 3.0
+  - x: -3.0
+    y: 3.0
+  - x: -3.0
+    y: -3.0
+  - x: 3.0
+    y: -3.0

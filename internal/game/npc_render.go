@@ -91,10 +91,10 @@ func (n *NPC) Draw(screen engine.Image, textRenderer engine.TextRenderer, vector
 	hasPalette := n.Archetype.PrimaryColor != "" || n.Archetype.SecondaryColor != ""
 	if hasPalette && paletteShader != nil {
 		uniforms := make(map[string]interface{})
-		pColor := HexToRGBA(n.Archetype.PrimaryColor)
-		sColor := HexToRGBA(n.Archetype.SecondaryColor)
-		uniforms["PrimaryColor"] = pColor
-		uniforms["SecondaryColor"] = sColor
+		pArr := HexToRGBA(n.Archetype.PrimaryColor)
+		sArr := HexToRGBA(n.Archetype.SecondaryColor)
+		uniforms["PrimaryColor"] = pArr[:] // Convert to slice
+		uniforms["SecondaryColor"] = sArr[:]
 
 		if g, ok := vectorRenderer.(engine.Graphics); ok {
 			g.DrawImageWithShader(screen, drawSprite, paletteShader, uniforms, op)

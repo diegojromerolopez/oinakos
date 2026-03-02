@@ -94,9 +94,9 @@ func Transparentize(img image.Image) image.Image {
 			isLime := false
 			if a > 0 {
 				r8, g8, b8 := uint8(r>>8), uint8(g>>8), uint8(b>>8)
-				// Robust lime detection for AI-generated assets:
-				// High green dominance over both red and blue.
-				if g8 > 140 && g8 > uint8(float64(r8)*1.2) && g8 > b8*2 {
+				// TIGHTENED & FIXED: Perform comparison in float64 to avoid uint8 overflow.
+				// (e.g. 200 * 1.5 = 300, which overflows uint8 to 44).
+				if float64(g8) > 160 && float64(g8) > float64(r8)*1.5 && float64(g8) > float64(b8)*1.5 {
 					isLime = true
 				}
 			}

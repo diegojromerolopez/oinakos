@@ -10,6 +10,7 @@ type Obstacle struct {
 	Archetype     *ObstacleArchetype
 	Health        int
 	CooldownTicks int
+	TickCounter   int
 	Alive         bool
 }
 
@@ -37,6 +38,7 @@ func (o *Obstacle) Update() {
 	if o.CooldownTicks > 0 {
 		o.CooldownTicks--
 	}
+	o.TickCounter++
 }
 
 func (o *Obstacle) TakeDamage(amount int) {

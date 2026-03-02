@@ -1,4 +1,4 @@
-.PHONY: all build build-wasm build-tools run run-debug boundaries-editor serve-wasm bundle-mac bundle-windows bundle-linux bundle-all clean
+.PHONY: all build build-wasm build-tools run run-debug boundaries-editor map-editor serve-wasm bundle-mac bundle-windows bundle-linux bundle-all clean
 
 # Default name for the native binary
 APP_NAME=oinakos
@@ -27,13 +27,19 @@ build-wasm:
 	GOOS=js GOARCH=wasm $(GOBUILD) -o $(DIST_DIR)/$(APP_NAME).wasm main.go
 	@echo "Built: $(DIST_DIR)/$(APP_NAME).wasm"
 
-build-tools: $(BIN_DIR)/boundaries_editor
+build-tools: $(BIN_DIR)/boundaries_editor $(BIN_DIR)/map_editor
 
 $(BIN_DIR)/boundaries_editor: ./tools/boundaries_editor/main.go
 	@echo "Building boundaries_editor..."
 	@mkdir -p $(BIN_DIR)
 	$(GOBUILD) -o $(BIN_DIR)/boundaries_editor ./tools/boundaries_editor/main.go
 	@echo "Tool built: $(BIN_DIR)/boundaries_editor"
+
+$(BIN_DIR)/map_editor: ./tools/map_editor/main.go
+	@echo "Building map_editor..."
+	@mkdir -p $(BIN_DIR)
+	$(GOBUILD) -o $(BIN_DIR)/map_editor ./tools/map_editor/main.go
+	@echo "Tool built: $(BIN_DIR)/map_editor"
 
 dist: build-wasm
 	@echo "Preparing distribution files..."
@@ -60,6 +66,9 @@ boundaries-editor: build-tools
 		$(if $(NPC),--npc $(NPC)) \
 		$(if $(CHARACTER),--character $(CHARACTER)); \
 	fi
+
+map-editor: build-tools
+	./$(BIN_DIR)/map_editor
 
 serve-wasm: dist
 	@echo "Serving WASM on port 8000..."

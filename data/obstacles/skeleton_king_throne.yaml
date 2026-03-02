@@ -1,0 +1,15 @@
+id: skeleton_king_throne
+name: Skeleton King Throne
+description: "A dark throne embedded in a jagged rock, with the remains of an ancient king still wearing his crown."
+health: 0
+type: static
+destructible: false
+footprint:
+  - x: -1.5
+    y: -1.5
+  - x: 1.5
+    y: -1.5
+  - x: 1.5
+    y: 1.5
+  - x: -1.5
+    y: 1.5

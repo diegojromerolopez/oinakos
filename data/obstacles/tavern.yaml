@@ -1,0 +1,14 @@
+id: tavern
+name: "The Gilded Tankard"
+type: building
+destructible: false
+description: "A dark, welcoming tavern where heroes and scoundrels gather."
+footprint:
+  - x: 4.0
+    y: 4.0
+  - x: -4.0
+    y: 4.0
+  - x: -4.0
+    y: -4.0
+  - x: 4.0
+    y: -4.0

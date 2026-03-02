@@ -282,7 +282,8 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 			isoX, isoY := engine.CartesianToIso(n.X, n.Y)
 			if gr.crownSprite != nil {
 				op := engine.NewDrawImageOptions()
-				op.Translate(isoX+offsetX-16, isoY+offsetY-40)
+				// Position above head (160px character height approx)
+				op.Translate(isoX+offsetX-16, isoY+offsetY-150)
 				screen.DrawImage(gr.crownSprite, op)
 			}
 		}

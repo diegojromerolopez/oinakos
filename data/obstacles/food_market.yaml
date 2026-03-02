@@ -1,0 +1,15 @@
+id: food_market
+name: "Food Market Stall"
+type: stall
+destructible: true
+health: 500
+description: "A stall selling questionable meats and rot-resistant vegetables."
+footprint:
+  - x: 1.2
+    y: 1.2
+  - x: -1.2
+    y: 1.2
+  - x: -1.2
+    y: -1.2
+  - x: 1.2
+    y: -1.2

@@ -841,9 +841,10 @@ func (g *Game) Update() error {
 		return nil
 	}
 
-	// Filter dead obstacles
+	// Update all obstacles (important for animation and cooldowns)
 	aliveObstacles := make([]*Obstacle, 0, len(g.obstacles))
 	for _, o := range g.obstacles {
+		o.Update()
 		if o.Alive {
 			aliveObstacles = append(aliveObstacles, o)
 		}
