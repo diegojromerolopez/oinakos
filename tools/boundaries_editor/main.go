@@ -400,7 +400,7 @@ func main() {
 		obsReg.LoadAssets(assets, graphics)
 		for _, id := range obsReg.IDs {
 			arch := obsReg.Archetypes[id]
-			obs := game.NewObstacle(0, 0, arch)
+			obs := game.NewObstacle("editor_preview", 0, 0, arch)
 			var img engine.Image
 			if arch.Image != nil {
 				img = arch.Image.(engine.Image)

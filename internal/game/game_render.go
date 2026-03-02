@@ -83,6 +83,11 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 	g := gr.game
 	offsetX, offsetY := g.camera.GetOffsets(g.width, g.height)
 
+	if g.isCampaignSelect {
+		gr.drawCampaignSelect(screen)
+		return
+	}
+
 	if g.currentMapType.FloorTile != "" && g.currentMapType.FloorTile != gr.lastFloorPath {
 		floorPath := path.Join("assets/images/floors", g.currentMapType.FloorTile)
 		tile := gr.graphics.LoadSprite(g.assets, floorPath, true)
@@ -283,7 +288,9 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 		}
 	}
 
-	if g.isGameOver {
+	if g.isGameWon {
+		gr.drawGameWon(screen)
+	} else if g.isGameOver {
 		gr.drawGameOver(screen)
 	} else if g.isMapWon {
 		gr.drawMapWon(screen)
@@ -368,6 +375,9 @@ func (gr *GameRenderer) drawHUD(screen engine.Image) {
 
 	// Map Name below Menu
 	mapTitle := strings.ToUpper(g.currentMapType.Name)
+	if g.isCampaign && g.currentCampaign != nil {
+		mapTitle = strings.ToUpper(g.currentCampaign.Name)
+	}
 	// Approximate width calculation: ~7 pixels per char
 	tw := len(mapTitle) * 7
 	gr.graphics.DebugPrintAt(screen, mapTitle, g.width-tw-20, 60, color.RGBA{218, 165, 32, 255})
@@ -494,4 +504,65 @@ func (gr *GameRenderer) drawInfoBox(screen engine.Image, title, desc string, x, 
 		}
 	}
 	gr.graphics.DebugPrintAt(screen, line, int(bx)+10, int(by)+35+lineNum*15, color.White)
+}
+func (gr *GameRenderer) drawCampaignSelect(screen engine.Image) {
+	g := gr.game
+	// Black background
+	gr.graphics.DrawFilledRect(screen, 0, 0, float32(g.width), float32(g.height), color.Black, false)
+
+	// Title
+	title := "OINAKOS: SELECT YOUR CAMPAIGN"
+	tw := len(title) * 7
+	gr.graphics.DebugPrintAt(screen, title, (g.width-tw)/2, 80, color.RGBA{218, 165, 32, 255})
+
+	// Options
+	for i, id := range g.campaignRegistry.IDs {
+		camp := g.campaignRegistry.Campaigns[id]
+		var clr color.Color = color.White
+		prefix := "  "
+		if g.campaignMenuIndex == i {
+			clr = color.RGBA{255, 255, 0, 255}
+			prefix = "> "
+
+			// Draw description
+			gr.graphics.DebugPrintAt(screen, camp.Description, 200, 500, color.RGBA{136, 136, 136, 255})
+		}
+		gr.graphics.DebugPrintAt(screen, prefix+camp.Name, 200, 150+i*40, clr)
+	}
+
+	// Quit option at bottom
+	i := len(g.campaignRegistry.IDs)
+	var clr color.Color = color.White
+	prefix := "  "
+	if g.campaignMenuIndex == i {
+		clr = color.RGBA{255, 0, 0, 255}
+		prefix = "> "
+	}
+	gr.graphics.DebugPrintAt(screen, prefix+"QUIT", 200, 150+i*40+20, clr)
+
+	gr.graphics.DebugPrintAt(screen, "Press UP/DOWN to navigate, ENTER to begin.", (g.width-300)/2, g.height-50, color.RGBA{136, 136, 136, 255})
+}
+
+func (gr *GameRenderer) drawGameWon(screen engine.Image) {
+	g := gr.game
+	// Semi-transparent overlay
+	gr.graphics.DrawFilledRect(screen, 0, 0, float32(g.width), float32(g.height), color.RGBA{0, 0, 0, 200}, false)
+
+	title := "YOU WIN!"
+	if g.isCampaign {
+		title = "CAMPAIGN COMPLETED: YOU WIN!"
+	}
+	tw := len(title) * 7
+	gr.graphics.DebugPrintAt(screen, title, (g.width-tw)/2, 100, color.RGBA{218, 165, 32, 255})
+
+	options := []string{"Replay", "Quit"}
+	for i, opt := range options {
+		var clr color.Color = color.White
+		prefix := "  "
+		if g.mapWonMenuIndex == i {
+			clr = color.RGBA{255, 255, 0, 255}
+			prefix = "> "
+		}
+		gr.graphics.DebugPrintAt(screen, prefix+opt, g.width/2-40, 200+i*40, clr)
+	}
 }

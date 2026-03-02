@@ -1,0 +1,7 @@
+id: demonic_incursion
+name: "Shadow of the Abyss"
+description: "Eldritch horrors tear through the veil. descend into the darkness and close the gates."
+maps:
+  - burning_fields
+  - demon_duel
+  - portal_of_shadows

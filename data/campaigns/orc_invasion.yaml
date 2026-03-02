@@ -1,0 +1,7 @@
+id: orc_invasion
+name: "The Great Orc Invasion"
+description: "The green tide rises from the East. Hold the frontier or see the kingdom fall."
+maps:
+  - frontier_outpost
+  - orc_camp
+  - orc_ambush

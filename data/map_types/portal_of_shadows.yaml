@@ -1,0 +1,14 @@
+id: portal_of_shadows
+name: "Portal of Shadows"
+type: reach_portal
+description: "Close the portal by reaching its core before it's too late."
+difficulty: 5
+target_radius: 3.0
+width_px: 5000
+height_px: 5000
+floor_tile: grass.png
+spawns:
+  - archetype: demon_male
+    alignment: enemy
+    probability: 0.25
+    frequency: 1.5

@@ -99,6 +99,7 @@ func NewMainCharacter(x, y float64, config *EntityConfig) *MainCharacter {
 		EquippedArmor: map[ArmorSlot]*Armor{
 			SlotBody: ArmorLeather,
 		},
+		Level: 1,
 	}
 	// Random quality bonus for starting weapon
 	if mc.Weapon != nil {

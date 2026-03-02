@@ -187,7 +187,7 @@ func TestNPCUpdate_Detailed(t *testing.T) {
 
 func TestCollisionDetailed(t *testing.T) {
 	mc := NewMainCharacter(0, 0, nil)
-	obs := []*Obstacle{NewObstacle(1, 0, &ObstacleArchetype{ID: "test", Footprint: []FootprintPoint{{-1, -1}, {1, -1}, {1, 1}, {-1, 1}}})}
+	obs := []*Obstacle{NewObstacle("test_obs_1", 1, 0, &ObstacleArchetype{ID: "test", Footprint: []FootprintPoint{{-1, -1}, {1, -1}, {1, 1}, {-1, 1}}})}
 
 	// Test collision detection
 	if !mc.checkCollisionAt(1, 0, obs) {
@@ -228,7 +228,7 @@ func TestMainCharacterTakeDamageDetailed(t *testing.T) {
 }
 
 func TestObstacleUpdate_Detailed(t *testing.T) {
-	o := NewObstacle(0, 0, nil)
+	o := NewObstacle("test_obs_2", 0, 0, nil)
 	o.Update()
 
 	o.CooldownTicks = 10
@@ -239,7 +239,7 @@ func TestObstacleUpdate_Detailed(t *testing.T) {
 }
 
 func TestProjectileUpdate_Detailed(t *testing.T) {
-	p := NewProjectile(0, 0, 1, 0, 1.0, 10, true)
+	p := NewProjectile(0, 0, 1, 0, 1.0, 10, true, 100.0)
 	mc := NewMainCharacter(0, 0, nil)
 	fts := []*FloatingText{}
 
@@ -248,7 +248,7 @@ func TestProjectileUpdate_Detailed(t *testing.T) {
 
 	// Update with entities
 	targetMc := NewMainCharacter(2, 0, nil)
-	obstacles := []*Obstacle{NewObstacle(5, 0, &ObstacleArchetype{ID: "test", Footprint: []FootprintPoint{{-0.5, -0.5}, {0.5, -0.5}, {0.5, 0.5}, {-0.5, 0.5}}})}
+	obstacles := []*Obstacle{NewObstacle("test_obs_3", 5, 0, &ObstacleArchetype{ID: "test", Footprint: []FootprintPoint{{-0.5, -0.5}, {0.5, -0.5}, {0.5, 0.5}, {-0.5, 0.5}}})}
 
 	// Manually move projectile to hit targetMc
 	p.X = 2

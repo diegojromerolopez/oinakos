@@ -25,20 +25,26 @@ const (
 )
 
 type Game struct {
-	width, height    int
-	mainCharacter    *MainCharacter
-	playerConfig     *EntityConfig
-	obstacles        []*Obstacle
-	npcs             []*NPC
-	projectiles      []*Projectile
-	isGameOver       bool
-	isMapWon         bool
-	mapWonMenuIndex  int // 0: Continue, 1: Quit
-	isPaused         bool
-	currentMapType   MapType
-	mapLevel         int
-	initialMapTypeID string
-	debug            bool
+	width, height     int
+	mainCharacter     *MainCharacter
+	playerConfig      *EntityConfig
+	obstacles         []*Obstacle
+	npcs              []*NPC
+	projectiles       []*Projectile
+	isGameOver        bool
+	isMapWon          bool
+	isGameWon         bool // For completing entire campaign or single map
+	mapWonMenuIndex   int  // 0: Continue/Replay, 1: Quit
+	isPaused          bool
+	currentMapType    MapType
+	mapLevel          int       // Current level (for scaling)
+	currentCampaign   *Campaign // If playing a campaign
+	campaignIndex     int       // Progress in campaign Maps
+	isCampaign        bool      // True if playing a campaign
+	isCampaignSelect  bool      // True if showing campaign picker
+	campaignMenuIndex int       // Index of selected campaign
+	initialMapTypeID  string
+	debug             bool
 
 	generatedChunks map[image.Point]bool
 	npcSpawnTimer   int
@@ -50,6 +56,7 @@ type Game struct {
 	floatingTexts     []*FloatingText
 	archetypeRegistry *ArchetypeRegistry
 	mapTypeRegistry   *MapTypeRegistry
+	campaignRegistry  *CampaignRegistry
 	obstacleRegistry  *ObstacleRegistry
 	initialMapID      string
 	lastSavePath      string
@@ -86,6 +93,9 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID string, input engine.I
 	mapTypeRegistry := NewMapTypeRegistry()
 	mapTypeRegistry.LoadAll(assets)
 
+	campaignRegistry := NewCampaignRegistry()
+	campaignRegistry.LoadAll(assets)
+
 	obstacleRegistry := NewObstacleRegistry()
 	obstacleRegistry.LoadAll(assets)
 
@@ -109,6 +119,7 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID string, input engine.I
 		npcSpawnTimer:     0,
 		archetypeRegistry: archetypeRegistry,
 		mapTypeRegistry:   mapTypeRegistry,
+		campaignRegistry:  campaignRegistry,
 		obstacleRegistry:  obstacleRegistry,
 		npcRegistry:       npcRegistry,
 		currentMapType:    selectedMapType,
@@ -118,6 +129,16 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID string, input engine.I
 		input:             input,
 		audio:             audio,
 		debug:             debug,
+	}
+
+	if initialMapID == "" && initialMapTypeID == "" {
+		if len(g.campaignRegistry.IDs) > 0 {
+			g.isCampaignSelect = true
+		} else {
+			g.loadMapLevel()
+		}
+	} else {
+		g.loadMapLevel()
 	}
 
 	// WASM Auto-resumption from localStorage
@@ -185,31 +206,27 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID string, input engine.I
 }
 
 func (g *Game) loadMapLevel() {
-	// Pick a map, generally increasing difficulty matching the level
-	availableMaps := make([]MapType, 0)
-	for _, id := range g.mapTypeRegistry.IDs {
-		m := g.mapTypeRegistry.Types[id]
-		// allow slightly higher or lower difficulty maps
-		if m.Difficulty <= g.mapLevel+1 {
-			availableMaps = append(availableMaps, *m)
+	if g.isCampaign && g.currentCampaign != nil {
+		if g.campaignIndex < len(g.currentCampaign.Maps) {
+			mapID := g.currentCampaign.Maps[g.campaignIndex]
+			if m, ok := g.mapTypeRegistry.Types[mapID]; ok {
+				g.currentMapType = *m
+				log.Printf("Loading Campaign Map [%d/%d]: %s", g.campaignIndex+1, len(g.currentCampaign.Maps), mapID)
+			}
 		}
 	}
 
-	if g.initialMapID != "" && g.mapLevel == 1 {
+	if g.initialMapID != "" && g.mapLevel == 1 && !g.isCampaign {
 		if m, ok := g.mapTypeRegistry.Types[g.initialMapID]; ok {
 			g.currentMapType = *m
 			log.Printf("Using initial map selection: %s", g.initialMapID)
-		} else {
-			log.Printf("Warning: requested initial map %s not found", g.initialMapID)
-			// fallback below
 		}
 	}
 
 	if g.currentMapType.ID == "" {
-		if len(availableMaps) > 0 {
-			g.currentMapType = availableMaps[rand.Intn(len(availableMaps))]
-		} else if len(g.mapTypeRegistry.IDs) > 0 {
-			g.currentMapType = *g.mapTypeRegistry.Types[g.mapTypeRegistry.IDs[0]] // Fallback
+		// Fallback picker
+		if len(g.mapTypeRegistry.IDs) > 0 {
+			g.currentMapType = *g.mapTypeRegistry.Types[g.mapTypeRegistry.IDs[0]]
 		}
 	}
 
@@ -267,45 +284,71 @@ func (g *Game) loadMapLevel() {
 			// Actually, let's just make the *first* NPC the VIP for simplicity if it's a VIP map.
 		}
 	case ObjReachPortal, ObjReachZone:
-		g.currentMapType.TargetPoint = engine.Point{
-			X: g.mainCharacter.X + (rand.Float64()*60 - 30),
-			Y: g.mainCharacter.Y + (rand.Float64()*60 - 30),
-		}
-		if g.currentMapType.TargetPoint.X > -10 && g.currentMapType.TargetPoint.X < 10 {
-			g.currentMapType.TargetPoint.X += 20
-		}
-		if g.currentMapType.TargetPoint.Y > -10 && g.currentMapType.TargetPoint.Y < 10 {
-			g.currentMapType.TargetPoint.Y += 20
+		if g.currentMapType.TargetPointRaw != nil {
+			g.currentMapType.TargetPoint = engine.Point{
+				X: g.currentMapType.TargetPointRaw.X,
+				Y: g.currentMapType.TargetPointRaw.Y,
+			}
+		} else {
+			// Fallback: random point at a safe distance
+			offX := rand.Float64()*60 - 30
+			offY := rand.Float64()*60 - 30
+			if offX > -10 && offX < 10 {
+				offX += 20
+			}
+			if offY > -10 && offY < 10 {
+				offY += 20
+			}
+			g.currentMapType.TargetPoint = engine.Point{
+				X: g.mainCharacter.X + offX,
+				Y: g.mainCharacter.Y + offY,
+			}
 		}
 	case ObjReachBuilding:
-		// Pick a random direction
-		g.currentMapType.TargetPoint = engine.Point{
-			X: g.mainCharacter.X + (rand.Float64()*50 - 25),
-			Y: g.mainCharacter.Y + (rand.Float64()*50 - 25),
+		if g.currentMapType.TargetPointRaw != nil {
+			g.currentMapType.TargetPoint = engine.Point{
+				X: g.currentMapType.TargetPointRaw.X,
+				Y: g.currentMapType.TargetPointRaw.Y,
+			}
+		} else {
+			offX := rand.Float64()*50 - 25
+			offY := rand.Float64()*50 - 25
+			if offX > -10 && offX < 10 {
+				offX += 20
+			}
+			if offY > -10 && offY < 10 {
+				offY += 20
+			}
+			g.currentMapType.TargetPoint = engine.Point{
+				X: g.mainCharacter.X + offX,
+				Y: g.mainCharacter.Y + offY,
+			}
 		}
-		if g.currentMapType.TargetPoint.X > -10 && g.currentMapType.TargetPoint.X < 10 {
-			g.currentMapType.TargetPoint.X += 20
-		}
-		if g.currentMapType.TargetPoint.Y > -10 && g.currentMapType.TargetPoint.Y < 10 {
-			g.currentMapType.TargetPoint.Y += 20
-		}
-		// We'll spawn a building there in the update loop or rely on chunks. Let's force a building spawn.
+		// Spawn a building at the target
 		if config, ok := g.obstacleRegistry.Archetypes["warehouse"]; ok {
-			g.obstacles = append(g.obstacles, NewObstacle(g.currentMapType.TargetPoint.X, g.currentMapType.TargetPoint.Y, config))
+			g.obstacles = append(g.obstacles, NewObstacle("target_warehouse", g.currentMapType.TargetPoint.X, g.currentMapType.TargetPoint.Y, config))
 		} else {
 			log.Println("WARNING: Warehouse config not found for ObjReachBuilding!")
 		}
 	case ObjProtectNPC:
-		// Target point far away
-		g.currentMapType.TargetPoint = engine.Point{
-			X: g.mainCharacter.X + (rand.Float64()*80 - 40),
-			Y: g.mainCharacter.Y + (rand.Float64()*80 - 40),
-		}
-		if g.currentMapType.TargetPoint.X > -20 && g.currentMapType.TargetPoint.X < 20 {
-			g.currentMapType.TargetPoint.X += 40
-		}
-		if g.currentMapType.TargetPoint.Y > -20 && g.currentMapType.TargetPoint.Y < 20 {
-			g.currentMapType.TargetPoint.Y += 40
+		if g.currentMapType.TargetPointRaw != nil {
+			g.currentMapType.TargetPoint = engine.Point{
+				X: g.currentMapType.TargetPointRaw.X,
+				Y: g.currentMapType.TargetPointRaw.Y,
+			}
+		} else {
+			offX := rand.Float64()*80 - 40
+			offY := rand.Float64()*80 - 40
+			if offX > -20 && offX < 20 {
+				offX += 40
+			}
+			if offY > -20 && offY < 20 {
+				offY += 40
+			}
+			g.currentMapType.TargetPoint = engine.Point{
+				X: g.mainCharacter.X + offX,
+				Y: g.mainCharacter.Y + offY,
+			}
 		}
 
 		// Spawn Escort right next to mainCharacter
@@ -329,7 +372,7 @@ func (g *Game) loadMapLevel() {
 
 		// Spawn a target building like a warehouse or farm
 		if config, ok := g.obstacleRegistry.Archetypes["house_burned"]; ok {
-			targetObs := NewObstacle(g.currentMapType.TargetPoint.X, g.currentMapType.TargetPoint.Y, config)
+			targetObs := NewObstacle("target_building", g.currentMapType.TargetPoint.X, g.currentMapType.TargetPoint.Y, config)
 			g.obstacles = append(g.obstacles, targetObs)
 			g.currentMapType.TargetObstacle = targetObs
 		} else {
@@ -385,7 +428,7 @@ func (g *Game) loadMapLevel() {
 			if po.Y != nil {
 				py = *po.Y
 			}
-			g.obstacles = append(g.obstacles, NewObstacle(px, py, config))
+			g.obstacles = append(g.obstacles, NewObstacle(po.ID, px, py, config))
 		} else {
 			log.Printf("WARNING: PreSpawn obstacle archetype not found: %s", po.Archetype)
 		}
@@ -425,6 +468,59 @@ func (g *Game) loadMapLevel() {
 }
 
 func (g *Game) Update() error {
+	if g.isCampaignSelect {
+		if g.input.IsKeyJustPressed(engine.KeyUp) || g.input.IsKeyJustPressed(engine.KeyW) {
+			g.campaignMenuIndex--
+			if g.campaignMenuIndex < 0 {
+				g.campaignMenuIndex = len(g.campaignRegistry.IDs)
+			}
+		}
+		if g.input.IsKeyJustPressed(engine.KeyDown) || g.input.IsKeyJustPressed(engine.KeyS) {
+			g.campaignMenuIndex++
+			if g.campaignMenuIndex > len(g.campaignRegistry.IDs) {
+				g.campaignMenuIndex = 0
+			}
+		}
+		if g.input.IsKeyJustPressed(engine.KeyEnter) {
+			if g.campaignMenuIndex < len(g.campaignRegistry.IDs) {
+				// Selected a campaign
+				camID := g.campaignRegistry.IDs[g.campaignMenuIndex]
+				g.currentCampaign = g.campaignRegistry.Campaigns[camID]
+				g.isCampaign = true
+				g.campaignIndex = 0
+				g.isCampaignSelect = false
+				g.loadMapLevel()
+			} else {
+				// Quit button
+				os.Exit(0)
+			}
+		}
+		if g.input.IsKeyJustPressed(engine.KeyEscape) {
+			os.Exit(0)
+		}
+		return nil
+	}
+
+	if g.isGameWon {
+		if g.input.IsKeyJustPressed(engine.KeyUp) || g.input.IsKeyJustPressed(engine.KeyW) {
+			g.mapWonMenuIndex = 0
+		}
+		if g.input.IsKeyJustPressed(engine.KeyDown) || g.input.IsKeyJustPressed(engine.KeyS) {
+			g.mapWonMenuIndex = 1
+		}
+		if g.input.IsKeyJustPressed(engine.KeyEnter) {
+			if g.mapWonMenuIndex == 0 { // Replay
+				*g = *NewGame(g.assets, g.initialMapID, g.initialMapTypeID, g.input, g.audio, g.debug)
+			} else { // Quit
+				os.Exit(0)
+			}
+		}
+		if g.input.IsKeyJustPressed(engine.KeyEscape) {
+			os.Exit(0)
+		}
+		return nil
+	}
+
 	// Handle debug boundaries toggle
 	if g.input.IsKeyJustPressed(engine.KeyTab) {
 		g.showBoundaries = !g.showBoundaries
@@ -451,15 +547,21 @@ func (g *Game) Update() error {
 
 		if g.input.IsKeyJustPressed(engine.KeyEnter) {
 			if g.mapWonMenuIndex == WinMenuContinue {
-				// Advance to next map
-				g.mapLevel++
-				// Heal as reward
-				g.mainCharacter.Health += g.mainCharacter.MaxHealth / 2
-				if g.mainCharacter.Health > g.mainCharacter.MaxHealth {
-					g.mainCharacter.Health = g.mainCharacter.MaxHealth
+				// Advance
+				if g.isCampaign && g.currentCampaign != nil {
+					g.campaignIndex++
+					if g.campaignIndex >= len(g.currentCampaign.Maps) {
+						g.isGameWon = true
+						g.isMapWon = false
+					} else {
+						g.loadMapLevel()
+						g.isMapWon = false
+					}
+				} else {
+					// Single map win
+					g.isGameWon = true
+					g.isMapWon = false
 				}
-				g.isMapWon = false
-				g.loadMapLevel()
 			} else if g.mapWonMenuIndex == WinMenuQuit {
 				os.Exit(0)
 			}
@@ -835,7 +937,7 @@ func (g *Game) spawnObstaclesInChunk(cx, cy int) {
 			types := []string{"tree1", "tree2", "tree3", "tree4", "tree5", "tree6", "tree7"}
 			ot := types[r.Intn(len(types))]
 			config := g.obstacleRegistry.Archetypes[ot]
-			g.obstacles = append(g.obstacles, NewObstacle(tx, ty, config))
+			g.obstacles = append(g.obstacles, NewObstacle(fmt.Sprintf("gen_%s_%.1f_%.1f", ot, tx, ty), tx, ty, config))
 		}
 	}
 
@@ -847,7 +949,7 @@ func (g *Game) spawnObstaclesInChunk(cx, cy int) {
 			types := []string{"rock1", "rock2", "rock3", "rock4", "rock5"}
 			ot := types[r.Intn(len(types))]
 			config := g.obstacleRegistry.Archetypes[ot]
-			g.obstacles = append(g.obstacles, NewObstacle(wx, wy, config))
+			g.obstacles = append(g.obstacles, NewObstacle(fmt.Sprintf("gen_%s_%.1f_%.1f", ot, wx, wy), wx, wy, config))
 			wx += r.Float64()*1.2 - 0.6
 			wy += r.Float64()*1.2 - 0.6
 		}
@@ -882,7 +984,7 @@ func (g *Game) spawnObstaclesInChunk(cx, cy int) {
 				types := []string{"house1", "house2", "house3", "farm", "smithery", "temple", "warehouse", "house_burned"}
 				ot := types[r.Intn(len(types))]
 				if config, ok := g.obstacleRegistry.Archetypes[ot]; ok {
-					g.obstacles = append(g.obstacles, NewObstacle(bx, by, config))
+					g.obstacles = append(g.obstacles, NewObstacle(fmt.Sprintf("gen_tree_palm_%.0f_%.0f", bx, by), bx, by, config))
 				}
 			}
 		}
@@ -894,7 +996,7 @@ func (g *Game) spawnObstaclesInChunk(cx, cy int) {
 		wy := startY + r.Float64()*chunkSize
 		if math.Abs(wx) > 2 || math.Abs(wy) > 2 {
 			if config, ok := g.obstacleRegistry.Archetypes["well"]; ok {
-				g.obstacles = append(g.obstacles, NewObstacle(wx, wy, config))
+				g.obstacles = append(g.obstacles, NewObstacle(fmt.Sprintf("gen_well_%.1f_%.1f", wx, wy), wx, wy, config))
 			}
 		}
 	}
@@ -907,7 +1009,7 @@ func (g *Game) spawnObstaclesInChunk(cx, cy int) {
 			types := []string{"bush1", "bush2", "bush3", "bush4", "bush5"}
 			ot := types[r.Intn(len(types))]
 			config := g.obstacleRegistry.Archetypes[ot]
-			g.obstacles = append(g.obstacles, NewObstacle(bx, by, config))
+			g.obstacles = append(g.obstacles, NewObstacle(fmt.Sprintf("gen_%s_%.1f_%.1f", ot, bx, by), bx, by, config))
 		}
 	}
 }

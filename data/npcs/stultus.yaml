@@ -2,6 +2,7 @@ id: stultus
 name: Stultus
 description: "Stultus is a younger man in his mid-40s. He is tall, slim, with black hair and weary, baggy eyes. A short moustache and beard frame his face. His voice is his weapon; he attacks by unleashing devastating shouts. Legends say his power resides in his tongue, which he guards fiercely."
 unique: true
+asset_dir: assets/images/npcs/stultus
 behavior: hunter
 stats:
   health_min: 650
@@ -22,3 +23,4 @@ footprint:
     y: 0.15
   - x: -0.25
     y: 0.15
+xp: 160

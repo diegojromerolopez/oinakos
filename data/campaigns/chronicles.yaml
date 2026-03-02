@@ -1,0 +1,7 @@
+id: chronicles
+name: "The Oinakos Chronicles"
+description: "The classic tale of a lone knight defending his homeland from rising threats."
+maps:
+  - safe_zone
+  - ancient_tavern
+  - boss_rush

@@ -1,0 +1,18 @@
+id: orc_camp
+name: "Orc Camp"
+type: destroy_building
+description: "Destroy the Orcish command tent to break their morale."
+difficulty: 3
+width_px: 3000
+height_px: 3000
+floor_tile: grass.png
+obstacles:
+  - id: command_tent
+    archetype: warehouse
+    x: 10
+    y: 10
+spawns:
+  - archetype: orc_male
+    alignment: enemy
+    probability: 0.2
+    frequency: 2

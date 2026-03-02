@@ -175,6 +175,7 @@ func (g *Game) serialize() ([]byte, error) {
 		}
 		xVal, yVal := o.X, o.Y
 		data.Obstacles = append(data.Obstacles, ObstacleSaveData{
+			ID:            o.ID,
 			ArchetypeID:   o.Archetype.ID,
 			X:             &xVal,
 			Y:             &yVal,
@@ -391,7 +392,7 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 			py = *base.Y
 		}
 
-		o := NewObstacle(px, py, config)
+		o := NewObstacle(oData.ID, px, py, config)
 		if oData.Health > 0 || oData.X != nil { // Use save data health if provided
 			o.Health = oData.Health
 		} else if config.Health > 0 {
@@ -416,7 +417,7 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 				if ps.Y != nil {
 					py = *ps.Y
 				}
-				g.obstacles = append(g.obstacles, NewObstacle(px, py, config))
+				g.obstacles = append(g.obstacles, NewObstacle(ps.ID, px, py, config))
 			}
 		}
 	}

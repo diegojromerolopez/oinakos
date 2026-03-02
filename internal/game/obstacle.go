@@ -5,6 +5,7 @@ import (
 )
 
 type Obstacle struct {
+	ID            string  // Unique instance ID (e.g. from PreSpawnObstacle)
 	X, Y          float64 // Grid positions
 	Archetype     *ObstacleArchetype
 	Health        int
@@ -12,13 +13,14 @@ type Obstacle struct {
 	Alive         bool
 }
 
-func NewObstacle(x, y float64, config *ObstacleArchetype) *Obstacle {
+func NewObstacle(id string, x, y float64, config *ObstacleArchetype) *Obstacle {
 	hp := 0 // Default indestructible
 	if config != nil {
 		hp = config.Health
 	}
 
 	return &Obstacle{
+		ID:            id,
 		X:             x,
 		Y:             y,
 		Archetype:     config,

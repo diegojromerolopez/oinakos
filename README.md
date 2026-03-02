@@ -87,4 +87,5 @@ uv run tools/asset_processor/main.py input.png output.png
 -   **`assets/`**: High-quality pixel art and localized sound effects.
 
 ## 📜 License
-This project is licensed under the MIT License. All AI-generated assets and code are intended for demonstration purposes.
+This project is licensed under the MIT License. All code and images have 
+been generated leveraging the AI technologies integrated in the Antigravity IDE.

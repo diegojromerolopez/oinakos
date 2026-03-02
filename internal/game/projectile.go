@@ -11,15 +11,17 @@ import (
 )
 
 type Projectile struct {
-	X, Y     float64
-	Dx, Dy   float64
-	Speed    float64
-	Damage   int
-	Alive    bool
-	IsPlayer bool // true if fired by player, false if by NPC (to prevent friendly-fire on themselves)
+	X, Y             float64
+	Dx, Dy           float64
+	Speed            float64
+	Damage           int
+	Alive            bool
+	IsPlayer         bool    // true if fired by player, false if by NPC (to prevent friendly-fire on themselves)
+	MaxRange         float64 // Despawn after this distance
+	DistanceTraveled float64
 }
 
-func NewProjectile(x, y, dx, dy, speed float64, damage int, isPlayer bool) *Projectile {
+func NewProjectile(x, y, dx, dy, speed float64, damage int, isPlayer bool, maxRange float64) *Projectile {
 	// Normalize dx/dy
 	mag := math.Sqrt(dx*dx + dy*dy)
 	if mag != 0 {
@@ -35,6 +37,7 @@ func NewProjectile(x, y, dx, dy, speed float64, damage int, isPlayer bool) *Proj
 		Damage:   damage,
 		Alive:    true,
 		IsPlayer: isPlayer,
+		MaxRange: maxRange,
 	}
 }
 
@@ -44,6 +47,12 @@ func (p *Projectile) Update(mc *MainCharacter, obstacles []*Obstacle, fts *[]*Fl
 	}
 	p.X += p.Dx * p.Speed
 	p.Y += p.Dy * p.Speed
+	p.DistanceTraveled += p.Speed
+
+	if p.MaxRange > 0 && p.DistanceTraveled >= p.MaxRange {
+		p.Alive = false
+		return
+	}
 
 	// Check environment collision
 	pFootprint := engine.Polygon{Points: []engine.Point{

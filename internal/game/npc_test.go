@@ -105,7 +105,7 @@ func TestNPCUpdateEscort(t *testing.T) {
 
 func TestNPCCollision(t *testing.T) {
 	n := NewNPC(10, 10, nil, 1)
-	obs := []*Obstacle{NewObstacle(10.5, 10.5, nil)}
+	obs := []*Obstacle{NewObstacle("test_npc_collider", 10.5, 10.5, nil)}
 	if !n.checkCollisionAt(10.5, 10.5, obs) {
 		t.Error("Expected collision at 10.5, 10.5")
 	}

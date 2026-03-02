@@ -97,7 +97,7 @@ func TestMainCharacterFootprint(t *testing.T) {
 
 func TestMainCharacterCollision(t *testing.T) {
 	mc := NewMainCharacter(10, 10, nil)
-	colliders := []*Obstacle{NewObstacle(10.5, 10.5, nil)}
+	colliders := []*Obstacle{NewObstacle("test_mc_collider", 10.5, 10.5, nil)}
 	if !mc.checkCollisionAt(10.5, 10.5, colliders) {
 		t.Error("Expected collision at 10.5, 10.5")
 	}

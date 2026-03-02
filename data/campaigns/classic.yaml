@@ -1,0 +1,7 @@
+id: classic
+name: "The First Crusade"
+description: "A journey from your starter village into the heart of the demonic realm."
+maps:
+  - safe_zone
+  - ancient_tavern
+  - safe_zone

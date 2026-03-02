@@ -288,6 +288,13 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 		hasTarget = true
 	}
 
+	// Reassess target for certain behaviors
+	if n.Behavior == BehaviorChaotic || n.Behavior == BehaviorNpcFighter {
+		// Clear existing target to force reassessment in the switch below
+		n.TargetPlayer = nil
+		n.TargetNPC = nil
+	}
+
 	if !hasTarget {
 		// Behavior Logic (Traditional Enemy behavior)
 		if n.TargetPlayer != nil && n.TargetPlayer.IsAlive() {
@@ -300,10 +307,12 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 		} else {
 			switch n.Behavior {
 			case BehaviorKnightHunter:
-				n.TargetPlayer = mainCharacter
-				targetX, targetY = mainCharacter.X, mainCharacter.Y
-				hasTarget = true
-				isTargetPlayer = true
+				if mainCharacter.IsAlive() {
+					n.TargetPlayer = mainCharacter
+					targetX, targetY = mainCharacter.X, mainCharacter.Y
+					hasTarget = true
+					isTargetPlayer = true
+				}
 			case BehaviorNpcFighter:
 				// Find nearest living NPC that isn't me
 				var minDist = 999.0
@@ -450,7 +459,7 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 						pSpd = 0.15 // fallback default
 					}
 
-					proj := NewProjectile(n.X, n.Y, dx/mag, dy/mag, pSpd, n.GetTotalAttack(), false)
+					proj := NewProjectile(n.X, n.Y, dx/mag, dy/mag, pSpd, n.GetTotalAttack(), false, 100.0)
 					*projectiles = append(*projectiles, proj)
 
 					if n.Archetype != nil && n.Archetype.ID == "stultus" {
@@ -654,25 +663,23 @@ func (n *NPC) TakeDamage(amount int, attackerPlayer *MainCharacter, attackerNPC 
 	if n.Health <= 0 {
 		log.Printf("NPC %s has been killed!", n.Name)
 		n.State = NPCDead
-		if attackerPlayer != nil && n.Archetype != nil {
+		if attackerPlayer != nil {
 			attackerPlayer.Kills++
-			// Award XP based on NPC type
-			switch n.Archetype.ID {
-			case "orc":
-				attackerPlayer.XP += 8 + rand.Intn(8) // 8-15
-			case "demon":
-				attackerPlayer.XP += 10 + rand.Intn(11) // 10-20
-			case "peasant":
-				attackerPlayer.XP += 2 + rand.Intn(5) // 2-6
+			// Award XP from YAML-defined archetype value
+			if n.Archetype != nil && n.Archetype.XP > 0 {
+				attackerPlayer.XP += n.Archetype.XP
+			} else {
+				// Fallback: 1 XP so every kill counts
+				attackerPlayer.XP += 1
 			}
 		}
 		if audio != nil && n.Archetype != nil {
 			switch n.Archetype.ID {
-			case "orc":
+			case "orc", "orc_male", "orc_female":
 				audio.PlaySound("orc_death")
-			case "demon":
+			case "demon", "demon_male", "demon_female":
 				audio.PlaySound("demon_death")
-			case "peasant":
+			case "peasant", "peasant_male", "peasant_female":
 				audio.PlaySound("peasant_death")
 			}
 		}

@@ -16,7 +16,7 @@ func makeObstacleArchetype(health int) *ObstacleArchetype {
 }
 
 func TestNewObstacle_NilArchetype(t *testing.T) {
-	o := NewObstacle(1, 2, nil)
+	o := NewObstacle("test_nil", 1, 2, nil)
 	if o.X != 1 || o.Y != 2 {
 		t.Errorf("Position: got (%v,%v), want (1,2)", o.X, o.Y)
 	}
@@ -30,14 +30,14 @@ func TestNewObstacle_NilArchetype(t *testing.T) {
 
 func TestNewObstacle_WithArchetype(t *testing.T) {
 	arch := makeObstacleArchetype(100)
-	o := NewObstacle(3, 4, arch)
+	o := NewObstacle("test_arch", 3, 4, arch)
 	if o.Health != 100 {
 		t.Errorf("Health: got %d, want 100", o.Health)
 	}
 }
 
 func TestObstacleUpdate_CooldownDecrement(t *testing.T) {
-	o := NewObstacle(0, 0, makeObstacleArchetype(10))
+	o := NewObstacle("test_cd", 0, 0, makeObstacleArchetype(10))
 	o.CooldownTicks = 5
 	o.Update()
 	if o.CooldownTicks != 4 {
@@ -46,7 +46,7 @@ func TestObstacleUpdate_CooldownDecrement(t *testing.T) {
 }
 
 func TestObstacleUpdate_NoCooldownBelowZero(t *testing.T) {
-	o := NewObstacle(0, 0, makeObstacleArchetype(10))
+	o := NewObstacle("test_cd_0", 0, 0, makeObstacleArchetype(10))
 	o.CooldownTicks = 0
 	o.Update()
 	if o.CooldownTicks != 0 {
@@ -55,7 +55,7 @@ func TestObstacleUpdate_NoCooldownBelowZero(t *testing.T) {
 }
 
 func TestObstacleUpdate_Dead(t *testing.T) {
-	o := NewObstacle(0, 0, makeObstacleArchetype(10))
+	o := NewObstacle("test_dead", 0, 0, makeObstacleArchetype(10))
 	o.Alive = false
 	o.CooldownTicks = 5
 	o.Update() // should return early
@@ -65,7 +65,7 @@ func TestObstacleUpdate_Dead(t *testing.T) {
 }
 
 func TestObstacleTakeDamage_Normal(t *testing.T) {
-	o := NewObstacle(0, 0, makeObstacleArchetype(100))
+	o := NewObstacle("test_dmg", 0, 0, makeObstacleArchetype(100))
 	o.TakeDamage(30)
 	if o.Health != 70 {
 		t.Errorf("Health after 30 damage: got %d, want 70", o.Health)
@@ -76,7 +76,7 @@ func TestObstacleTakeDamage_Normal(t *testing.T) {
 }
 
 func TestObstacleTakeDamage_Lethal(t *testing.T) {
-	o := NewObstacle(0, 0, makeObstacleArchetype(50))
+	o := NewObstacle("test_lethal", 0, 0, makeObstacleArchetype(50))
 	o.TakeDamage(100)
 	if o.Alive {
 		t.Error("Should be dead after lethal damage")
@@ -86,7 +86,7 @@ func TestObstacleTakeDamage_Lethal(t *testing.T) {
 func TestObstacleTakeDamage_Indestructible(t *testing.T) {
 	arch := makeObstacleArchetype(1000)
 	arch.Destructible = false // explicitly mark as indestructible
-	o := NewObstacle(0, 0, arch)
+	o := NewObstacle("test_indestructible", 0, 0, arch)
 	o.TakeDamage(9999)
 	if !o.Alive || o.Health != 1000 {
 		t.Error("Indestructible obstacle should take no damage")
@@ -94,7 +94,7 @@ func TestObstacleTakeDamage_Indestructible(t *testing.T) {
 }
 
 func TestObstacleTakeDamage_AlreadyDead(t *testing.T) {
-	o := NewObstacle(0, 0, makeObstacleArchetype(100))
+	o := NewObstacle("test_dead_dmg", 0, 0, makeObstacleArchetype(100))
 	o.Alive = false
 	o.TakeDamage(10)
 	if o.Health != 100 {
@@ -103,12 +103,12 @@ func TestObstacleTakeDamage_AlreadyDead(t *testing.T) {
 }
 
 func TestObstacleTakeDamage_NilArchetype(t *testing.T) {
-	o := NewObstacle(0, 0, nil)
+	o := NewObstacle("test_nil_dmg", 0, 0, nil)
 	o.TakeDamage(10) // should not panic
 }
 
 func TestObstacleGetFootprint_DefaultSize(t *testing.T) {
-	o := NewObstacle(0, 0, nil)
+	o := NewObstacle("test_fp_default", 0, 0, nil)
 	fp := o.GetFootprint()
 	if len(fp.Points) != 4 {
 		t.Errorf("Footprint should have 4 points, got %d", len(fp.Points))
@@ -117,7 +117,7 @@ func TestObstacleGetFootprint_DefaultSize(t *testing.T) {
 
 func TestObstacleGetFootprint_WithArchetype(t *testing.T) {
 	arch := makeObstacleArchetype(10)
-	o := NewObstacle(2, 3, arch)
+	o := NewObstacle("test_fp", 2, 3, arch)
 	fp := o.GetFootprint()
 	if len(fp.Points) != 4 {
 		t.Errorf("Footprint should have 4 points, got %d", len(fp.Points))

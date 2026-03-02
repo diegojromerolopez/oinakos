@@ -1,0 +1,14 @@
+id: burning_fields
+name: "Burning Fields"
+type: survive
+description: "Survive the demonic onslaught in the scorched fields."
+difficulty: 3
+target_time: 120
+width_px: 4000
+height_px: 4000
+floor_tile: grass.png
+spawns:
+  - archetype: demon_male
+    alignment: enemy
+    probability: 0.15
+    frequency: 2

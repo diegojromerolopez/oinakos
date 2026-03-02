@@ -1,0 +1,14 @@
+id: frontier_outpost
+name: "Frontier Outpost"
+type: kill_count
+description: "Defend the outpost from the first wave of invaders."
+difficulty: 2
+target_kill_count: 15
+width_px: 2000
+height_px: 2000
+floor_tile: grass.png
+spawns:
+  - archetype: orc_male
+    alignment: enemy
+    probability: 0.1
+    frequency: 3

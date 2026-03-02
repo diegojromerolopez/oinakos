@@ -8,12 +8,10 @@ import (
 
 func TestSaveLoad(t *testing.T) {
 	g := NewGame(nil, "data/maps/test_save.yaml", "", &MockInputManager{}, &MockAudioManager{}, false)
-	g.mainCharacter.X = 123.45
-	g.mainCharacter.Y = 67.89
-	g.mainCharacter.Kills = 10
-	g.mainCharacter.XP = 500
-	g.mainCharacter.Health = 15
-	g.playTime = 3600.0
+	// Add NPC and Obstacle to test persistence
+	g.npcs = []*NPC{NewNPC(10, 20, &Archetype{ID: "test_npc"}, 1)}
+	g.npcs[0].Health = 5
+	g.obstacles = []*Obstacle{NewObstacle("test_building", 30, 40, &ObstacleArchetype{ID: "test_arch", Health: 100})}
 
 	testPath := "test_save.yaml"
 	defer os.Remove(testPath)
@@ -24,6 +22,13 @@ func TestSaveLoad(t *testing.T) {
 
 	// Create a new game and load
 	g2 := NewGame(nil, "", "", NewMockInputManager(), NewMockAudioManager(), false)
+	// Mock registries for loading to work
+	g2.npcRegistry.IDs = []string{"test_npc"}
+	g2.npcRegistry.NPCs["test_npc"] = &EntityConfig{ArchetypeID: "test_npc"}
+	g2.archetypeRegistry.Archetypes["test_npc"] = &Archetype{ID: "test_npc"}
+	g2.obstacleRegistry.IDs = []string{"test_arch"}
+	g2.obstacleRegistry.Archetypes["test_arch"] = &ObstacleArchetype{ID: "test_arch", Health: 100}
+
 	if err := g2.Load(testPath); err != nil {
 		t.Fatalf("Failed to load: %v", err)
 	}
@@ -42,6 +47,18 @@ func TestSaveLoad(t *testing.T) {
 	}
 	if g2.playTime != g.playTime {
 		t.Errorf("PlayTime mismatch: expected %f, got %f", g.playTime, g2.playTime)
+	}
+
+	if len(g2.npcs) != 1 {
+		t.Errorf("NPCs mismatch: expected 1, got %d", len(g2.npcs))
+	} else if g2.npcs[0].X != 10 || g2.npcs[0].Y != 20 {
+		t.Errorf("NPC pos mismatch: expected (10,20), got (%f,%f)", g2.npcs[0].X, g2.npcs[0].Y)
+	}
+
+	if len(g2.obstacles) != 1 {
+		t.Errorf("Obstacles mismatch: expected 1, got %d", len(g2.obstacles))
+	} else if g2.obstacles[0].ID != "test_building" {
+		t.Errorf("Building ID mismatch: expected 'test_building', got '%s'", g2.obstacles[0].ID)
 	}
 }
 
@@ -67,4 +84,41 @@ func TestQuickSave(t *testing.T) {
 		t.Error("No .oinakos quicksave file found")
 	}
 	os.Remove("saves") // Clean up if empty
+}
+
+func TestLoad_Errors(t *testing.T) {
+	g := NewGame(nil, "", "", NewMockInputManager(), NewMockAudioManager(), false)
+
+	// 1. Non-existent file
+	err := g.Load("nonexistent_file.yaml")
+	if err == nil {
+		t.Error("Expected error loading non-existent file")
+	}
+
+	// 2. Corrupted YAML
+	corruptPath := "corrupt.yaml"
+	os.WriteFile(corruptPath, []byte("invalid: yaml: {{"), 0644)
+	defer os.Remove(corruptPath)
+
+	err = g.Load(corruptPath)
+	if err == nil {
+		t.Error("Expected error loading corrupted YAML")
+	}
+
+	// 3. Empty file
+	emptyPath := "empty.yaml"
+	os.WriteFile(emptyPath, []byte(""), 0644)
+	defer os.Remove(emptyPath)
+	err = g.Load(emptyPath)
+	if err != nil {
+		t.Errorf("Loading empty file should not fail, got: %v", err)
+	}
+}
+
+func TestSave_InvalidPath(t *testing.T) {
+	g := NewGame(nil, "", "", NewMockInputManager(), NewMockAudioManager(), false)
+	err := g.Save("/invalid/dir/save.yaml")
+	if err == nil {
+		t.Error("Expected error saving to invalid directory")
+	}
 }

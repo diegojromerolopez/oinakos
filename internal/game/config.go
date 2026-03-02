@@ -133,6 +133,12 @@ type SpawnConfig struct {
 	Timer int `yaml:"-"` // Internal tick counter
 }
 
+// TargetPointConfig is used to parse target_point from YAML.
+type TargetPointConfig struct {
+	X float64 `yaml:"x"`
+	Y float64 `yaml:"y"`
+}
+
 type MapType struct {
 	ID              string             `yaml:"id"`
 	Name            string             `yaml:"name"`
@@ -149,12 +155,13 @@ type MapType struct {
 	Spawns          []SpawnConfig      `yaml:"spawns"`
 	Obstacles       []PreSpawnObstacle `yaml:"obstacles"`
 	FloorTile       string             `yaml:"floor_tile"`
-	MapWidth        float64            `yaml:"-"` // Cartesian width
-	MapHeight       float64            `yaml:"-"` // Cartesian height
+	TargetPointRaw  *TargetPointConfig `yaml:"target_point"` // Optional YAML-supplied target point
+	MapWidth        float64            `yaml:"-"`            // Cartesian width
+	MapHeight       float64            `yaml:"-"`            // Cartesian height
 
 	TargetNPC      *EntityConfig `yaml:"-"`
 	TargetObstacle *Obstacle     `yaml:"-"`
-	TargetPoint    engine.Point  `yaml:"-"`
+	TargetPoint    engine.Point  `yaml:"-"` // Resolved at loadMapLevel time
 	StartTime      float64       `yaml:"-"`
 	IsCompleted    bool          `yaml:"-"`
 }
@@ -162,6 +169,69 @@ type MapType struct {
 type MapTypeRegistry struct {
 	Types map[string]*MapType
 	IDs   []string
+}
+
+type Campaign struct {
+	ID          string   `yaml:"id"`
+	Name        string   `yaml:"name"`
+	Description string   `yaml:"description"`
+	Maps        []string `yaml:"maps"` // Map IDs in sequence
+}
+
+type CampaignRegistry struct {
+	Campaigns map[string]*Campaign
+	IDs       []string
+}
+
+func NewCampaignRegistry() *CampaignRegistry {
+	return &CampaignRegistry{
+		Campaigns: make(map[string]*Campaign),
+		IDs:       make([]string, 0),
+	}
+}
+
+func (r *CampaignRegistry) LoadAll(assets fs.FS) error {
+	if assets == nil {
+		return nil
+	}
+	const campaignDir = "data/campaigns"
+
+	entries, err := fs.ReadDir(assets, campaignDir)
+	if err != nil {
+		if os.IsNotExist(err) || strings.Contains(err.Error(), "no such file or directory") {
+			return nil
+		}
+		return fmt.Errorf("failed to read campaigns directory: %w", err)
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() || filepath.Ext(entry.Name()) != ".yaml" {
+			continue
+		}
+
+		yamlPath := path.Join(campaignDir, entry.Name())
+		data, err := fs.ReadFile(assets, yamlPath)
+		if err != nil {
+			log.Printf("Warning: failed to read %s: %v", yamlPath, err)
+			continue
+		}
+
+		var config Campaign
+		if err := yaml.Unmarshal(data, &config); err != nil {
+			log.Printf("Warning: failed to unmarshal %s: %v", yamlPath, err)
+			continue
+		}
+
+		if config.ID == "" {
+			config.ID = strings.TrimSuffix(entry.Name(), filepath.Ext(entry.Name()))
+		}
+
+		r.Campaigns[config.ID] = &config
+		r.IDs = append(r.IDs, config.ID)
+		log.Printf("Loaded Campaign: %s (%s)", config.ID, config.Name)
+	}
+
+	return nil
 }
 
 func NewMapTypeRegistry() *MapTypeRegistry {
@@ -278,6 +348,7 @@ type EntityConfig struct {
 	Unique         bool             `yaml:"unique,omitempty"`
 	PrimaryColor   string           `yaml:"primary_color,omitempty"`
 	SecondaryColor string           `yaml:"secondary_color,omitempty"`
+	XP             int              `yaml:"xp,omitempty"` // XP awarded on kill
 
 	// Run-time loaded assets
 	AssetDir    string      `yaml:"-"`

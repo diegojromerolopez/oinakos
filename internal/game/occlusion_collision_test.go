@@ -58,7 +58,7 @@ func TestOcclusionAndCollision(t *testing.T) {
 	}
 	obsConfig.Image = graphics.NewImage(128, 128)
 
-	building := NewObstacle(0, 15, obsConfig)
+	building := NewObstacle("test_building", 0, 15, obsConfig)
 	obstacles := []*Obstacle{building}
 
 	// 1. Test Collision: Should collide with base
