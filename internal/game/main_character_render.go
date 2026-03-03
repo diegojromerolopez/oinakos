@@ -17,12 +17,16 @@ func (mc *MainCharacter) Draw(screen engine.Image, textRenderer engine.TextRende
 		if img, ok := mc.Config.StaticImage.(engine.Image); ok {
 			drawSprite = img
 		}
-		if mc.State == StateAttacking {
-			if img, ok := mc.Config.AttackImage.(engine.Image); ok {
+		if mc.State == StateDead {
+			if img, ok := mc.Config.CorpseImage.(engine.Image); ok {
 				drawSprite = img
 			}
-		} else if mc.State == StateDead {
-			if img, ok := mc.Config.CorpseImage.(engine.Image); ok {
+		} else if mc.HitTimer > 0 {
+			if img, ok := mc.Config.HitImage.(engine.Image); ok {
+				drawSprite = img
+			}
+		} else if mc.State == StateAttacking {
+			if img, ok := mc.Config.AttackImage.(engine.Image); ok {
 				drawSprite = img
 			}
 		}

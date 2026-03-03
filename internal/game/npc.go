@@ -224,12 +224,16 @@ func (n *NPC) GetFootprint() engine.Polygon {
 }
 
 func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPCs []*NPC, projectiles *[]*Projectile, fts *[]*FloatingText, mapW, mapH float64, audio AudioManager) {
+	n.Tick++
+
+	if n.BloodTimer > 0 {
+		n.BloodTimer--
+	}
+
 	if n.State == NPCDead {
 		n.DeadTimer++
 		return
 	}
-
-	n.Tick++
 
 	// Custom Escort Logic
 	if n.Archetype != nil && n.Archetype.ID == "escort" {
@@ -251,7 +255,10 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 		var nearestEnemy *NPC
 		var minDist = 999.0
 		for _, other := range allNPCs {
-			if other == n || !other.IsAlive() || other.Alignment != AlignmentEnemy {
+			if other == n {
+				continue
+			}
+			if !other.IsAlive() || other.Alignment != AlignmentEnemy {
 				continue
 			}
 			dist := math.Sqrt(math.Pow(n.X-other.X, 2) + math.Pow(n.Y-other.Y, 2))

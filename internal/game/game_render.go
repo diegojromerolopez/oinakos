@@ -71,6 +71,11 @@ func (gr *GameRenderer) LoadAssets(assets fs.FS) {
 		if _, err := fs.Stat(assets, attackPath); err == nil {
 			mc.Config.AttackImage = gr.graphics.LoadSprite(assets, attackPath, true)
 		}
+
+		hitPath := path.Join(imgDir, "hit.png")
+		if _, err := fs.Stat(assets, hitPath); err == nil {
+			mc.Config.HitImage = gr.graphics.LoadSprite(assets, hitPath, true)
+		}
 	}
 }
 

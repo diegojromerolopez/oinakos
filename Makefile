@@ -1,4 +1,4 @@
-.PHONY: all build build-wasm build-tools run run-debug boundaries-editor map-editor serve-wasm bundle-mac bundle-windows bundle-linux bundle-all clean
+.PHONY: all build build-wasm build-tools test run run-debug boundaries-editor map-editor serve-wasm bundle-mac bundle-windows bundle-linux bundle-all clean
 
 # Default name for the native binary
 APP_NAME=oinakos
@@ -40,6 +40,10 @@ $(BIN_DIR)/map_editor: ./tools/map_editor/main.go
 	@mkdir -p $(BIN_DIR)
 	$(GOBUILD) -o $(BIN_DIR)/map_editor ./tools/map_editor/main.go
 	@echo "Tool built: $(BIN_DIR)/map_editor"
+
+test:
+	@echo "Running tests..."
+	$(GOCMD) test ./...
 
 dist: build-wasm
 	@echo "Preparing distribution files..."

@@ -355,6 +355,7 @@ type EntityConfig struct {
 	StaticImage interface{} `yaml:"-"`
 	CorpseImage interface{} `yaml:"-"`
 	AttackImage interface{} `yaml:"-"`
+	HitImage    interface{} `yaml:"-"`
 	Weapon      *Weapon     `yaml:"-"`
 }
 
@@ -390,6 +391,11 @@ func (r *ArchetypeRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics) {
 		attackPath := path.Join(config.AssetDir, "attack.png")
 		if _, err := fs.Stat(assets, attackPath); err == nil {
 			config.AttackImage = graphics.LoadSprite(assets, attackPath, true)
+		}
+
+		hitPath := path.Join(config.AssetDir, "hit.png")
+		if _, err := fs.Stat(assets, hitPath); err == nil {
+			config.HitImage = graphics.LoadSprite(assets, hitPath, true)
 		}
 	}
 }
@@ -498,6 +504,10 @@ func (r *NPCRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *
 				if _, err := fs.Stat(assets, attackPath); err != nil {
 					config.AttackImage = arch.AttackImage
 				}
+				hitPath := path.Join(config.AssetDir, "hit.png")
+				if _, err := fs.Stat(assets, hitPath); err != nil {
+					config.HitImage = arch.HitImage
+				}
 			}
 		}
 
@@ -513,6 +523,11 @@ func (r *NPCRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *
 		attackPath := path.Join(config.AssetDir, "attack.png")
 		if _, err := fs.Stat(assets, attackPath); err == nil {
 			config.AttackImage = graphics.LoadSprite(assets, attackPath, true)
+		}
+
+		hitPath := path.Join(config.AssetDir, "hit.png")
+		if _, err := fs.Stat(assets, hitPath); err == nil {
+			config.HitImage = graphics.LoadSprite(assets, hitPath, true)
 		}
 	}
 }

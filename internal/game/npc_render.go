@@ -27,6 +27,10 @@ func (n *NPC) Draw(screen engine.Image, textRenderer engine.TextRenderer, vector
 		} else {
 			drawSprite = nil // Complete removal (invisibility) if no corpse
 		}
+	} else if n.BloodTimer > 0 {
+		if img, ok := n.Archetype.HitImage.(engine.Image); ok {
+			drawSprite = img
+		}
 	} else if n.State == NPCAttacking {
 		if img, ok := n.Archetype.AttackImage.(engine.Image); ok {
 			drawSprite = img

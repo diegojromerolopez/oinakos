@@ -858,9 +858,7 @@ func (g *Game) Update() error {
 
 	// Update all NPCs (keep corpses indefinitely per user request)
 	for _, n := range g.npcs {
-		if n.IsAlive() {
-			n.Update(g.mainCharacter, g.obstacles, g.npcs, &g.projectiles, &g.floatingTexts, g.currentMapType.MapWidth, g.currentMapType.MapHeight, g.audio)
-		}
+		n.Update(g.mainCharacter, g.obstacles, g.npcs, &g.projectiles, &g.floatingTexts, g.currentMapType.MapWidth, g.currentMapType.MapHeight, g.audio)
 	}
 
 	// Update floating texts

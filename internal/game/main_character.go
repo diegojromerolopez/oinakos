@@ -51,6 +51,7 @@ type MainCharacter struct {
 	BaseDefense   int
 	Weapon        *Weapon
 	EquippedArmor map[ArmorSlot]*Armor
+	HitTimer      int
 }
 
 func loadPlayerImage(assets fs.FS, path string) (image.Image, error) {
@@ -152,7 +153,7 @@ func (mc *MainCharacter) TakeDamage(amount int, audio AudioManager) {
 		return
 	}
 	mc.Health -= amount
-	// audio.PlaySound("knight_hit") // Knight remains silent as requested
+	mc.HitTimer = 15 // Show hit frame for 15 ticks
 	if mc.Health <= 0 {
 		mc.Health = 0
 		mc.State = StateDead
@@ -191,6 +192,10 @@ func (mc *MainCharacter) checkCollisionAt(newX, newY float64, obstacles []*Obsta
 func (mc *MainCharacter) Update(input engine.Input, audio AudioManager, obstacles []*Obstacle, npcs []*NPC, fts *[]*FloatingText, mapW, mapH float64) {
 	if mc.State == StateDead {
 		return
+	}
+
+	if mc.HitTimer > 0 {
+		mc.HitTimer--
 	}
 
 	if mc.State == StateAttacking {
