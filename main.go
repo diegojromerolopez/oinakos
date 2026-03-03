@@ -6,6 +6,7 @@ import (
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
+	"io/fs"
 	"log"
 
 	"oinakos/internal/engine"
@@ -35,37 +36,44 @@ func main() {
 
 	engine.InitAudio(assets)
 
-	// Load sounds
-	engine.GlobalAudio.LoadSound("knight_attack", "assets/audio/knight/knight_attack.wav")
-	engine.GlobalAudio.LoadSound("knight_hit", "assets/audio/knight/knight_hit.wav")
-	engine.GlobalAudio.LoadSound("orc_hit", "assets/audio/orc/orc_hit.wav")
-	engine.GlobalAudio.LoadSound("demon_hit", "assets/audio/demon/demon_hit.wav")
-	engine.GlobalAudio.LoadSound("peasant_hit", "assets/audio/peasant/peasant_hit.wav")
+	// Load archetype sounds dynamically: walk each archetype's AudioDir and register
+	// every .wav as  "<archetypeID>/<stem>"  (e.g. "orc_male/hit", "orc_male/menace_1").
+	archetypeReg := game.NewArchetypeRegistry()
+	archetypeReg.LoadAll(assets)
+	for _, arch := range archetypeReg.Archetypes {
+		if arch.AudioDir == "" {
+			continue
+		}
+		entries, err := fs.ReadDir(assets, arch.AudioDir)
+		if err != nil {
+			continue // no audio for this archetype
+		}
+		for _, e := range entries {
+			if e.IsDir() {
+				continue
+			}
+			name := e.Name()
+			if len(name) < 5 || name[len(name)-4:] != ".wav" {
+				continue
+			}
+			stem := name[:len(name)-4]
+			key := arch.ID + "/" + stem
+			engine.GlobalAudio.LoadSound(key, arch.AudioDir+"/"+name)
+		}
+	}
 
-	// Menace lines
-	engine.GlobalAudio.LoadSound("orc_menace_1", "assets/audio/orc/orc_menace_1.wav")
-	engine.GlobalAudio.LoadSound("orc_menace_2", "assets/audio/orc/orc_menace_2.wav")
-	engine.GlobalAudio.LoadSound("orc_menace_3", "assets/audio/orc/orc_menace_3.wav")
-	engine.GlobalAudio.LoadSound("orc_menace_4", "assets/audio/orc/orc_menace_4.wav")
-	engine.GlobalAudio.LoadSound("orc_menace_5", "assets/audio/orc/orc_menace_5.wav")
-
-	engine.GlobalAudio.LoadSound("demon_menace_1", "assets/audio/demon/demon_menace_1.wav")
-	engine.GlobalAudio.LoadSound("demon_menace_2", "assets/audio/demon/demon_menace_2.wav")
-	engine.GlobalAudio.LoadSound("demon_menace_3", "assets/audio/demon/demon_menace_3.wav")
-	engine.GlobalAudio.LoadSound("demon_menace_4", "assets/audio/demon/demon_menace_4.wav")
-	engine.GlobalAudio.LoadSound("demon_menace_5", "assets/audio/demon/demon_menace_5.wav")
-
-	engine.GlobalAudio.LoadSound("peasant_menace_1", "assets/audio/peasant/peasant_menace_1.wav")
-	engine.GlobalAudio.LoadSound("peasant_menace_2", "assets/audio/peasant/peasant_menace_2.wav")
-	engine.GlobalAudio.LoadSound("peasant_menace_3", "assets/audio/peasant/peasant_menace_3.wav")
-	engine.GlobalAudio.LoadSound("peasant_menace_4", "assets/audio/peasant/peasant_menace_4.wav")
-	engine.GlobalAudio.LoadSound("peasant_menace_5", "assets/audio/peasant/peasant_menace_5.wav")
-
-	// Death cries
-	engine.GlobalAudio.LoadSound("knight_death", "assets/audio/knight/knight_death.wav")
-	engine.GlobalAudio.LoadSound("orc_death", "assets/audio/orc/orc_death.wav")
-	engine.GlobalAudio.LoadSound("demon_death", "assets/audio/demon/demon_death.wav")
-	engine.GlobalAudio.LoadSound("peasant_death", "assets/audio/peasant/peasant_death.wav")
+	// Load main character sounds: assets/audio/characters/main/<stem>.wav → "main/<stem>"
+	const mainAudioDir = "assets/audio/characters/main"
+	if entries, err := fs.ReadDir(assets, mainAudioDir); err == nil {
+		for _, e := range entries {
+			name := e.Name()
+			if len(name) < 5 || name[len(name)-4:] != ".wav" {
+				continue
+			}
+			stem := name[:len(name)-4]
+			engine.GlobalAudio.LoadSound("main/"+stem, mainAudioDir+"/"+name)
+		}
+	}
 
 	// Providers
 	eg := engine.NewEbitenGraphics()

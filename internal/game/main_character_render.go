@@ -22,7 +22,7 @@ func (mc *MainCharacter) Draw(screen engine.Image, textRenderer engine.TextRende
 				drawSprite = img
 			}
 		} else if mc.HitTimer > 0 {
-			if img, ok := mc.Config.HitImage.(engine.Image); ok {
+			if img := mc.Config.PickHitImage(); img != nil {
 				drawSprite = img
 			}
 		} else if mc.State == StateAttacking {

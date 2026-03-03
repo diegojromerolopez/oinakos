@@ -158,7 +158,7 @@ func (mc *MainCharacter) TakeDamage(amount int, audio AudioManager) {
 		mc.Health = 0
 		mc.State = StateDead
 		if audio != nil {
-			audio.PlaySound("knight_death")
+			audio.PlaySound("main/death")
 		}
 	}
 }
@@ -257,7 +257,7 @@ func (mc *MainCharacter) Update(input engine.Input, audio AudioManager, obstacle
 			mc.State = StateAttacking
 			mc.Tick = 0
 			if audio != nil {
-				audio.PlaySound("knight_attack") // Sword swing/woosh
+				audio.PlaySound("main/attack")
 			}
 			return
 		}

@@ -439,15 +439,8 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 			// Chance to say a menace line when starting to attack the mainCharacter
 			if rand.Float64() < 0.3 {
 				msgNum := rand.Intn(5) + 1
-				if audio != nil {
-					switch n.Archetype.ID {
-					case "orc":
-						audio.PlaySound(fmt.Sprintf("orc_menace_%d", msgNum))
-					case "demon":
-						audio.PlaySound(fmt.Sprintf("demon_menace_%d", msgNum))
-					case "peasant":
-						audio.PlaySound(fmt.Sprintf("peasant_menace_%d", msgNum))
-					}
+				if audio != nil && n.Archetype != nil {
+					audio.PlaySound(fmt.Sprintf("%s/menace_%d", n.Archetype.ID, msgNum))
 				}
 			}
 		}
@@ -656,14 +649,7 @@ func (n *NPC) TakeDamage(amount int, attackerPlayer *MainCharacter, attackerNPC 
 	n.BloodTimer = 30
 	// Play hit sound
 	if audio != nil && n.Archetype != nil {
-		switch n.Archetype.ID {
-		case "orc":
-			audio.PlaySound("orc_hit")
-		case "demon":
-			audio.PlaySound("demon_hit")
-		case "peasant":
-			audio.PlaySound("peasant_hit")
-		}
+		audio.PlaySound(n.Archetype.ID + "/hit")
 	}
 
 	if n.Health <= 0 {
@@ -680,14 +666,7 @@ func (n *NPC) TakeDamage(amount int, attackerPlayer *MainCharacter, attackerNPC 
 			}
 		}
 		if audio != nil && n.Archetype != nil {
-			switch n.Archetype.ID {
-			case "orc", "orc_male", "orc_female":
-				audio.PlaySound("orc_death")
-			case "demon", "demon_male", "demon_female":
-				audio.PlaySound("demon_death")
-			case "peasant", "peasant_male", "peasant_female":
-				audio.PlaySound("peasant_death")
-			}
+			audio.PlaySound(n.Archetype.ID + "/death")
 		}
 	}
 }

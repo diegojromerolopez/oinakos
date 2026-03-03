@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
+	"math/rand"
 	"oinakos/internal/engine"
 	"os"
 	"path"
@@ -352,11 +353,34 @@ type EntityConfig struct {
 
 	// Run-time loaded assets
 	AssetDir    string      `yaml:"-"`
+	AudioDir    string      `yaml:"-"` // e.g. assets/audio/archetypes/orc/male
 	StaticImage interface{} `yaml:"-"`
 	CorpseImage interface{} `yaml:"-"`
 	AttackImage interface{} `yaml:"-"`
-	HitImage    interface{} `yaml:"-"`
+	HitImage    interface{} `yaml:"-"` // hit.png  (legacy / single hit frame)
+	Hit1Image   interface{} `yaml:"-"` // hit1.png (first variant)
+	Hit2Image   interface{} `yaml:"-"` // hit2.png (second variant, requires hit1.png)
 	Weapon      *Weapon     `yaml:"-"`
+}
+
+// PickHitImage returns the sprite to display when this entity is hit.
+//   - If hit1.png and hit2.png both exist → randomly pick one.
+//   - Else if hit.png exists              → use hit.png.
+//   - Else                                → nil (caller uses static image).
+func (e *EntityConfig) PickHitImage() engine.Image {
+	if h1, ok := e.Hit1Image.(engine.Image); ok {
+		if h2, ok2 := e.Hit2Image.(engine.Image); ok2 {
+			if rand.Intn(2) == 0 {
+				return h1
+			}
+			return h2
+		}
+		return h1
+	}
+	if h, ok := e.HitImage.(engine.Image); ok {
+		return h
+	}
+	return nil
 }
 
 type Archetype = EntityConfig
@@ -396,6 +420,14 @@ func (r *ArchetypeRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics) {
 		hitPath := path.Join(config.AssetDir, "hit.png")
 		if _, err := fs.Stat(assets, hitPath); err == nil {
 			config.HitImage = graphics.LoadSprite(assets, hitPath, true)
+		}
+		hit1Path := path.Join(config.AssetDir, "hit1.png")
+		if _, err := fs.Stat(assets, hit1Path); err == nil {
+			config.Hit1Image = graphics.LoadSprite(assets, hit1Path, true)
+		}
+		hit2Path := path.Join(config.AssetDir, "hit2.png")
+		if _, err := fs.Stat(assets, hit2Path); err == nil {
+			config.Hit2Image = graphics.LoadSprite(assets, hit2Path, true)
 		}
 	}
 }
@@ -446,6 +478,7 @@ func (r *ArchetypeRegistry) LoadAll(assets fs.FS) error {
 		// assets/images/archetypes/<subDir>/<variantRootName>/
 		variantName := filepath.Base(fpath[:len(fpath)-len(filepath.Ext(fpath))])
 		config.AssetDir = path.Join("assets/images/archetypes", subDir, variantName)
+		config.AudioDir = path.Join("assets/audio/archetypes", subDir, variantName)
 
 		// Link weapon
 		config.Weapon = GetWeaponByName(config.WeaponName)
@@ -508,6 +541,14 @@ func (r *NPCRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *
 				if _, err := fs.Stat(assets, hitPath); err != nil {
 					config.HitImage = arch.HitImage
 				}
+				hit1Path := path.Join(config.AssetDir, "hit1.png")
+				if _, err := fs.Stat(assets, hit1Path); err != nil {
+					config.Hit1Image = arch.Hit1Image
+				}
+				hit2Path := path.Join(config.AssetDir, "hit2.png")
+				if _, err := fs.Stat(assets, hit2Path); err != nil {
+					config.Hit2Image = arch.Hit2Image
+				}
 			}
 		}
 
@@ -528,6 +569,14 @@ func (r *NPCRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *
 		hitPath := path.Join(config.AssetDir, "hit.png")
 		if _, err := fs.Stat(assets, hitPath); err == nil {
 			config.HitImage = graphics.LoadSprite(assets, hitPath, true)
+		}
+		hit1Path := path.Join(config.AssetDir, "hit1.png")
+		if _, err := fs.Stat(assets, hit1Path); err == nil {
+			config.Hit1Image = graphics.LoadSprite(assets, hit1Path, true)
+		}
+		hit2Path := path.Join(config.AssetDir, "hit2.png")
+		if _, err := fs.Stat(assets, hit2Path); err == nil {
+			config.Hit2Image = graphics.LoadSprite(assets, hit2Path, true)
 		}
 	}
 }
