@@ -489,6 +489,29 @@ func main() {
 func findArchetypeYAML(id string) string {
 	baseDir := "data/archetypes"
 	var found string
+	// 1. Try local oinakos/data override first
+	localBaseDir := filepath.Join("oinakos", baseDir)
+	if _, statErr := os.Stat(localBaseDir); statErr == nil {
+		filepath.WalkDir(localBaseDir, func(fpath string, d fs.DirEntry, err error) error {
+			if err != nil || d.IsDir() {
+				return nil
+			}
+			if filepath.Ext(fpath) == ".yaml" || filepath.Ext(fpath) == ".yml" {
+				data, err := os.ReadFile(fpath)
+				if err == nil && containsID(data, id) {
+					found = fpath
+					return filepath.SkipAll
+				}
+			}
+			return nil
+		})
+	}
+
+	if found != "" {
+		return found
+	}
+
+	// 2. Fallback to regular data dir
 	filepath.WalkDir(baseDir, func(fpath string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
 			return nil

@@ -14,6 +14,43 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// forEachYAML iterates over YAML files in a base directory from both the embedded FS
+// and the local oinakos/data override directory.
+func forEachYAML(assets fs.FS, baseDir string, callback func(fpath string, data []byte) error) error {
+	// 1. Embedded assets
+	if assets != nil {
+		fs.WalkDir(assets, baseDir, func(fpath string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return nil // Skip if not found in embedded
+			}
+			if d.IsDir() || (filepath.Ext(fpath) != ".yaml" && filepath.Ext(fpath) != ".yml") {
+				return nil
+			}
+			data, err := fs.ReadFile(assets, fpath)
+			if err == nil {
+				callback(fpath, data)
+			}
+			return nil
+		})
+	}
+
+	// 2. Local oinakos/data overrides
+	localBaseDir := filepath.Join("oinakos", baseDir)
+	if _, err := os.Stat(localBaseDir); err == nil {
+		filepath.WalkDir(localBaseDir, func(fpath string, d fs.DirEntry, err error) error {
+			if err != nil || d.IsDir() || (filepath.Ext(fpath) != ".yaml" && filepath.Ext(fpath) != ".yml") {
+				return nil
+			}
+			data, err := os.ReadFile(fpath)
+			if err == nil {
+				callback(fpath, data)
+			}
+			return nil
+		})
+	}
+	return nil
+}
+
 type ObstacleType string
 
 const (
@@ -196,43 +233,20 @@ func (r *CampaignRegistry) LoadAll(assets fs.FS) error {
 		return nil
 	}
 	const campaignDir = "data/campaigns"
-
-	entries, err := fs.ReadDir(assets, campaignDir)
-	if err != nil {
-		if os.IsNotExist(err) || strings.Contains(err.Error(), "no such file or directory") {
-			return nil
-		}
-		return fmt.Errorf("failed to read campaigns directory: %w", err)
-	}
-
-	for _, entry := range entries {
-		if entry.IsDir() || filepath.Ext(entry.Name()) != ".yaml" {
-			continue
-		}
-
-		yamlPath := path.Join(campaignDir, entry.Name())
-		data, err := fs.ReadFile(assets, yamlPath)
-		if err != nil {
-			log.Printf("Warning: failed to read %s: %v", yamlPath, err)
-			continue
-		}
-
+	return forEachYAML(assets, campaignDir, func(fpath string, data []byte) error {
 		var config Campaign
 		if err := yaml.Unmarshal(data, &config); err != nil {
-			log.Printf("Warning: failed to unmarshal %s: %v", yamlPath, err)
-			continue
+			log.Printf("Warning: failed to unmarshal %s: %v", fpath, err)
+			return nil
 		}
-
 		if config.ID == "" {
-			config.ID = strings.TrimSuffix(entry.Name(), filepath.Ext(entry.Name()))
+			config.ID = strings.TrimSuffix(filepath.Base(fpath), filepath.Ext(fpath))
 		}
-
 		r.Campaigns[config.ID] = &config
 		r.IDs = append(r.IDs, config.ID)
-		log.Printf("Loaded Campaign: %s (%s)", config.ID, config.Name)
-	}
-
-	return nil
+		log.Printf("Loaded Campaign: %s (%s) from %s", config.ID, config.Name, fpath)
+		return nil
+	})
 }
 
 func NewMapTypeRegistry() *MapTypeRegistry {
@@ -247,35 +261,13 @@ func (r *MapTypeRegistry) LoadAll(assets fs.FS) error {
 		return nil
 	}
 	const mapDir = "data/map_types"
-
-	entries, err := fs.ReadDir(assets, mapDir)
-	if err != nil {
-		if os.IsNotExist(err) || strings.Contains(err.Error(), "no such file or directory") {
-			return nil // Optional directory
-		}
-		return fmt.Errorf("failed to read maps directory: %w", err)
-	}
-
-	for _, entry := range entries {
-		if entry.IsDir() || filepath.Ext(entry.Name()) != ".yaml" {
-			continue
-		}
-
-		yamlPath := path.Join(mapDir, entry.Name())
-		data, err := fs.ReadFile(assets, yamlPath)
-		if err != nil {
-			log.Printf("Warning: failed to read %s: %v", yamlPath, err)
-			continue
-		}
-
+	return forEachYAML(assets, mapDir, func(fpath string, data []byte) error {
 		var config MapType
 		if err := yaml.Unmarshal(data, &config); err != nil {
-			log.Printf("Warning: failed to unmarshal %s: %v", yamlPath, err)
-			continue
+			log.Printf("Warning: failed to unmarshal %s: %v", fpath, err)
+			return nil
 		}
-
-		sanitizeMapType(&config, yamlPath)
-
+		sanitizeMapType(&config, fpath)
 		if config.WidthPixels <= 0 {
 			config.WidthPixels = 1000000
 		}
@@ -284,17 +276,14 @@ func (r *MapTypeRegistry) LoadAll(assets fs.FS) error {
 		}
 		config.MapWidth = float64(config.WidthPixels) / float64(engine.TileWidth)
 		config.MapHeight = float64(config.HeightPixels) / float64(engine.TileHeight)
-
 		if config.FloorTile == "" {
 			config.FloorTile = "grass.png"
 		}
-
 		r.Types[config.ID] = &config
 		r.IDs = append(r.IDs, config.ID)
-		log.Printf("Loaded Map config: %s (%s)", config.ID, config.Name)
-	}
-
-	return nil
+		log.Printf("Loaded Map config: %s (%s) from %s", config.ID, config.Name, fpath)
+		return nil
+	})
 }
 
 type FootprintPoint struct {
@@ -352,15 +341,35 @@ type EntityConfig struct {
 	XP             int              `yaml:"xp,omitempty"` // XP awarded on kill
 
 	// Run-time loaded assets
-	AssetDir    string      `yaml:"-"`
-	AudioDir    string      `yaml:"-"` // e.g. assets/audio/archetypes/orc/male
-	StaticImage interface{} `yaml:"-"`
-	CorpseImage interface{} `yaml:"-"`
-	AttackImage interface{} `yaml:"-"`
-	HitImage    interface{} `yaml:"-"` // hit.png  (legacy / single hit frame)
-	Hit1Image   interface{} `yaml:"-"` // hit1.png (first variant)
-	Hit2Image   interface{} `yaml:"-"` // hit2.png (second variant, requires hit1.png)
-	Weapon      *Weapon     `yaml:"-"`
+	AssetDir     string      `yaml:"-"`
+	AudioDir     string      `yaml:"-"` // e.g. assets/audio/archetypes/orc/male
+	StaticImage  interface{} `yaml:"-"`
+	CorpseImage  interface{} `yaml:"-"`
+	AttackImage  interface{} `yaml:"-"` // attack.png (default)
+	Attack1Image interface{} `yaml:"-"` // attack1.png
+	Attack2Image interface{} `yaml:"-"` // attack2.png
+	HitImage     interface{} `yaml:"-"` // hit.png  (legacy / single hit frame)
+	Hit1Image    interface{} `yaml:"-"` // hit1.png (first variant)
+	Hit2Image    interface{} `yaml:"-"` // hit2.png (second variant, requires hit1.png)
+	Weapon       *Weapon     `yaml:"-"`
+}
+
+// PickAttackImage returns the sprite to display when this entity attacks.
+// It follows the same logic as PickHitImage.
+func (e *EntityConfig) PickAttackImage() engine.Image {
+	if a1, ok := e.Attack1Image.(engine.Image); ok {
+		if a2, ok2 := e.Attack2Image.(engine.Image); ok2 {
+			if rand.Intn(2) == 0 {
+				return a1
+			}
+			return a2
+		}
+		return a1
+	}
+	if a, ok := e.AttackImage.(engine.Image); ok {
+		return a
+	}
+	return nil
 }
 
 // PickHitImage returns the sprite to display when this entity is hit.
@@ -416,6 +425,14 @@ func (r *ArchetypeRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics) {
 		if _, err := fs.Stat(assets, attackPath); err == nil {
 			config.AttackImage = graphics.LoadSprite(assets, attackPath, true)
 		}
+		attack1Path := path.Join(config.AssetDir, "attack1.png")
+		if _, err := fs.Stat(assets, attack1Path); err == nil {
+			config.Attack1Image = graphics.LoadSprite(assets, attack1Path, true)
+		}
+		attack2Path := path.Join(config.AssetDir, "attack2.png")
+		if _, err := fs.Stat(assets, attack2Path); err == nil {
+			config.Attack2Image = graphics.LoadSprite(assets, attack2Path, true)
+		}
 
 		hitPath := path.Join(config.AssetDir, "hit.png")
 		if _, err := fs.Stat(assets, hitPath); err == nil {
@@ -437,20 +454,16 @@ func (r *ArchetypeRegistry) LoadAll(assets fs.FS) error {
 		return nil
 	}
 	const baseDir = "data/archetypes"
-
-	err := fs.WalkDir(assets, baseDir, func(fpath string, d fs.DirEntry, err error) error {
-		if err != nil {
-			if os.IsNotExist(err) || strings.Contains(err.Error(), "no such file or directory") {
-				return nil // Skip if baseDir doesn't exist
-			}
-			return err
-		}
-		if d.IsDir() || (filepath.Ext(fpath) != ".yaml" && filepath.Ext(fpath) != ".yml") {
-			return nil
-		}
-
+	return forEachYAML(assets, baseDir, func(fpath string, data []byte) error {
 		// Get relative path from baseDir to the yaml file
-		relPath, err := filepath.Rel(baseDir, fpath)
+		// NOTE: if fpath comes from oinakos/data, it will have that prefix.
+		// We need to strip it to get the correct subDir/assetDir mapping.
+		cleanRelPath := fpath
+		if strings.HasPrefix(fpath, "oinakos"+string(filepath.Separator)) {
+			cleanRelPath = fpath[len("oinakos"+string(filepath.Separator)):]
+		}
+
+		relPath, err := filepath.Rel(baseDir, cleanRelPath)
 		if err != nil {
 			return nil
 		}
@@ -458,12 +471,6 @@ func (r *ArchetypeRegistry) LoadAll(assets fs.FS) error {
 		subDir := filepath.Dir(relPath)
 		if subDir == "." {
 			subDir = ""
-		}
-
-		data, err := fs.ReadFile(assets, fpath)
-		if err != nil {
-			log.Printf("Warning: failed to read %s: %v", fpath, err)
-			return nil
 		}
 
 		var config Archetype
@@ -488,8 +495,6 @@ func (r *ArchetypeRegistry) LoadAll(assets fs.FS) error {
 		log.Printf("Loaded Archetype: %s (%s) from %s with AssetDir: %s", config.ID, config.Name, fpath, config.AssetDir)
 		return nil
 	})
-
-	return err
 }
 
 type NPCRegistry struct {
@@ -537,6 +542,14 @@ func (r *NPCRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *
 				if _, err := fs.Stat(assets, attackPath); err != nil {
 					config.AttackImage = arch.AttackImage
 				}
+				attack1Path := path.Join(config.AssetDir, "attack1.png")
+				if _, err := fs.Stat(assets, attack1Path); err != nil {
+					config.Attack1Image = arch.Attack1Image
+				}
+				attack2Path := path.Join(config.AssetDir, "attack2.png")
+				if _, err := fs.Stat(assets, attack2Path); err != nil {
+					config.Attack2Image = arch.Attack2Image
+				}
 				hitPath := path.Join(config.AssetDir, "hit.png")
 				if _, err := fs.Stat(assets, hitPath); err != nil {
 					config.HitImage = arch.HitImage
@@ -565,6 +578,14 @@ func (r *NPCRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *
 		if _, err := fs.Stat(assets, attackPath); err == nil {
 			config.AttackImage = graphics.LoadSprite(assets, attackPath, true)
 		}
+		attack1Path := path.Join(config.AssetDir, "attack1.png")
+		if _, err := fs.Stat(assets, attack1Path); err == nil {
+			config.Attack1Image = graphics.LoadSprite(assets, attack1Path, true)
+		}
+		attack2Path := path.Join(config.AssetDir, "attack2.png")
+		if _, err := fs.Stat(assets, attack2Path); err == nil {
+			config.Attack2Image = graphics.LoadSprite(assets, attack2Path, true)
+		}
 
 		hitPath := path.Join(config.AssetDir, "hit.png")
 		if _, err := fs.Stat(assets, hitPath); err == nil {
@@ -586,24 +607,7 @@ func (r *NPCRegistry) LoadAll(assets fs.FS) error {
 		return nil
 	}
 	const baseDir = "data/npcs"
-
-	err := fs.WalkDir(assets, baseDir, func(fpath string, d fs.DirEntry, err error) error {
-		if err != nil {
-			if os.IsNotExist(err) || strings.Contains(err.Error(), "no such file or directory") {
-				return nil
-			}
-			return err
-		}
-		if d.IsDir() || (filepath.Ext(fpath) != ".yaml" && filepath.Ext(fpath) != ".yml") {
-			return nil
-		}
-
-		data, err := fs.ReadFile(assets, fpath)
-		if err != nil {
-			log.Printf("Warning: failed to read %s: %v", fpath, err)
-			return nil
-		}
-
+	return forEachYAML(assets, baseDir, func(fpath string, data []byte) error {
 		var config EntityConfig
 		if err := yaml.Unmarshal(data, &config); err != nil {
 			log.Printf("Warning: failed to unmarshal %s: %v", fpath, err)
@@ -624,8 +628,6 @@ func (r *NPCRegistry) LoadAll(assets fs.FS) error {
 		log.Printf("Loaded Unique NPC: %s (%s) from %s", config.ID, config.Name, fpath)
 		return nil
 	})
-
-	return err
 }
 
 type ObstacleArchetype struct {
@@ -664,44 +666,24 @@ func (r *ObstacleRegistry) LoadAll(assets fs.FS) error {
 		return nil
 	}
 	const obsDir = "data/obstacles"
-
-	entries, err := fs.ReadDir(assets, obsDir)
-	if err != nil {
-		if os.IsNotExist(err) || strings.Contains(err.Error(), "no such file or directory") {
-			return nil // Optional directory
-		}
-		return fmt.Errorf("failed to read obstacles directory: %w", err)
-	}
-
-	for _, entry := range entries {
-		if entry.IsDir() || filepath.Ext(entry.Name()) != ".yaml" {
-			continue
-		}
-
-		yamlPath := path.Join(obsDir, entry.Name())
-		data, err := fs.ReadFile(assets, yamlPath)
-		if err != nil {
-			log.Printf("Warning: failed to read %s: %v", yamlPath, err)
-			continue
-		}
-
+	return forEachYAML(assets, obsDir, func(fpath string, data []byte) error {
 		var config ObstacleArchetype
 		if err := yaml.Unmarshal(data, &config); err != nil {
-			log.Printf("Warning: failed to unmarshal %s: %v", yamlPath, err)
-			continue
+			log.Printf("Warning: failed to unmarshal %s: %v", fpath, err)
+			return nil
 		}
 
-		sanitizeObstacleArchetype(&config, yamlPath)
+		sanitizeObstacleArchetype(&config, fpath)
 
-		// Store full path from data/obstacles/<id>/ logic
-		config.Image = nil // Will be loaded in LoadAssets
+		if config.ID == "" {
+			config.ID = strings.TrimSuffix(filepath.Base(fpath), filepath.Ext(fpath))
+		}
 
 		r.Archetypes[config.ID] = &config
 		r.IDs = append(r.IDs, config.ID)
-		log.Printf("Loaded Obstacle Archetype: %s (%s)", config.ID, config.Name)
-	}
-
-	return nil
+		log.Printf("Loaded Obstacle Archetype: %s (%s) from %s", config.ID, config.Name, fpath)
+		return nil
+	})
 }
 func (r *ObstacleRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics) {
 	for _, config := range r.Archetypes {
@@ -731,13 +713,25 @@ func LoadMainCharacterConfig(assets fs.FS) (*EntityConfig, error) {
 		return &EntityConfig{}, nil
 	}
 	const configPath = "data/characters/main/character.yaml"
-	data, err := fs.ReadFile(assets, configPath)
-	if err != nil {
-		// Fallback to direct OS read if embedded FS fails or is not complete
-		data, err = os.ReadFile(configPath)
+	localPath := filepath.Join("oinakos", configPath)
+
+	var data []byte
+	var err error
+
+	// Try local override first
+	if _, errStat := os.Stat(localPath); errStat == nil {
+		data, err = os.ReadFile(localPath)
+	}
+	if data == nil {
+		data, err = fs.ReadFile(assets, configPath)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to read main character config %s: %w", configPath, err)
+		// Fallback to direct OS read of regular path
+		data, err = os.ReadFile(configPath)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to read main character config: %w", err)
 	}
 
 	var config EntityConfig
@@ -773,6 +767,8 @@ func GetWeaponByName(name string) *Weapon {
 		return &Weapon{Name: "Bow", MinDamage: 3, MaxDamage: 6}
 	case "Dagger":
 		return &Weapon{Name: "Dagger", MinDamage: 2, MaxDamage: 5}
+	case "Gilded Pitchfork":
+		return &Weapon{Name: "Gilded Pitchfork", MinDamage: 8, MaxDamage: 18}
 	case "Shouts":
 		return &Weapon{Name: "Shouts", MinDamage: 10, MaxDamage: 50}
 	default:

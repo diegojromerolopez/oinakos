@@ -45,12 +45,19 @@ func (m *AudioManager) LoadSound(name, path string) {
 	var f fs.File
 	var err error
 
-	if m.fs != nil {
-		f, err = m.fs.Open(path)
-	}
-	// Fallback to os.Open if not in embedded FS or not found
-	if err != nil || m.fs == nil {
-		f, err = os.Open(path)
+	// Check for local override in oinakos/assets folder
+	localPath := "oinakos/" + path
+	if _, statErr := os.Stat(localPath); statErr == nil {
+		f, err = os.Open(localPath)
+	} else {
+		// Try embedded FS
+		if m.fs != nil {
+			f, err = m.fs.Open(path)
+		}
+		// Fallback to direct os.Open if not in embedded FS or not found
+		if f == nil {
+			f, err = os.Open(path)
+		}
 	}
 
 	if err != nil {

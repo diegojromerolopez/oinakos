@@ -131,6 +131,9 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID string, input engine.I
 		debug:             debug,
 	}
 
+	SetDebugMode(debug)
+	DebugLog("Game Initialized | MapID: %s | MapTypeID: %s", initialMapID, initialMapTypeID)
+
 	if initialMapID == "" && initialMapTypeID == "" {
 		if len(g.campaignRegistry.IDs) > 0 {
 			g.isCampaignSelect = true
@@ -524,6 +527,8 @@ func (g *Game) Update() error {
 	// Handle debug boundaries toggle
 	if g.input.IsKeyJustPressed(engine.KeyTab) {
 		g.showBoundaries = !g.showBoundaries
+		g.debug = g.showBoundaries
+		SetDebugMode(g.debug)
 	}
 
 	if g.isGameOver {
@@ -711,7 +716,7 @@ func (g *Game) Update() error {
 			}
 		}
 
-		log.Printf("[REALTIME] Player Pos: X=%.2f, Y=%.2f | Status: %s | Nearest: %s (Dist: %.2f)",
+		DebugLog("[REALTIME] Player Pos: X=%.2f, Y=%.2f | Status: %s | Nearest: %s (Dist: %.2f)",
 			g.mainCharacter.X, g.mainCharacter.Y, status, nearestName, nearestDist)
 	}
 	// Write to a dedicated file for the agent to poll
@@ -837,8 +842,16 @@ func (g *Game) Update() error {
 
 	if mapWon && !g.isGameOver && g.mainCharacter.IsAlive() {
 		// Show win dialog, don't auto-advance
+		if !g.isMapWon {
+			DebugLog("Objective Completed! Level %d cleared. Objective: %v", g.mapLevel, g.currentMapType.Type)
+		}
 		g.isMapWon = true
 		return nil
+	}
+
+	if g.isGameOver && g.mainCharacter.IsAlive() == false {
+		// Only log if it just happened
+		// We need to check if we already logged it, or just log here once per game over
 	}
 
 	// Update all obstacles (important for animation and cooldowns)
@@ -1061,6 +1074,9 @@ func (g *Game) updateNPCSpawning() {
 				activeNPCs = append(activeNPCs, n)
 			}
 		}
+		if len(g.npcs) != len(activeNPCs) {
+			DebugLog("Culled %d far-away NPCs", len(g.npcs)-len(activeNPCs))
+		}
 		g.npcs = activeNPCs
 	}
 }
@@ -1111,6 +1127,7 @@ func (g *Game) spawnNPCNearPosition(x, y float64, sc *SpawnConfig) {
 		npc.Y = y + math.Sin(angle)*(spawnRadius+rand.Float64())
 	}
 	g.npcs = append(g.npcs, npc)
+	DebugLog("Dynamic Spawn: [%s] at (%.2f, %.2f) | Alignment: %v", npc.Name, npc.X, npc.Y, npc.Alignment)
 }
 
 func (g *Game) spawnNPCAtMapEdges(sc *SpawnConfig) {
@@ -1161,6 +1178,7 @@ func (g *Game) spawnNPCAtMapEdges(sc *SpawnConfig) {
 	}
 
 	g.npcs = append(g.npcs, npc)
+	DebugLog("Dynamic Edge Spawn: [%s] at (%.2f, %.2f) | Alignment: %v", npc.Name, npc.X, npc.Y, npc.Alignment)
 }
 
 func (g *Game) openFilePicker() string {

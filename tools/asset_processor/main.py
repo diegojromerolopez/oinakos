@@ -31,8 +31,15 @@ def process_npc_asset(in_path, out_path, force_magenta_band=False):
         # distance to bg_color
         dist = ((r - bg_color[0])**2 + (g - bg_color[1])**2 + (b - bg_color[2])**2)**0.5
         
-        is_bg = dist < 50 # Threshold
+        # Increase threshold for checkerboard backgrounds (generator artifacts)
+        # But be careful with Orcs (green skin).
+        # We can also check if the pixel is "Very Green" relative to R and B.
+        is_bg = dist < 100 # Increased from 50
         
+        # Specific check for lime-green variations (common in generator artifacts)
+        if g > 200 and r < 100 and b < 100:
+            is_bg = True
+            
         # Also check for "near white" backgrounds
         if r > 240 and g > 240 and b > 240:
             is_bg = True

@@ -6,13 +6,45 @@ target_time: 60.0
 description: "Walk in peace, do not spill blood"
 floor_tile: "grass.png"
 inhabitants:
-  - npc: marcus_ardea
-    x: 0.5
-    y: 0.5
+  - npc: crimson_guard
+    x: 1.0
+    y: 1.0
     alignment: neutral
-  - npc: lieutenant_varrick
-    x: 1.5
-    y: 0.5
+  - npc: crimson_guard
+    x: 2.0
+    y: 0.0
+    alignment: neutral
+  - npc: crimson_guard
+    x: 0.0
+    y: 2.0
+    alignment: neutral
+  - npc: crimson_guard
+    x: -2.0
+    y: 0.0
+    alignment: neutral
+  - npc: crimson_guard
+    x: 0.0
+    y: -2.0
+    alignment: neutral
+  - npc: crimson_guard
+    x: 4.0
+    y: 4.0
+    alignment: neutral
+  - npc: crimson_guard
+    x: 4.0
+    y: -4.0
+    alignment: neutral
+  - npc: crimson_guard
+    x: -4.0
+    y: 4.0
+    alignment: neutral
+  - npc: crimson_guard
+    x: -4.0
+    y: -4.0
+    alignment: neutral
+  - npc: crimson_guard
+    x: 5.0
+    y: 0.0
     alignment: neutral
 obstacles:
   - archetype: temple

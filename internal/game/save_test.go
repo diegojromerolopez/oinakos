@@ -2,6 +2,7 @@ package game
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -63,40 +64,100 @@ func TestSaveLoad(t *testing.T) {
 }
 
 func TestQuickSave(t *testing.T) {
-	g := NewGame(nil, "", "", NewMockInputManager(), NewMockAudioManager(), false)
-	g.performQuicksave()
+	// Create a temporary directory for the test
+	dir, err := os.MkdirTemp("", "test_quicksave")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(dir) // Clean up the directory
 
-	// Check if 'saves' dir exists
-	if _, err := os.Stat("saves"); os.IsNotExist(err) {
-		t.Error("'saves' directory was not created")
+	// Change to the temporary directory
+	origDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Failed to get current working directory: %v", err)
+	}
+	os.Chdir(dir)
+	defer os.Chdir(origDir)
+
+	// Ensure the oinakos/data/maps directory exists for the map file
+	mapDir := filepath.Join("oinakos", "data", "maps")
+	if err := os.MkdirAll(mapDir, 0755); err != nil {
+		t.Fatalf("Failed to create map directory: %v", err)
 	}
 
-	// Verify a .oinakos file was created in saves/
-	files, _ := os.ReadDir("saves")
+	// Create a dummy map file
+	dummyMapPath := filepath.Join(mapDir, "test_quicksave_map.yaml")
+	if err := os.WriteFile(dummyMapPath, []byte("map_data: {}"), 0644); err != nil {
+		t.Fatalf("Failed to create dummy map file: %v", err)
+	}
+
+	g := NewGame(nil, dummyMapPath, "", NewMockInputManager(), NewMockAudioManager(), false)
+	g.performQuicksave()
+
+	// Check if 'oinakos/saves' dir exists
+	savesDir := filepath.Join("oinakos", "saves")
+	if _, err := os.Stat(savesDir); os.IsNotExist(err) {
+		t.Error("'oinakos/saves' directory was not created")
+	}
+
+	// Verify a .oinakos file was created in oinakos/saves/
+	files, _ := os.ReadDir(savesDir)
 	found := false
 	for _, f := range files {
 		if strings.HasPrefix(f.Name(), "quicksave-") && strings.HasSuffix(f.Name(), ".oinakos.yaml") {
 			found = true
-			os.Remove("saves/" + f.Name())
+			os.Remove(filepath.Join(savesDir, f.Name()))
 		}
 	}
 	if !found {
 		t.Error("No .oinakos quicksave file found")
 	}
-	os.Remove("saves") // Clean up if empty
 }
 
 func TestLoad_Errors(t *testing.T) {
-	g := NewGame(nil, "", "", NewMockInputManager(), NewMockAudioManager(), false)
+	// Create a temporary directory for the test
+	dir, err := os.MkdirTemp("", "test_load_errors")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(dir) // Clean up the directory
+
+	// Change to the temporary directory
+	origDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Failed to get current working directory: %v", err)
+	}
+	os.Chdir(dir)
+	defer os.Chdir(origDir)
+
+	// Ensure the oinakos/data/maps directory exists for the map file
+	mapDir := filepath.Join("oinakos", "data", "maps")
+	if err := os.MkdirAll(mapDir, 0755); err != nil {
+		t.Fatalf("Failed to create map directory: %v", err)
+	}
+
+	// Create a dummy map file
+	dummyMapPath := filepath.Join(mapDir, "test_load_errors_map.yaml")
+	if err := os.WriteFile(dummyMapPath, []byte("map_data: {}"), 0644); err != nil {
+		t.Fatalf("Failed to create dummy map file: %v", err)
+	}
+
+	g := NewGame(nil, dummyMapPath, "", NewMockInputManager(), NewMockAudioManager(), false)
+
+	// Ensure the oinakos/saves directory exists for the save files
+	saveDir := filepath.Join("oinakos", "saves")
+	if err := os.MkdirAll(saveDir, 0755); err != nil {
+		t.Fatalf("Failed to create save directory: %v", err)
+	}
 
 	// 1. Non-existent file
-	err := g.Load("nonexistent_file.yaml")
+	err = g.Load(filepath.Join(saveDir, "nonexistent_file.yaml"))
 	if err == nil {
 		t.Error("Expected error loading non-existent file")
 	}
 
 	// 2. Corrupted YAML
-	corruptPath := "corrupt.yaml"
+	corruptPath := filepath.Join(saveDir, "corrupt.yaml")
 	os.WriteFile(corruptPath, []byte("invalid: yaml: {{"), 0644)
 	defer os.Remove(corruptPath)
 
@@ -106,7 +167,7 @@ func TestLoad_Errors(t *testing.T) {
 	}
 
 	// 3. Empty file
-	emptyPath := "empty.yaml"
+	emptyPath := filepath.Join(saveDir, "empty.yaml")
 	os.WriteFile(emptyPath, []byte(""), 0644)
 	defer os.Remove(emptyPath)
 	err = g.Load(emptyPath)

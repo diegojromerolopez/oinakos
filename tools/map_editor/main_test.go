@@ -150,7 +150,7 @@ func TestInitializeMapCreatesMapData(t *testing.T) {
 	// map editor writes to maps/<name>.yaml relative to cwd;
 	// change cwd so the file lands under TempDir.
 	origDir, _ := os.Getwd()
-	os.MkdirAll(filepath.Join(dir, "maps"), 0755)
+	os.MkdirAll(filepath.Join(dir, "oinakos/data/maps"), 0755)
 	os.Chdir(dir)
 	defer os.Chdir(origDir)
 
@@ -175,15 +175,15 @@ func TestInitializeMapCreatesMapData(t *testing.T) {
 	if me.MapData.Map.HeightPixels != 240 {
 		t.Errorf("HeightPixels: want 240, got %d", me.MapData.Map.HeightPixels)
 	}
-	if me.Filename != filepath.Join("maps", "test_map.yaml") {
-		t.Errorf("Filename: want maps/test_map.yaml, got %s", me.Filename)
+	if me.Filename != filepath.Join("oinakos/data/maps", "test_map.yaml") {
+		t.Errorf("Filename: want oinakos/data/maps/test_map.yaml, got %s", me.Filename)
 	}
 }
 
 func TestInitializeMapInfiniteMode(t *testing.T) {
 	dir := t.TempDir()
 	origDir, _ := os.Getwd()
-	os.MkdirAll(filepath.Join(dir, "maps"), 0755)
+	os.MkdirAll(filepath.Join(dir, "oinakos/data/maps"), 0755)
 	os.Chdir(dir)
 	defer os.Chdir(origDir)
 
@@ -463,7 +463,7 @@ func TestSyncNPCPosition(t *testing.T) {
 func TestSaveMapCreatesFile(t *testing.T) {
 	dir := t.TempDir()
 	origDir, _ := os.Getwd()
-	os.MkdirAll(filepath.Join(dir, "maps"), 0755)
+	os.MkdirAll(filepath.Join(dir, "oinakos/data/maps"), 0755)
 	os.Chdir(dir)
 	defer os.Chdir(origDir)
 
@@ -473,7 +473,7 @@ func TestSaveMapCreatesFile(t *testing.T) {
 	me.InHeight = "100"
 	me.initializeMap()
 
-	path := filepath.Join(dir, "maps", "save_test.yaml")
+	path := filepath.Join(dir, "oinakos/data/maps", "save_test.yaml")
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		t.Errorf("expected YAML file at %s, not found", path)
 	}

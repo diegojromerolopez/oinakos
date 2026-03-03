@@ -233,7 +233,7 @@ func (m *MapEditor) initializeMap() {
 	if m.InName == "" {
 		return
 	}
-	const mapsDir = "maps"
+	const mapsDir = "oinakos/data/maps"
 	os.MkdirAll(mapsDir, 0755)
 	m.Filename = filepath.Join(mapsDir, m.InName+".yaml")
 

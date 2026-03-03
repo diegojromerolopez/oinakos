@@ -394,12 +394,17 @@ func LoadSprite(assets fs.FS, path string, removeBg bool) Image {
 	var f fs.File
 	var err error
 
-	if assets != nil {
-		f, err = assets.Open(path)
-	}
-
-	if err != nil || assets == nil {
-		f, err = os.Open(path)
+	// Check for local override in oinakos/assets folder
+	localPath := "oinakos/" + path
+	if _, statErr := os.Stat(localPath); statErr == nil {
+		f, err = os.Open(localPath)
+	} else {
+		if assets != nil {
+			f, err = assets.Open(path)
+		}
+		if f == nil {
+			f, err = os.Open(path)
+		}
 	}
 
 	if err != nil {

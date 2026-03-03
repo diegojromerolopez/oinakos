@@ -1,0 +1,26 @@
+id: peasant_king
+name: "King of Peasants"
+description: "An intelligent psychopath who has convinced a mass of impoverished peasants to adore him. He wears a crown and peasant clothes, living in secret luxury while preaching hate against nobles to keep his followers focused on an external enemy."
+unique: true
+behavior: wander
+stats:
+  health_min: 250
+  health_max: 300
+  speed: 0.05
+  base_attack: 25
+  base_defense: 15
+  attack_cooldown: 50
+  attack_range: 1.2
+weapon: "Gilded Pitchfork"
+footprint:
+  - x: -0.2
+    y: -0.1
+  - x: 0.2
+    y: -0.1
+  - x: 0.2
+    y: 0.1
+  - x: -0.2
+    y: 0.1
+xp: 250
+primary_color: "#FFD700" # Golden crown/jewelry
+secondary_color: "#654321" # Dirty peasant clothes

@@ -7,7 +7,6 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"io/fs"
-	"log"
 	"math"
 	"math/rand"
 	"os"
@@ -152,11 +151,14 @@ func (mc *MainCharacter) TakeDamage(amount int, audio AudioManager) {
 	if mc.State == StateDead {
 		return
 	}
+	oldHealth := mc.Health
 	mc.Health -= amount
 	mc.HitTimer = 15 // Show hit frame for 15 ticks
+	DebugLog("Player Hit! Damage: %d | Health: %d -> %d", amount, oldHealth, mc.Health)
 	if mc.Health <= 0 {
 		mc.Health = 0
 		mc.State = StateDead
+		DebugLog("Player DIED at (%.2f, %.2f)", mc.X, mc.Y)
 		if audio != nil {
 			audio.PlaySound("main/death")
 		}
@@ -243,12 +245,11 @@ func (mc *MainCharacter) Update(input engine.Input, audio AudioManager, obstacle
 						// Drink from well
 						mc.Health = mc.MaxHealth
 						o.CooldownTicks = int(o.Archetype.CooldownTime * 60 * 60)
+						DebugLog("Player used Well at (%.2f, %.2f) | Health Restored to %d", o.X, o.Y, mc.Health)
 
 						// Change state to drinking
 						mc.State = StateDrinking
 						mc.Tick = 0
-
-						// Optional: play a drinking sound here if needed
 						return
 					}
 				}
@@ -256,6 +257,7 @@ func (mc *MainCharacter) Update(input engine.Input, audio AudioManager, obstacle
 
 			mc.State = StateAttacking
 			mc.Tick = 0
+			DebugLog("Player is Attacking! Pos: (%.2f, %.2f) | Facing: %v", mc.X, mc.Y, mc.Facing)
 			if audio != nil {
 				audio.PlaySound("main/attack")
 			}
@@ -284,6 +286,10 @@ func (mc *MainCharacter) Update(input engine.Input, audio AudioManager, obstacle
 			if !mc.checkCollisionAt(mc.X, mc.Y+moveY, obstacles) {
 				mc.Y += moveY
 			}
+		}
+
+		if mc.Tick%30 == 0 {
+			DebugLog("Player Moved to (%.2f, %.2f)", mc.X, mc.Y)
 		}
 
 		// Clamp to map boundaries
@@ -383,7 +389,7 @@ func (mc *MainCharacter) CheckAttackHits(npcs []*NPC, obstacles []*Obstacle, fts
 				rawDmg := mc.Weapon.RollDamage()
 				protection := n.GetTotalProtection()
 				finalDmg := int(math.Max(1, float64(rawDmg-protection)))
-				log.Printf("Player attacks NPC %s: HIT for %d damage (roll: %d/%d)", n.Name, finalDmg, roll, hitChance)
+				DebugLog("Player attacks NPC %s: HIT for %d damage (roll: %d/%d)", n.Name, finalDmg, roll, hitChance)
 				n.TakeDamage(finalDmg, mc, nil, audio)
 
 				*fts = append(*fts, &FloatingText{
@@ -395,7 +401,7 @@ func (mc *MainCharacter) CheckAttackHits(npcs []*NPC, obstacles []*Obstacle, fts
 				})
 			} else {
 				// MISS
-				log.Printf("Player attacks NPC %s: MISS (roll: %d/%d)", n.Name, roll, hitChance)
+				DebugLog("Player attacks NPC %s: MISS (roll: %d/%d)", n.Name, roll, hitChance)
 				*fts = append(*fts, &FloatingText{
 					Text:  "MISS",
 					X:     n.X,

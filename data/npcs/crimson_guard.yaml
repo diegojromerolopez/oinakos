@@ -2,7 +2,7 @@ id: crimson_guard
 name: Crimson Guard
 archetype: man_at_arms_male
 unique: false # Not unique, just a variant
-primary_color: "#FF0000"
+primary_color: "#DC143C"
 secondary_color: "#FFFFFF"
 stats:
   health_min: 100

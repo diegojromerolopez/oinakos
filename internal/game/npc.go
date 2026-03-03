@@ -5,7 +5,6 @@ import (
 	"image/color"
 	_ "image/jpeg"
 	_ "image/png"
-	"log"
 	"math"
 	"math/rand"
 
@@ -496,7 +495,7 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 					if roll <= hitChance {
 						rawDmg := n.Weapon.RollDamage()
 						finalDmg := int(math.Max(1, float64(rawDmg-targetProtection)))
-						log.Printf("NPC %s attacks Player: HIT for %d damage (roll: %d/%d)", n.Name, finalDmg, roll, hitChance)
+						DebugLog("NPC [%s] attacks Player: HIT for %d damage (roll: %d/%d)", n.Name, finalDmg, roll, hitChance)
 						mainCharacter.TakeDamage(finalDmg, audio)
 
 						*fts = append(*fts, &FloatingText{
@@ -508,7 +507,7 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 						})
 					} else {
 						// MISS
-						log.Printf("NPC %s attacks Player: MISS (roll: %d/%d)", n.Name, roll, hitChance)
+						DebugLog("NPC [%s] attacks Player: MISS (roll: %d/%d)", n.Name, roll, hitChance)
 						*fts = append(*fts, &FloatingText{
 							Text:  "MISS",
 							X:     mainCharacter.X,
@@ -542,7 +541,7 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 					if roll <= hitChance {
 						rawDmg := n.Weapon.RollDamage()
 						finalDmg := int(math.Max(1, float64(rawDmg-targetProtection)))
-						log.Printf("NPC %s attacks NPC %s: HIT for %d damage (roll: %d/%d)", n.Name, n.TargetNPC.Name, finalDmg, roll, hitChance)
+						DebugLog("NPC [%s] attacks NPC [%s]: HIT for %d damage (roll: %d/%d)", n.Name, n.TargetNPC.Name, finalDmg, roll, hitChance)
 						n.TargetNPC.TakeDamage(finalDmg, nil, n, audio)
 
 						*fts = append(*fts, &FloatingText{
@@ -554,7 +553,7 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 						})
 					} else {
 						// MISS
-						log.Printf("NPC %s attacks NPC %s: MISS (roll: %d/%d)", n.Name, n.TargetNPC.Name, roll, hitChance)
+						DebugLog("NPC [%s] attacks NPC [%s]: MISS (roll: %d/%d)", n.Name, n.TargetNPC.Name, roll, hitChance)
 						*fts = append(*fts, &FloatingText{
 							Text:  "MISS",
 							X:     n.TargetNPC.X,
@@ -621,6 +620,10 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 				}
 			}
 		}
+
+		if n.Tick%120 == 0 {
+			DebugLog("NPC [%s] Moved to (%.2f, %.2f) | State: %v", n.Name, n.X, n.Y, n.State)
+		}
 	}
 }
 
@@ -636,7 +639,7 @@ func (n *NPC) TakeDamage(amount int, attackerPlayer *MainCharacter, attackerNPC 
 		n.TargetNPC = nil
 		// Neutral or Ally NPCs become enemies if hit by the player
 		if n.Alignment != AlignmentEnemy {
-			log.Printf("NPC %s was %s and is now an ENEMY due to player attack!", n.Name, n.Alignment)
+			DebugLog("NPC [%s] was %s and is now an ENEMY due to player attack!", n.Name, n.Alignment)
 			n.Alignment = AlignmentEnemy
 			n.Behavior = BehaviorKnightHunter
 		}
@@ -653,7 +656,7 @@ func (n *NPC) TakeDamage(amount int, attackerPlayer *MainCharacter, attackerNPC 
 	}
 
 	if n.Health <= 0 {
-		log.Printf("NPC %s has been killed!", n.Name)
+		DebugLog("NPC [%s] has been killed at (%.2f, %.2f)!", n.Name, n.X, n.Y)
 		n.State = NPCDead
 		if attackerPlayer != nil {
 			attackerPlayer.Kills++

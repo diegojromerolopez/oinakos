@@ -78,9 +78,14 @@ type SaveData struct {
 func (g *Game) Save(fpath string) error {
 	bytes, err := g.serialize()
 	if err != nil {
+		DebugLog("Failed to serialize for save to %s: %v", fpath, err)
 		return err
 	}
-	return os.WriteFile(fpath, bytes, 0644)
+	err = os.WriteFile(fpath, bytes, 0644)
+	if err == nil {
+		DebugLog("Game Successfully Saved to %s | NPCs: %d | Obstacles: %d", fpath, len(g.npcs), len(g.obstacles))
+	}
+	return err
 }
 
 func (g *Game) performQuicksave() {
@@ -97,8 +102,8 @@ func (g *Game) performQuicksave() {
 		return
 	}
 
-	if err := os.MkdirAll("saves", 0755); err == nil {
-		savePath := fmt.Sprintf("saves/quicksave-%s.oinakos.yaml", time.Now().Format("2006-01-02T150405"))
+	if err := os.MkdirAll("oinakos/saves", 0755); err == nil {
+		savePath := fmt.Sprintf("oinakos/saves/quicksave-%s.oinakos.yaml", time.Now().Format("2006-01-02T150405"))
 		if err := g.Save(savePath); err == nil {
 			log.Printf("Game quicksaved: %s", savePath)
 			g.lastSavePath = savePath
@@ -191,11 +196,12 @@ func (g *Game) Load(fpath string) error {
 	var bytes []byte
 	var err error
 
+	DebugLog("Attempting to load: %s", fpath)
 	// WASM LocalStorage check
 	if g.isWasm() && (fpath == "" || fpath == "quicksave") {
 		bytes, err = g.loadFromLocalStorage()
 		if err == nil && bytes != nil {
-			log.Printf("Loaded from Browser Storage")
+			DebugLog("Loaded from Browser Storage")
 			return g.unmarshal(bytes, fpath)
 		}
 	}
@@ -213,6 +219,7 @@ func (g *Game) Load(fpath string) error {
 	}
 
 	if err != nil {
+		DebugLog("Failed to read save file %s: %v", fpath, err)
 		return fmt.Errorf("failed to read save file %s: %w", fpath, err)
 	}
 
@@ -222,6 +229,7 @@ func (g *Game) Load(fpath string) error {
 func (g *Game) unmarshal(bytes []byte, fpath string) error {
 	var data SaveData
 	if err := yaml.Unmarshal(bytes, &data); err != nil {
+		DebugLog("Failed to unmarshal save data: %v", err)
 		return fmt.Errorf("failed to unmarshal save data: %w", err)
 	}
 
@@ -422,5 +430,6 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 		}
 	}
 
+	DebugLog("Game Successfully Unmarshaled: %s | Level: %d | NPCs: %d | Obstacles: %d", fpath, g.mapLevel, len(g.npcs), len(g.obstacles))
 	return nil
 }

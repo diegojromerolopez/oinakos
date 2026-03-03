@@ -76,6 +76,7 @@ func (p *Projectile) Update(mc *MainCharacter, obstacles []*Obstacle, fts *[]*Fl
 			// Hit!
 			protection := mc.GetTotalProtection()
 			finalDmg := int(math.Max(1, float64(p.Damage-protection)))
+			DebugLog("Projectile HIT Player for %d damage", finalDmg)
 			mc.TakeDamage(finalDmg, nil)
 
 			*fts = append(*fts, &FloatingText{

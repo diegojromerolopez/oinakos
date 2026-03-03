@@ -32,7 +32,7 @@ func (n *NPC) Draw(screen engine.Image, textRenderer engine.TextRenderer, vector
 			drawSprite = img
 		}
 	} else if n.State == NPCAttacking {
-		if img, ok := n.Archetype.AttackImage.(engine.Image); ok {
+		if img := n.Archetype.PickAttackImage(); img != nil {
 			drawSprite = img
 		}
 	}

@@ -26,7 +26,7 @@ func (mc *MainCharacter) Draw(screen engine.Image, textRenderer engine.TextRende
 				drawSprite = img
 			}
 		} else if mc.State == StateAttacking {
-			if img, ok := mc.Config.AttackImage.(engine.Image); ok {
+			if img := mc.Config.PickAttackImage(); img != nil {
 				drawSprite = img
 			}
 		}

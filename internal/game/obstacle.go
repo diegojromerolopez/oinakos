@@ -53,6 +53,7 @@ func (o *Obstacle) TakeDamage(amount int) {
 	o.Health -= amount
 	if o.Health <= 0 {
 		o.Alive = false
+		DebugLog("Obstacle [%s] Destroyed at (%.2f, %.2f)", o.ID, o.X, o.Y)
 	}
 }
 
