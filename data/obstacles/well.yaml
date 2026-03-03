@@ -5,6 +5,10 @@ destructible: false
 description: A magical well that restores health when drank from. Takes 5 minutes to replenish.
 health: 0
 cooldown_time: 5.0
+actions:
+  - type: heal
+    amount: 999
+    requires_interaction: true
 footprint:
   - x: 1.41
     y: -0.09

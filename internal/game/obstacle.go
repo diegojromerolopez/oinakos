@@ -12,6 +12,7 @@ type Obstacle struct {
 	CooldownTicks int
 	TickCounter   int
 	Alive         bool
+	EffectTimers  map[interface{}]int // Track intervals for hazards/healing per entity
 }
 
 func NewObstacle(id string, x, y float64, config *ObstacleArchetype) *Obstacle {
@@ -28,6 +29,7 @@ func NewObstacle(id string, x, y float64, config *ObstacleArchetype) *Obstacle {
 		Health:        hp,
 		CooldownTicks: 0,
 		Alive:         true,
+		EffectTimers:  make(map[interface{}]int),
 	}
 }
 
@@ -39,6 +41,15 @@ func (o *Obstacle) Update() {
 		o.CooldownTicks--
 	}
 	o.TickCounter++
+
+	// Age the effect timers
+	for entity, ticks := range o.EffectTimers {
+		if ticks > 0 {
+			o.EffectTimers[entity] = ticks - 1
+		} else {
+			// Cleanup old timers? Maybe not strictly necessary if map is small
+		}
+	}
 }
 
 func (o *Obstacle) TakeDamage(amount int) {

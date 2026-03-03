@@ -51,6 +51,21 @@ func forEachYAML(assets fs.FS, baseDir string, callback func(fpath string, data 
 	return nil
 }
 
+type ObstacleActionType string
+
+const (
+	ActionHarm ObstacleActionType = "harm"
+	ActionHeal ObstacleActionType = "heal"
+)
+
+type ObstacleActionConfig struct {
+	Type                ObstacleActionType `yaml:"type"`
+	Amount              int                `yaml:"amount"`
+	Aura                float64            `yaml:"aura"`
+	AlignmentLimit      string             `yaml:"alignment_limit"`      // "all", "ally", "enemy"
+	RequiresInteraction bool               `yaml:"requires_interaction"` // e.g. the Well
+}
+
 type ObstacleType string
 
 const (
@@ -631,18 +646,19 @@ func (r *NPCRegistry) LoadAll(assets fs.FS) error {
 }
 
 type ObstacleArchetype struct {
-	ID             string           `yaml:"id"`
-	Name           string           `yaml:"name"`
-	Type           ObstacleType     `yaml:"type"`
-	Destructible   bool             `yaml:"destructible"` // If false, cannot be damaged
-	Description    string           `yaml:"description"`
-	Health         int              `yaml:"health"`        // Base health (ignored if Destructible is false)
-	CooldownTime   float64          `yaml:"cooldown_time"` // Base cooldown in minutes
-	Footprint      []FootprintPoint `yaml:"footprint"`
-	FrameCount     int              `yaml:"frame_count"`     // Total number of frames
-	FramesPerRow   int              `yaml:"frames_per_row"`  // For grid-based spritesheets (default 0 = single row)
-	AnimationSpeed int              `yaml:"animation_speed"` // Ticks per frame
-	Image          interface{}      `yaml:"-"`
+	ID             string                 `yaml:"id"`
+	Name           string                 `yaml:"name"`
+	Type           ObstacleType           `yaml:"type"`
+	Destructible   bool                   `yaml:"destructible"` // If false, cannot be damaged
+	Description    string                 `yaml:"description"`
+	Health         int                    `yaml:"health"`        // Base health (ignored if Destructible is false)
+	CooldownTime   float64                `yaml:"cooldown_time"` // Base cooldown in minutes
+	Footprint      []FootprintPoint       `yaml:"footprint"`
+	FrameCount     int                    `yaml:"frame_count"`     // Total number of frames
+	FramesPerRow   int                    `yaml:"frames_per_row"`  // For grid-based spritesheets (default 0 = single row)
+	AnimationSpeed int                    `yaml:"animation_speed"` // Ticks per frame
+	Actions        []ObstacleActionConfig `yaml:"actions,omitempty"`
+	Image          interface{}            `yaml:"-"`
 }
 
 func (a *ObstacleArchetype) IsWell() bool {

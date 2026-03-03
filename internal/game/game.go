@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"image/color"
 	_ "image/jpeg"
 	_ "image/png"
 
@@ -729,6 +730,8 @@ func (g *Game) Update() error {
 		o.Update()
 	}
 
+	g.updateProximityEffects()
+
 	// Check Win Conditions
 	mapWon := false
 	switch g.currentMapType.Type {
@@ -1191,4 +1194,113 @@ func (g *Game) openFilePicker() string {
 		return strings.TrimSpace(string(out))
 	}
 	return ""
+}
+func (g *Game) updateProximityEffects() {
+	if g.isPaused || g.isGameOver || g.isMapWon {
+		return
+	}
+
+	for _, o := range g.obstacles {
+		if !o.Alive || o.Archetype == nil {
+			continue
+		}
+
+		// Process Entities: MainCharacter and NPCs
+		entities := make([]interface{}, 0, len(g.npcs)+1)
+		entities = append(entities, g.mainCharacter)
+		for _, n := range g.npcs {
+			if n.IsAlive() {
+				entities = append(entities, n)
+			}
+		}
+
+		for _, entity := range entities {
+			var ex, ey float64
+			var eFootprint engine.Polygon
+			var isMC bool
+
+			switch e := entity.(type) {
+			case *MainCharacter:
+				ex, ey = e.X, e.Y
+				eFootprint = e.GetFootprint()
+				isMC = true
+			case *NPC:
+				ex, ey = e.X, e.Y
+				eFootprint = e.GetFootprint()
+			default:
+				continue
+			}
+
+			for _, action := range o.Archetype.Actions {
+				inRange := false
+				if action.Aura > 0 {
+					dist := math.Sqrt(math.Pow(ex-o.X, 2) + math.Pow(ey-o.Y, 2))
+					if dist <= action.Aura {
+						inRange = true
+					}
+				} else {
+					if engine.CheckCollision(eFootprint, o.GetFootprint()) {
+						inRange = true
+					}
+				}
+
+				if !inRange {
+					continue
+				}
+
+				if action.Type == ActionHarm {
+					if o.EffectTimers[entity] <= 0 {
+						// Apply Damage
+						switch e := entity.(type) {
+						case *MainCharacter:
+							e.TakeDamage(action.Amount, g.audio)
+						case *NPC:
+							e.TakeDamage(action.Amount, nil, nil, g.audio)
+						}
+						o.EffectTimers[entity] = 60
+						g.floatingTexts = append(g.floatingTexts, &FloatingText{
+							Text:  fmt.Sprintf("%d", action.Amount),
+							X:     ex,
+							Y:     ey,
+							Life:  45,
+							Color: color.RGBA{255, 0, 0, 255},
+						})
+					}
+				} else if action.Type == ActionHeal && !action.RequiresInteraction {
+					allowed := true
+					if action.AlignmentLimit != "" && action.AlignmentLimit != "all" {
+						var alignment Alignment
+						if isMC {
+							alignment = AlignmentAlly
+						} else {
+							alignment = entity.(*NPC).Alignment
+						}
+						if action.AlignmentLimit == "enemy" && alignment != AlignmentEnemy {
+							allowed = false
+						}
+						if action.AlignmentLimit == "ally" && alignment != AlignmentAlly {
+							allowed = false
+						}
+					}
+
+					if allowed && o.EffectTimers[entity] <= 0 {
+						switch e := entity.(type) {
+						case *MainCharacter:
+							e.Heal(action.Amount)
+						case *NPC:
+							e.Heal(action.Amount)
+						}
+						o.EffectTimers[entity] = 60
+						g.floatingTexts = append(g.floatingTexts, &FloatingText{
+							Text:  fmt.Sprintf("+%d", action.Amount),
+							X:     ex,
+							Y:     ey,
+							Life:  45,
+							Color: color.RGBA{0, 255, 0, 255},
+						})
+					}
+				}
+			}
+		}
+	}
 }

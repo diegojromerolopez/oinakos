@@ -14,6 +14,16 @@ import (
 	"oinakos/internal/engine"
 )
 
+func (mc *MainCharacter) Heal(amount int) {
+	if mc.State == StateDead {
+		return
+	}
+	mc.Health += amount
+	if mc.Health > mc.MaxHealth {
+		mc.Health = mc.MaxHealth
+	}
+}
+
 type MainCharacterState int
 
 const (
@@ -237,20 +247,29 @@ func (mc *MainCharacter) Update(input engine.Input, audio AudioManager, obstacle
 		}
 
 		if input.IsKeyPressed(engine.KeySpace) {
-			// Check for well interaction first
+			// Check for interactive obstacles (like wells)
 			for _, o := range obstacles {
-				if o.Alive && o.Archetype != nil && o.Archetype.Type == "well" && o.CooldownTicks <= 0 {
-					dist := math.Sqrt(math.Pow(mc.X-o.X, 2) + math.Pow(mc.Y-o.Y, 2))
-					if dist < 1.5 {
-						// Drink from well
-						mc.Health = mc.MaxHealth
-						o.CooldownTicks = int(o.Archetype.CooldownTime * 60 * 60)
-						DebugLog("Player used Well at (%.2f, %.2f) | Health Restored to %d", o.X, o.Y, mc.Health)
+				if o.Alive && o.Archetype != nil && o.CooldownTicks <= 0 {
+					for _, action := range o.Archetype.Actions {
+						if action.Type == ActionHeal && action.RequiresInteraction {
+							dist := math.Sqrt(math.Pow(mc.X-o.X, 2) + math.Pow(mc.Y-o.Y, 2))
+							if dist < 1.5 {
+								// Use interactive healing
+								if action.Amount >= 999 {
+									mc.Health = mc.MaxHealth
+								} else {
+									mc.Heal(action.Amount)
+								}
+								// Use legacy cooldown_time logic (minutes to ticks)
+								o.CooldownTicks = int(o.Archetype.CooldownTime * 60 * 60)
+								DebugLog("Player used %s at (%.2f, %.2f) | Health: %d", o.Archetype.Name, o.X, o.Y, mc.Health)
 
-						// Change state to drinking
-						mc.State = StateDrinking
-						mc.Tick = 0
-						return
+								// Change state to drinking
+								mc.State = StateDrinking
+								mc.Tick = 0
+								return
+							}
+						}
 					}
 				}
 			}

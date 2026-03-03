@@ -166,6 +166,29 @@ To add a new "Halfling" unit in a "humanoid" category:
 
 3.  **Run the Game**: The halfling will now be available for use in the map editor or for spawning via new NPC definitions!
 
+### 🌍 Interactive Environments (Actions System)
+
+Obstacles can perform multiple effects through the `actions` system. This allows objects like a "Magic Campfire" to both heal allies and harm enemies simultaneously.
+
+All periodic effects pulse exactly every **1 second (60 ticks)**.
+
+- **Example: Damaging Aura (Campfire)**
+  ```yaml
+  actions:
+    - type: harm
+      amount: 2     # Damage amount
+      aura: 1.5    # Radius in world units. If 0, uses collision.
+  ```
+
+- **Example: Manual Interaction (Healing Well)**
+  ```yaml
+  actions:
+    - type: heal
+      amount: 10    # Restoration amount
+      requires_interaction: true # Require SPACE key
+      alignment_limit: "ally"    # "all", "ally", "enemy"
+  ```
+
 
 ## 📁 Technical Architecture
 -   **`internal/engine`**: Platform-agnostic core (Iso transforms, Camera, Collision, Graphics interfaces).

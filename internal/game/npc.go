@@ -222,6 +222,16 @@ func (n *NPC) GetFootprint() engine.Polygon {
 	return n.Archetype.GetFootprint().Transformed(n.X, n.Y)
 }
 
+func (n *NPC) Heal(amount int) {
+	if n.State == NPCDead {
+		return
+	}
+	n.Health += amount
+	if n.Health > n.MaxHealth {
+		n.Health = n.MaxHealth
+	}
+}
+
 func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPCs []*NPC, projectiles *[]*Projectile, fts *[]*FloatingText, mapW, mapH float64, audio AudioManager) {
 	n.Tick++
 
