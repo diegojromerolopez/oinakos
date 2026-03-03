@@ -75,17 +75,12 @@ jobs:
           go-version: 'stable'
           cache: true
 
-      - name: Build WASM
-        run: |
-          mkdir -p bin web-dist
-          GOOS=js GOARCH=wasm go build -o bin/oinakos.wasm main.go
-          cp "$(go env GOROOT)/lib/wasm/wasm_exec.js" bin/
-          cp bin/oinakos.wasm web-dist/
-          cp assets/wasm/index.html web-dist/
-          cp bin/wasm_exec.js web-dist/
+      - name: Build WASM distribution
+        run: make dist
 
       - name: Upload WASM artifact
         uses: actions/upload-artifact@v4
         with:
           name: oinakos-wasm
-          path: web-dist/
+          path: dist/
+          retention-days: 30

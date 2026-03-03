@@ -98,7 +98,7 @@ func (g *Game) performQuicksave() {
 	}
 
 	if err := os.MkdirAll("saves", 0755); err == nil {
-		savePath := fmt.Sprintf("saves/quicksave-%s.oinakos.yaml", time.Now().Format("2006-01-02T15:04:05"))
+		savePath := fmt.Sprintf("saves/quicksave-%s.oinakos.yaml", time.Now().Format("2006-01-02T150405"))
 		if err := g.Save(savePath); err == nil {
 			log.Printf("Game quicksaved: %s", savePath)
 			g.lastSavePath = savePath
