@@ -13,7 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"image/color"
 	_ "image/jpeg"
 	_ "image/png"
 
@@ -1259,11 +1258,11 @@ func (g *Game) updateProximityEffects() {
 						}
 						o.EffectTimers[entity] = 60
 						g.floatingTexts = append(g.floatingTexts, &FloatingText{
-							Text:  fmt.Sprintf("%d", action.Amount),
+							Text:  fmt.Sprintf("-%d", action.Amount),
 							X:     ex,
 							Y:     ey,
 							Life:  45,
-							Color: color.RGBA{255, 0, 0, 255},
+							Color: ColorHarm,
 						})
 					}
 				} else if action.Type == ActionHeal && !action.RequiresInteraction {
@@ -1296,7 +1295,7 @@ func (g *Game) updateProximityEffects() {
 							X:     ex,
 							Y:     ey,
 							Life:  45,
-							Color: color.RGBA{0, 255, 0, 255},
+							Color: ColorHeal,
 						})
 					}
 				}

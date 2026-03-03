@@ -71,10 +71,26 @@ func (gr *GameRenderer) LoadAssets(assets fs.FS) {
 		if _, err := fs.Stat(assets, attackPath); err == nil {
 			mc.Config.AttackImage = gr.graphics.LoadSprite(assets, attackPath, true)
 		}
+		attack1Path := path.Join(imgDir, "attack1.png")
+		if _, err := fs.Stat(assets, attack1Path); err == nil {
+			mc.Config.Attack1Image = gr.graphics.LoadSprite(assets, attack1Path, true)
+		}
+		attack2Path := path.Join(imgDir, "attack2.png")
+		if _, err := fs.Stat(assets, attack2Path); err == nil {
+			mc.Config.Attack2Image = gr.graphics.LoadSprite(assets, attack2Path, true)
+		}
 
 		hitPath := path.Join(imgDir, "hit.png")
 		if _, err := fs.Stat(assets, hitPath); err == nil {
 			mc.Config.HitImage = gr.graphics.LoadSprite(assets, hitPath, true)
+		}
+		hit1Path := path.Join(imgDir, "hit1.png")
+		if _, err := fs.Stat(assets, hit1Path); err == nil {
+			mc.Config.Hit1Image = gr.graphics.LoadSprite(assets, hit1Path, true)
+		}
+		hit2Path := path.Join(imgDir, "hit2.png")
+		if _, err := fs.Stat(assets, hit2Path); err == nil {
+			mc.Config.Hit2Image = gr.graphics.LoadSprite(assets, hit2Path, true)
 		}
 	}
 }

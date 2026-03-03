@@ -241,14 +241,16 @@ func fromEbitenKey(key ebiten.Key) Key {
 
 // EbitenGraphics implements engine.Graphics using Ebiten's utility functions.
 type EbitenGraphics struct {
-	whiteImage *ebiten.Image
+	whiteImage  *ebiten.Image
+	debugTxtImg *ebiten.Image // Reusable buffer for colored debug print
 }
 
 func NewEbitenGraphics() *EbitenGraphics {
 	whiteImg := ebiten.NewImage(3, 3)
 	whiteImg.Fill(color.White)
 	return &EbitenGraphics{
-		whiteImage: whiteImg,
+		whiteImage:  whiteImg,
+		debugTxtImg: ebiten.NewImage(256, 32), // Large enough for most floating texts
 	}
 }
 
@@ -265,9 +267,36 @@ func (e *EbitenGraphics) NewImageFromImage(img image.Image) Image {
 
 func (e *EbitenGraphics) DebugPrintAt(screen Image, str string, x, y int, clr color.Color) {
 	wrapper, ok := screen.(*EbitenImageWrapper)
-	if ok && wrapper != nil && wrapper.img != nil {
-		ebitenutil.DebugPrintAt(wrapper.img, str, x, y)
+	if !ok || wrapper == nil || wrapper.img == nil {
+		return
 	}
+
+	// If no special color (defaults to white in many contexts) or pure white, use optimized call
+	r, g, b, a := clr.RGBA()
+	if r == 0xffff && g == 0xffff && b == 0xffff && a == 0xffff {
+		ebitenutil.DebugPrintAt(wrapper.img, str, x, y)
+		return
+	}
+
+	// For colored text, we draw to a reusable buffer and tint it.
+	// We ensure the buffer is wide enough for the string.
+	neededW := len(str) * 6
+	if neededW > e.debugTxtImg.Bounds().Dx() {
+		// Rare case: string too long for buffer, use direct (will be white)
+		ebitenutil.DebugPrintAt(wrapper.img, str, x, y)
+		return
+	}
+
+	e.debugTxtImg.Clear()
+	ebitenutil.DebugPrint(e.debugTxtImg, str)
+
+	var op ebiten.DrawImageOptions
+	op.GeoM.Translate(float64(x), float64(y))
+	op.ColorScale.ScaleWithColor(clr)
+
+	// Draw only the part of the buffer we used
+	sub := e.debugTxtImg.SubImage(image.Rect(0, 0, neededW, 16)).(*ebiten.Image)
+	wrapper.img.DrawImage(sub, &op)
 }
 
 func (e *EbitenGraphics) LoadSprite(assets fs.FS, path string, removeBg bool) Image {

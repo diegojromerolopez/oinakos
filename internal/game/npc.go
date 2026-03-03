@@ -283,18 +283,24 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 			targetX, targetY = nearestEnemy.X, nearestEnemy.Y
 			hasTarget = true
 		} else {
+			// No enemies nearby
+			n.TargetNPC = nil
 			// No enemies, follow player
 			distToPlayer := math.Sqrt(math.Pow(n.X-mainCharacter.X, 2) + math.Pow(n.Y-mainCharacter.Y, 2))
 			if distToPlayer > 3.0 {
+				n.TargetPlayer = mainCharacter
 				targetX, targetY = mainCharacter.X, mainCharacter.Y
 				hasTarget = true
+				isTargetPlayer = true
 			} else {
 				n.State = NPCIdle
 				return
 			}
 		}
 	} else if n.Alignment == AlignmentNeutral {
-		// Strictly wander, ignore player and NPCs unless we add retaliation logic later
+		// Strictly wander, ignore player and NPCs
+		n.TargetPlayer = nil
+		n.TargetNPC = nil
 		if n.Tick%120 == 0 {
 			n.WanderDirX = rand.Float64()*2 - 1
 			n.WanderDirY = rand.Float64()*2 - 1
@@ -333,6 +339,10 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 				var minDist = 999.0
 				for _, other := range allNPCs {
 					if other == n || !other.IsAlive() {
+						continue
+					}
+					// Only fight NPCs of different alignment
+					if n.Alignment == other.Alignment {
 						continue
 					}
 					dist := math.Sqrt(math.Pow(n.X-other.X, 2) + math.Pow(n.Y-other.Y, 2))
@@ -444,17 +454,34 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 			return
 		}
 
-		if n.State != NPCAttacking && isTargetPlayer {
-			// Chance to say a menace line when starting to attack the mainCharacter
-			if rand.Float64() < 0.3 {
-				msgNum := rand.Intn(5) + 1
-				if audio != nil && n.Archetype != nil {
-					audio.PlaySound(fmt.Sprintf("%s/menace_%d", n.Archetype.ID, msgNum))
-				}
+		// Check alignment before attacking
+		canAttack := false
+		if isTargetPlayer {
+			if n.Alignment != AlignmentAlly {
+				canAttack = true
+			}
+		} else if n.TargetNPC != nil {
+			if n.Alignment != n.TargetNPC.Alignment {
+				canAttack = true
 			}
 		}
 
-		n.State = NPCAttacking
+		if canAttack {
+			if n.State != NPCAttacking && isTargetPlayer {
+				// Chance to say a menace line when starting to attack the mainCharacter
+				if rand.Float64() < 0.3 {
+					msgNum := rand.Intn(5) + 1
+					if audio != nil && n.Archetype != nil {
+						audio.PlaySound(fmt.Sprintf("%s/menace_%d", n.Archetype.ID, msgNum))
+					}
+				}
+			}
+			n.State = NPCAttacking
+		} else {
+			// If it's an ally near the target (like follow player), just stay idle or walk
+			n.State = NPCIdle
+			return
+		}
 		if n.AttackTimer >= n.AttackCooldown {
 			n.AttackTimer = 0
 
@@ -509,11 +536,11 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 						mainCharacter.TakeDamage(finalDmg, audio)
 
 						*fts = append(*fts, &FloatingText{
-							Text:  fmt.Sprintf("%d", finalDmg),
+							Text:  fmt.Sprintf("-%d", finalDmg),
 							X:     mainCharacter.X,
 							Y:     mainCharacter.Y,
 							Life:  45,
-							Color: color.RGBA{255, 100, 100, 255},
+							Color: ColorHarm,
 						})
 					} else {
 						// MISS
@@ -523,7 +550,7 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 							X:     mainCharacter.X,
 							Y:     mainCharacter.Y,
 							Life:  45,
-							Color: color.RGBA{200, 200, 200, 255},
+							Color: ColorMiss,
 						})
 					}
 				} else {
@@ -555,11 +582,11 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 						n.TargetNPC.TakeDamage(finalDmg, nil, n, audio)
 
 						*fts = append(*fts, &FloatingText{
-							Text:  fmt.Sprintf("%d", finalDmg),
+							Text:  fmt.Sprintf("-%d", finalDmg),
 							X:     n.TargetNPC.X,
 							Y:     n.TargetNPC.Y,
 							Life:  45,
-							Color: color.RGBA{255, 100, 100, 255},
+							Color: ColorHarm,
 						})
 					} else {
 						// MISS
@@ -569,7 +596,7 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 							X:     n.TargetNPC.X,
 							Y:     n.TargetNPC.Y,
 							Life:  45,
-							Color: color.RGBA{150, 150, 150, 255},
+							Color: ColorMiss,
 						})
 					}
 				}

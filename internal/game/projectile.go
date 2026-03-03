@@ -2,7 +2,6 @@ package game
 
 import (
 	"fmt"
-	"image/color"
 	"math"
 
 	_ "image/png"
@@ -80,11 +79,11 @@ func (p *Projectile) Update(mc *MainCharacter, obstacles []*Obstacle, fts *[]*Fl
 			mc.TakeDamage(finalDmg, nil)
 
 			*fts = append(*fts, &FloatingText{
-				Text:  fmt.Sprintf("%d", finalDmg),
+				Text:  fmt.Sprintf("-%d", finalDmg),
 				X:     mc.X,
 				Y:     mc.Y,
 				Life:  45,
-				Color: color.RGBA{255, 0, 0, 255},
+				Color: ColorHarm,
 			})
 			p.Alive = false
 		}

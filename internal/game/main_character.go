@@ -3,7 +3,6 @@ package game
 import (
 	"fmt"
 	"image"
-	"image/color"
 	_ "image/jpeg"
 	_ "image/png"
 	"io/fs"
@@ -264,6 +263,21 @@ func (mc *MainCharacter) Update(input engine.Input, audio AudioManager, obstacle
 								o.CooldownTicks = int(o.Archetype.CooldownTime * 60 * 60)
 								DebugLog("Player used %s at (%.2f, %.2f) | Health: %d", o.Archetype.Name, o.X, o.Y, mc.Health)
 
+								// Add healing text
+								healVal := action.Amount
+								if healVal > 1000 {
+									healVal = mc.MaxHealth // Just a representative number for the text if it was a "Full Heal"
+								}
+								if fts != nil {
+									*fts = append(*fts, &FloatingText{
+										Text:  fmt.Sprintf("+%d", healVal),
+										X:     mc.X,
+										Y:     mc.Y,
+										Life:  45,
+										Color: ColorHeal,
+									})
+								}
+
 								// Change state to drinking
 								mc.State = StateDrinking
 								mc.Tick = 0
@@ -412,11 +426,11 @@ func (mc *MainCharacter) CheckAttackHits(npcs []*NPC, obstacles []*Obstacle, fts
 				n.TakeDamage(finalDmg, mc, nil, audio)
 
 				*fts = append(*fts, &FloatingText{
-					Text:  fmt.Sprintf("%d", finalDmg),
+					Text:  fmt.Sprintf("-%d", finalDmg),
 					X:     n.X,
 					Y:     n.Y,
 					Life:  45,
-					Color: color.RGBA{255, 0, 0, 255},
+					Color: ColorHarm,
 				})
 			} else {
 				// MISS
@@ -426,7 +440,30 @@ func (mc *MainCharacter) CheckAttackHits(npcs []*NPC, obstacles []*Obstacle, fts
 					X:     n.X,
 					Y:     n.Y,
 					Life:  45,
-					Color: color.RGBA{200, 200, 200, 255},
+					Color: ColorMiss,
+				})
+			}
+		}
+	}
+
+	// OBSTACLE Damage
+	for _, o := range obstacles {
+		if !o.Alive {
+			continue
+		}
+		// Circle check for obstacles
+		dist := math.Sqrt(math.Pow(atX-o.X, 2) + math.Pow(atY-o.Y, 2))
+		if dist < 1.8 { // Slightly larger radius for obstacles (easier to hit)
+			if o.Archetype != nil && o.Archetype.Destructible {
+				rawDmg := mc.Weapon.RollDamage()
+				o.TakeDamage(rawDmg)
+
+				*fts = append(*fts, &FloatingText{
+					Text:  fmt.Sprintf("-%d", rawDmg),
+					X:     o.X,
+					Y:     o.Y,
+					Life:  45,
+					Color: ColorHarm,
 				})
 			}
 		}

@@ -18,7 +18,7 @@ func (ft *FloatingText) Draw(screen engine.Image, textRenderer engine.TextRender
 		alpha = uint8(float64(ft.Life) / 20.0 * 255.0)
 	}
 
-	c := ft.Color.(color.RGBA)
+	c := color.RGBAModel.Convert(ft.Color).(color.RGBA)
 	c.A = alpha
 
 	if textRenderer != nil {

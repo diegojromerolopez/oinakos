@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
-	"math/rand"
 	"oinakos/internal/engine"
 	"os"
 	"path"
@@ -371,10 +370,10 @@ type EntityConfig struct {
 
 // PickAttackImage returns the sprite to display when this entity attacks.
 // It follows the same logic as PickHitImage.
-func (e *EntityConfig) PickAttackImage() engine.Image {
+func (e *EntityConfig) PickAttackImage(seed int) engine.Image {
 	if a1, ok := e.Attack1Image.(engine.Image); ok {
 		if a2, ok2 := e.Attack2Image.(engine.Image); ok2 {
-			if rand.Intn(2) == 0 {
+			if seed%2 == 0 {
 				return a1
 			}
 			return a2
@@ -391,10 +390,10 @@ func (e *EntityConfig) PickAttackImage() engine.Image {
 //   - If hit1.png and hit2.png both exist → randomly pick one.
 //   - Else if hit.png exists              → use hit.png.
 //   - Else                                → nil (caller uses static image).
-func (e *EntityConfig) PickHitImage() engine.Image {
+func (e *EntityConfig) PickHitImage(seed int) engine.Image {
 	if h1, ok := e.Hit1Image.(engine.Image); ok {
 		if h2, ok2 := e.Hit2Image.(engine.Image); ok2 {
-			if rand.Intn(2) == 0 {
+			if seed%2 == 0 {
 				return h1
 			}
 			return h2
@@ -534,8 +533,30 @@ func (r *NPCRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *
 					config.Behavior = arch.Behavior
 				}
 				if config.Stats.HealthMin == 0 {
-					config.Stats = arch.Stats
+					config.Stats.HealthMin = arch.Stats.HealthMin
 				}
+				if config.Stats.HealthMax == 0 {
+					config.Stats.HealthMax = arch.Stats.HealthMax
+				}
+				if config.Stats.Speed == 0 {
+					config.Stats.Speed = arch.Stats.Speed
+				}
+				if config.Stats.BaseAttack == 0 {
+					config.Stats.BaseAttack = arch.Stats.BaseAttack
+				}
+				if config.Stats.BaseDefense == 0 {
+					config.Stats.BaseDefense = arch.Stats.BaseDefense
+				}
+				if config.Stats.AttackCooldown == 0 {
+					config.Stats.AttackCooldown = arch.Stats.AttackCooldown
+				}
+				if config.Stats.AttackRange == 0 {
+					config.Stats.AttackRange = arch.Stats.AttackRange
+				}
+				if config.Stats.ProjectileSpeed == 0 {
+					config.Stats.ProjectileSpeed = arch.Stats.ProjectileSpeed
+				}
+
 				if len(config.Footprint) == 0 {
 					config.Footprint = arch.Footprint
 				}
@@ -614,6 +635,9 @@ func (r *NPCRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *
 		if _, err := fs.Stat(assets, hit2Path); err == nil {
 			config.Hit2Image = graphics.LoadSprite(assets, hit2Path, true)
 		}
+
+		// Final sanitize after merge and asset loading
+		sanitizeEntityConfig(config, config.ID)
 	}
 }
 
@@ -629,7 +653,8 @@ func (r *NPCRegistry) LoadAll(assets fs.FS) error {
 			return nil
 		}
 
-		sanitizeEntityConfig(&config, fpath)
+		// We defer sanitization until LoadAssets, where we merge with Archetypes.
+		// sanitizeEntityConfig(&config, fpath)
 
 		// Set AssetDir for unique NPC sprites:
 		// assets/images/npcs/<id>/

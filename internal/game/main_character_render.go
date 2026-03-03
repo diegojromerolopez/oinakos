@@ -22,11 +22,13 @@ func (mc *MainCharacter) Draw(screen engine.Image, textRenderer engine.TextRende
 				drawSprite = img
 			}
 		} else if mc.HitTimer > 0 {
-			if img := mc.Config.PickHitImage(); img != nil {
+			// Hit frame is 15 ticks
+			if img := mc.Config.PickHitImage(mc.Tick / 15); img != nil {
 				drawSprite = img
 			}
 		} else if mc.State == StateAttacking {
-			if img := mc.Config.PickAttackImage(); img != nil {
+			// Attack animation is 30 ticks
+			if img := mc.Config.PickAttackImage(mc.Tick / 30); img != nil {
 				drawSprite = img
 			}
 		}

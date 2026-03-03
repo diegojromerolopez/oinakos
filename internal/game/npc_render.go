@@ -28,11 +28,17 @@ func (n *NPC) Draw(screen engine.Image, textRenderer engine.TextRenderer, vector
 			drawSprite = nil // Complete removal (invisibility) if no corpse
 		}
 	} else if n.BloodTimer > 0 {
-		if img := n.Archetype.PickHitImage(); img != nil {
+		// Use a stable seed for the duration of the hit (15 ticks)
+		if img := n.Archetype.PickHitImage(n.Tick / 15); img != nil {
 			drawSprite = img
 		}
 	} else if n.State == NPCAttacking {
-		if img := n.Archetype.PickAttackImage(); img != nil {
+		// Use a stable seed for the duration of the attack cycle
+		cooldown := n.AttackCooldown
+		if cooldown <= 0 {
+			cooldown = 1
+		}
+		if img := n.Archetype.PickAttackImage(n.Tick / cooldown); img != nil {
 			drawSprite = img
 		}
 	}

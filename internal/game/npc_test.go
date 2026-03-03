@@ -162,6 +162,7 @@ func TestNPCUpdate_Behaviors(t *testing.T) {
 	n.Behavior = BehaviorNpcFighter
 	n.TargetPlayer = nil
 	targetNPC := NewNPC(5, 5, nil, 1)
+	targetNPC.Alignment = AlignmentAlly
 	deadNPC := NewNPC(2, 2, nil, 1)
 	deadNPC.State = NPCDead
 	allNPCs = []*NPC{n, deadNPC, targetNPC}
@@ -243,6 +244,7 @@ func TestNPC_MeleeAttack(t *testing.T) {
 	// Test NPC vs NPC attack
 	n.TargetPlayer = nil
 	targetNPC := NewNPC(0.5, 0, nil, 1)
+	targetNPC.Alignment = AlignmentAlly
 	n.TargetNPC = targetNPC
 	n.AttackTimer = 60
 	startNpcHealth := targetNPC.Health

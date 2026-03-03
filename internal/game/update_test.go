@@ -162,7 +162,8 @@ func TestNPCUpdate_Detailed(t *testing.T) {
 
 	// Test fighter behavior with other NPCs
 	otherNpc := NewNPC(5, 5, nil, 1)
-	npcs := []*NPC{otherNpc, n} // allNPCs includes self
+	otherNpc.Alignment = AlignmentAlly // Different alignment from n (Enemy)
+	npcs := []*NPC{otherNpc, n}        // allNPCs includes self
 	n.Behavior = BehaviorNpcFighter
 	n.X = 0
 	n.Y = 0

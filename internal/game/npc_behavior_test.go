@@ -36,7 +36,7 @@ func TestNPCBehavior_Fighter_TargetsNearestNPC(t *testing.T) {
 	fighter.Alignment = AlignmentEnemy
 
 	target := NewNPC(2, 0, &Archetype{ID: "target"}, 1)
-	target.Alignment = AlignmentEnemy
+	target.Alignment = AlignmentAlly
 
 	audio := NewMockAudioManager()
 	var projs []*Projectile
