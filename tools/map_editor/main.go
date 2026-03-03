@@ -21,9 +21,9 @@ import (
 // ─── Constants & UI Settings ──────────────────────────────────────────────────
 
 const (
-	screenWidth  = 1280
-	screenHeight = 720
-	sidebarWidth = 220
+	screenWidth  = 1600
+	screenHeight = 900
+	sidebarWidth = 240
 	slotHeight   = 80
 	thumbSize    = 60
 )
@@ -32,7 +32,7 @@ var (
 	colorBG      = color.RGBA{15, 15, 15, 255}
 	colorSide    = color.RGBA{35, 35, 35, 255}
 	colorText    = color.White
-	colorSelect  = color.RGBA{0, 255, 0, 255}
+	colorSelect  = color.RGBA{0, 255, 0, 255} // allied green
 	colorOutline = color.RGBA{50, 50, 50, 255}
 	colorModal   = color.RGBA{25, 25, 25, 240}
 )
@@ -62,6 +62,7 @@ type MapEditor struct {
 
 	// Assets
 	Graphics    engine.Graphics
+	Renderer    *engine.Renderer
 	Library     []*EditorItem
 	Floors      []string
 	FloorImages map[string]engine.Image
@@ -87,6 +88,7 @@ type MapEditor struct {
 func NewMapEditor(g engine.Graphics) *MapEditor {
 	me := &MapEditor{
 		Graphics:    g,
+		Renderer:    engine.NewRenderer(),
 		Mode:        "DIALOG",
 		InWidth:     "640",
 		InHeight:    "640",
@@ -156,7 +158,7 @@ func (m *MapEditor) loadFloors() {
 			name := f.Name()
 			m.Floors = append(m.Floors, name)
 			// Preload floor sprites
-			tex := m.Graphics.LoadSprite(assets, filepath.Join("assets/images/floors", name), false)
+			tex := m.Graphics.LoadSprite(assets, filepath.Join("assets/images/floors", name), true)
 			m.FloorImages[name] = tex
 		}
 	}
@@ -180,23 +182,18 @@ func (m *MapEditor) Update() error {
 }
 
 func (m *MapEditor) updateDialog() error {
-	for {
-		chars := ebiten.AppendInputChars(nil)
-		if len(chars) > 0 {
-			switch m.ActiveField {
-			case 0:
-				m.InName += string(chars)
-			case 1:
-				if strings.Contains("0123456789", string(chars)) {
-					m.InWidth += string(chars)
-				}
-			case 2:
-				if strings.Contains("0123456789", string(chars)) {
-					m.InHeight += string(chars)
-				}
+	for _, ch := range ebiten.AppendInputChars(nil) {
+		switch m.ActiveField {
+		case 0:
+			m.InName += string(ch)
+		case 1:
+			if ch >= '0' && ch <= '9' {
+				m.InWidth += string(ch)
 			}
-		} else {
-			break
+		case 2:
+			if ch >= '0' && ch <= '9' {
+				m.InHeight += string(ch)
+			}
 		}
 	}
 
@@ -236,7 +233,9 @@ func (m *MapEditor) initializeMap() {
 	if m.InName == "" {
 		return
 	}
-	m.Filename = filepath.Join("data/maps", m.InName+".yaml")
+	const mapsDir = "maps"
+	os.MkdirAll(mapsDir, 0755)
+	m.Filename = filepath.Join(mapsDir, m.InName+".yaml")
 
 	width := 0
 	height := 0
@@ -284,6 +283,13 @@ func (m *MapEditor) updateEditor() error {
 	if mx < sidebarWidth {
 		_, wy := ebiten.Wheel()
 		m.ScrollL += int(wy * 30)
+		// Clamp: top = 0, bottom = last item at top of list
+		if m.ScrollL > 0 {
+			m.ScrollL = 0
+		}
+		if minL := -(len(m.Library) - 1) * slotHeight; m.ScrollL < minL {
+			m.ScrollL = minL
+		}
 		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 			idx := (my - m.ScrollL) / slotHeight
 			if idx >= 0 && idx < len(m.Library) {
@@ -296,6 +302,13 @@ func (m *MapEditor) updateEditor() error {
 	if mx > screenWidth-sidebarWidth {
 		_, wy := ebiten.Wheel()
 		m.ScrollR += int(wy * 30)
+		// Clamp: top = 0, bottom = last item at top of list
+		if m.ScrollR > 0 {
+			m.ScrollR = 0
+		}
+		if minR := -(len(m.Floors) - 1) * slotHeight; m.ScrollR < minR {
+			m.ScrollR = minR
+		}
 		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 			idx := (my - m.ScrollR) / slotHeight
 			if idx >= 0 && idx < len(m.Floors) {
@@ -554,24 +567,29 @@ func (m *MapEditor) drawField(eImg engine.Image, label, val string, x, y float32
 	m.Graphics.DebugPrintAt(eImg, val, int(x)+125, int(y), colorText)
 }
 
+// drawOutlineRect draws a 1-pixel wide rectangle outline (no fill) using four DrawLine calls.
+func (m *MapEditor) drawOutlineRect(eImg engine.Image, x, y, w, h float32) {
+	pts := []engine.Point{
+		{X: float64(x), Y: float64(y)},
+		{X: float64(x + w), Y: float64(y)},
+		{X: float64(x + w), Y: float64(y + h)},
+		{X: float64(x), Y: float64(y + h)},
+	}
+	m.Graphics.DrawPolygon(eImg, pts, colorSelect, 1.0)
+}
+
 func (m *MapEditor) drawEditor(screen *ebiten.Image) {
 	screen.Fill(colorBG)
 	eImg := engine.NewEbitenImageWrapper(screen)
 
-	// 1. Draw Map Viewport
+	// 1. Draw Map Viewport — tile the floor exactly as the game does.
 	offsetX := sidebarWidth + float64(screenWidth-2*sidebarWidth)/2 - m.CamX
 	offsetY := float64(screenHeight)/2 - m.CamY
 
-	// Draw Floor Tile if selected
 	if m.FloorIdx < len(m.Floors) {
 		floorImg := m.FloorImages[m.Floors[m.FloorIdx]]
 		if floorImg != nil {
-			// Center it roughly
-			op := engine.NewDrawImageOptions()
-			sw, sh := floorImg.Size()
-			op.GeoM.Translate(-float64(sw)/2, -float64(sh)/2)
-			op.GeoM.Translate(offsetX, offsetY)
-			eImg.DrawImage(floorImg, op)
+			m.Renderer.DrawInfiniteGrass(eImg, offsetX, offsetY, floorImg)
 		}
 	}
 
@@ -592,7 +610,7 @@ func (m *MapEditor) drawEditor(screen *ebiten.Image) {
 			obs.Draw(eImg, m.Graphics, offsetX, offsetY)
 			if m.Selection != nil && m.Selection.ID == fmt.Sprintf("obs_%d", i) {
 				ix, iy := engine.CartesianToIso(*obsData.X, *obsData.Y)
-				m.Graphics.DrawFilledRect(eImg, float32(ix+offsetX-20), float32(iy+offsetY-20), 40, 40, colorSelect, true)
+				m.drawOutlineRect(eImg, float32(ix+offsetX-20), float32(iy+offsetY-20), 40, 40)
 			}
 		}
 	}
@@ -611,7 +629,7 @@ func (m *MapEditor) drawEditor(screen *ebiten.Image) {
 			npc.Draw(eImg, m.Graphics, m.Graphics, nil, offsetX, offsetY)
 			if m.Selection != nil && m.Selection.ID == fmt.Sprintf("npc_%d", i) {
 				ix, iy := engine.CartesianToIso(npcData.X, npcData.Y)
-				m.Graphics.DrawFilledRect(eImg, float32(ix+offsetX-20), float32(iy+offsetY-20), 40, 40, colorSelect, true)
+				m.drawOutlineRect(eImg, float32(ix+offsetX-20), float32(iy+offsetY-20), 40, 40)
 			}
 		}
 	}
@@ -633,7 +651,7 @@ func (m *MapEditor) drawEditor(screen *ebiten.Image) {
 		}
 		m.Graphics.DebugPrintAt(eImg, item.ID, 80, y+30, colorText)
 		if m.PendingItem == item {
-			m.Graphics.DrawFilledRect(eImg, 2, float32(y+2), sidebarWidth-4, slotHeight-4, colorSelect, true)
+			m.drawOutlineRect(eImg, 2, float32(y+2), sidebarWidth-4, slotHeight-4)
 		}
 	}
 
@@ -649,7 +667,8 @@ func (m *MapEditor) drawEditor(screen *ebiten.Image) {
 		}
 		m.Graphics.DebugPrintAt(eImg, f, screenWidth-sidebarWidth+80, y+30, colorText)
 		if m.FloorIdx == i {
-			m.Graphics.DrawFilledRect(eImg, float32(screenWidth-sidebarWidth+2), float32(y+2), sidebarWidth-4, slotHeight-4, colorSelect, true)
+			// Highlight active floor with a dimmed fill, not the entity-selection green
+			m.Graphics.DrawFilledRect(eImg, float32(screenWidth-sidebarWidth+2), float32(y+2), sidebarWidth-4, slotHeight-4, color.RGBA{60, 80, 60, 120}, false)
 		}
 	}
 

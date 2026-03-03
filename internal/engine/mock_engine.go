@@ -99,5 +99,8 @@ func (m *MockGraphics) LoadSprite(assets fs.FS, path string, removeBg bool) Imag
 	return &MockImage{W: 160, H: 160}
 }
 
+func (m *MockGraphics) DrawLine(screen Image, x1, y1, x2, y2 float32, clr color.Color, width float32) {
+}
+
 func (m *MockGraphics) DrawPolygon(screen Image, points []Point, clr color.Color, width float32) {
 }
