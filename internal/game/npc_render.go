@@ -97,7 +97,23 @@ func (n *NPC) Draw(screen engine.Image, textRenderer engine.TextRenderer, vector
 
 	op.Translate(tx, ty)
 
-	// Palette Swapping
+	// Draw Alignment Ellipse under feet
+	if n.IsAlive() && vectorRenderer != nil {
+		var clr color.Color
+		switch n.Alignment {
+		case AlignmentAlly:
+			clr = ColorAlly
+		case AlignmentEnemy:
+			clr = ColorEnemy
+		case AlignmentNeutral:
+			clr = ColorNeutral
+		default:
+			clr = color.RGBA{150, 150, 150, 150}
+		}
+		// Vertical radius is half of horizontal to match isometric perspective
+		vectorRenderer.DrawEllipse(screen, float32(isoX+offsetX), float32(isoY+offsetY), 30, 15, clr, 1, true)
+	}
+
 	hasPalette := n.Archetype.PrimaryColor != "" || n.Archetype.SecondaryColor != ""
 	if hasPalette && paletteShader != nil {
 		uniforms := make(map[string]interface{})

@@ -215,7 +215,7 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 	tasks = append(tasks, drawTask{
 		y: mcSortY,
 		draw: func() {
-			g.mainCharacter.Draw(screen, gr.graphics, offsetX, offsetY)
+			g.mainCharacter.Draw(screen, gr.graphics, gr.graphics, offsetX, offsetY)
 		},
 	})
 

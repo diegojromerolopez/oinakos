@@ -6,7 +6,7 @@ import (
 	"oinakos/internal/engine"
 )
 
-func (mc *MainCharacter) Draw(screen engine.Image, textRenderer engine.TextRenderer, offsetX, offsetY float64) {
+func (mc *MainCharacter) Draw(screen engine.Image, textRenderer engine.TextRenderer, vectorRenderer engine.VectorRenderer, offsetX, offsetY float64) {
 	if screen == nil {
 		return
 	}
@@ -80,6 +80,10 @@ func (mc *MainCharacter) Draw(screen engine.Image, textRenderer engine.TextRende
 		} else {
 			tx -= lungeAmt // Lunge left
 		}
+	}
+	// Draw Alignment Ellipse under feet (Player is always Ally green)
+	if mc.State != StateDead && vectorRenderer != nil {
+		vectorRenderer.DrawEllipse(screen, float32(isoX+offsetX), float32(isoY+offsetY), 30, 15, ColorMainCharacter, 1, true)
 	}
 
 	op.Translate(tx, ty)

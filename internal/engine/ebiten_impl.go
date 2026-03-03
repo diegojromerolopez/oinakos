@@ -5,6 +5,7 @@ import (
 	"image/color"
 	"io/fs"
 	"log"
+	"math"
 	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -242,14 +243,21 @@ func fromEbitenKey(key ebiten.Key) Key {
 // EbitenGraphics implements engine.Graphics using Ebiten's utility functions.
 type EbitenGraphics struct {
 	whiteImage  *ebiten.Image
+	circleImage *ebiten.Image // Pre-rendered white circle for efficient ellipses
 	debugTxtImg *ebiten.Image // Reusable buffer for colored debug print
 }
 
 func NewEbitenGraphics() *EbitenGraphics {
 	whiteImg := ebiten.NewImage(3, 3)
 	whiteImg.Fill(color.White)
+
+	// Pre-render a high-res white circle (128x128)
+	circleImg := ebiten.NewImage(128, 128)
+	vector.DrawFilledCircle(circleImg, 64, 64, 64, color.White, true)
+
 	return &EbitenGraphics{
 		whiteImage:  whiteImg,
+		circleImage: circleImg,
 		debugTxtImg: ebiten.NewImage(256, 32), // Large enough for most floating texts
 	}
 }
@@ -322,6 +330,40 @@ func (e *EbitenGraphics) DrawFilledCircle(screen Image, x, y, radius float32, cl
 	wrapper, ok := screen.(*EbitenImageWrapper)
 	if ok && wrapper != nil && wrapper.img != nil {
 		vector.DrawFilledCircle(wrapper.img, x, y, radius, clr, antiAlias)
+	}
+}
+
+func (e *EbitenGraphics) DrawFilledEllipse(screen Image, x, y, rx, ry float32, clr color.Color, antiAlias bool) {
+	wrapper, ok := screen.(*EbitenImageWrapper)
+	if !ok || wrapper == nil || wrapper.img == nil || e.circleImage == nil {
+		return
+	}
+
+	var op ebiten.DrawImageOptions
+	// Our circleImage is 128x128 with center at 64,64 and radius 64
+	op.GeoM.Scale(float64(rx)/64.0, float64(ry)/64.0)
+	op.GeoM.Translate(float64(x), float64(y))
+	op.ColorScale.ScaleWithColor(clr)
+	wrapper.img.DrawImage(e.circleImage, &op)
+}
+
+func (e *EbitenGraphics) DrawEllipse(screen Image, x, y, rx, ry float32, clr color.Color, width float32, antiAlias bool) {
+	wrapper, ok := screen.(*EbitenImageWrapper)
+	if !ok || wrapper == nil || wrapper.img == nil {
+		return
+	}
+
+	const segments = 32
+	for i := 0; i < segments; i++ {
+		a1 := float64(i) * 2 * math.Pi / segments
+		a2 := float64(i+1) * 2 * math.Pi / segments
+
+		x1 := x + float32(math.Cos(a1))*rx
+		y1 := y + float32(math.Sin(a1))*ry
+		x2 := x + float32(math.Cos(a2))*rx
+		y2 := y + float32(math.Sin(a2))*ry
+
+		vector.StrokeLine(wrapper.img, x1, y1, x2, y2, width, clr, antiAlias)
 	}
 }
 

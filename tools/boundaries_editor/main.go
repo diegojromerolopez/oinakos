@@ -463,7 +463,7 @@ func main() {
 			Footprint: &mcConfig.Footprint,
 			YamlPath:  "data/characters/main/character.yaml",
 			DrawMain: func(screen engine.Image, g engine.Graphics, offsetX, offsetY float64) {
-				mc.Draw(screen, g, offsetX, offsetY)
+				mc.Draw(screen, g, g, offsetX, offsetY)
 			},
 		})
 	}

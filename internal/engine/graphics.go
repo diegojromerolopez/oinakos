@@ -24,6 +24,8 @@ type Shader interface{}
 type VectorRenderer interface {
 	DrawFilledRect(screen Image, x, y, width, height float32, clr color.Color, antiAlias bool)
 	DrawFilledCircle(screen Image, x, y, radius float32, clr color.Color, antiAlias bool)
+	DrawFilledEllipse(screen Image, x, y, rx, ry float32, clr color.Color, antiAlias bool)
+	DrawEllipse(screen Image, x, y, rx, ry float32, clr color.Color, width float32, antiAlias bool)
 	DrawLine(screen Image, x1, y1, x2, y2 float32, clr color.Color, width float32)
 	DrawPolygon(screen Image, points []Point, clr color.Color, width float32)
 }

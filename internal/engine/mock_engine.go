@@ -85,6 +85,10 @@ func (m *MockGraphics) DrawFilledRect(screen Image, x, y, width, height float32,
 }
 func (m *MockGraphics) DrawFilledCircle(screen Image, x, y, radius float32, clr color.Color, antiAlias bool) {
 }
+func (m *MockGraphics) DrawFilledEllipse(screen Image, x, y, rx, ry float32, clr color.Color, antiAlias bool) {
+}
+func (m *MockGraphics) DrawEllipse(screen Image, x, y, rx, ry float32, clr color.Color, width float32, antiAlias bool) {
+}
 func (m *MockGraphics) DrawTriangles(screen Image, vertices []Vertex, indices []uint16, src Image, options *DrawTrianglesOptions) {
 }
 
