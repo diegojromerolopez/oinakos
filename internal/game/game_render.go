@@ -25,6 +25,9 @@ type GameRenderer struct {
 	emptyImage    engine.Image
 	lastFloorPath string
 	PaletteShader engine.Shader
+
+	tileCache  map[string]engine.Image
+	coordCache map[string]string
 }
 
 func NewGameRenderer(g *Game, assets fs.FS, graphics engine.Graphics) *GameRenderer {
@@ -39,6 +42,8 @@ func NewGameRenderer(g *Game, assets fs.FS, graphics engine.Graphics) *GameRende
 	}
 	gr.emptyImage = graphics.NewImage(3, 3)
 	gr.emptyImage.Fill(color.White)
+	gr.tileCache = make(map[string]engine.Image)
+	gr.coordCache = make(map[string]string)
 	return gr
 }
 
@@ -115,17 +120,14 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 	}
 
 	if g.currentMapType.FloorTile != "" && g.currentMapType.FloorTile != gr.lastFloorPath {
-		floorPath := path.Join("assets/images/floors", g.currentMapType.FloorTile)
-		tile := gr.graphics.LoadSprite(g.assets, floorPath, true)
-		if tile != nil {
-			gr.grassSprite = tile
-			gr.lastFloorPath = g.currentMapType.FloorTile
-		}
+		// Clear caches when map floor base changes
+		gr.coordCache = make(map[string]string)
+		gr.lastFloorPath = g.currentMapType.FloorTile
 	}
 
-	if gr.grassSprite != nil {
-		gr.renderer.DrawInfiniteGrass(screen, offsetX, offsetY, gr.grassSprite)
-	}
+	gr.renderer.DrawTileMap(screen, offsetX, offsetY, func(x, y int) engine.Image {
+		return gr.getTileAt(x, y)
+	})
 
 	// Collect all drawable entities for Y-sorting
 	type drawTask struct {
@@ -592,4 +594,34 @@ func (gr *GameRenderer) drawGameWon(screen engine.Image) {
 		}
 		gr.graphics.DebugPrintAt(screen, prefix+opt, g.width/2-40, 200+i*40, clr)
 	}
+}
+
+func (gr *GameRenderer) getTileAt(x, y int) engine.Image {
+	key := fmt.Sprintf("%d_%d", x, y)
+
+	if tilePath, ok := gr.coordCache[key]; ok {
+		return gr.tileCache[tilePath]
+	}
+
+	resolvedTile := gr.game.currentMapType.FloorTile
+	highestPriority := -1
+
+	for _, zone := range gr.game.currentMapType.FloorZones {
+		if zone.Priority > highestPriority {
+			if zone.GetPolygon().Contains(float64(x), float64(y)) {
+				resolvedTile = zone.Tile
+				highestPriority = zone.Priority
+			}
+		}
+	}
+
+	gr.coordCache[key] = resolvedTile
+
+	if _, ok := gr.tileCache[resolvedTile]; !ok {
+		floorPath := path.Join("assets/images/floors", resolvedTile)
+		loaded := gr.graphics.LoadSprite(gr.game.assets, floorPath, true)
+		gr.tileCache[resolvedTile] = loaded
+	}
+
+	return gr.tileCache[resolvedTile]
 }

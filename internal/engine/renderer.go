@@ -15,8 +15,8 @@ func NewRenderer() *Renderer {
 	}
 }
 
-func (r *Renderer) DrawInfiniteGrass(screen Image, offsetX, offsetY float64, grassSprite Image) {
-	if grassSprite == nil {
+func (r *Renderer) DrawTileMap(screen Image, offsetX, offsetY float64, getTile func(x, y int) Image) {
+	if getTile == nil {
 		return
 	}
 
@@ -33,9 +33,6 @@ func (r *Renderer) DrawInfiniteGrass(screen Image, offsetX, offsetY float64, gra
 	minY := int(camY) - dim
 	maxY := int(camY) + dim
 
-	sw, sh := grassSprite.Size()
-	scaleX, scaleY := 64.0/float64(sw), 64.0/float64(sh)
-
 	for y := minY; y <= maxY; y++ {
 		for x := minX; x <= maxX; x++ {
 			isoX, isoY := CartesianToIso(float64(x), float64(y))
@@ -48,10 +45,18 @@ func (r *Renderer) DrawInfiniteGrass(screen Image, offsetX, offsetY float64, gra
 				continue
 			}
 
+			tileSprite := getTile(x, y)
+			if tileSprite == nil {
+				continue
+			}
+
+			sw, sh := tileSprite.Size()
+			scaleX, scaleY := 64.0/float64(sw), 64.0/float64(sh)
+
 			r.grassOptions.GeoM.Reset()
 			r.grassOptions.GeoM.Scale(scaleX, scaleY)
 			r.grassOptions.GeoM.Translate(drawX-32, drawY)
-			screen.DrawImage(grassSprite, r.grassOptions)
+			screen.DrawImage(tileSprite, r.grassOptions)
 		}
 	}
 }

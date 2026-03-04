@@ -25,6 +25,55 @@ func (p Polygon) Transformed(dx, dy float64) Polygon {
 	return Polygon{Points: newPoints}
 }
 
+// Bounds returns the axis-aligned bounding box (minX, minY, maxX, maxY).
+func (p Polygon) Bounds() (minX, minY, maxX, maxY float64) {
+	if len(p.Points) == 0 {
+		return 0, 0, 0, 0
+	}
+	minX, maxX = p.Points[0].X, p.Points[0].X
+	minY, maxY = p.Points[0].Y, p.Points[0].Y
+	for _, pt := range p.Points[1:] {
+		if pt.X < minX {
+			minX = pt.X
+		} else if pt.X > maxX {
+			maxX = pt.X
+		}
+		if pt.Y < minY {
+			minY = pt.Y
+		} else if pt.Y > maxY {
+			maxY = pt.Y
+		}
+	}
+	return
+}
+
+// Contains returns true if the point (x, y) is inside the polygon using ray-casting.
+func (p Polygon) Contains(x, y float64) bool {
+	if len(p.Points) < 3 {
+		return false
+	}
+
+	// Fast AABB check
+	minX, minY, maxX, maxY := p.Bounds()
+	if x < minX || x > maxX || y < minY || y > maxY {
+		return false
+	}
+
+	inside := false
+	j := len(p.Points) - 1
+	for i := 0; i < len(p.Points); i++ {
+		xi, yi := p.Points[i].X, p.Points[i].Y
+		xj, yj := p.Points[j].X, p.Points[j].Y
+
+		intersect := ((yi > y) != (yj > y)) && (x < (xj-xi)*(y-yi)/(yj-yi)+xi)
+		if intersect {
+			inside = !inside
+		}
+		j = i
+	}
+	return inside
+}
+
 // GetEdges returns the vectors representing each edge of the polygon.
 func (p Polygon) GetEdges() []Point {
 	edges := make([]Point, len(p.Points))

@@ -215,6 +215,26 @@ type TargetPointConfig struct {
 	Y float64 `yaml:"y"`
 }
 
+type FloorZone struct {
+	Name      string           `yaml:"name"`
+	Tile      string           `yaml:"tile"`
+	Priority  int              `yaml:"priority"`
+	Perimeter []FootprintPoint `yaml:"perimeter"`
+	Polygon   engine.Polygon   `yaml:"-"`
+}
+
+func (fz *FloorZone) GetPolygon() engine.Polygon {
+	if len(fz.Polygon.Points) > 0 {
+		return fz.Polygon
+	}
+	pts := make([]engine.Point, len(fz.Perimeter))
+	for i, pt := range fz.Perimeter {
+		pts[i] = engine.Point{X: pt.X, Y: pt.Y}
+	}
+	fz.Polygon = engine.Polygon{Points: pts}
+	return fz.Polygon
+}
+
 type MapType struct {
 	ID              string             `yaml:"id"`
 	Name            string             `yaml:"name"`
@@ -231,6 +251,7 @@ type MapType struct {
 	Spawns          []SpawnConfig      `yaml:"spawns"`
 	Obstacles       []PreSpawnObstacle `yaml:"obstacles"`
 	FloorTile       string             `yaml:"floor_tile"`
+	FloorZones      []*FloorZone       `yaml:"floor_zones"`
 	TargetPointRaw  *TargetPointConfig `yaml:"target_point"` // Optional YAML-supplied target point
 	MapWidth        float64            `yaml:"-"`            // Cartesian width
 	MapHeight       float64            `yaml:"-"`            // Cartesian height

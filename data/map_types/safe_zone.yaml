@@ -5,6 +5,19 @@ difficulty: 1
 target_time: 60.0
 description: "Walk in peace, do not spill blood"
 floor_tile: "grass.png"
+floor_zones:
+  - name: "merchant_path"
+    tile: "dirt.png"
+    priority: 1
+    perimeter:
+      - x: -5.0
+        y: -10.0
+      - x: 4.0
+        y: -10.0
+      - x: 4.0
+        y: 4.0
+      - x: -5.0
+        y: 4.0
 inhabitants:
   - npc: crimson_guard
     x: 1.0

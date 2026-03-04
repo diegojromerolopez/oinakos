@@ -590,7 +590,9 @@ func (m *MapEditor) drawEditor(screen *ebiten.Image) {
 	if m.FloorIdx < len(m.Floors) {
 		floorImg := m.FloorImages[m.Floors[m.FloorIdx]]
 		if floorImg != nil {
-			m.Renderer.DrawInfiniteGrass(eImg, offsetX, offsetY, floorImg)
+			m.Renderer.DrawTileMap(eImg, offsetX, offsetY, func(x, y int) engine.Image {
+				return floorImg
+			})
 		}
 	}
 
