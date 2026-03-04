@@ -32,7 +32,7 @@ func TestNPCGetters(t *testing.T) {
 
 func TestNPCTakeDamage(t *testing.T) {
 	n := &NPC{Health: 100, MaxHealth: 100}
-	n.TakeDamage(10, nil, nil, nil)
+	n.TakeDamage(10, nil, nil, nil, nil)
 	if n.Health != 90 {
 		t.Errorf("Health after damage: got %d, want 90", n.Health)
 	}
@@ -40,7 +40,7 @@ func TestNPCTakeDamage(t *testing.T) {
 		t.Error("NPC should still be alive")
 	}
 
-	n.TakeDamage(100, nil, nil, nil)
+	n.TakeDamage(100, nil, nil, nil, nil)
 	if n.Health != -10 {
 		t.Errorf("Health after lethal damage: got %d, want -10", n.Health)
 	}

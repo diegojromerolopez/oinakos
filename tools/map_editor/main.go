@@ -14,7 +14,6 @@ import (
 	"oinakos/internal/game"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"gopkg.in/yaml.v3"
 )
 
@@ -62,6 +61,7 @@ type MapEditor struct {
 
 	// Assets
 	Graphics    engine.Graphics
+	Input       engine.Input
 	Renderer    *engine.Renderer
 	Library     []*EditorItem
 	Floors      []string
@@ -85,9 +85,10 @@ type MapEditor struct {
 	ActiveField int // 0:Name, 1:W, 2:H
 }
 
-func NewMapEditor(g engine.Graphics) *MapEditor {
+func NewMapEditor(g engine.Graphics, in engine.Input) *MapEditor {
 	me := &MapEditor{
 		Graphics:    g,
+		Input:       in,
 		Renderer:    engine.NewRenderer(),
 		Mode:        "DIALOG",
 		InWidth:     "640",
@@ -182,7 +183,7 @@ func (m *MapEditor) Update() error {
 }
 
 func (m *MapEditor) updateDialog() error {
-	for _, ch := range ebiten.AppendInputChars(nil) {
+	for _, ch := range m.Input.AppendInputChars(nil) {
 		switch m.ActiveField {
 		case 0:
 			m.InName += string(ch)
@@ -197,7 +198,7 @@ func (m *MapEditor) updateDialog() error {
 		}
 	}
 
-	if inpututil.IsKeyJustPressed(ebiten.KeyBackspace) {
+	if m.Input.IsKeyJustPressed(engine.KeyBackspace) {
 		switch m.ActiveField {
 		case 0:
 			if len(m.InName) > 0 {
@@ -214,15 +215,15 @@ func (m *MapEditor) updateDialog() error {
 		}
 	}
 
-	if inpututil.IsKeyJustPressed(ebiten.KeyTab) {
+	if m.Input.IsKeyJustPressed(engine.KeyTab) {
 		m.ActiveField = (m.ActiveField + 1) % 3
 	}
 
-	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) {
+	if m.Input.IsKeyJustPressed(engine.KeyEnter) {
 		m.initializeMap()
 	}
 
-	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+	if m.Input.IsKeyJustPressed(engine.KeyEscape) {
 		return ebiten.Termination
 	}
 
@@ -277,11 +278,11 @@ func (m *MapEditor) saveMap() {
 }
 
 func (m *MapEditor) updateEditor() error {
-	mx, my := ebiten.CursorPosition()
+	mx, my := m.Input.MousePosition()
 
 	// Scroll Left (Library)
 	if mx < sidebarWidth {
-		_, wy := ebiten.Wheel()
+		_, wy := m.Input.Wheel()
 		m.ScrollL += int(wy * 30)
 		// Clamp: top = 0, bottom = last item at top of list
 		if m.ScrollL > 0 {
@@ -290,7 +291,7 @@ func (m *MapEditor) updateEditor() error {
 		if minL := -(len(m.Library) - 1) * slotHeight; m.ScrollL < minL {
 			m.ScrollL = minL
 		}
-		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		if m.Input.IsMouseButtonJustPressed(engine.MouseButtonLeft) {
 			idx := (my - m.ScrollL) / slotHeight
 			if idx >= 0 && idx < len(m.Library) {
 				m.PendingItem = m.Library[idx]
@@ -300,7 +301,7 @@ func (m *MapEditor) updateEditor() error {
 
 	// Scroll Right (Floors)
 	if mx > screenWidth-sidebarWidth {
-		_, wy := ebiten.Wheel()
+		_, wy := m.Input.Wheel()
 		m.ScrollR += int(wy * 30)
 		// Clamp: top = 0, bottom = last item at top of list
 		if m.ScrollR > 0 {
@@ -309,7 +310,7 @@ func (m *MapEditor) updateEditor() error {
 		if minR := -(len(m.Floors) - 1) * slotHeight; m.ScrollR < minR {
 			m.ScrollR = minR
 		}
-		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		if m.Input.IsMouseButtonJustPressed(engine.MouseButtonLeft) {
 			idx := (my - m.ScrollR) / slotHeight
 			if idx >= 0 && idx < len(m.Floors) {
 				m.FloorIdx = idx
@@ -321,7 +322,7 @@ func (m *MapEditor) updateEditor() error {
 
 	// Main Editor View Interaction
 	if mx >= sidebarWidth && mx <= screenWidth-sidebarWidth {
-		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		if m.Input.IsMouseButtonJustPressed(engine.MouseButtonLeft) {
 			// Click to select or place
 			found := m.pickAt(mx, my)
 			if found != -1 {
@@ -339,45 +340,45 @@ func (m *MapEditor) updateEditor() error {
 		// Move selected item
 		if m.Selection != nil {
 			moved := false
-			if inpututil.IsKeyJustPressed(ebiten.KeyUp) {
+			if m.Input.IsKeyJustPressed(engine.KeyUp) {
 				m.Selection.Y -= 1.0
 				moved = true
 			}
-			if inpututil.IsKeyJustPressed(ebiten.KeyDown) {
+			if m.Input.IsKeyJustPressed(engine.KeyDown) {
 				m.Selection.Y += 1.0
 				moved = true
 			}
-			if inpututil.IsKeyJustPressed(ebiten.KeyLeft) {
+			if m.Input.IsKeyJustPressed(engine.KeyLeft) {
 				m.Selection.X -= 1.0
 				moved = true
 			}
-			if inpututil.IsKeyJustPressed(ebiten.KeyRight) {
+			if m.Input.IsKeyJustPressed(engine.KeyRight) {
 				m.Selection.X += 1.0
 				moved = true
 			}
-			if inpututil.IsKeyJustPressed(ebiten.KeyDelete) || inpututil.IsKeyJustPressed(ebiten.KeyBackspace) {
+			if m.Input.IsKeyJustPressed(engine.KeyDelete) || m.Input.IsKeyJustPressed(engine.KeyBackspace) {
 				m.removeSelection()
 			} else if moved {
 				m.syncToSaveData()
 			}
 		} else {
 			// Move camera if nothing selected
-			if ebiten.IsKeyPressed(ebiten.KeyUp) {
+			if m.Input.IsKeyPressed(engine.KeyUp) {
 				m.CamY -= 5
 			}
-			if ebiten.IsKeyPressed(ebiten.KeyDown) {
+			if m.Input.IsKeyPressed(engine.KeyDown) {
 				m.CamY += 5
 			}
-			if ebiten.IsKeyPressed(ebiten.KeyLeft) {
+			if m.Input.IsKeyPressed(engine.KeyLeft) {
 				m.CamX -= 5
 			}
-			if ebiten.IsKeyPressed(ebiten.KeyRight) {
+			if m.Input.IsKeyPressed(engine.KeyRight) {
 				m.CamX += 5
 			}
 		}
 	}
 
-	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+	if m.Input.IsKeyJustPressed(engine.KeyEscape) {
 		return ebiten.Termination
 	}
 
@@ -685,7 +686,8 @@ func (m *MapEditor) Layout(w, h int) (int, int) {
 
 func main() {
 	graphics := engine.NewEbitenGraphics()
-	editor := NewMapEditor(graphics)
+	input := engine.NewEbitenInput()
+	editor := NewMapEditor(graphics, input)
 
 	ebiten.SetWindowTitle("Oinakos Map Editor")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)

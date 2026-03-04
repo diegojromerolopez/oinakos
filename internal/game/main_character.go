@@ -60,6 +60,7 @@ type MainCharacter struct {
 	Weapon        *Weapon
 	EquippedArmor map[ArmorSlot]*Armor
 	HitTimer      int
+	DeadTimer     int
 }
 
 func loadPlayerImage(assets fs.FS, path string) (image.Image, error) {
@@ -202,6 +203,12 @@ func (mc *MainCharacter) checkCollisionAt(newX, newY float64, obstacles []*Obsta
 
 func (mc *MainCharacter) Update(input engine.Input, audio AudioManager, obstacles []*Obstacle, npcs []*NPC, fts *[]*FloatingText, mapW, mapH float64) {
 	if mc.State == StateDead {
+		if mc.DeadTimer == 0 {
+			if mc.Config != nil {
+				mc.X, mc.Y = findSafePosition(mc.X, mc.Y, mc.Config.GetFootprint(), obstacles)
+			}
+		}
+		mc.DeadTimer++
 		return
 	}
 
@@ -325,22 +332,6 @@ func (mc *MainCharacter) Update(input engine.Input, audio AudioManager, obstacle
 			DebugLog("Player Moved to (%.2f, %.2f)", mc.X, mc.Y)
 		}
 
-		// Clamp to map boundaries
-		halfW := mapW / 2
-		halfH := mapH / 2
-		if mc.X < -halfW {
-			mc.X = -halfW
-		}
-		if mc.X > halfW {
-			mc.X = halfW
-		}
-		if mc.Y < -halfH {
-			mc.Y = -halfH
-		}
-		if mc.Y > halfH {
-			mc.Y = halfH
-		}
-
 		if dx > 0 {
 			if dy < 0 {
 				mc.Facing = DirNE
@@ -368,6 +359,22 @@ func (mc *MainCharacter) Update(input engine.Input, audio AudioManager, obstacle
 	} else {
 		mc.State = StateIdle
 		mc.Tick = 0
+	}
+
+	// ALWAYS clamp to map boundaries
+	halfW := mapW / 2
+	halfH := mapH / 2
+	if mc.X < -halfW {
+		mc.X = -halfW
+	}
+	if mc.X > halfW {
+		mc.X = halfW
+	}
+	if mc.Y < -halfH {
+		mc.Y = -halfH
+	}
+	if mc.Y > halfH {
+		mc.Y = halfH
 	}
 }
 
@@ -423,7 +430,7 @@ func (mc *MainCharacter) CheckAttackHits(npcs []*NPC, obstacles []*Obstacle, fts
 				protection := n.GetTotalProtection()
 				finalDmg := int(math.Max(1, float64(rawDmg-protection)))
 				DebugLog("Player attacks NPC %s: HIT for %d damage (roll: %d/%d)", n.Name, finalDmg, roll, hitChance)
-				n.TakeDamage(finalDmg, mc, nil, audio)
+				n.TakeDamage(finalDmg, mc, nil, audio, npcs)
 
 				*fts = append(*fts, &FloatingText{
 					Text:  fmt.Sprintf("-%d", finalDmg),

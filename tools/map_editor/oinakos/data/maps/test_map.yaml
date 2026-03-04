@@ -1,0 +1,20 @@
+map:
+  id: test_map
+  width_px: 100
+  height_px: 100
+  level: 0
+  play_time: 0
+player:
+  x: 0
+  "y": 0
+  health: 100
+  max_health: 100
+  xp: 0
+  level: 1
+  kills: 0
+  map_kills: {}
+  base_attack: 10
+  base_defense: 5
+  weapon: ""
+npcs: []
+obstacles: []

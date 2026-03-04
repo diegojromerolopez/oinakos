@@ -13,7 +13,8 @@ import (
 
 func newTestViewer(entities []*EditorEntity) *Viewer {
 	g := &engine.MockGraphics{}
-	return NewViewer(entities, g, defaultScreenWidth, defaultScreenHeight)
+	in := engine.NewMockInput()
+	return NewViewer(entities, g, in, defaultScreenWidth, defaultScreenHeight)
 }
 
 func makeFootprint(points ...game.FootprintPoint) *[]game.FootprintPoint {

@@ -79,7 +79,7 @@ func TestNPCNeutral_Retaliation(t *testing.T) {
 	audio := NewMockAudioManager()
 
 	// Hit the NPC
-	npc.TakeDamage(10, mc, nil, audio)
+	npc.TakeDamage(10, mc, nil, audio, []*NPC{npc})
 
 	if npc.Alignment != AlignmentEnemy {
 		t.Error("Neutral NPC should become Enemy after taking damage from player")
@@ -157,7 +157,7 @@ func TestNPC_RetaliationNPC(t *testing.T) {
 	}
 
 	// NPC B hits NPC A
-	npcA.TakeDamage(5, nil, npcB, audio)
+	npcA.TakeDamage(5, nil, npcB, audio, []*NPC{npcA, npcB})
 
 	if npcA.TargetNPC != npcB {
 		t.Errorf("NPC A should target NPC B after taking damage from it, got %v", npcA.TargetNPC)
@@ -206,7 +206,7 @@ func TestNPCAlly_RetaliationHostile(t *testing.T) {
 	audio := NewMockAudioManager()
 
 	// Hit the ally
-	ally.TakeDamage(10, mc, nil, audio)
+	ally.TakeDamage(10, mc, nil, audio, []*NPC{ally})
 
 	if ally.Alignment != AlignmentEnemy {
 		t.Error("Ally NPC should become Enemy after taking damage from player")

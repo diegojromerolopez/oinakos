@@ -1,4 +1,5 @@
 id: peasant_king
+group: Peasants
 name: "King of Peasants"
 description: "An intelligent psychopath who has convinced a mass of impoverished peasants to adore him. He wears a crown and peasant clothes, living in secret luxury while preaching hate against nobles to keep his followers focused on an external enemy."
 unique: true
@@ -22,5 +23,3 @@ footprint:
   - x: -0.2
     y: 0.1
 xp: 250
-primary_color: "#FFD700" # Golden crown/jewelry
-secondary_color: "#654321" # Dirty peasant clothes

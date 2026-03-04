@@ -87,6 +87,7 @@ type NPC struct {
 	TargetPlayer *MainCharacter
 	IsBoss       bool
 	Alignment    Alignment
+	Group        string
 }
 
 var npcNames = []string{
@@ -112,6 +113,7 @@ func NewNPC(x, y float64, archetype *Archetype, level int) *NPC {
 		Facing:    DirSE,
 		Level:     level,
 		Alignment: AlignmentEnemy, // Default to Enemy
+		Group:     archetype.Group,
 	}
 
 	if archetype.Unique {
@@ -240,6 +242,12 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 	}
 
 	if n.State == NPCDead {
+		if n.DeadTimer == 0 {
+			// FIRST TICK OF DEATH: Ensure position is safe for the corpse.
+			if n.Archetype != nil {
+				n.X, n.Y = findSafePosition(n.X, n.Y, n.Archetype.GetFootprint(), obstacles)
+			}
+		}
 		n.DeadTimer++
 		return
 	}
@@ -579,7 +587,7 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 						rawDmg := n.Weapon.RollDamage()
 						finalDmg := int(math.Max(1, float64(rawDmg-targetProtection)))
 						DebugLog("NPC [%s] attacks NPC [%s]: HIT for %d damage (roll: %d/%d)", n.Name, n.TargetNPC.Name, finalDmg, roll, hitChance)
-						n.TargetNPC.TakeDamage(finalDmg, nil, n, audio)
+						n.TargetNPC.TakeDamage(finalDmg, nil, n, audio, allNPCs)
 
 						*fts = append(*fts, &FloatingText{
 							Text:  fmt.Sprintf("-%d", finalDmg),
@@ -626,22 +634,6 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 				}
 			}
 
-			// Clamp to map boundaries
-			halfW := mapW / 2
-			halfH := mapH / 2
-			if n.X < -halfW {
-				n.X = -halfW
-			}
-			if n.X > halfW {
-				n.X = halfW
-			}
-			if n.Y < -halfH {
-				n.Y = -halfH
-			}
-			if n.Y > halfH {
-				n.Y = halfH
-			}
-
 			// Facing direction
 			if ndx > 0 {
 				if ndy < 0 {
@@ -662,9 +654,25 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 			DebugLog("NPC [%s] Moved to (%.2f, %.2f) | State: %v", n.Name, n.X, n.Y, n.State)
 		}
 	}
+
+	// ALWAYS clamp to map boundaries
+	halfW := mapW / 2
+	halfH := mapH / 2
+	if n.X < -halfW {
+		n.X = -halfW
+	}
+	if n.X > halfW {
+		n.X = halfW
+	}
+	if n.Y < -halfH {
+		n.Y = -halfH
+	}
+	if n.Y > halfH {
+		n.Y = halfH
+	}
 }
 
-func (n *NPC) TakeDamage(amount int, attackerPlayer *MainCharacter, attackerNPC *NPC, audio AudioManager) {
+func (n *NPC) TakeDamage(amount int, attackerPlayer *MainCharacter, attackerNPC *NPC, audio AudioManager, allNPCs []*NPC) {
 	if n.State == NPCDead {
 		return
 	}
@@ -679,6 +687,24 @@ func (n *NPC) TakeDamage(amount int, attackerPlayer *MainCharacter, attackerNPC 
 			DebugLog("NPC [%s] was %s and is now an ENEMY due to player attack!", n.Name, n.Alignment)
 			n.Alignment = AlignmentEnemy
 			n.Behavior = BehaviorKnightHunter
+
+			// GROUP ALERT: Alert all members of the same group in the "same zone" (e.g. 20 units)
+			if n.Group != "" {
+				for _, other := range allNPCs {
+					if other == n || other.Alignment == AlignmentEnemy || !other.IsAlive() {
+						continue
+					}
+					if other.Group == n.Group {
+						dist := math.Sqrt(math.Pow(n.X-other.X, 2) + math.Pow(n.Y-other.Y, 2))
+						if dist < 20.0 {
+							DebugLog("NPC [%s] joining fight of group [%s]!", other.Name, n.Group)
+							other.Alignment = AlignmentEnemy
+							other.Behavior = BehaviorKnightHunter
+							other.TargetPlayer = attackerPlayer
+						}
+					}
+				}
+			}
 		}
 	} else if attackerNPC != nil {
 		n.TargetNPC = attackerNPC

@@ -43,6 +43,18 @@ func (m *MockInputManager) MousePosition() (x, y int) {
 	return 0, 0
 }
 
+func (m *MockInputManager) AppendInputChars(chars []rune) []rune {
+	return chars
+}
+
+func (m *MockInputManager) IsMouseButtonPressed(button engine.MouseButton) bool {
+	return false
+}
+
 func (m *MockInputManager) IsMouseButtonJustPressed(button engine.MouseButton) bool {
 	return false
+}
+
+func (m *MockInputManager) Wheel() (x, y float64) {
+	return 0, 0
 }

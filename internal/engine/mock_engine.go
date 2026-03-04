@@ -61,8 +61,20 @@ func (m *MockInput) MousePosition() (x, y int) {
 	return 0, 0
 }
 
+func (m *MockInput) AppendInputChars(chars []rune) []rune {
+	return chars
+}
+
+func (m *MockInput) IsMouseButtonPressed(button MouseButton) bool {
+	return false
+}
+
 func (m *MockInput) IsMouseButtonJustPressed(button MouseButton) bool {
 	return false
+}
+
+func (m *MockInput) Wheel() (x, y float64) {
+	return 0, 0
 }
 
 // MockGraphics is a mock for engine.Graphics.

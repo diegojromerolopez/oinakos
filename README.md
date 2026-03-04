@@ -1,6 +1,8 @@
 # Oinakos (Knight's Path) 🛡️🗡️
 
-> **⚠️ Warning:** This project has been vibecoded.
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Go Version](https://img.shields.io/badge/Go-1.21%2B-blue)
+![Ebiten v2](https://img.shields.io/badge/Engine-Ebiten%20v2-orange)
 
 An infinite, isometric action combat game built with **Go** and the **Ebiten v2** 2D game library.
 
@@ -16,8 +18,14 @@ An infinite, isometric action combat game built with **Go** and the **Ebiten v2*
     -   **Native**: Saves to `.oinakos.yaml` files in the `oinakos/saves/` directory. Use the "Load" dialog to select and resume any save.
     -   **WASM**: Automatic persistence to **localStorage**. The game automatically resumes your last session when you refresh the page.
 -   **Unique NPC System**: Encounter unique "Boss" characters like **Stultus** or **Marcus Ardea** with custom descriptions, names, and gold-trimmed info boxes.
+-   **NPC Group Alignment**: NPCs can belong to specific groups (e.g., "Peasants", "Crimson Arm"). Attacking any member of a group will alert all nearby members of the same faction, turning them hostile simultaneously.
 -   **Dynamic Palette Swapping**: Engine uses GPU shaders to dynamically change NPC colors (e.g., unit armbands or capes) using primary/secondary color masks.
--   **Testable Engine Architecture**: Game logic is decoupled from the rendering engine using strict Dependency Injection, enabling 100% headless testing.
+-   **Testable Engine Architecture**: Game logic is decoupled from the rendering engine using strict Dependency Injection, enabling 100% (headless) unit testing coverage.
+
+### 🎭 NPC Factions & Groups
+Oinakos implements a localized "Social AI" system. NPCs with a defined `group` field (e.g., `group: Peasants`) share a hive-mind response within a **20-unit radius**. 
+-   **Radial Alerts**: When an NPC is damaged by the player, it broadcasts an alert.
+-   **Shared Alignment**: All nearby members of the same group instantly switch their alignment to **Enemy** and initiate combat.
 
 ## 🚀 Getting Started
 
@@ -190,11 +198,29 @@ All periodic effects pulse exactly every **1 second (60 ticks)**.
   ```
 
 
-## 📁 Technical Architecture
--   **`internal/engine`**: Platform-agnostic core (Iso transforms, Camera, Collision, Graphics interfaces).
--   **`internal/game`**: Game-specific logic: chunking, NPC AI, Persistence (Platform-split), and HUD.
--   **`assets/`**: High-quality pixel art and localized sound effects.
+## 📁 Project Structure
+
+-   **`/bin`**: Compiled development binaries and tools.
+-   **`/dist`**: Distribution packages (WASM, macOS `.app`, etc.).
+-   **`/internal/engine`**: Low-level math, rendering interfaces, and platform abstractions.
+-   **`/internal/game`**: High-level game logic: NPC AI, combat, and world generation.
+-   **`/data`**: Game content definitions (YAML).
+-   **`/assets`**: Raw and processed game sprites and sound effects.
+
+## 🤝 Contributing
+
+We welcome contributions! Whether you're fixing bugs, adding new entities, or expanding the engine, here's how to get started:
+
+1.  **Read the Technical Guide**: Before writing code, please review our [Agent Memo / Technical Core (`GEMINI.md`)](GEMINI.md). It outlines crucial architectural pillars, such as our **Strict Dependency Injection** rule (keeping game logic completely decoupled from `ebiten`), our data-driven registry, and coordinate systems.
+2.  **Test-Driven**: Because of our DI architecture, the `internal/game` package can be tested entirely headlessly. Run `make test` to ensure all tests pass before submitting changes.
+3.  **Use the Tools**: Use `make map-editor` and `make boundaries-editor` for visual content adjustments to avoid manual YAML errors.
+
+## 📝 Roadmap
+
+- [ ] **Animation System**: Move from static sprites to full sprite-sheet support.
+- [ ] **A* Pathfinding**: Implement advanced navigation for complex environments.
+- [ ] **Dynamic Biomes**: Procedural background and ambient weather changes.
+- [ ] **UI Overhaul**: Replace debug-print elements with textured HUD components.
 
 ## 📜 License
-This project is licensed under the MIT License. All code and images have 
-been generated leveraging the AI technologies integrated in the Antigravity IDE.
+This project is licensed under the MIT License. All code and images have been generated leveraging AI tools, specifically designed for high-performance and modularity.

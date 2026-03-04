@@ -1254,7 +1254,7 @@ func (g *Game) updateProximityEffects() {
 						case *MainCharacter:
 							e.TakeDamage(action.Amount, g.audio)
 						case *NPC:
-							e.TakeDamage(action.Amount, nil, nil, g.audio)
+							e.TakeDamage(action.Amount, nil, nil, g.audio, g.npcs)
 						}
 						o.EffectTimers[entity] = 60
 						g.floatingTexts = append(g.floatingTexts, &FloatingText{

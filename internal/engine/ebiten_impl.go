@@ -150,12 +150,24 @@ func (e *EbitenInput) AppendJustPressedKeys(keys []Key) []Key {
 	return keys
 }
 
+func (e *EbitenInput) AppendInputChars(chars []rune) []rune {
+	return ebiten.AppendInputChars(chars)
+}
+
 func (e *EbitenInput) MousePosition() (x, y int) {
 	return ebiten.CursorPosition()
 }
 
+func (e *EbitenInput) IsMouseButtonPressed(button MouseButton) bool {
+	return ebiten.IsMouseButtonPressed(toEbitenMouseButton(button))
+}
+
 func (e *EbitenInput) IsMouseButtonJustPressed(button MouseButton) bool {
 	return inpututil.IsMouseButtonJustPressed(toEbitenMouseButton(button))
+}
+
+func (e *EbitenInput) Wheel() (x, y float64) {
+	return ebiten.Wheel()
 }
 
 func toEbitenMouseButton(button MouseButton) ebiten.MouseButton {
@@ -202,6 +214,16 @@ func toEbitenKey(key Key) ebiten.Key {
 		return ebiten.KeyTab
 	case KeyQ:
 		return ebiten.KeyQ
+	case KeyControl:
+		return ebiten.KeyControl
+	case KeyMeta:
+		return ebiten.KeyMeta
+	case KeyShift:
+		return ebiten.KeyShift
+	case KeyBackspace:
+		return ebiten.KeyBackspace
+	case KeyDelete:
+		return ebiten.KeyDelete
 	}
 	return -1
 }
@@ -236,6 +258,16 @@ func fromEbitenKey(key ebiten.Key) Key {
 		return KeyTab
 	case ebiten.KeyQ:
 		return KeyQ
+	case ebiten.KeyControl:
+		return KeyControl
+	case ebiten.KeyMeta:
+		return KeyMeta
+	case ebiten.KeyShift:
+		return KeyShift
+	case ebiten.KeyBackspace:
+		return KeyBackspace
+	case ebiten.KeyDelete:
+		return KeyDelete
 	}
 	return -1
 }

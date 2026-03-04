@@ -346,7 +346,7 @@ difficulty: 1
 	g.npcs = []*NPC{npc}
 
 	// Deal fatal damage
-	npc.TakeDamage(100, mc, nil, NewMockAudioManager())
+	npc.TakeDamage(100, mc, nil, NewMockAudioManager(), []*NPC{npc})
 
 	if npc.State != NPCDead {
 		t.Fatalf("NPC should be dead")

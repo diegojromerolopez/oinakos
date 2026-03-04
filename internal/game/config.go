@@ -353,6 +353,7 @@ type EntityConfig struct {
 	PrimaryColor   string           `yaml:"primary_color,omitempty"`
 	SecondaryColor string           `yaml:"secondary_color,omitempty"`
 	XP             int              `yaml:"xp,omitempty"` // XP awarded on kill
+	Group          string           `yaml:"group,omitempty"`
 
 	// Run-time loaded assets
 	AssetDir     string      `yaml:"-"`

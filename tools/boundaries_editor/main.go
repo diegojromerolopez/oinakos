@@ -18,7 +18,6 @@ import (
 	"oinakos/internal/game"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"gopkg.in/yaml.v3"
 )
 
@@ -83,14 +82,16 @@ type Viewer struct {
 	draggingIdx   int
 	hoverIdx      int
 	scrollOffset  int
+	input         engine.Input
 	addBtnRect    image.Rectangle
 }
 
-func NewViewer(entities []*EditorEntity, g engine.Graphics, w, h int) *Viewer {
+func NewViewer(entities []*EditorEntity, g engine.Graphics, input engine.Input, w, h int) *Viewer {
 	return &Viewer{
 		entities:      entities,
 		selectedIndex: 0,
 		graphics:      g,
+		input:         input,
 		width:         w,
 		height:        h,
 		draggingIdx:   -1,
@@ -100,13 +101,13 @@ func NewViewer(entities []*EditorEntity, g engine.Graphics, w, h int) *Viewer {
 }
 
 func (v *Viewer) Update() error {
-	if ebiten.IsKeyPressed(ebiten.KeyEscape) || ebiten.IsKeyPressed(ebiten.KeyQ) {
+	if v.input.IsKeyPressed(engine.KeyEscape) || v.input.IsKeyPressed(engine.KeyQ) {
 		return ebiten.Termination
 	}
 
 	// Sidebar interaction
-	mx, my := ebiten.CursorPosition()
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) && mx < sidebarWidth {
+	mx, my := v.input.MousePosition()
+	if v.input.IsMouseButtonJustPressed(engine.MouseButtonLeft) && mx < sidebarWidth {
 		slotIdx := (my - v.scrollOffset) / slotHeight
 		if slotIdx >= 0 && slotIdx < len(v.entities) {
 			v.selectedIndex = slotIdx
@@ -117,7 +118,7 @@ func (v *Viewer) Update() error {
 	}
 
 	// Scroll sidebar
-	_, wheelY := ebiten.Wheel()
+	_, wheelY := v.input.Wheel()
 	if mx < sidebarWidth {
 		v.scrollOffset += int(wheelY * 20)
 		if v.scrollOffset > 0 {
@@ -133,16 +134,16 @@ func (v *Viewer) Update() error {
 
 	// Camera pan in main view
 	if mx >= sidebarWidth {
-		if ebiten.IsKeyPressed(ebiten.KeyUp) {
+		if v.input.IsKeyPressed(engine.KeyUp) {
 			v.camY -= cameraSpeed
 		}
-		if ebiten.IsKeyPressed(ebiten.KeyDown) {
+		if v.input.IsKeyPressed(engine.KeyDown) {
 			v.camY += cameraSpeed
 		}
-		if ebiten.IsKeyPressed(ebiten.KeyLeft) {
+		if v.input.IsKeyPressed(engine.KeyLeft) {
 			v.camX -= cameraSpeed
 		}
-		if ebiten.IsKeyPressed(ebiten.KeyRight) {
+		if v.input.IsKeyPressed(engine.KeyRight) {
 			v.camX += cameraSpeed
 		}
 	}
@@ -180,9 +181,9 @@ func (v *Viewer) Update() error {
 		}
 	}
 
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) && mx >= sidebarWidth {
+	if v.input.IsMouseButtonJustPressed(engine.MouseButtonLeft) && mx >= sidebarWidth {
 		// New Shortcut: CTRL or CMD + Click to add point at mouse position
-		if ebiten.IsKeyPressed(ebiten.KeyControl) || ebiten.IsKeyPressed(ebiten.KeyMeta) {
+		if v.input.IsKeyPressed(engine.KeyControl) || v.input.IsKeyPressed(engine.KeyMeta) {
 			worldX := float64(mx) - offsetX
 			worldY := float64(my) - offsetY
 			cx, cy := engine.IsoToCartesian(worldX, worldY)
@@ -200,7 +201,7 @@ func (v *Viewer) Update() error {
 			return nil
 		}
 		if v.hoverIdx != -1 {
-			if ebiten.IsKeyPressed(ebiten.KeyShift) {
+			if v.input.IsKeyPressed(engine.KeyShift) {
 				v.removePoint(ee, v.hoverIdx)
 				return nil
 			}
@@ -209,7 +210,7 @@ func (v *Viewer) Update() error {
 	}
 
 	if v.draggingIdx != -1 {
-		if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+		if v.input.IsMouseButtonPressed(engine.MouseButtonLeft) {
 			worldX := float64(mx) - offsetX
 			worldY := float64(my) - offsetY
 			cx, cy := engine.IsoToCartesian(worldX, worldY)
@@ -373,7 +374,7 @@ func (v *Viewer) drawUI(screen engine.Image, ee *EditorEntity) {
 	v.graphics.DebugPrintAt(screen, title, sidebarWidth+10, 10, color.White)
 	v.graphics.DebugPrintAt(screen, fmt.Sprintf("Camera: (%.1f, %.1f)", v.camX, v.camY), sidebarWidth+10, 25, color.White)
 
-	mx, my := ebiten.CursorPosition()
+	mx, my := v.input.MousePosition()
 	v.graphics.DebugPrintAt(screen, fmt.Sprintf("Mouse: (%d, %d)", mx, my), sidebarWidth+10, 40, color.White)
 	if v.hoverIdx != -1 {
 		v.graphics.DebugPrintAt(screen, fmt.Sprintf("Hover: Vertex %d", v.hoverIdx), sidebarWidth+110, 40, color.White)
@@ -476,7 +477,7 @@ func main() {
 		return entities[i].ID < entities[j].ID
 	})
 
-	viewer := NewViewer(entities, graphics, defaultScreenWidth, defaultScreenHeight)
+	viewer := NewViewer(entities, graphics, engine.NewEbitenInput(), defaultScreenWidth, defaultScreenHeight)
 
 	ebiten.SetWindowTitle("Oinakos Boundary Editor")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)

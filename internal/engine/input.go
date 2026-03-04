@@ -19,6 +19,11 @@ const (
 	KeyF9
 	KeyTab
 	KeyQ
+	KeyControl
+	KeyMeta
+	KeyShift
+	KeyBackspace
+	KeyDelete
 )
 
 // Input defines an interface for all input operations to allow mocking.
@@ -26,8 +31,11 @@ type Input interface {
 	IsKeyPressed(key Key) bool
 	IsKeyJustPressed(key Key) bool
 	AppendJustPressedKeys(keys []Key) []Key
+	AppendInputChars(chars []rune) []rune
 	MousePosition() (x, y int)
+	IsMouseButtonPressed(button MouseButton) bool
 	IsMouseButtonJustPressed(button MouseButton) bool
+	Wheel() (x, y float64)
 }
 
 type MouseButton int
