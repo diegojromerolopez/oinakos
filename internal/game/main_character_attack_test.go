@@ -91,3 +91,38 @@ func TestCheckAttackHits_AllDirections(t *testing.T) {
 		}
 	}
 }
+
+func TestCheckAttackHits_KillUpdatesMapKills(t *testing.T) {
+	mc := NewMainCharacter(0, 0, nil)
+	mc.BaseAttack = 9999 // Guarantee a huge hit
+	mc.Facing = DirSE
+
+	// Ensure the MapKills map is initialized (it is inside NewMainCharacter)
+	npc := NewNPC(0.5, 0.5, &Archetype{ID: "crimson_guard", XP: 10}, 1)
+	npc.Health = 1
+	npc.BaseDefense = 0
+
+	var fts []*FloatingText
+
+	// The game has a 5% miss cap (max hitChance=95).
+	// We loop up to 100 times to virtually guarantee a hit happens.
+	hitDetected := false
+	for attempt := 0; attempt < 100; attempt++ {
+		mc.CheckAttackHits([]*NPC{npc}, nil, &fts, NewMockAudioManager())
+		if npc.State == NPCDead {
+			hitDetected = true
+			break
+		}
+	}
+
+	if !hitDetected {
+		t.Errorf("NPC should have died after multiple huge hits")
+	}
+
+	if mc.MapKills["crimson_guard"] != 1 {
+		t.Errorf("Expected MapKills['crimson_guard'] to be 1, got %d", mc.MapKills["crimson_guard"])
+	}
+	if mc.Kills != 1 {
+		t.Errorf("Expected Kills to be 1, got %d", mc.Kills)
+	}
+}

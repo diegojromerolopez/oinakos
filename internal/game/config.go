@@ -359,6 +359,7 @@ type EntityConfig struct {
 	AssetDir     string      `yaml:"-"`
 	AudioDir     string      `yaml:"-"` // e.g. assets/audio/archetypes/orc/male
 	StaticImage  interface{} `yaml:"-"`
+	BackImage    interface{} `yaml:"-"` // back.png (instead of static.png when facing UP)
 	CorpseImage  interface{} `yaml:"-"`
 	AttackImage  interface{} `yaml:"-"` // attack.png (default)
 	Attack1Image interface{} `yaml:"-"` // attack1.png
@@ -429,6 +430,11 @@ func (r *ArchetypeRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics) {
 		staticPath := path.Join(config.AssetDir, "static.png")
 		if _, err := fs.Stat(assets, staticPath); err == nil {
 			config.StaticImage = graphics.LoadSprite(assets, staticPath, true)
+		}
+
+		backPath := path.Join(config.AssetDir, "back.png")
+		if _, err := fs.Stat(assets, backPath); err == nil {
+			config.BackImage = graphics.LoadSprite(assets, backPath, true)
 		}
 
 		corpsePath := path.Join(config.AssetDir, "corpse.png")
@@ -571,6 +577,10 @@ func (r *NPCRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *
 				if _, err := fs.Stat(assets, staticPath); err != nil {
 					config.StaticImage = arch.StaticImage
 				}
+				backPath := path.Join(config.AssetDir, "back.png")
+				if _, err := fs.Stat(assets, backPath); err != nil {
+					config.BackImage = arch.BackImage
+				}
 				corpsePath := path.Join(config.AssetDir, "corpse.png")
 				if _, err := fs.Stat(assets, corpsePath); err != nil {
 					config.CorpseImage = arch.CorpseImage
@@ -606,6 +616,10 @@ func (r *NPCRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *
 		staticPath := path.Join(config.AssetDir, "static.png")
 		if _, err := fs.Stat(assets, staticPath); err == nil {
 			config.StaticImage = graphics.LoadSprite(assets, staticPath, true)
+		}
+		backPath := path.Join(config.AssetDir, "back.png")
+		if _, err := fs.Stat(assets, backPath); err == nil {
+			config.BackImage = graphics.LoadSprite(assets, backPath, true)
 		}
 		corpsePath := path.Join(config.AssetDir, "corpse.png")
 		if _, err := fs.Stat(assets, corpsePath); err == nil {

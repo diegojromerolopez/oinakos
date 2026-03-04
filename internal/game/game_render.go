@@ -62,6 +62,11 @@ func (gr *GameRenderer) LoadAssets(assets fs.FS) {
 			mc.Config.StaticImage = gr.graphics.LoadSprite(assets, staticPath, true)
 		}
 
+		backPath := path.Join(imgDir, "back.png")
+		if _, err := fs.Stat(assets, backPath); err == nil {
+			mc.Config.BackImage = gr.graphics.LoadSprite(assets, backPath, true)
+		}
+
 		corpsePath := path.Join(imgDir, "corpse.png")
 		if _, err := fs.Stat(assets, corpsePath); err == nil {
 			mc.Config.CorpseImage = gr.graphics.LoadSprite(assets, corpsePath, true)

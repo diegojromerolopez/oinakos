@@ -18,8 +18,16 @@ func (n *NPC) Draw(screen engine.Image, textRenderer engine.TextRenderer, vector
 	isoX, isoY := engine.CartesianToIso(n.X, n.Y)
 
 	var drawSprite engine.Image
-	if img, ok := n.Archetype.StaticImage.(engine.Image); ok {
-		drawSprite = img
+	if n.Facing == DirNE || n.Facing == DirNW {
+		if img, ok := n.Archetype.BackImage.(engine.Image); ok {
+			drawSprite = img
+		} else if img, ok := n.Archetype.StaticImage.(engine.Image); ok {
+			drawSprite = img
+		}
+	} else {
+		if img, ok := n.Archetype.StaticImage.(engine.Image); ok {
+			drawSprite = img
+		}
 	}
 	if n.State == NPCDead {
 		if img, ok := n.Archetype.CorpseImage.(engine.Image); ok {

@@ -723,6 +723,9 @@ func (n *NPC) TakeDamage(amount int, attackerPlayer *MainCharacter, attackerNPC 
 		n.State = NPCDead
 		if attackerPlayer != nil {
 			attackerPlayer.Kills++
+			if n.Archetype != nil && n.Archetype.ID != "" {
+				attackerPlayer.MapKills[n.Archetype.ID]++
+			}
 			// Award XP from YAML-defined archetype value
 			if n.Archetype != nil && n.Archetype.XP > 0 {
 				attackerPlayer.XP += n.Archetype.XP

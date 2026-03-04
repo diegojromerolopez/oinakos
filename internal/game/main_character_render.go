@@ -14,8 +14,16 @@ func (mc *MainCharacter) Draw(screen engine.Image, textRenderer engine.TextRende
 
 	var drawSprite engine.Image
 	if mc.Config != nil {
-		if img, ok := mc.Config.StaticImage.(engine.Image); ok {
-			drawSprite = img
+		if mc.Facing == DirNE || mc.Facing == DirNW {
+			if img, ok := mc.Config.BackImage.(engine.Image); ok {
+				drawSprite = img
+			} else if img, ok := mc.Config.StaticImage.(engine.Image); ok {
+				drawSprite = img
+			}
+		} else {
+			if img, ok := mc.Config.StaticImage.(engine.Image); ok {
+				drawSprite = img
+			}
 		}
 		if mc.State == StateDead {
 			if img, ok := mc.Config.CorpseImage.(engine.Image); ok {
