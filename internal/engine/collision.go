@@ -3,6 +3,7 @@ package engine
 import (
 	"image"
 	"image/color"
+	"log"
 	"math"
 )
 
@@ -83,6 +84,7 @@ func Transparentize(img image.Image) image.Image {
 	bounds := img.Bounds()
 	newImg := image.NewRGBA(bounds)
 
+	count := 0
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 			c := img.At(x, y)
@@ -94,8 +96,6 @@ func Transparentize(img image.Image) image.Image {
 			isLime := false
 			if a > 0 {
 				r8, g8, b8 := uint8(r>>8), uint8(g>>8), uint8(b>>8)
-				// TIGHTENED & FIXED: Perform comparison in float64 to avoid uint8 overflow.
-				// (e.g. 200 * 1.5 = 300, which overflows uint8 to 44).
 				if float64(g8) > 160 && float64(g8) > float64(r8)*1.5 && float64(g8) > float64(b8)*1.5 {
 					isLime = true
 				}
@@ -103,10 +103,14 @@ func Transparentize(img image.Image) image.Image {
 
 			if isLime {
 				newImg.Set(x, y, color.Transparent)
+				count++
 			} else {
 				newImg.Set(x, y, c)
 			}
 		}
+	}
+	if count > 0 {
+		log.Printf("Transparentized %d pixels", count)
 	}
 
 	return newImg

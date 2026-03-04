@@ -89,6 +89,30 @@ const (
 	ObjDestroyBuilding
 )
 
+func (t ObjectiveType) String() string {
+	switch t {
+	case ObjKillVIP:
+		return "kill_vip"
+	case ObjReachPortal:
+		return "reach_portal"
+	case ObjSurvive:
+		return "survive"
+	case ObjReachZone:
+		return "reach_zone"
+	case ObjKillCount:
+		return "kill_count"
+	case ObjReachBuilding:
+		return "reach_building"
+	case ObjProtectNPC:
+		return "protect_npc"
+	case ObjPacifist:
+		return "pacifist"
+	case ObjDestroyBuilding:
+		return "destroy_building"
+	}
+	return "unknown"
+}
+
 func (t *ObjectiveType) UnmarshalYAML(value *yaml.Node) error {
 	var s string
 	if err := value.Decode(&s); err == nil {
@@ -423,11 +447,15 @@ func NewArchetypeRegistry() *ArchetypeRegistry {
 }
 
 func (r *ArchetypeRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics) {
+	log.Printf(">>>> LOADING ARCHETYPE ASSETS: found %d archetypes in registry", len(r.Archetypes))
 	for _, config := range r.Archetypes {
 		if config.AssetDir == "" {
 			continue
 		}
 		staticPath := path.Join(config.AssetDir, "static.png")
+		if config.ID == "man_at_arms_male" {
+			log.Printf("Archetype %s: checking %s", config.ID, staticPath)
+		}
 		if _, err := fs.Stat(assets, staticPath); err == nil {
 			config.StaticImage = graphics.LoadSprite(assets, staticPath, true)
 		}
@@ -532,123 +560,73 @@ func NewNPCRegistry() *NPCRegistry {
 
 func (r *NPCRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *ArchetypeRegistry) {
 	for _, config := range r.NPCs {
-		// Inheritance from Archetype
-		if config.ArchetypeID != "" && archs != nil {
-			if arch, ok := archs.Archetypes[config.ArchetypeID]; ok {
-				// Copy missing metadata/stats
-				if config.Behavior == "" {
-					config.Behavior = arch.Behavior
-				}
-				if config.Stats.HealthMin == 0 {
-					config.Stats.HealthMin = arch.Stats.HealthMin
-				}
-				if config.Stats.HealthMax == 0 {
-					config.Stats.HealthMax = arch.Stats.HealthMax
-				}
-				if config.Stats.Speed == 0 {
-					config.Stats.Speed = arch.Stats.Speed
-				}
-				if config.Stats.BaseAttack == 0 {
-					config.Stats.BaseAttack = arch.Stats.BaseAttack
-				}
-				if config.Stats.BaseDefense == 0 {
-					config.Stats.BaseDefense = arch.Stats.BaseDefense
-				}
-				if config.Stats.AttackCooldown == 0 {
-					config.Stats.AttackCooldown = arch.Stats.AttackCooldown
-				}
-				if config.Stats.AttackRange == 0 {
-					config.Stats.AttackRange = arch.Stats.AttackRange
-				}
-				if config.Stats.ProjectileSpeed == 0 {
-					config.Stats.ProjectileSpeed = arch.Stats.ProjectileSpeed
-				}
+		arch, ok := archs.Archetypes[config.ArchetypeID]
+		if !ok {
+			log.Printf("Warning: NPC %s uses unknown archetype %s", config.ID, config.ArchetypeID)
+			continue
+		}
 
-				if len(config.Footprint) == 0 {
-					config.Footprint = arch.Footprint
-				}
-				if config.WeaponName == "" {
-					config.WeaponName = arch.WeaponName
-					config.Weapon = arch.Weapon
-				}
+		// Inherit stats if they are empty
+		if config.Stats.HealthMin == 0 {
+			config.Stats.HealthMin = arch.Stats.HealthMin
+		}
+		if config.Stats.HealthMax == 0 {
+			config.Stats.HealthMax = arch.Stats.HealthMax
+		}
+		if config.Stats.Speed == 0 {
+			config.Stats.Speed = arch.Stats.Speed
+		}
+		if config.Stats.BaseAttack == 0 {
+			config.Stats.BaseAttack = arch.Stats.BaseAttack
+		}
+		if config.Stats.ProjectileSpeed == 0 {
+			config.Stats.ProjectileSpeed = arch.Stats.ProjectileSpeed
+		}
 
-				// Copy images if NPC doesn't have its own
-				staticPath := path.Join(config.AssetDir, "static.png")
-				if _, err := fs.Stat(assets, staticPath); err != nil {
-					config.StaticImage = arch.StaticImage
-				}
-				backPath := path.Join(config.AssetDir, "back.png")
-				if _, err := fs.Stat(assets, backPath); err != nil {
-					config.BackImage = arch.BackImage
-				}
-				corpsePath := path.Join(config.AssetDir, "corpse.png")
-				if _, err := fs.Stat(assets, corpsePath); err != nil {
-					config.CorpseImage = arch.CorpseImage
-				}
-				attackPath := path.Join(config.AssetDir, "attack.png")
-				if _, err := fs.Stat(assets, attackPath); err != nil {
-					config.AttackImage = arch.AttackImage
-				}
-				attack1Path := path.Join(config.AssetDir, "attack1.png")
-				if _, err := fs.Stat(assets, attack1Path); err != nil {
-					config.Attack1Image = arch.Attack1Image
-				}
-				attack2Path := path.Join(config.AssetDir, "attack2.png")
-				if _, err := fs.Stat(assets, attack2Path); err != nil {
-					config.Attack2Image = arch.Attack2Image
-				}
-				hitPath := path.Join(config.AssetDir, "hit.png")
-				if _, err := fs.Stat(assets, hitPath); err != nil {
-					config.HitImage = arch.HitImage
-				}
-				hit1Path := path.Join(config.AssetDir, "hit1.png")
-				if _, err := fs.Stat(assets, hit1Path); err != nil {
-					config.Hit1Image = arch.Hit1Image
-				}
-				hit2Path := path.Join(config.AssetDir, "hit2.png")
-				if _, err := fs.Stat(assets, hit2Path); err != nil {
-					config.Hit2Image = arch.Hit2Image
-				}
-			}
+		if config.PrimaryColor == "" {
+			config.PrimaryColor = arch.PrimaryColor
+		}
+		if config.SecondaryColor == "" {
+			config.SecondaryColor = arch.SecondaryColor
+		}
+
+		if len(config.Footprint) == 0 {
+			config.Footprint = arch.Footprint
+		}
+		if config.WeaponName == "" {
+			config.WeaponName = arch.WeaponName
+			config.Weapon = arch.Weapon
+		}
+
+		// Copy images if NPC doesn't have its own
+		staticPath := path.Join(config.AssetDir, "static.png")
+		if _, err := fs.Stat(assets, staticPath); err != nil {
+			config.StaticImage = arch.StaticImage
+		}
+		backPath := path.Join(config.AssetDir, "back.png")
+		if _, err := fs.Stat(assets, backPath); err != nil {
+			config.BackImage = arch.BackImage
+		}
+		corpsePath := path.Join(config.AssetDir, "corpse.png")
+		if _, err := fs.Stat(assets, corpsePath); err != nil {
+			config.CorpseImage = arch.CorpseImage
 		}
 
 		// Load unique assets if they exist (overriding or initial)
-		staticPath := path.Join(config.AssetDir, "static.png")
-		if _, err := fs.Stat(assets, staticPath); err == nil {
-			config.StaticImage = graphics.LoadSprite(assets, staticPath, true)
-		}
-		backPath := path.Join(config.AssetDir, "back.png")
-		if _, err := fs.Stat(assets, backPath); err == nil {
-			config.BackImage = graphics.LoadSprite(assets, backPath, true)
-		}
-		corpsePath := path.Join(config.AssetDir, "corpse.png")
-		if _, err := fs.Stat(assets, corpsePath); err == nil {
-			config.CorpseImage = graphics.LoadSprite(assets, corpsePath, true)
-		}
-		attackPath := path.Join(config.AssetDir, "attack.png")
-		if _, err := fs.Stat(assets, attackPath); err == nil {
-			config.AttackImage = graphics.LoadSprite(assets, attackPath, true)
-		}
-		attack1Path := path.Join(config.AssetDir, "attack1.png")
-		if _, err := fs.Stat(assets, attack1Path); err == nil {
-			config.Attack1Image = graphics.LoadSprite(assets, attack1Path, true)
-		}
-		attack2Path := path.Join(config.AssetDir, "attack2.png")
-		if _, err := fs.Stat(assets, attack2Path); err == nil {
-			config.Attack2Image = graphics.LoadSprite(assets, attack2Path, true)
+		if config.AssetDir != "" {
+			if _, err := fs.Stat(assets, staticPath); err == nil {
+				config.StaticImage = graphics.LoadSprite(assets, staticPath, true)
+			}
+			if _, err := fs.Stat(assets, backPath); err == nil {
+				config.BackImage = graphics.LoadSprite(assets, backPath, true)
+			}
+			if _, err := fs.Stat(assets, corpsePath); err == nil {
+				config.CorpseImage = graphics.LoadSprite(assets, corpsePath, true)
+			}
 		}
 
-		hitPath := path.Join(config.AssetDir, "hit.png")
-		if _, err := fs.Stat(assets, hitPath); err == nil {
-			config.HitImage = graphics.LoadSprite(assets, hitPath, true)
-		}
-		hit1Path := path.Join(config.AssetDir, "hit1.png")
-		if _, err := fs.Stat(assets, hit1Path); err == nil {
-			config.Hit1Image = graphics.LoadSprite(assets, hit1Path, true)
-		}
-		hit2Path := path.Join(config.AssetDir, "hit2.png")
-		if _, err := fs.Stat(assets, hit2Path); err == nil {
-			config.Hit2Image = graphics.LoadSprite(assets, hit2Path, true)
+		if config.ID == "crimson_guard" {
+			log.Printf("NPC %s: P=%s S=%s staticNil=%v", config.ID, config.PrimaryColor, config.SecondaryColor, config.StaticImage == nil)
 		}
 
 		// Final sanitize after merge and asset loading

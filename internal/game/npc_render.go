@@ -58,6 +58,9 @@ func (n *NPC) Draw(screen engine.Image, textRenderer engine.TextRenderer, vector
 	}
 
 	w, h := drawSprite.Size()
+	if n.Archetype.ID == "crimson_guard" {
+		log.Printf("Crimson Guard sprite size: %dx%d (%s)", w, h, n.Name)
+	}
 	op := engine.NewDrawImageOptions()
 	scale := 1.0
 
@@ -124,6 +127,9 @@ func (n *NPC) Draw(screen engine.Image, textRenderer engine.TextRenderer, vector
 
 	hasPalette := n.Archetype.PrimaryColor != "" || n.Archetype.SecondaryColor != ""
 	if hasPalette && paletteShader != nil {
+		if n.Archetype.ID == "crimson_guard" {
+			// log.Printf("Drawing Crimson Guard [%s]: P=%s, S=%s, hasShader=%v", n.Name, n.Archetype.PrimaryColor, n.Archetype.SecondaryColor, paletteShader != nil)
+		}
 		uniforms := make(map[string]interface{})
 		pArr := HexToRGBA(n.Archetype.PrimaryColor)
 		sArr := HexToRGBA(n.Archetype.SecondaryColor)

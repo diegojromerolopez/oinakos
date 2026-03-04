@@ -14,9 +14,13 @@ func HexToRGBA(hex string) [4]float32 {
 		return [4]float32{1, 1, 1, 1} // Fallback to white
 	}
 
-	r, _ := strconv.ParseUint(hex[0:2], 16, 8)
-	g, _ := strconv.ParseUint(hex[2:4], 16, 8)
-	b, _ := strconv.ParseUint(hex[4:6], 16, 8)
+	r, errR := strconv.ParseUint(hex[0:2], 16, 8)
+	g, errG := strconv.ParseUint(hex[2:4], 16, 8)
+	b, errB := strconv.ParseUint(hex[4:6], 16, 8)
+
+	if errR != nil || errG != nil || errB != nil {
+		return [4]float32{1, 1, 1, 1}
+	}
 
 	return [4]float32{
 		float32(r) / 255.0,
