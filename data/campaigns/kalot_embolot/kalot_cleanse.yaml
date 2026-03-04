@@ -1,0 +1,135 @@
+id: kalot_cleanse
+name: 'Kalot Embolot: The Cleanse'
+type: kill_vip
+difficulty: 5
+description: Execute the corrupted magi Staro Rovinec.
+floor_tile: black_dirt.png
+floor_zones:
+- name: boss_arena
+  tile: big_stones.png
+  priority: 2
+  perimeter:
+  - x: -10.0
+    y: -10.0
+  - x: 10.0
+    y: -10.0
+  - x: 10.0
+    y: 10.0
+  - x: -10.0
+    y: 10.0
+- name: dark_waters_ring
+  tile: dark_water.png
+  priority: 1
+  perimeter:
+  - x: -20.0
+    y: -20.0
+  - x: 20.0
+    y: -20.0
+  - x: 20.0
+    y: 20.0
+  - x: -20.0
+    y: 20.0
+inhabitants:
+- npc: staro_rovinec
+  x: 0.0
+  y: 0.0
+  alignment: enemy
+- npc: m_demon
+  x: 3.3
+  y: 0.6
+  alignment: enemy
+- npc: m_demon
+  x: 1.7
+  y: -1.6
+  alignment: enemy
+- npc: m_demon
+  x: 4.1
+  y: 3.1
+  alignment: enemy
+- npc: f_demon
+  x: -3.1
+  y: 1.1
+  alignment: enemy
+- npc: f_demon
+  x: 1.4
+  y: -2.5
+  alignment: enemy
+- npc: m_demon
+  x: 5.1
+  y: -1.8
+  alignment: enemy
+- npc: m_demon
+  x: -5.4
+  y: 5.5
+  alignment: enemy
+- npc: m_demon
+  x: -2.7
+  y: 4.0
+  alignment: enemy
+- npc: f_demon
+  x: -0.2
+  y: 1.5
+  alignment: enemy
+- npc: m_demon
+  x: -4.7
+  y: -0.0
+  alignment: enemy
+- npc: f_demon
+  x: -3.9
+  y: 2.6
+  alignment: enemy
+- npc: m_demon
+  x: 0.9
+  y: -2.8
+  alignment: enemy
+- npc: m_demon
+  x: -2.8
+  y: -5.3
+  alignment: enemy
+- npc: f_demon
+  x: -3.9
+  y: -5.5
+  alignment: enemy
+- npc: f_demon
+  x: 1.8
+  y: 5.0
+  alignment: enemy
+- npc: m_demon
+  x: -5.5
+  y: 0.0
+  alignment: enemy
+- npc: f_demon
+  x: -2.0
+  y: -0.6
+  alignment: enemy
+- npc: m_demon
+  x: 2
+  y: 0.7
+  alignment: enemy
+- npc: m_demon
+  x: 5.2
+  y: 0.0
+  alignment: enemy
+- npc: f_demon
+  x: -3.6
+  y: -0.1
+  alignment: enemy
+obstacles:
+- archetype: temple
+  x: 0.0
+  y: -5.0
+- archetype: campfire
+  x: 0.0
+  y: -2.0
+- archetype: well
+  x: -8.0
+  y: -8.0
+- archetype: well
+  x: 8.0
+  y: -8.0
+- archetype: well
+  x: -8.0
+  y: 8.0
+- archetype: well
+  x: 8.0
+  y: 8.0

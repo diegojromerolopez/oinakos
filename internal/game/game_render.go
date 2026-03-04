@@ -540,11 +540,21 @@ func (gr *GameRenderer) drawCampaignSelect(screen engine.Image) {
 	gr.graphics.DrawFilledRect(screen, 0, 0, float32(g.width), float32(g.height), color.Black, false)
 
 	// Title
-	title := "OINAKOS: SELECT YOUR CAMPAIGN"
+	title := "OINAKOS: SELECT YOUR JOURNEY"
 	tw := len(title) * 7
-	gr.graphics.DebugPrintAt(screen, title, (g.width-tw)/2, 80, color.RGBA{218, 165, 32, 255})
+	gr.graphics.DebugPrintAt(screen, title, (g.width-tw)/2, 50, color.RGBA{218, 165, 32, 255})
 
-	// Options
+	col1X := 100
+	col2X := g.width / 2
+
+	gr.graphics.DebugPrintAt(screen, "--- CAMPAIGNS ---", col1X-20, 100, color.RGBA{150, 150, 150, 255})
+	gr.graphics.DebugPrintAt(screen, "--- MAPS ---", col2X-20, 100, color.RGBA{150, 150, 150, 255})
+
+	nC := len(g.campaignRegistry.IDs)
+	nM := len(g.mapTypeRegistry.IDs)
+	y := 130
+
+	// Draw campaigns in the first column
 	for i, id := range g.campaignRegistry.IDs {
 		camp := g.campaignRegistry.Campaigns[id]
 		var clr color.Color = color.White
@@ -552,22 +562,42 @@ func (gr *GameRenderer) drawCampaignSelect(screen engine.Image) {
 		if g.campaignMenuIndex == i {
 			clr = color.RGBA{255, 255, 0, 255}
 			prefix = "> "
-
-			// Draw description
-			gr.graphics.DebugPrintAt(screen, camp.Description, 200, 500, color.RGBA{136, 136, 136, 255})
 		}
-		gr.graphics.DebugPrintAt(screen, prefix+camp.Name, 200, 150+i*40, clr)
+		gr.graphics.DebugPrintAt(screen, prefix+camp.Name, col1X, y+i*25, clr)
+	}
+
+	// Draw maps in the second column, possibly wrapping around if there are too many
+	for i, id := range g.mapTypeRegistry.IDs {
+		m := g.mapTypeRegistry.Types[id]
+		var clr color.Color = color.White
+		prefix := "  "
+		idx := nC + i
+		if g.campaignMenuIndex == idx {
+			clr = color.RGBA{150, 255, 150, 255}
+			prefix = "> "
+		}
+
+		// Calculate row and column wrapping (max ~15 items per column)
+		colOffset := col2X
+		rowOffset := i
+		if i > 15 {
+			colOffset += 250 // Shift to a third column if there are tons of maps
+			rowOffset = i - 16
+		}
+
+		gr.graphics.DebugPrintAt(screen, prefix+m.Name, colOffset, y+rowOffset*25, clr)
 	}
 
 	// Quit option at bottom
-	i := len(g.campaignRegistry.IDs)
 	var clr color.Color = color.White
 	prefix := "  "
-	if g.campaignMenuIndex == i {
+	if g.campaignMenuIndex == nC+nM {
 		clr = color.RGBA{255, 0, 0, 255}
 		prefix = "> "
 	}
-	gr.graphics.DebugPrintAt(screen, prefix+"QUIT", 200, 150+i*40+20, clr)
+	quitText := prefix + "QUIT"
+	quitW := len(quitText) * 7
+	gr.graphics.DebugPrintAt(screen, quitText, (g.width-quitW)/2, g.height-90, clr)
 
 	gr.graphics.DebugPrintAt(screen, "Press UP/DOWN to navigate, ENTER to begin.", (g.width-300)/2, g.height-50, color.RGBA{136, 136, 136, 255})
 }

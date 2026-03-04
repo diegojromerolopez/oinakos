@@ -1,0 +1,134 @@
+id: ancient_tavern
+name: The Ancient Tavern
+type: reach_building
+difficulty: 1
+description: Find shelter at the marked building
+inhabitants:
+- name: Silas the Unfortunate
+  archetype: peasant_male
+  x: -8.0
+  y: 5.0
+  state: dead
+  alignment: neutral
+- name: Lyra the Fallen
+  archetype: demon_female
+  x: 12.0
+  y: 2.0
+  state: dead
+  alignment: neutral
+- name: Kael Ironfist
+  archetype: orc_female
+  x: -2.0
+  y: -10.0
+  state: dead
+  alignment: neutral
+- name: Aris the Wicked
+  archetype: lame_devil_male
+  x: 6.0
+  y: 9.0
+  state: dead
+  alignment: neutral
+- name: Barnaby the Barkeeper
+  archetype: peasant_male
+  x: 10.0
+  y: 12.0
+  alignment: neutral
+- name: Old Tom
+  archetype: peasant_male
+  x: 12.0
+  y: 11.0
+  alignment: neutral
+- name: Brave Elara
+  archetype: magi_female
+  x: 8.0
+  y: 10.0
+  alignment: ally
+floor_tile: grass.png
+spawns:
+- archetype: orc_male
+  probability: 0.8
+  frequency: 12.0
+  alignment: enemy
+- archetype: orc_male
+  probability: 1.0
+  frequency: 30.0
+  alignment: enemy
+  x: 20.0
+  y: -10.0
+- archetype: peasant_male
+  probability: 0.5
+  frequency: 20.0
+  alignment: neutral
+- archetype: magi_female
+  probability: 0.2
+  frequency: 45.0
+  alignment: ally
+obstacles:
+- id: tavern_main
+  archetype: house1
+  x: 10.0
+  y: 10.0
+- id: community_well
+  archetype: well
+  x: -5.0
+  y: -5.0
+- id: storage
+  archetype: warehouse
+  x: -15.0
+  y: 0.0
+- id: forge
+  archetype: smithery
+  x: 0.0
+  y: -25.0
+- archetype: bush1
+  x: -10.0
+  y: -10.0
+- archetype: bush2
+  x: 5.0
+  y: -15.0
+- archetype: bush3
+  x: 20.0
+  y: 0.0
+- archetype: bush4
+  x: -5.0
+  y: 5.0
+- archetype: bush5
+  x: 15.0
+  y: 15.0
+floor_zones:
+- name: crossroad
+  tile: paved_ground.png
+  priority: 2
+  perimeter:
+  - x: -4.0
+    y: -40.0
+  - x: 4.0
+    y: -40.0
+  - x: 4.0
+    y: 40.0
+  - x: -4.0
+    y: 40.0
+- name: horizontal_road
+  tile: paved_ground.png
+  priority: 1
+  perimeter:
+  - x: -40.0
+    y: -4.0
+  - x: 40.0
+    y: -4.0
+  - x: 40.0
+    y: 4.0
+  - x: -40.0
+    y: 4.0
+- name: tavern_grounds
+  tile: wooden_planks.png
+  priority: 3
+  perimeter:
+  - x: 5.0
+    y: 5.0
+  - x: 20.0
+    y: 5.0
+  - x: 20.0
+    y: 20.0
+  - x: 5.0
+    y: 20.0

@@ -471,26 +471,77 @@ func (g *Game) loadMapLevel() {
 
 func (g *Game) Update() error {
 	if g.isCampaignSelect {
+		nC := len(g.campaignRegistry.IDs)
+		nM := len(g.mapTypeRegistry.IDs)
+
 		if g.input.IsKeyJustPressed(engine.KeyUp) || g.input.IsKeyJustPressed(engine.KeyW) {
 			g.campaignMenuIndex--
 			if g.campaignMenuIndex < 0 {
-				g.campaignMenuIndex = len(g.campaignRegistry.IDs)
+				g.campaignMenuIndex = nC + nM
 			}
 		}
 		if g.input.IsKeyJustPressed(engine.KeyDown) || g.input.IsKeyJustPressed(engine.KeyS) {
 			g.campaignMenuIndex++
-			if g.campaignMenuIndex > len(g.campaignRegistry.IDs) {
+			if g.campaignMenuIndex > nC+nM {
 				g.campaignMenuIndex = 0
 			}
 		}
-		if g.input.IsKeyJustPressed(engine.KeyEnter) {
-			if g.campaignMenuIndex < len(g.campaignRegistry.IDs) {
+
+		// Handle Mouse Hover & Click
+		mx, my := g.input.MousePosition()
+		hoverIndex := -1
+		col1X := 100
+		col2X := g.width / 2
+
+		for i := 0; i < nC; i++ {
+			cy := 130 + i*25
+			if mx >= col1X && mx <= col1X+300 && my >= cy && my <= cy+20 {
+				hoverIndex = i
+			}
+		}
+		for i := 0; i < nM; i++ {
+			colOffset := col2X
+			rowOffset := i
+			if i > 15 {
+				colOffset += 250 // Shift to a third column if there are tons of maps
+				rowOffset = i - 16
+			}
+			cy := 130 + rowOffset*25
+			if mx >= colOffset && mx <= colOffset+300 && my >= cy && my <= cy+20 {
+				hoverIndex = nC + i
+			}
+		}
+
+		quitText := "  QUIT"
+		quitW := len(quitText) * 7
+		qx, qy := (g.width-quitW)/2, g.height-90
+		if mx >= qx && mx <= qx+300 && my >= qy && my <= qy+20 {
+			hoverIndex = nC + nM
+		}
+
+		if hoverIndex != -1 {
+			// Update menu index to what the mouse is hovering over
+			g.campaignMenuIndex = hoverIndex
+		}
+
+		handleSelect := g.input.IsKeyJustPressed(engine.KeyEnter) || (hoverIndex != -1 && g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft))
+
+		if handleSelect {
+			if g.campaignMenuIndex < nC {
 				// Selected a campaign
 				camID := g.campaignRegistry.IDs[g.campaignMenuIndex]
 				g.currentCampaign = g.campaignRegistry.Campaigns[camID]
 				g.isCampaign = true
 				g.campaignIndex = 0
 				g.isCampaignSelect = false
+				g.loadMapLevel()
+			} else if g.campaignMenuIndex < nC+nM {
+				// Selected an individual map
+				mapID := g.mapTypeRegistry.IDs[g.campaignMenuIndex-nC]
+				g.currentMapType = *g.mapTypeRegistry.Types[mapID]
+				g.isCampaign = false
+				g.isCampaignSelect = false
+				g.initialMapID = mapID
 				g.loadMapLevel()
 			} else {
 				// Quit button
@@ -616,7 +667,26 @@ func (g *Game) Update() error {
 			}
 		}
 
-		if g.input.IsKeyJustPressed(engine.KeyEnter) {
+		mw, mh := 400, 250
+		bx, by := (g.width-mw)/2, (g.height-mh)/2
+		mx, my := g.input.MousePosition()
+
+		hoverIndex := -1
+		for i := 0; i < 4; i++ {
+			itemY := by + 70 + i*35
+			// Rough box: width ~150px, height ~20px
+			if mx >= bx+100 && mx <= bx+250 && my >= itemY-10 && my <= itemY+20 {
+				hoverIndex = i
+			}
+		}
+
+		if hoverIndex != -1 {
+			g.menuIndex = hoverIndex
+		}
+
+		handleSelect := g.input.IsKeyJustPressed(engine.KeyEnter) || (hoverIndex != -1 && g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft))
+
+		if handleSelect {
 			switch g.menuIndex {
 			case 0: // Resume
 				g.isMenuOpen = false

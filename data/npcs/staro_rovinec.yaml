@@ -1,0 +1,22 @@
+id: staro_rovinec
+name: Staro Rovinec
+description: "A corrupt magi who sold his soul. He smells of ash and blood."
+image: assets/images/characters/m_magi.png
+footprint:
+  - x: -0.2
+    y: -0.2
+  - x: 0.2
+    y: -0.2
+  - x: 0.2
+    y: 0.2
+  - x: -0.2
+    y: 0.2
+base_health: 50.0
+base_damage: 15.0
+damage_type: magic
+move_speed: 2.0
+attack_cooldown: 0.8
+attack_range: 5.0
+primary_color: "#200020" # Deep dark purple 
+secondary_color: "#CC0000" # Blood red 
+unique: true # Set to true to classify it as a VIP / boss.

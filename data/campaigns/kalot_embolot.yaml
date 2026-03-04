@@ -1,0 +1,7 @@
+id: kalot_embolot
+name: "Kalot Embolot"
+description: "The demonic invasion of a ruined city and the fall of the corrupted magi Staro Rovinec."
+maps:
+  - kalot_invasion
+  - kalot_plague
+  - kalot_cleanse

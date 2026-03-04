@@ -1,5 +1,6 @@
 map:
   id: duel
+  name: "Demon Duel"
   width_px: 1000
   height_px: 1000
   level: 5

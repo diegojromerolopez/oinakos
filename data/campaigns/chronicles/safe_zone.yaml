@@ -1,0 +1,197 @@
+id: safe_zone
+name: The Sanctuary
+type: pacifist
+difficulty: 1
+target_time: 60.0
+description: Walk in peace, do not spill blood
+floor_tile: grass.png
+floor_zones:
+- name: central_road
+  tile: paved_ground.png
+  priority: 2
+  perimeter:
+  - x: -2.0
+    y: -30.0
+  - x: 2.0
+    y: -30.0
+  - x: 2.0
+    y: 30.0
+  - x: -2.0
+    y: 30.0
+- name: town_square
+  tile: big_stones.png
+  priority: 1
+  perimeter:
+  - x: -10.0
+    y: -10.0
+  - x: 10.0
+    y: -10.0
+  - x: 10.0
+    y: 10.0
+  - x: -10.0
+    y: 10.0
+- name: wheat_fields_east
+  tile: wheat_field.png
+  priority: 1
+  perimeter:
+  - x: 12.0
+    y: -10.0
+  - x: 25.0
+    y: -10.0
+  - x: 25.0
+    y: 10.0
+  - x: 12.0
+    y: 10.0
+- name: wheat_fields_west
+  tile: wheat_field.png
+  priority: 1
+  perimeter:
+  - x: -25.0
+    y: -10.0
+  - x: -12.0
+    y: -10.0
+  - x: -12.0
+    y: 10.0
+  - x: -25.0
+    y: 10.0
+inhabitants:
+- npc: crimson_guard
+  x: 1.0
+  y: 1.0
+  alignment: neutral
+- npc: crimson_guard
+  x: 3.0
+  y: 0.0
+  alignment: neutral
+- npc: crimson_guard
+  x: 0.0
+  y: 3.0
+  alignment: neutral
+- npc: crimson_guard
+  x: -3.0
+  y: 0.0
+  alignment: neutral
+- npc: crimson_guard
+  x: 0.0
+  y: -3.0
+  alignment: neutral
+- npc: crimson_guard
+  x: 5.0
+  y: 5.0
+  alignment: neutral
+- npc: crimson_guard
+  x: -5.0
+  y: -5.0
+  alignment: neutral
+- npc: crimson_guard
+  x: 5.0
+  y: -5.0
+  alignment: neutral
+- npc: crimson_guard
+  x: -5.0
+  y: 5.0
+  alignment: neutral
+- npc: crimson_guard
+  x: 8.0
+  y: 0.0
+  alignment: neutral
+- npc: m_peasant
+  x: -18.0
+  y: 0.0
+  alignment: neutral
+- npc: m_peasant
+  x: -20.0
+  y: 5.0
+  alignment: neutral
+- npc: m_peasant
+  x: -16.0
+  y: -4.0
+  alignment: neutral
+- npc: f_peasant
+  x: 18.0
+  y: 0.0
+  alignment: neutral
+- npc: f_peasant
+  x: 20.0
+  y: 5.0
+  alignment: neutral
+- npc: f_peasant
+  x: 16.0
+  y: -4.0
+  alignment: neutral
+obstacles:
+- archetype: campfire
+  x: 0.0
+  y: 0.0
+- archetype: house1
+  x: -4.0
+  y: 4.0
+- archetype: house1
+  x: 4.0
+  y: 4.0
+- archetype: house1
+  x: -4.0
+  y: -4.0
+- archetype: house1
+  x: 4.0
+  y: -4.0
+- archetype: well
+  x: 0.0
+  y: 6.0
+- archetype: smithery
+  x: 0.0
+  y: -8.0
+- archetype: temple
+  x: 10.0
+  y: -12.0
+- archetype: tree_pine
+  x: 7.3
+  y: 32.1
+- archetype: tree_pine
+  x: -21.8
+  y: -25.0
+- archetype: tree_oak
+  x: 28.9
+  y: -13.5
+- archetype: tree_oak
+  x: -25.9
+  y: 11.6
+- archetype: tree_pine
+  x: 36.7
+  y: -25.9
+- archetype: tree_pine
+  x: -22.2
+  y: 29.5
+- archetype: tree_oak
+  x: 2.8
+  y: 28.9
+- archetype: tree_pine
+  x: 26.5
+  y: 8.3
+- archetype: tree_oak
+  x: -12.9
+  y: -31.5
+- archetype: tree_pine
+  x: 34.7
+  y: -32.3
+- archetype: tree_oak
+  x: 38.8
+  y: -34.8
+- archetype: tree_oak
+  x: -14.4
+  y: -28.0
+- archetype: tree_oak
+  x: -28.4
+  y: -22.6
+- archetype: tree_pine
+  x: 26.7
+  y: 11.7
+- archetype: tree_oak
+  x: -28.4
+  y: 27.3
+- archetype: tree_oak
+  x: 33.8
+  y: -2.0
+- archetype: tree_oak
+  x: -38.5
+  y: -2.1

@@ -1,5 +1,6 @@
 map:
   id: orc_encampment
+  name: 'Orc Ambush'
   width_px: 2000000
   height_px: 2000000
   level: 5

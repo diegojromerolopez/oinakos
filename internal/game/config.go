@@ -293,6 +293,14 @@ func (r *CampaignRegistry) LoadAll(assets fs.FS) error {
 	}
 	const campaignDir = "data/campaigns"
 	return forEachYAML(assets, campaignDir, func(fpath string, data []byte) error {
+		normalizedPath := filepath.ToSlash(fpath)
+		dir := filepath.Dir(normalizedPath)
+		// Only accept files directly in campaignDir or oinakos/campaignDir
+		if dir != "data/campaigns" && dir != "oinakos/data/campaigns" {
+			// Skip files in subdirectories (which are campaign maps)
+			return nil
+		}
+
 		var config Campaign
 		if err := yaml.Unmarshal(data, &config); err != nil {
 			log.Printf("Warning: failed to unmarshal %s: %v", fpath, err)
@@ -318,29 +326,67 @@ func (r *MapTypeRegistry) LoadAll(assets fs.FS) error {
 	if assets == nil {
 		return nil
 	}
-	const mapDir = "data/map_types"
-	return forEachYAML(assets, mapDir, func(fpath string, data []byte) error {
-		var config MapType
-		if err := yaml.Unmarshal(data, &config); err != nil {
-			log.Printf("Warning: failed to unmarshal %s: %v", fpath, err)
+	dirs := []string{"data/map_types", "data/maps", "data/campaigns"}
+	for _, loadDir := range dirs {
+		forEachYAML(assets, loadDir, func(fpath string, data []byte) error {
+			normalizedPath := filepath.ToSlash(fpath)
+			dir := filepath.Dir(normalizedPath)
+
+			// Skip top-level files in campaigns (which are campaigns, not map levels)
+			if dir == "data/campaigns" || dir == "oinakos/data/campaigns" {
+				return nil
+			}
+
+			var config MapType
+			if err := yaml.Unmarshal(data, &config); err != nil {
+				log.Printf("Warning: failed to unmarshal %s: %v", fpath, err)
+				return nil
+			}
+
+			// Detect if someone accidentally loaded a campaign object (it will have maps but no difficulty)
+			// But for simplicity we just allow loading anything that passes Unmarshal.
+
+			// Auto ID assignment
+			if config.ID == "" {
+				config.ID = strings.TrimSuffix(filepath.Base(fpath), filepath.Ext(fpath))
+			}
+
+			sanitizeMapType(&config, fpath)
+			if config.WidthPixels <= 0 {
+				config.WidthPixels = 1000000
+			}
+			if config.HeightPixels <= 0 {
+				config.HeightPixels = 1000000
+			}
+			config.MapWidth = float64(config.WidthPixels) / float64(engine.TileWidth)
+			config.MapHeight = float64(config.HeightPixels) / float64(engine.TileHeight)
+			if config.FloorTile == "" {
+				config.FloorTile = "grass.png"
+			}
+
+			// Only add if we actually parsed something meaningful or just unconditionally
+			r.Types[config.ID] = &config
+
+			// Skip adding campaign-specific maps to the UI selector list
+			if strings.Contains(normalizedPath, "data/campaigns/") {
+				return nil
+			}
+
+			// Add to ID list if not already there
+			found := false
+			for _, id := range r.IDs {
+				if id == config.ID {
+					found = true
+					break
+				}
+			}
+			if !found {
+				r.IDs = append(r.IDs, config.ID)
+			}
 			return nil
-		}
-		sanitizeMapType(&config, fpath)
-		if config.WidthPixels <= 0 {
-			config.WidthPixels = 1000000
-		}
-		if config.HeightPixels <= 0 {
-			config.HeightPixels = 1000000
-		}
-		config.MapWidth = float64(config.WidthPixels) / float64(engine.TileWidth)
-		config.MapHeight = float64(config.HeightPixels) / float64(engine.TileHeight)
-		if config.FloorTile == "" {
-			config.FloorTile = "grass.png"
-		}
-		r.Types[config.ID] = &config
-		r.IDs = append(r.IDs, config.ID)
-		return nil
-	})
+		})
+	}
+	return nil
 }
 
 type FootprintPoint struct {

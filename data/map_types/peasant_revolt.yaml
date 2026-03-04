@@ -5,21 +5,24 @@ difficulty: 1
 description: Reach the village center
 floor_tile: grass.png
 obstacles:
-- archetype: house1
-  x: -15.0
+- archetype: campfire
+  x: 0.0
   y: 20.0
-- archetype: house2
-  x: 5.0
-  y: 18.0
-- archetype: house3
-  x: -5.0
-  y: 22.0
 - archetype: well
-  x: 15.0
+  x: 5.0
   y: 25.0
+- archetype: house1
+  x: -8.0
+  y: 25.0
+- archetype: house2
+  x: 8.0
+  y: 25.0
+- archetype: house3
+  x: -8.0
+  y: 15.0
 - archetype: farm
-  x: 10.0
-  y: 30.0
+  x: 8.0
+  y: 15.0
 inhabitants:
 - npc: peasant_king
   x: 0.0
@@ -425,3 +428,40 @@ inhabitants:
   x: 26.0
   y: 31.4
   alignment: neutral
+floor_zones:
+- name: village_road
+  tile: dirt.png
+  priority: 2
+  perimeter:
+  - x: -5.0
+    y: -30.0
+  - x: 5.0
+    y: -30.0
+  - x: 5.0
+    y: 30.0
+  - x: -5.0
+    y: 30.0
+- name: town_center
+  tile: paved_ground.png
+  priority: 1
+  perimeter:
+  - x: -10.0
+    y: 10.0
+  - x: 10.0
+    y: 10.0
+  - x: 10.0
+    y: 30.0
+  - x: -10.0
+    y: 30.0
+- name: farming_fields
+  tile: wheat_field.png
+  priority: 1
+  perimeter:
+  - x: 15.0
+    y: 0.0
+  - x: 30.0
+    y: 0.0
+  - x: 30.0
+    y: 30.0
+  - x: 15.0
+    y: 30.0
