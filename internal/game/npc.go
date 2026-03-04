@@ -228,9 +228,13 @@ func (n *NPC) Heal(amount int) {
 	if n.State == NPCDead {
 		return
 	}
+	oldHealth := n.Health
 	n.Health += amount
 	if n.Health > n.MaxHealth {
 		n.Health = n.MaxHealth
+	}
+	if n.Health > oldHealth {
+		DebugLog("NPC Healed [%s] %s! +%d | Health: %d -> %d", n.Alignment, n.Name, amount, oldHealth, n.Health)
 	}
 }
 
@@ -676,7 +680,9 @@ func (n *NPC) TakeDamage(amount int, attackerPlayer *MainCharacter, attackerNPC 
 	if n.State == NPCDead {
 		return
 	}
+	oldHealth := n.Health
 	n.Health -= amount
+	DebugLog("NPC Hit! [%s] Name: %s | Damage: %d | Health: %d -> %d", n.Alignment, n.Name, amount, oldHealth, n.Health)
 
 	// Retaliation tracking
 	if attackerPlayer != nil {

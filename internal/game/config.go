@@ -282,7 +282,6 @@ func (r *CampaignRegistry) LoadAll(assets fs.FS) error {
 		}
 		r.Campaigns[config.ID] = &config
 		r.IDs = append(r.IDs, config.ID)
-		log.Printf("Loaded Campaign: %s (%s) from %s", config.ID, config.Name, fpath)
 		return nil
 	})
 }
@@ -319,7 +318,6 @@ func (r *MapTypeRegistry) LoadAll(assets fs.FS) error {
 		}
 		r.Types[config.ID] = &config
 		r.IDs = append(r.IDs, config.ID)
-		log.Printf("Loaded Map config: %s (%s) from %s", config.ID, config.Name, fpath)
 		return nil
 	})
 }
@@ -541,7 +539,6 @@ func (r *ArchetypeRegistry) LoadAll(assets fs.FS) error {
 
 		r.Archetypes[config.ID] = &config
 		r.IDs = append(r.IDs, config.ID)
-		log.Printf("Loaded Archetype: %s (%s) from %s with AssetDir: %s", config.ID, config.Name, fpath, config.AssetDir)
 		return nil
 	})
 }
@@ -658,7 +655,6 @@ func (r *NPCRegistry) LoadAll(assets fs.FS) error {
 
 		r.NPCs[config.ID] = &config
 		r.IDs = append(r.IDs, config.ID)
-		log.Printf("Loaded Unique NPC: %s (%s) from %s", config.ID, config.Name, fpath)
 		return nil
 	})
 }
@@ -715,7 +711,6 @@ func (r *ObstacleRegistry) LoadAll(assets fs.FS) error {
 
 		r.Archetypes[config.ID] = &config
 		r.IDs = append(r.IDs, config.ID)
-		log.Printf("Loaded Obstacle Archetype: %s (%s) from %s", config.ID, config.Name, fpath)
 		return nil
 	})
 }

@@ -17,9 +17,13 @@ func (mc *MainCharacter) Heal(amount int) {
 	if mc.State == StateDead {
 		return
 	}
+	oldHealth := mc.Health
 	mc.Health += amount
 	if mc.Health > mc.MaxHealth {
 		mc.Health = mc.MaxHealth
+	}
+	if mc.Health > oldHealth {
+		DebugLog("Player Healed! +%d | Health: %d -> %d", amount, oldHealth, mc.Health)
 	}
 }
 

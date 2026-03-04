@@ -408,7 +408,6 @@ func (g *Game) loadMapLevel() {
 				npc.State = NPCIdle
 			}
 			g.npcs = append(g.npcs, npc)
-			log.Printf("Spawned Inhabitant: %s at (%.2f, %.2f) - NPC type: %s", npc.Name, npc.X, npc.Y, ps.NPC)
 		} else {
 			id := ps.Archetype
 			if ps.NPC != "" {
@@ -467,7 +466,7 @@ func (g *Game) loadMapLevel() {
 		g.mainCharacter.Y += math.Sin(angle) * dist
 	}
 
-	log.Printf("Starting Map Level %d: %s at safe pos %.2f,%.2f", g.mapLevel, g.currentMapType.Name, g.mainCharacter.X, g.mainCharacter.Y)
+	DebugLog("Starting Map Level %d: %s at safe pos %.2f,%.2f", g.mapLevel, g.currentMapType.Name, g.mainCharacter.X, g.mainCharacter.Y)
 }
 
 func (g *Game) Update() error {

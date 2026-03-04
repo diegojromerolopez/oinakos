@@ -3,7 +3,6 @@ package engine
 import (
 	"image"
 	"image/color"
-	"log"
 	"math"
 )
 
@@ -108,9 +107,6 @@ func Transparentize(img image.Image) image.Image {
 				newImg.Set(x, y, c)
 			}
 		}
-	}
-	if count > 0 {
-		log.Printf("Transparentized %d pixels", count)
 	}
 
 	return newImg

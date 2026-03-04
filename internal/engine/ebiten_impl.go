@@ -526,7 +526,6 @@ func LoadSprite(assets fs.FS, path string, removeBg bool) Image {
 
 	if removeBg {
 		img = Transparentize(img)
-		log.Printf("LoadSprite: %s (Transparentized)", path)
 	}
 
 	return &EbitenImageWrapper{img: ebiten.NewImageFromImage(img)}
