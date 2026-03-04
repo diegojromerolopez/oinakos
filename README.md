@@ -11,9 +11,11 @@ An infinite, isometric action combat game built with **Go** and the **Ebiten v2*
 **Oinakos** puts you in the boots of a lone knight in a vast, procedurally generated world. Your goal is simple: survive as long as possible while defeating the waves of Non-Player Characters (NPCs) that seek you out.
 
 ### Key Gameplay Features:
+-   **Campaigns & Maps**: Play through structured Campaign storylines spanning multiple maps, or drop into standalone sandbox maps featuring diverse terrain and map types.
 -   **Infinite Procedural World**: Chunk-based generation creates an endless world of forests, ruins, and villages as you explore.
 -   **Dynamic Ambush System**: NPCs spawn from the edges of your view and track you down using specific behavior profiles (wander, hunter, etc.).
--   **Menu & Save System**: 
+-   **Interactive Menu & Save System**: 
+    -   Full **Mouse Support** for navigating and clicking campaigns, maps, and pause menu options.
     -   Press **ESC** to open the Game Menu (Resume, Quicksave, Load, Quit).
     -   **Native**: Saves to `.oinakos.yaml` files in the `oinakos/saves/` directory. Use the "Load" dialog to select and resume any save.
     -   **WASM**: Automatic persistence to **localStorage**. The game automatically resumes your last session when you refresh the page.
@@ -68,6 +70,7 @@ Oinakos features a robust multi-platform bundling system that generates producti
 
 ## 🎮 Controls:
 -   **WASD / Arrow Keys**: Move Oinakos
+-   **Mouse**: Navigate and select options in menus (Campaigns, Maps, Pause Menu)
 -   **SPACE**: Attack
 -   **Q**: Quick Quicksave
 -   **ESC**: Open Game Menu
