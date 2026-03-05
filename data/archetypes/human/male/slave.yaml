@@ -1,0 +1,24 @@
+id: m_slave
+name: Male Slave
+category: human
+description: "A male human slave captured in recent wars against foreigners. He wears a chain around his neck and is clad only in a dirty loincloth. He appears emaciated, unhappy, and resigned to a life of hard labor."
+behavior: wander
+stats:
+  health_min: 15
+  health_max: 20
+  speed: 0.08
+  base_attack: 2
+  base_defense: 1
+  attack_cooldown: 80
+  attack_range: 0.6
+weapon: "Fists"
+xp: 5
+footprint:
+  - x: -0.15
+    y: -0.15
+  - x: 0.15
+    y: -0.15
+  - x: 0.15
+    y: 0.15
+  - x: -0.15
+    y: 0.15
