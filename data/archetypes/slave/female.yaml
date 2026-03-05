@@ -1,0 +1,24 @@
+id: female
+name: Female Slave
+category: slave
+description: "A female human slave captured in recent wars against foreigners. She wears a chain around her neck, a dirty loincloth, and scraps of cloth covering her chest. She appears unhappy, sad, and resigned to her fate."
+behavior: wander
+stats:
+  health_min: 12
+  health_max: 18
+  speed: 0.08
+  base_attack: 1
+  base_defense: 1
+  attack_cooldown: 80
+  attack_range: 0.6
+weapon: "Fists"
+xp: 4
+footprint:
+  - x: -0.15
+    y: -0.15
+  - x: 0.15
+    y: -0.15
+  - x: 0.15
+    y: 0.15
+  - x: -0.15
+    y: 0.15
