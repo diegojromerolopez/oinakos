@@ -1,0 +1,25 @@
+id: trasgo
+name: Trasgo
+category: trasgo
+description: "A short, gnome-sized humanoid jester wearing a bright red hat. He is neutral and will not attack unless provoked, but runs incredibly fast and will laugh out loud while performing tricks and leaping around."
+behavior: wander
+stats:
+  health_min: 30
+  health_max: 50
+  speed: 0.25
+  base_attack: 0
+  base_defense: 10
+  attack_cooldown: 100
+  attack_range: 0.0
+weapon: "None"
+alignment: "neutral"
+xp: 10
+footprint:
+  - x: -0.2
+    y: -0.2
+  - x: 0.2
+    y: -0.2
+  - x: 0.2
+    y: 0.2
+  - x: -0.2
+    y: 0.2
