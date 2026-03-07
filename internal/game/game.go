@@ -81,6 +81,8 @@ type Game struct {
 	saveMessageTimer   int // Ticks to show the message
 
 	settings *Settings
+
+	isSettingsFromPause bool
 }
 
 func NewGame(assets fs.FS, initialMapID, initialMapTypeID string, input engine.Input, audio AudioManager, debug bool) *Game {
@@ -599,12 +601,22 @@ func (g *Game) Update() error {
 				g.audio.SetProbability(g.settings.GetSoundProbability())
 			}
 			g.isSettingsScreen = false
-			g.isMainMenu = true
+			if g.isSettingsFromPause {
+				g.isMenuOpen = true
+				g.isSettingsFromPause = false
+			} else {
+				g.isMainMenu = true
+			}
 		}
 
 		if g.input.IsKeyJustPressed(engine.KeyEscape) {
 			g.isSettingsScreen = false
-			g.isMainMenu = true
+			if g.isSettingsFromPause {
+				g.isMenuOpen = true
+				g.isSettingsFromPause = false
+			} else {
+				g.isMainMenu = true
+			}
 		}
 		return nil
 	}
@@ -849,22 +861,22 @@ func (g *Game) Update() error {
 		if g.input.IsKeyJustPressed(engine.KeyUp) || g.input.IsKeyJustPressed(engine.KeyW) {
 			g.menuIndex--
 			if g.menuIndex < 0 {
-				g.menuIndex = 3
+				g.menuIndex = 4
 			}
 		}
 		if g.input.IsKeyJustPressed(engine.KeyDown) || g.input.IsKeyJustPressed(engine.KeyS) {
 			g.menuIndex++
-			if g.menuIndex > 3 {
+			if g.menuIndex > 4 {
 				g.menuIndex = 0
 			}
 		}
 
-		mw, mh := 400, 250
+		mw, mh := 400, 280
 		bx, by := (g.width-mw)/2, (g.height-mh)/2
 		mx, my := g.input.MousePosition()
 
 		hoverIndex := -1
-		for i := 0; i < 4; i++ {
+		for i := 0; i < 5; i++ {
 			itemY := by + 70 + i*35
 			// Rough box: width ~150px, height ~20px
 			if mx >= bx+100 && mx <= bx+250 && my >= itemY-10 && my <= itemY+20 {
@@ -888,7 +900,21 @@ func (g *Game) Update() error {
 			case 2: // Load
 				g.loadDialogActive = true
 				g.isMenuOpen = false
-			case 3: // Quit
+			case 3: // Settings
+				// Load or create default settings
+				g.settings = LoadSettings()
+				g.settings.Save() // Ensure folder/file exists
+				// Find current index
+				for idx, val := range FrequencyOptions {
+					if val == g.settings.SoundFrequency {
+						g.settingsMenuIndex = idx
+						break
+					}
+				}
+				g.isSettingsFromPause = true
+				g.isMenuOpen = false
+				g.isSettingsScreen = true
+			case 4: // Quit
 				os.Exit(0)
 			}
 		}

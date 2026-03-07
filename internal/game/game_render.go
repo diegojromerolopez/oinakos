@@ -367,7 +367,7 @@ func (gr *GameRenderer) drawHUD(screen engine.Image) {
 
 	// Menu Overlay
 	if g.isMenuOpen {
-		mw, mh := 400, 250
+		mw, mh := 400, 280
 		mx, my := (g.width-mw)/2, (g.height-mh)/2
 		// Border & Backdrop
 		gr.graphics.DrawFilledRect(screen, float32(mx-2), float32(my-2), float32(mw+4), float32(mh+4), color.RGBA{218, 165, 32, 255}, false)
@@ -375,7 +375,7 @@ func (gr *GameRenderer) drawHUD(screen engine.Image) {
 
 		gr.graphics.DebugPrintAt(screen, "GAME MENU", mx+mw/2-40, my+20, color.RGBA{218, 165, 32, 255})
 
-		options := []string{"Resume", "Quicksave (Q)", "Load", "Quit"}
+		options := []string{"Resume", "Quicksave (Q)", "Load", "Settings", "Quit"}
 		for i, opt := range options {
 			var clr color.Color = color.White
 			prefix := "  "
