@@ -439,6 +439,8 @@ type EntityConfig struct {
 	Footprint      []FootprintPoint `yaml:"footprint"`
 	Description    string           `yaml:"description,omitempty"`
 	Unique         bool             `yaml:"unique,omitempty"`
+	Gender         string           `yaml:"gender,omitempty"`
+	SoundID        string           `yaml:"-"` // ID used for audio lookups (e.g. "man_at_arms_male")
 	PrimaryColor   string           `yaml:"primary_color,omitempty"`
 	SecondaryColor string           `yaml:"secondary_color,omitempty"`
 	XP             int              `yaml:"xp,omitempty"` // XP awarded on kill
@@ -603,11 +605,107 @@ func (r *ArchetypeRegistry) LoadAll(assets fs.FS) error {
 
 		// Link weapon
 		config.Weapon = GetWeaponByName(config.WeaponName)
+		config.SoundID = config.ID
 
 		r.Archetypes[config.ID] = &config
 		r.IDs = append(r.IDs, config.ID)
 		return nil
 	})
+}
+
+type PlayableCharacterRegistry struct {
+	Characters map[string]*EntityConfig
+	IDs        []string
+}
+
+func NewPlayableCharacterRegistry() *PlayableCharacterRegistry {
+	return &PlayableCharacterRegistry{
+		Characters: make(map[string]*EntityConfig),
+		IDs:        make([]string, 0),
+	}
+}
+
+func (r *PlayableCharacterRegistry) LoadAll(assets fs.FS) error {
+	if assets == nil {
+		return nil
+	}
+	const baseDir = "data/characters"
+	return forEachYAML(assets, baseDir, func(fpath string, data []byte) error {
+		normalizedPath := filepath.ToSlash(fpath)
+		dir := filepath.Dir(normalizedPath)
+		// Only accept files directly in data/characters or oinakos/data/characters
+		if dir != "data/characters" && dir != "oinakos/data/characters" {
+			return nil
+		}
+		var config EntityConfig
+		if err := yaml.Unmarshal(data, &config); err != nil {
+			log.Printf("Warning: failed to unmarshal %s: %v", fpath, err)
+			return nil
+		}
+
+		sanitizeEntityConfig(&config, fpath)
+
+		// Set AssetDir for playable character sprites
+		// assets/images/characters/variant_name/
+		variantName := config.ID
+		config.AssetDir = path.Join("assets/images/characters", variantName)
+		config.AudioDir = path.Join("assets/audio/characters", variantName)
+
+		// Link weapon
+		config.Weapon = GetWeaponByName(config.WeaponName)
+
+		r.Characters[config.ID] = &config
+		r.IDs = append(r.IDs, config.ID)
+		return nil
+	})
+}
+
+func (r *PlayableCharacterRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics) {
+	for _, config := range r.Characters {
+		if config.AssetDir == "" {
+			continue
+		}
+		staticPath := path.Join(config.AssetDir, "static.png")
+		if _, err := fs.Stat(assets, staticPath); err == nil {
+			config.StaticImage = graphics.LoadSprite(assets, staticPath, true)
+		}
+
+		backPath := path.Join(config.AssetDir, "back.png")
+		if _, err := fs.Stat(assets, backPath); err == nil {
+			config.BackImage = graphics.LoadSprite(assets, backPath, true)
+		}
+
+		corpsePath := path.Join(config.AssetDir, "corpse.png")
+		if _, err := fs.Stat(assets, corpsePath); err == nil {
+			config.CorpseImage = graphics.LoadSprite(assets, corpsePath, true)
+		}
+
+		attackPath := path.Join(config.AssetDir, "attack.png")
+		if _, err := fs.Stat(assets, attackPath); err == nil {
+			config.AttackImage = graphics.LoadSprite(assets, attackPath, true)
+		}
+		attack1Path := path.Join(config.AssetDir, "attack1.png")
+		if _, err := fs.Stat(assets, attack1Path); err == nil {
+			config.Attack1Image = graphics.LoadSprite(assets, attack1Path, true)
+		}
+		attack2Path := path.Join(config.AssetDir, "attack2.png")
+		if _, err := fs.Stat(assets, attack2Path); err == nil {
+			config.Attack2Image = graphics.LoadSprite(assets, attack2Path, true)
+		}
+
+		hitPath := path.Join(config.AssetDir, "hit.png")
+		if _, err := fs.Stat(assets, hitPath); err == nil {
+			config.HitImage = graphics.LoadSprite(assets, hitPath, true)
+		}
+		hit1Path := path.Join(config.AssetDir, "hit1.png")
+		if _, err := fs.Stat(assets, hit1Path); err == nil {
+			config.Hit1Image = graphics.LoadSprite(assets, hit1Path, true)
+		}
+		hit2Path := path.Join(config.AssetDir, "hit2.png")
+		if _, err := fs.Stat(assets, hit2Path); err == nil {
+			config.Hit2Image = graphics.LoadSprite(assets, hit2Path, true)
+		}
+	}
 }
 
 type NPCRegistry struct {
@@ -624,56 +722,100 @@ func NewNPCRegistry() *NPCRegistry {
 
 func (r *NPCRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *ArchetypeRegistry) {
 	for _, config := range r.NPCs {
-		arch, ok := archs.Archetypes[config.ArchetypeID]
+		lookupID := config.ArchetypeID
+		if config.Gender != "" && !strings.Contains(config.ArchetypeID, config.Gender) {
+			// Try archetype_gender if not already specific
+			fullID := config.ArchetypeID + "_" + config.Gender
+			if _, exists := archs.Archetypes[fullID]; exists {
+				lookupID = fullID
+			}
+		}
+
+		arch, ok := archs.Archetypes[lookupID]
+		if ok {
+			config.SoundID = lookupID
+		} else {
+			config.SoundID = config.ID
+		}
+
+		// Override if NPC has its own audio files in assets/audio/npcs/<id>
+		if config.AudioDir != "" {
+			if entries, err := fs.ReadDir(assets, config.AudioDir); err == nil {
+				for _, e := range entries {
+					if !e.IsDir() && strings.HasSuffix(strings.ToLower(e.Name()), ".wav") {
+						config.SoundID = config.ID
+						break
+					}
+				}
+			}
+		}
+
 		if !ok {
-			log.Printf("Warning: NPC %s uses unknown archetype %s", config.ID, config.ArchetypeID)
-			continue
+			// If it's in the NPC Registry, it's an NPC profile.
+			// We should allow it to exist even without an archetype if it's defined in data/npcs,
+			// though it might be missing base stats/assets if not self-contained.
+			if config.Unique {
+				DebugLog("Unique NPC %s has no archetype, using self-contained config", config.ID)
+			} else if config.ArchetypeID != "" {
+				log.Printf("Warning: NPC %s uses unknown archetype %s. Proceeding with self-contained config.", config.ID, config.ArchetypeID)
+			}
 		}
 
 		// Inherit stats if they are empty
-		if config.Stats.HealthMin == 0 {
-			config.Stats.HealthMin = arch.Stats.HealthMin
-		}
-		if config.Stats.HealthMax == 0 {
-			config.Stats.HealthMax = arch.Stats.HealthMax
-		}
-		if config.Stats.Speed == 0 {
-			config.Stats.Speed = arch.Stats.Speed
-		}
-		if config.Stats.BaseAttack == 0 {
-			config.Stats.BaseAttack = arch.Stats.BaseAttack
-		}
-		if config.Stats.ProjectileSpeed == 0 {
-			config.Stats.ProjectileSpeed = arch.Stats.ProjectileSpeed
+		if arch != nil {
+			if config.Stats.HealthMin == 0 {
+				config.Stats.HealthMin = arch.Stats.HealthMin
+			}
+			if config.Stats.HealthMax == 0 {
+				config.Stats.HealthMax = arch.Stats.HealthMax
+			}
+			if config.Stats.Speed == 0 {
+				config.Stats.Speed = arch.Stats.Speed
+			}
+			if config.Stats.BaseAttack == 0 {
+				config.Stats.BaseAttack = arch.Stats.BaseAttack
+			}
+			if config.Stats.ProjectileSpeed == 0 {
+				config.Stats.ProjectileSpeed = arch.Stats.ProjectileSpeed
+			}
+			if config.Stats.AttackCooldown == 0 {
+				config.Stats.AttackCooldown = arch.Stats.AttackCooldown
+			}
+			if config.Stats.BaseDefense == 0 {
+				config.Stats.BaseDefense = arch.Stats.BaseDefense
+			}
+
+			if config.PrimaryColor == "" {
+				config.PrimaryColor = arch.PrimaryColor
+			}
+			if config.SecondaryColor == "" {
+				config.SecondaryColor = arch.SecondaryColor
+			}
+
+			if len(config.Footprint) == 0 {
+				config.Footprint = arch.Footprint
+			}
+			if config.WeaponName == "" {
+				config.WeaponName = arch.WeaponName
+				config.Weapon = arch.Weapon
+			}
 		}
 
-		if config.PrimaryColor == "" {
-			config.PrimaryColor = arch.PrimaryColor
-		}
-		if config.SecondaryColor == "" {
-			config.SecondaryColor = arch.SecondaryColor
-		}
-
-		if len(config.Footprint) == 0 {
-			config.Footprint = arch.Footprint
-		}
-		if config.WeaponName == "" {
-			config.WeaponName = arch.WeaponName
-			config.Weapon = arch.Weapon
-		}
-
-		// Copy images if NPC doesn't have its own
 		staticPath := path.Join(config.AssetDir, "static.png")
-		if _, err := fs.Stat(assets, staticPath); err != nil {
-			config.StaticImage = arch.StaticImage
-		}
 		backPath := path.Join(config.AssetDir, "back.png")
-		if _, err := fs.Stat(assets, backPath); err != nil {
-			config.BackImage = arch.BackImage
-		}
 		corpsePath := path.Join(config.AssetDir, "corpse.png")
-		if _, err := fs.Stat(assets, corpsePath); err != nil {
-			config.CorpseImage = arch.CorpseImage
+
+		// Copy images from archetype if NPC doesn't have its own
+		if arch != nil {
+			if _, err := fs.Stat(assets, staticPath); err != nil {
+				config.StaticImage = arch.StaticImage
+			}
+			if _, err := fs.Stat(assets, backPath); err != nil {
+				config.BackImage = arch.BackImage
+			}
+			if _, err := fs.Stat(assets, corpsePath); err != nil {
+				config.CorpseImage = arch.CorpseImage
+			}
 		}
 
 		// Load unique assets if they exist (overriding or initial)
@@ -716,10 +858,12 @@ func (r *NPCRegistry) LoadAll(assets fs.FS) error {
 		// Set AssetDir for unique NPC sprites:
 		// assets/images/npcs/<id>/
 		config.AssetDir = path.Join("assets/images/npcs", config.ID)
+		config.AudioDir = path.Join("assets/audio/npcs", config.ID)
 
 		// Link weapon
 		config.Weapon = GetWeaponByName(config.WeaponName)
 
+		log.Printf("DEBUG: NPC Registry loading %s from %s", config.ID, fpath)
 		r.NPCs[config.ID] = &config
 		r.IDs = append(r.IDs, config.ID)
 		return nil
@@ -808,7 +952,7 @@ func LoadMainCharacterConfig(assets fs.FS) (*EntityConfig, error) {
 	if assets == nil {
 		return &EntityConfig{}, nil
 	}
-	const configPath = "data/characters/main/character.yaml"
+	const configPath = "data/characters/oinakos.yaml"
 	localPath := filepath.Join("oinakos", configPath)
 
 	var data []byte
@@ -863,11 +1007,14 @@ func GetWeaponByName(name string) *Weapon {
 		return &Weapon{Name: "Bow", MinDamage: 3, MaxDamage: 6}
 	case "Dagger":
 		return &Weapon{Name: "Dagger", MinDamage: 2, MaxDamage: 5}
+	case "Pitchfork":
+		return &Weapon{Name: "Pitchfork", MinDamage: 4, MaxDamage: 10}
 	case "Gilded Pitchfork":
 		return &Weapon{Name: "Gilded Pitchfork", MinDamage: 8, MaxDamage: 18}
 	case "Shouts":
 		return &Weapon{Name: "Shouts", MinDamage: 10, MaxDamage: 50}
 	default:
+		// Return a basic unarmed weapon instead of nil to prevent panics
 		return WeaponFists
 	}
 }

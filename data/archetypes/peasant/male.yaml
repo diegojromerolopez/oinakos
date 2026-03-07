@@ -1,5 +1,6 @@
 id: peasant_male
 group: Peasants
+gender: male
 name: Peasant
 names:
   - Hicks

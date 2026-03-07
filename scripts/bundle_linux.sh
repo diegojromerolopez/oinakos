@@ -28,7 +28,7 @@ if [ ! -f "${DIST_DIR}/${APP_NAME}" ]; then
 fi
 
 echo "Generating Linux icon (PNG)..."
-ICON_SRC="assets/images/characters/main/static.png"
+ICON_SRC="assets/images/characters/oinakos/static.png"
 uv run tools/transparent_icon.py "${ICON_SRC}" "${DIST_DIR}/icon.png"
 
 echo "Generating Desktop Entry..."

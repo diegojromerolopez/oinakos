@@ -1,6 +1,6 @@
 id: male
 name: Male Slave
-category: slave
+gender: male
 description: "A male human slave captured in recent wars against foreigners. He wears a chain around his neck and is clad only in a dirty loincloth. He appears emaciated, unhappy, and resigned to a life of hard labor."
 behavior: wander
 stats:

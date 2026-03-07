@@ -5,6 +5,7 @@ map:
   level: 0
   play_time: 0
 player:
+  archetype_id: ""
   x: 0
   "y": 0
   health: 100

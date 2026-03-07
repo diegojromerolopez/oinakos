@@ -3,6 +3,7 @@ group: Peasants
 name: "King of Peasants"
 description: "An intelligent psychopath who has convinced a mass of impoverished peasants to adore him. He wears a crown and peasant clothes, living in secret luxury while preaching hate against nobles to keep his followers focused on an external enemy."
 unique: true
+gender: male
 behavior: wander
 stats:
   health_min: 250

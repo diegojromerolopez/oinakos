@@ -1,3 +1,4 @@
+name: "Starter Village"
 map:
   id: safe_zone
   width_px: 1000000

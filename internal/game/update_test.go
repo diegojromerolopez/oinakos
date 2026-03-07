@@ -23,6 +23,8 @@ height_px: 1000
 		},
 	}
 	g := NewGame(mockFS, "type1", "", NewMockInputManager(), NewMockAudioManager(), false)
+	g.isMainMenu = false
+	g.isCharacterSelect = false
 
 	// 1. Test Paused state
 	g.isPaused = true
@@ -99,6 +101,8 @@ height_px: 1000
 	}
 	mockInput := NewMockInputManager()
 	g := NewGame(mockFS, "type1", "", mockInput, NewMockAudioManager(), false)
+	g.isMainMenu = false
+	g.isCharacterSelect = false
 
 	// Test Initial state
 	if g.showBoundaries {
@@ -245,7 +249,7 @@ func TestProjectileUpdate_Detailed(t *testing.T) {
 	fts := []*FloatingText{}
 
 	// Update until it hits nothing or expires
-	p.Update(mc, nil, &fts)
+	p.Update(mc, nil, &fts, nil)
 
 	// Update with entities
 	targetMc := NewMainCharacter(2, 0, nil)
@@ -255,13 +259,13 @@ func TestProjectileUpdate_Detailed(t *testing.T) {
 	p.X = 2
 	p.Y = 0
 	p.Alive = true
-	p.Update(targetMc, obstacles, &fts)
+	p.Update(targetMc, obstacles, &fts, nil)
 
 	// Manually move projectile to hit obstacle
 	p.Alive = true
 	p.X = 5
 	p.Y = 0
-	p.Update(targetMc, obstacles, &fts)
+	p.Update(targetMc, obstacles, &fts, nil)
 }
 
 func TestFloatingTextUpdate_Detailed(t *testing.T) {
@@ -293,6 +297,8 @@ spawn_frequency: 0
 		},
 	}
 	g := NewGame(mockFS, "duel", "", NewMockInputManager(), NewMockAudioManager(), false)
+	g.isMainMenu = false
+	g.isCharacterSelect = false
 
 	// Spawn a boss (VIP)
 	boss := NewNPC(5, 5, nil, 10)
@@ -326,6 +332,8 @@ difficulty: 1
 		},
 	}
 	g := NewGame(mockFS, "test", "", NewMockInputManager(), NewMockAudioManager(), false)
+	g.isMainMenu = false
+	g.isCharacterSelect = false
 	mc := g.mainCharacter
 
 	npc := NewNPC(0, 0, &Archetype{

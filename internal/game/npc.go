@@ -480,11 +480,10 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 
 		if canAttack {
 			if n.State != NPCAttacking && isTargetPlayer {
-				// Chance to say a menace line when starting to attack the mainCharacter
+				// Chance to say an attack line when starting to attack the mainCharacter
 				if rand.Float64() < 0.3 {
-					msgNum := rand.Intn(5) + 1
 					if audio != nil && n.Archetype != nil {
-						audio.PlaySound(fmt.Sprintf("%s/menace_%d", n.Archetype.ID, msgNum))
+						audio.PlayRandomSound(n.Archetype.SoundID + "/attack")
 					}
 				}
 			}
@@ -721,7 +720,7 @@ func (n *NPC) TakeDamage(amount int, attackerPlayer *MainCharacter, attackerNPC 
 	n.BloodTimer = 30
 	// Play hit sound
 	if audio != nil && n.Archetype != nil {
-		audio.PlaySound(n.Archetype.ID + "/hit")
+		audio.PlayRandomSound(n.Archetype.SoundID + "/hit")
 	}
 
 	if n.Health <= 0 {
@@ -734,14 +733,14 @@ func (n *NPC) TakeDamage(amount int, attackerPlayer *MainCharacter, attackerNPC 
 			}
 			// Award XP from YAML-defined archetype value
 			if n.Archetype != nil && n.Archetype.XP > 0 {
-				attackerPlayer.XP += n.Archetype.XP
+				attackerPlayer.AddXP(n.Archetype.XP)
 			} else {
 				// Fallback: 1 XP so every kill counts
-				attackerPlayer.XP += 1
+				attackerPlayer.AddXP(1)
 			}
 		}
 		if audio != nil && n.Archetype != nil {
-			audio.PlaySound(n.Archetype.ID + "/death")
+			audio.PlayRandomSound(n.Archetype.SoundID + "/death")
 		}
 	}
 }

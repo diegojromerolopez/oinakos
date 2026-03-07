@@ -8,6 +8,8 @@ import (
 	"log"
 	"os"
 
+	"math/rand"
+
 	"github.com/hajimehoshi/ebiten/v2/audio"
 	"github.com/hajimehoshi/ebiten/v2/audio/mp3"
 	"github.com/hajimehoshi/ebiten/v2/audio/wav"
@@ -119,8 +121,36 @@ func (m *AudioManager) Play(name string) {
 	}
 }
 
+func (m *AudioManager) getMatchingKeys(prefix string) []string {
+	var matches []string
+	for k := range m.sounds {
+		// Key matches prefix exactly, or key starts with prefix + "_" or "/" (e.g. attack_1, orc/hit)
+		if k == prefix || (len(k) > len(prefix) && k[:len(prefix)] == prefix && (k[len(prefix)] == '_' || k[len(prefix)] == '/')) {
+			matches = append(matches, k)
+		}
+	}
+	return matches
+}
+
+func (m *AudioManager) PlayRandom(prefix string) {
+	keys := m.getMatchingKeys(prefix)
+	if len(keys) == 0 {
+		return
+	}
+	// Note: We use a simple rand here. In a real engine we might want
+	// a deterministic or seeded one, but for audio variety this is fine.
+	key := keys[rand.Intn(len(keys))]
+	m.Play(key)
+}
+
 func PlaySound(name string) {
 	if GlobalAudio != nil {
 		GlobalAudio.Play(name)
+	}
+}
+
+func PlayRandomSound(prefix string) {
+	if GlobalAudio != nil {
+		GlobalAudio.PlayRandom(prefix)
 	}
 }

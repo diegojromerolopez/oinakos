@@ -40,7 +40,7 @@ func NewProjectile(x, y, dx, dy, speed float64, damage int, isPlayer bool, maxRa
 	}
 }
 
-func (p *Projectile) Update(mc *MainCharacter, obstacles []*Obstacle, fts *[]*FloatingText) {
+func (p *Projectile) Update(mc *MainCharacter, obstacles []*Obstacle, fts *[]*FloatingText, audio AudioManager) {
 	if !p.Alive {
 		return
 	}
@@ -76,7 +76,7 @@ func (p *Projectile) Update(mc *MainCharacter, obstacles []*Obstacle, fts *[]*Fl
 			protection := mc.GetTotalProtection()
 			finalDmg := int(math.Max(1, float64(p.Damage-protection)))
 			DebugLog("Projectile HIT Player for %d damage", finalDmg)
-			mc.TakeDamage(finalDmg, nil)
+			mc.TakeDamage(finalDmg, audio)
 
 			*fts = append(*fts, &FloatingText{
 				Text:  fmt.Sprintf("-%d", finalDmg),

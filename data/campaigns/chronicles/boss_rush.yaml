@@ -1,3 +1,4 @@
+name: "Boss Rush"
 map:
   id: demon_invasion
   width_px: 500000

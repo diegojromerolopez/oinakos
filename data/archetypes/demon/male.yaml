@@ -1,5 +1,6 @@
 id: demon_male
 name: Demon
+gender: male
 names:
   - Malphas
   - Valac

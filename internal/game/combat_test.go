@@ -80,7 +80,7 @@ func TestProjectileCombat(t *testing.T) {
 	// Put the projectile right at the player
 	p.X = mc.X
 	p.Y = mc.Y
-	p.Update(mc, nil, &fts)
+	p.Update(mc, nil, &fts, nil)
 
 	// Player should have taken damage
 	if mc.Health >= 100 {

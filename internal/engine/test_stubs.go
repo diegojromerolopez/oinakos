@@ -12,6 +12,9 @@ func LoadSprite(assets fs.FS, path string, removeBg bool) Image {
 // PlaySound stub for headless test builds.
 func PlaySound(name string) {}
 
+// PlayRandomSound stub for headless test builds.
+func PlayRandomSound(prefix string) {}
+
 // InitAudio stub for headless test builds.
 func InitAudio(assets fs.FS) {
 	GlobalAudio = &AudioManager{}
@@ -19,5 +22,9 @@ func InitAudio(assets fs.FS) {
 
 // AudioManager minimal stub for test builds.
 type AudioManager struct{}
+
+func (m *AudioManager) LoadSound(name, path string) {}
+func (m *AudioManager) PlayRandom(prefix string)    {}
+func (m *AudioManager) Play(name string)            {}
 
 var GlobalAudio *AudioManager

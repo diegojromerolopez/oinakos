@@ -8,6 +8,7 @@ import (
 	_ "image/png"
 	"io/fs"
 	"log"
+	"strings"
 
 	"oinakos/internal/engine"
 	"oinakos/internal/game"
@@ -23,11 +24,17 @@ func main() {
 	var initialMapType string
 	var loadGame string
 	var debug bool
+	var configDir string
 	flag.StringVar(&initialMap, "map", "", "Map YAML file to load (save/instance)")
 	flag.StringVar(&initialMapType, "map-type", "", "Named map type to generate from")
 	flag.StringVar(&loadGame, "load-game", "", "Saved game file to load (e.g. quicksaves/save_20240101_120000.yaml)")
 	flag.BoolVar(&debug, "debug", false, "Show collision perimeters (red borders)")
+	flag.StringVar(&configDir, "config", "", "Config directory to use for settings and saves")
 	flag.Parse()
+
+	if configDir != "" {
+		game.SetOinakosDir(configDir)
+	}
 
 	// --load-game overrides --map
 	if loadGame != "" {
@@ -36,34 +43,37 @@ func main() {
 
 	engine.InitAudio(assets)
 
-	// Load archetype sounds dynamically: walk each archetype's AudioDir and register
-	// every .wav as  "<archetypeID>/<stem>"  (e.g. "orc_male/hit", "orc_male/menace_1").
-	archetypeReg := game.NewArchetypeRegistry()
-	archetypeReg.LoadAll(assets)
-	for _, arch := range archetypeReg.Archetypes {
-		if arch.AudioDir == "" {
-			continue
-		}
-		entries, err := fs.ReadDir(assets, arch.AudioDir)
-		if err != nil {
-			continue // no audio for this archetype
-		}
-		for _, e := range entries {
-			if e.IsDir() {
+	// Register sounds from both archetypes and NPCs
+	registerEntitySounds := func(configs map[string]*game.EntityConfig) {
+		for _, conf := range configs {
+			if conf.AudioDir == "" {
 				continue
 			}
-			name := e.Name()
-			if len(name) < 5 || name[len(name)-4:] != ".wav" {
+			entries, err := fs.ReadDir(assets, conf.AudioDir)
+			if err != nil {
 				continue
 			}
-			stem := name[:len(name)-4]
-			key := arch.ID + "/" + stem
-			engine.GlobalAudio.LoadSound(key, arch.AudioDir+"/"+name)
+			for _, e := range entries {
+				if e.IsDir() || !strings.HasSuffix(strings.ToLower(e.Name()), ".wav") {
+					continue
+				}
+				stem := e.Name()[:len(e.Name())-4]
+				key := conf.ID + "/" + stem
+				engine.GlobalAudio.LoadSound(key, conf.AudioDir+"/"+e.Name())
+			}
 		}
 	}
 
-	// Load main character sounds: assets/audio/characters/main/<stem>.wav → "main/<stem>"
-	const mainAudioDir = "assets/audio/characters/main"
+	archetypeReg := game.NewArchetypeRegistry()
+	archetypeReg.LoadAll(assets)
+	registerEntitySounds(archetypeReg.Archetypes)
+
+	npcReg := game.NewNPCRegistry()
+	npcReg.LoadAll(assets)
+	registerEntitySounds(npcReg.NPCs)
+
+	// Load main character sounds: assets/audio/characters/oinakos/<stem>.wav → "oinakos/<stem>"
+	const mainAudioDir = "assets/audio/characters/oinakos"
 	if entries, err := fs.ReadDir(assets, mainAudioDir); err == nil {
 		for _, e := range entries {
 			name := e.Name()
@@ -71,7 +81,7 @@ func main() {
 				continue
 			}
 			stem := name[:len(name)-4]
-			engine.GlobalAudio.LoadSound("main/"+stem, mainAudioDir+"/"+name)
+			engine.GlobalAudio.LoadSound("oinakos/"+stem, mainAudioDir+"/"+name)
 		}
 	}
 
@@ -88,7 +98,7 @@ func main() {
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 
 	// Set Window Icon from player character sprite
-	f, err := assets.Open("assets/images/characters/main/static.png")
+	f, err := assets.Open("assets/images/characters/oinakos/static.png")
 	if err != nil {
 		log.Printf("Warning: failed to open icon file: %v", err)
 	} else {

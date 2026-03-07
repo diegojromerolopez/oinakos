@@ -15,7 +15,7 @@ echo "Building Windows binary..."
 GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-H=windowsgui" -o "${DIST_DIR}/${APP_NAME}.exe" main.go
 
 echo "Generating Windows icon (ICO)..."
-ICON_SRC="assets/images/characters/main/static.png"
+ICON_SRC="assets/images/characters/oinakos/static.png"
 uv run tools/transparent_icon.py "${ICON_SRC}" "${DIST_DIR}/icon.ico"
 
 # Create a zip package

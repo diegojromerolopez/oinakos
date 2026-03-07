@@ -1,6 +1,6 @@
 id: female
 name: Female Slave
-category: slave
+gender: female
 description: "A female human slave captured in recent wars against foreigners. She wears a chain around her neck, a dirty loincloth, and scraps of cloth covering her chest. She appears unhappy, sad, and resigned to her fate."
 behavior: wander
 stats:

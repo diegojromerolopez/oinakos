@@ -19,9 +19,6 @@ type GameRenderer struct {
 	renderer      *engine.Renderer
 	graphics      engine.Graphics
 	grassSprite   engine.Image
-	portalSprite  engine.Image
-	crownSprite   engine.Image
-	zoneSprite    engine.Image
 	emptyImage    engine.Image
 	lastFloorPath string
 	PaletteShader engine.Shader
@@ -32,13 +29,10 @@ type GameRenderer struct {
 
 func NewGameRenderer(g *Game, assets fs.FS, graphics engine.Graphics) *GameRenderer {
 	gr := &GameRenderer{
-		game:         g,
-		renderer:     engine.NewRenderer(),
-		graphics:     graphics,
-		grassSprite:  graphics.LoadSprite(assets, "assets/images/floors/grass.png", true),
-		portalSprite: graphics.LoadSprite(assets, "assets/images/scenario/portal.png", true),
-		crownSprite:  graphics.LoadSprite(assets, "assets/images/scenario/crown.png", true),
-		zoneSprite:   graphics.LoadSprite(assets, "assets/images/scenario/zone_marker.png", true),
+		game:        g,
+		renderer:    engine.NewRenderer(),
+		graphics:    graphics,
+		grassSprite: graphics.LoadSprite(assets, "assets/images/floors/grass.png", true),
 	}
 	gr.emptyImage = graphics.NewImage(3, 3)
 	gr.emptyImage.Fill(color.White)
@@ -49,6 +43,7 @@ func NewGameRenderer(g *Game, assets fs.FS, graphics engine.Graphics) *GameRende
 
 func (gr *GameRenderer) LoadAssets(assets fs.FS) {
 	gr.game.archetypeRegistry.LoadAssets(assets, gr.graphics)
+	gr.game.playableCharacterRegistry.LoadAssets(assets, gr.graphics)
 	gr.game.obstacleRegistry.LoadAssets(assets, gr.graphics)
 	gr.game.npcRegistry.LoadAssets(assets, gr.graphics, gr.game.archetypeRegistry)
 
@@ -61,7 +56,10 @@ func (gr *GameRenderer) LoadAssets(assets fs.FS) {
 	// Load player assets
 	mc := gr.game.mainCharacter
 	if mc != nil && mc.Config != nil {
-		imgDir := "assets/images/characters/main"
+		if mc.Config.AssetDir == "" {
+			mc.Config.AssetDir = "assets/images/characters/oinakos"
+		}
+		imgDir := mc.Config.AssetDir
 		staticPath := path.Join(imgDir, "static.png")
 		if _, err := fs.Stat(assets, staticPath); err == nil {
 			mc.Config.StaticImage = gr.graphics.LoadSprite(assets, staticPath, true)
@@ -114,8 +112,23 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 	g := gr.game
 	offsetX, offsetY := g.camera.GetOffsets(g.width, g.height)
 
+	if g.isMainMenu {
+		gr.drawMainMenu(screen)
+		return
+	}
+
+	if g.isCharacterSelect {
+		gr.drawCharacterSelect(screen)
+		return
+	}
+
 	if g.isCampaignSelect {
 		gr.drawCampaignSelect(screen)
+		return
+	}
+
+	if g.isSettingsScreen {
+		gr.drawSettingsScreen(screen)
 		return
 	}
 
@@ -256,65 +269,6 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 	// Draw floating texts (always on top of entities)
 	for _, ft := range g.floatingTexts {
 		ft.Draw(screen, gr.graphics, offsetX, offsetY)
-	}
-
-	// Draw map target points for navigation objectives
-	switch g.currentMapType.Type {
-	case ObjReachPortal:
-		tasks = append(tasks, drawTask{
-			y: g.currentMapType.TargetPoint.X + g.currentMapType.TargetPoint.Y,
-			draw: func() {
-				isoX, isoY := engine.CartesianToIso(g.currentMapType.TargetPoint.X, g.currentMapType.TargetPoint.Y)
-				op := engine.NewDrawImageOptions()
-				op.Translate(isoX+offsetX-32, isoY+offsetY-16)
-				screen.DrawImage(gr.portalSprite, op)
-			},
-		})
-	case ObjReachZone, ObjProtectNPC:
-		// Draw zone under everything, no need to y-sort.
-		isoX, isoY := engine.CartesianToIso(g.currentMapType.TargetPoint.X, g.currentMapType.TargetPoint.Y)
-		op := engine.NewDrawImageOptions()
-		op.Translate(isoX+offsetX-float64(gr.zoneSprite.Bounds().Dx())/2, isoY+offsetY-float64(gr.zoneSprite.Bounds().Dy())/2)
-		// Draw as background element
-		screen.DrawImage(gr.zoneSprite, op)
-	case ObjReachBuilding:
-		// Draw light column on top of the target point
-		tasks = append(tasks, drawTask{
-			y: g.currentMapType.TargetPoint.X + g.currentMapType.TargetPoint.Y,
-			draw: func() {
-				isoX, isoY := engine.CartesianToIso(g.currentMapType.TargetPoint.X, g.currentMapType.TargetPoint.Y)
-				op := engine.NewDrawImageOptions()
-				op.Scale(2, 8)
-				op.Translate(isoX+offsetX-16, isoY+offsetY-128) // Adjust for scaled size
-				op.SetColorScale(0.5, 0.5, 0.5, 0.5)            // Alpha scaling
-				screen.DrawImage(gr.crownSprite, op)
-			},
-		})
-	case ObjKillVIP:
-		if len(g.npcs) > 0 && g.npcs[0].IsAlive() {
-			tasks = append(tasks, drawTask{
-				y: g.npcs[0].X + g.npcs[0].Y + 0.1, // always slightly in front of the NPC
-				draw: func() {
-					isoX, isoY := engine.CartesianToIso(g.npcs[0].X, g.npcs[0].Y)
-					op := engine.NewDrawImageOptions()
-					op.Translate(isoX+offsetX-16, isoY+offsetY-60) // Float above head
-					screen.DrawImage(gr.crownSprite, op)
-				},
-			})
-		}
-	}
-
-	// Draw crown for boss NPCs
-	for _, n := range gr.game.npcs {
-		if n.IsBoss && n.IsAlive() {
-			isoX, isoY := engine.CartesianToIso(n.X, n.Y)
-			if gr.crownSprite != nil {
-				op := engine.NewDrawImageOptions()
-				// Position above head (160px character height approx)
-				op.Translate(isoX+offsetX-16, isoY+offsetY-150)
-				screen.DrawImage(gr.crownSprite, op)
-			}
-		}
 	}
 
 	if g.isGameWon {
@@ -600,6 +554,140 @@ func (gr *GameRenderer) drawCampaignSelect(screen engine.Image) {
 	gr.graphics.DebugPrintAt(screen, quitText, (g.width-quitW)/2, g.height-90, clr)
 
 	gr.graphics.DebugPrintAt(screen, "Press UP/DOWN to navigate, ENTER to begin.", (g.width-300)/2, g.height-50, color.RGBA{136, 136, 136, 255})
+}
+
+func (gr *GameRenderer) drawMainMenu(screen engine.Image) {
+	g := gr.game
+	// Black background
+	gr.graphics.DrawFilledRect(screen, 0, 0, float32(g.width), float32(g.height), color.Black, false)
+
+	// Large Title
+	title := "OINAKOS"
+	gr.graphics.DebugPrintAt(screen, title, (g.width-len(title)*7)/2, 150, color.RGBA{218, 165, 32, 255})
+
+	subtitle := "A KNIGHT'S PATH"
+	gr.graphics.DebugPrintAt(screen, subtitle, (g.width-len(subtitle)*7)/2, 180, color.RGBA{150, 150, 150, 255})
+
+	options := []string{"NEW GAME", "LOAD GAME", "SETTINGS", "QUIT"}
+
+	for i, opt := range options {
+		var clr color.Color = color.White
+		prefix := "  "
+		if g.mainMenuIndex == i {
+			clr = color.RGBA{255, 255, 0, 255}
+			prefix = "> "
+		}
+		itemW := len(prefix+opt) * 7
+		gr.graphics.DebugPrintAt(screen, prefix+opt, (g.width-itemW)/2, 300+i*50, clr)
+	}
+
+	gr.graphics.DebugPrintAt(screen, "v0.9.0-alpha", 20, g.height-30, color.RGBA{80, 80, 80, 255})
+}
+
+func (gr *GameRenderer) drawSettingsScreen(screen engine.Image) {
+	g := gr.game
+	// Black background
+	gr.graphics.DrawFilledRect(screen, 0, 0, float32(g.width), float32(g.height), color.Black, false)
+
+	// Title
+	title := "SETTINGS"
+	gr.graphics.DebugPrintAt(screen, title, (g.width-len(title)*7)/2, 100, color.RGBA{218, 165, 32, 255})
+
+	gr.graphics.DebugPrintAt(screen, "--- AUDIO ---", (g.width-100)/2, 200, color.RGBA{150, 150, 150, 255})
+	gr.graphics.DebugPrintAt(screen, "Sound Frequency:", (g.width-150)/2, 240, color.White)
+
+	for i, opt := range FrequencyOptions {
+		var clr color.Color = color.White
+		prefix := "  "
+		if g.settingsMenuIndex == i {
+			clr = color.RGBA{255, 255, 0, 255}
+			prefix = "> "
+		}
+		itemW := len(prefix+opt) * 7
+		gr.graphics.DebugPrintAt(screen, prefix+opt, (g.width-itemW)/2, 300+i*30, clr)
+	}
+
+	gr.graphics.DebugPrintAt(screen, "Select frequency and press ENTER to save and return.", (g.width-400)/2, g.height-100, color.RGBA{136, 136, 136, 255})
+}
+
+func (gr *GameRenderer) drawCharacterSelect(screen engine.Image) {
+	g := gr.game
+	// Black background
+	gr.graphics.DrawFilledRect(screen, 0, 0, float32(g.width), float32(g.height), color.Black, false)
+
+	// Title
+	title := "OINAKOS: CHOOSE YOUR HERO"
+	tw := len(title) * 7
+	gr.graphics.DebugPrintAt(screen, title, (g.width-tw)/2, 50, color.RGBA{218, 165, 32, 255})
+
+	mx, my := g.input.MousePosition()
+	hoverIndex := -1
+
+	for i, id := range g.playableCharacterRegistry.IDs {
+		char := g.playableCharacterRegistry.Characters[id]
+		var clr color.Color = color.White
+		prefix := "  "
+
+		// Mouse hover detection: X in [100, 400], Y in [130+i*30-5, 130+i*30+25]
+		if mx >= 100 && mx <= 400 && my >= 130+i*30-5 && my <= 130+i*30+25 {
+			hoverIndex = i
+		}
+
+		if g.characterMenuIndex == i {
+			clr = color.RGBA{255, 255, 0, 255}
+			prefix = "> "
+
+			// Draw full info for selected hero
+			gr.drawHeroPreview(screen, char, g.width/2+50, 130)
+		}
+		gr.graphics.DebugPrintAt(screen, prefix+char.Name, 100, 130+i*30, clr)
+	}
+
+	// If hovering but not selecting via keyboard, we can optionally show preview or update index.
+	// But usually we want mouse and keyboard to stay in sync.
+	if hoverIndex != -1 {
+		// We don't update g.characterMenuIndex here directly, but handle it in Game.Update
+		// However, for visual feedback we could highlight it.
+	}
+
+	gr.graphics.DebugPrintAt(screen, "Press UP/DOWN to navigate, ENTER to select hero.", (g.width-350)/2, g.height-50, color.RGBA{136, 136, 136, 255})
+}
+
+func (gr *GameRenderer) drawHeroPreview(screen engine.Image, char *EntityConfig, x, y int) {
+	gr.graphics.DebugPrintAt(screen, "--- HERO PROFILE ---", x, y, color.RGBA{218, 165, 32, 255})
+
+	// Portrait
+	if char.StaticImage != nil {
+		img := char.StaticImage.(engine.Image)
+		op := engine.NewDrawImageOptions()
+		op.Scale(1.5, 1.5)
+		op.Translate(float64(x), float64(y+30))
+		screen.DrawImage(img, op)
+	}
+
+	statsX := x + 150
+	statsY := y + 40
+	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("Health:  %d", char.Stats.HealthMin), statsX, statsY, color.White)
+	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("Attack:  %d", char.Stats.BaseAttack), statsX, statsY+20, color.White)
+	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("Defense: %d", char.Stats.BaseDefense), statsX, statsY+40, color.White)
+	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("Speed:   %.2f", char.Stats.Speed), statsX, statsY+60, color.White)
+	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("Weapon:  %s", char.WeaponName), statsX, statsY+80, color.White)
+
+	// Description
+	gr.graphics.DebugPrintAt(screen, "--- BIOGRAPHY ---", x, y+200, color.RGBA{218, 165, 32, 255})
+	words := strings.Fields(char.Description)
+	line := ""
+	lineNum := 0
+	for _, w := range words {
+		if len(line)+len(w) > 45 {
+			gr.graphics.DebugPrintAt(screen, line, x, y+230+lineNum*15, color.White)
+			line = w + " "
+			lineNum++
+		} else {
+			line += w + " "
+		}
+	}
+	gr.graphics.DebugPrintAt(screen, line, x, y+230+lineNum*15, color.White)
 }
 
 func (gr *GameRenderer) drawGameWon(screen engine.Image) {

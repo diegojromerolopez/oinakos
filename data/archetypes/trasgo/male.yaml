@@ -1,6 +1,6 @@
 id: trasgo
 name: Trasgo
-category: trasgo
+gender: male
 description: "A short, gnome-sized humanoid jester wearing a bright red hat. He is neutral and will not attack unless provoked, but runs incredibly fast and will laugh out loud while performing tricks and leaping around."
 behavior: wander
 stats:

@@ -45,7 +45,7 @@ cat > "${CONTENTS_DIR}/Info.plist" <<EOF
 EOF
 
 echo "Generating icon.icns..."
-ICON_SRC="assets/images/characters/main/static.png"
+ICON_SRC="assets/images/characters/oinakos/static.png"
 TEMP_ICON_DIR="/tmp/oinakos_icon.iconset"
 mkdir -p "${TEMP_ICON_DIR}"
 

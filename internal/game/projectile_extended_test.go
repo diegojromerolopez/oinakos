@@ -14,14 +14,14 @@ func TestProjectileLifecycle_Range(t *testing.T) {
 
 	// After 4 updates, it has moved 4.0 units. Still alive.
 	for i := 0; i < 4; i++ {
-		p.Update(mc, nil, &fts)
+		p.Update(mc, nil, &fts, nil)
 	}
 	if !p.Alive {
 		t.Errorf("Projectile should be alive after 4 units, distance is %v", p.DistanceTraveled)
 	}
 
 	// 5th update moves it to 5.0 units.
-	p.Update(mc, nil, &fts)
+	p.Update(mc, nil, &fts, nil)
 
 	// Since DistanceTraveled (5.0) >= MaxRange (5.0), it should be dead.
 	if p.Alive {
@@ -44,13 +44,13 @@ func TestProjectileCollision_MC(t *testing.T) {
 	var fts []*FloatingText
 
 	// Update 1: p moves to (1,0). No collision yet (MC is at 2,0, dist is 1.0, threshold is 0.6)
-	p.Update(mc, nil, &fts)
+	p.Update(mc, nil, &fts, nil)
 	if !p.Alive || mc.Health != 100 {
 		t.Errorf("P should be alive at (1,0), mc health %d", mc.Health)
 	}
 
 	// Update 2: p moves to (2,0). Collides.
-	p.Update(mc, nil, &fts)
+	p.Update(mc, nil, &fts, nil)
 
 	if p.Alive {
 		t.Error("Projectile should be dead after hitting MC")
@@ -78,7 +78,7 @@ func TestProjectileCollision_Obstacle(t *testing.T) {
 	// Update 2: (2,0)
 	// Update 3: (3,0) -> collision
 	for i := 0; i < 3; i++ {
-		p.Update(mc, obstacles, &fts)
+		p.Update(mc, obstacles, &fts, nil)
 	}
 
 	if p.Alive {

@@ -1,0 +1,25 @@
+id: durandarte
+name: Durandarte
+gender: male
+description: "The tragic hero of the Spanish Carolingian cycle. Mortally wounded at Roncevaux, his legend is tied to the devotion of his heart and his undying loyalty to his beloved Belerma."
+stats:
+  health_min: 130
+  health_max: 130
+  base_attack: 45
+  base_defense: 25
+  speed: 0.05
+  attack_cooldown: 40
+weapon: Bréche de Roland
+footprint:
+  - x: -0.2
+    y: -0.3
+  - x: 0.64
+    y: -0.64
+  - x: 1.44
+    y: -0.31
+  - x: 1.08
+    y: 0.67
+  - x: 0.42
+    y: 1.27
+  - x: -0.36
+    y: 0.86

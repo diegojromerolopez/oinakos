@@ -30,13 +30,13 @@ func SetDebugMode(enabled bool) {
 }
 
 func initDebugFile() {
-	// Ensure oinakos directory exists
-	if err := os.MkdirAll("oinakos", 0755); err != nil {
+	oinakosDir := GetOinakosDir()
+	if err := os.MkdirAll(oinakosDir, 0755); err != nil {
 		log.Printf("Warning: failed to create oinakos directory for debug log: %v", err)
 		return
 	}
 
-	logPath := filepath.Join("oinakos", "debug.log")
+	logPath := filepath.Join(oinakosDir, "debug.log")
 	f, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Printf("Warning: failed to open debug log file: %v", err)

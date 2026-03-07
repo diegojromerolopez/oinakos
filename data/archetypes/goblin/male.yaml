@@ -1,5 +1,6 @@
 id: goblin_male
 name: Goblin Archer
+gender: male
 behavior: hunter
 stats:
   health_min: 15

@@ -24,6 +24,26 @@ An infinite, isometric action combat game built with **Go** and the **Ebiten v2*
 -   **Dynamic Palette Swapping**: Engine uses GPU shaders to dynamically change NPC colors (e.g., unit armbands or capes) using primary/secondary color masks.
 -   **Testable Engine Architecture**: Game logic is decoupled from the rendering engine using strict Dependency Injection, enabling 100% (headless) unit testing coverage.
 
+### ⚔️ Combat & RPG Mechanics
+
+Oinakos features a deep, logarithmic RPG progression system that balances early early-game satisfaction with long-term survival challenge:
+
+-   **Experience & Leveling**:
+    -   Earn **XP** by defeating NPCs (XP values are defined per archetype).
+    -   Level up for every **100 XP** accumulated: `Level = (XP / 100) + 1`.
+    -   **Insta-Heal**: Leveling up instantly restores your character to **full health**.
+
+-   **RPG Attributes**:
+    -   **Health**: Your current durability. If it hits 0, the path ends.
+    -   **Attack**: Combined with your weapon stats to calculate outgoing damage.
+    -   **Defense**: Mitigates incoming damage from NPC strikes and projectiles.
+    -   **Speed**: Your base movement velocity in the Cartesian simulation.
+
+-   **Logarithmic Scaling**:
+    To prevent stats from spiraling out of control, Oinakos uses a **Base 2 Logarithmic Scaling** formula:
+    $$\text{Stat} = \text{Base} + (\log_2(\text{Level}) \times 10)$$
+    This ensures that reaching Level 2 gives a significant **+10 bonus**, while reaching Level 4 grants **+20**, and Level 8 grants **+30**. This makes every early level feel powerful while maintaining high-end challenge.
+
 ### 🎭 NPC Factions & Groups
 Oinakos implements a localized "Social AI" system. NPCs with a defined `group` field (e.g., `group: Peasants`) share a hive-mind response within a **20-unit radius**. 
 -   **Radial Alerts**: When an NPC is damaged by the player, it broadcasts an alert.

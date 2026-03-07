@@ -1,5 +1,6 @@
 id: orc_male
 name: Orc
+gender: male
 names:
   - Grog
   - Zog

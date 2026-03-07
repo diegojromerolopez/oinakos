@@ -27,7 +27,7 @@ func TestNewProjectile_ZeroDirection(t *testing.T) {
 func TestProjectileUpdate_Moves(t *testing.T) {
 	p := NewProjectile(0, 0, 1, 0, 0.5, 5, true, 100.0)
 	var fts []*FloatingText
-	p.Update(nil, nil, &fts)
+	p.Update(nil, nil, &fts, nil)
 	if math.Abs(p.X-0.5) > 0.001 {
 		t.Errorf("X after update: got %v, want 0.5", p.X)
 	}
@@ -37,7 +37,7 @@ func TestProjectileUpdate_SkipsIfDead(t *testing.T) {
 	p := NewProjectile(0, 0, 1, 0, 1.0, 5, true, 100.0)
 	p.Alive = false
 	var fts []*FloatingText
-	p.Update(nil, nil, &fts)
+	p.Update(nil, nil, &fts, nil)
 	// X should not have changed
 	if p.X != 0 {
 		t.Errorf("Dead projectile should not move, X=%v", p.X)
@@ -51,7 +51,7 @@ func TestProjectileUpdate_HitsObstacle(t *testing.T) {
 	obs := NewObstacle("test_obs_a", 0, 0, arch)
 	p := NewProjectile(0, 0, 1, 0, 0.0, 5, true, 100.0) // speed=0, won't move past
 	var fts []*FloatingText
-	p.Update(nil, []*Obstacle{obs}, &fts)
+	p.Update(nil, []*Obstacle{obs}, &fts, nil)
 	if p.Alive {
 		t.Error("Projectile should be killed when overlapping an obstacle")
 	}
@@ -64,7 +64,7 @@ func TestProjectileUpdate_ObstacleDead(t *testing.T) {
 	obs.Alive = false
 	p := NewProjectile(0, 0, 1, 0, 0.0, 5, true, 100.0)
 	var fts []*FloatingText
-	p.Update(nil, []*Obstacle{obs}, &fts)
+	p.Update(nil, []*Obstacle{obs}, &fts, nil)
 	// Dead obstacle should not kill the projectile
 	if !p.Alive {
 		t.Error("Dead obstacle should not stop the projectile")

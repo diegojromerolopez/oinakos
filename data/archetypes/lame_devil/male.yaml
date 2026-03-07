@@ -1,5 +1,6 @@
 id: lame_devil_male
 name: Lame Devil
+gender: male
 behavior: chaotic
 stats:
   health_min: 8

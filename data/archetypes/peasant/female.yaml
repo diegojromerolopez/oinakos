@@ -1,5 +1,6 @@
 id: peasant_female
 group: Peasants
+gender: female
 name: Peasant female
 names:
   - Maria

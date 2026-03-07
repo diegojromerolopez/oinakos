@@ -1,7 +1,8 @@
 id: crimson_guard
-group: "Crinsom Arm"
+group: "Crimson Arm"
 name: Crimson Guard
-archetype: man_at_arms_male
+archetype: man_at_arms
+gender: male
 unique: false
 primary_color: "#DC143C"
 secondary_color: "#FFFFFF"

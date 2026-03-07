@@ -1,6 +1,7 @@
 id: golden_guard
 name: Golden Guard
-archetype: man_at_arms_male
+archetype: man_at_arms
+gender: male
 unique: false
 primary_color: "#FFD700" # Gold
 secondary_color: "#FFFFFF"

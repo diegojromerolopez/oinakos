@@ -174,7 +174,11 @@ func (mc *MainCharacter) TakeDamage(amount int, audio AudioManager) {
 		mc.State = StateDead
 		DebugLog("Player DIED at (%.2f, %.2f)", mc.X, mc.Y)
 		if audio != nil {
-			audio.PlaySound("main/death")
+			audio.PlayRandomSound("oinakos/death")
+		}
+	} else {
+		if audio != nil {
+			audio.PlayRandomSound("oinakos/hit")
 		}
 	}
 }
@@ -303,7 +307,7 @@ func (mc *MainCharacter) Update(input engine.Input, audio AudioManager, obstacle
 			mc.Tick = 0
 			DebugLog("Player is Attacking! Pos: (%.2f, %.2f) | Facing: %v", mc.X, mc.Y, mc.Facing)
 			if audio != nil {
-				audio.PlaySound("main/attack")
+				audio.PlayRandomSound("oinakos/attack")
 			}
 			return
 		}

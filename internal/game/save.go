@@ -14,6 +14,7 @@ import (
 )
 
 type PlayerSaveData struct {
+	ArchetypeID string         `yaml:"archetype_id"`
 	X           float64        `yaml:"x"`
 	Y           float64        `yaml:"y"`
 	Health      int            `yaml:"health"`
@@ -102,8 +103,10 @@ func (g *Game) performQuicksave() {
 		return
 	}
 
-	if err := os.MkdirAll("oinakos/saves", 0755); err == nil {
-		savePath := fmt.Sprintf("oinakos/saves/quicksave-%s.oinakos.yaml", time.Now().Format("2006-01-02T150405"))
+	oinakosDir := GetOinakosDir()
+	saveDir := filepath.Join(oinakosDir, "saves")
+	if err := os.MkdirAll(saveDir, 0755); err == nil {
+		savePath := filepath.Join(saveDir, fmt.Sprintf("quicksave-%s.oinakos.yaml", time.Now().Format("2006-01-02T150405")))
 		if err := g.Save(savePath); err == nil {
 			log.Printf("Game quicksaved: %s", savePath)
 			g.lastSavePath = savePath
@@ -130,6 +133,7 @@ func (g *Game) serialize() ([]byte, error) {
 	data.Map.PlayTime = g.playTime
 
 	data.Player = PlayerSaveData{
+		ArchetypeID: g.mainCharacter.Config.ID,
 		X:           g.mainCharacter.X,
 		Y:           g.mainCharacter.Y,
 		Health:      g.mainCharacter.Health,
@@ -272,6 +276,17 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 	}
 
 	// Restore Player
+	if data.Player.ArchetypeID != "" {
+		if config, ok := g.playableCharacterRegistry.Characters[data.Player.ArchetypeID]; ok {
+			g.mainCharacter.Config = config
+			g.isCharacterSelect = false
+			g.isMainMenu = false
+			// Note: We might need to reload assets for this config if not already loaded
+		} else {
+			log.Printf("Warning: saved character archetype ID %s not found in registry", data.Player.ArchetypeID)
+		}
+	}
+
 	g.mainCharacter.X = data.Player.X
 	g.mainCharacter.Y = data.Player.Y
 	g.mainCharacter.Health = data.Player.Health
@@ -311,7 +326,23 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 
 		config, ok := g.archetypeRegistry.Archetypes[nData.ArchetypeID]
 		if !ok {
-			log.Printf("Warning: saved NPC archetype ID %s not found", nData.ArchetypeID)
+			// Fallback: check NPC registry for unique/named NPCs
+			config, ok = g.npcRegistry.NPCs[nData.ArchetypeID]
+			if !ok {
+				var archIDs []string
+				for id := range g.archetypeRegistry.Archetypes {
+					archIDs = append(archIDs, id)
+				}
+				var npcIDs []string
+				for id := range g.npcRegistry.NPCs {
+					npcIDs = append(npcIDs, id)
+				}
+				log.Printf("DEBUG: Lookup failed for %q. Archetypes Loaded: %v, NPCs Loaded: %v", nData.ArchetypeID, archIDs, npcIDs)
+			}
+		}
+
+		if !ok {
+			log.Printf("Warning: saved NPC/Archetype ID %s not found in any registry", nData.ArchetypeID)
 			continue
 		}
 		n := NewNPC(nData.X, nData.Y, config, nData.Level)

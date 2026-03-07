@@ -447,7 +447,7 @@ func main() {
 	mcConfig, err := game.LoadMainCharacterConfig(assets)
 	if err == nil {
 		// Override AssetDir for tool to find images
-		mcConfig.AssetDir = "assets/images/characters/main"
+		mcConfig.AssetDir = "assets/images/characters/oinakos"
 		mcConfig.StaticImage = graphics.LoadSprite(assets, filepath.Join(mcConfig.AssetDir, "static.png"), true)
 		mcConfig.CorpseImage = graphics.LoadSprite(assets, filepath.Join(mcConfig.AssetDir, "corpse.png"), true)
 		mcConfig.AttackImage = graphics.LoadSprite(assets, filepath.Join(mcConfig.AssetDir, "attack.png"), true)
@@ -462,7 +462,7 @@ func main() {
 			Type:      "Character",
 			Image:     img,
 			Footprint: &mcConfig.Footprint,
-			YamlPath:  "data/characters/main/character.yaml",
+			YamlPath:  "data/characters/oinakos.yaml",
 			DrawMain: func(screen engine.Image, g engine.Graphics, offsetX, offsetY float64) {
 				mc.Draw(screen, g, g, offsetX, offsetY)
 			},

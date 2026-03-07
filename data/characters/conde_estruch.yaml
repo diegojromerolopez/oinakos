@@ -1,0 +1,25 @@
+id: conde_estruch
+name: Conde Estruch
+gender: male
+description: "The 'Dracula of Catalonia'. Wilfred Estruch was a 12th-century knight who returned from death as a vampire to terrorize Llers Castle. A powerful blood-drinking noble."
+stats:
+  health_min: 90
+  health_max: 90
+  base_attack: 80
+  base_defense: 5
+  speed: 0.08
+  attack_cooldown: 25
+weapon: Claws
+footprint:
+  - x: -0.2
+    y: -0.3
+  - x: 0.64
+    y: -0.64
+  - x: 1.44
+    y: -0.31
+  - x: 1.08
+    y: 0.67
+  - x: 0.42
+    y: 1.27
+  - x: -0.36
+    y: 0.86

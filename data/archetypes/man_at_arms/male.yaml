@@ -1,5 +1,6 @@
 id: man_at_arms_male
 name: Man-at-Arms
+gender: male
 names:
   - Alden
   - Barret

@@ -1,8 +1,10 @@
 id: lieutenant_varrick
 name: Lieutenant Varrick
 description: "A seasoned veteran who wears the red band of the Crimson Guard. He is more skilled than the average man-at-arms."
-archetype: man_at_arms_male
-unique: true
+archetype: man_at_arms
+gender: male
+unique: false
+primary_color: "#8B0000" # Dark Red for rank distinction
 stats:
   health_min: 150
   health_max: 180

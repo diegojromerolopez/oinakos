@@ -1,5 +1,6 @@
 id: goblin_female
 name: Goblin Huntress
+gender: female
 behavior: hunter
 stats:
   health_min: 12

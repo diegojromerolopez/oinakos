@@ -41,6 +41,10 @@ type Game struct {
 	currentCampaign   *Campaign // If playing a campaign
 	campaignIndex     int       // Progress in campaign Maps
 	isCampaign        bool      // True if playing a campaign
+	isMainMenu        bool      // True if showing main menu
+	mainMenuIndex     int       // Index for main menu
+	isSettingsScreen  bool      // True if showing settings screen
+	settingsMenuIndex int       // Index for settings menu
 	isCampaignSelect  bool      // True if showing campaign picker
 	campaignMenuIndex int       // Index of selected campaign
 	initialMapTypeID  string
@@ -53,25 +57,30 @@ type Game struct {
 	camera *engine.Camera
 	assets fs.FS
 
-	floatingTexts     []*FloatingText
-	archetypeRegistry *ArchetypeRegistry
-	mapTypeRegistry   *MapTypeRegistry
-	campaignRegistry  *CampaignRegistry
-	obstacleRegistry  *ObstacleRegistry
-	initialMapID      string
-	lastSavePath      string
-	input             engine.Input
-	showBoundaries    bool
-	audio             AudioManager
-	npcRegistry       *NPCRegistry
+	floatingTexts             []*FloatingText
+	archetypeRegistry         *ArchetypeRegistry
+	playableCharacterRegistry *PlayableCharacterRegistry
+	mapTypeRegistry           *MapTypeRegistry
+	campaignRegistry          *CampaignRegistry
+	obstacleRegistry          *ObstacleRegistry
+	initialMapID              string
+	lastSavePath              string
+	input                     engine.Input
+	showBoundaries            bool
+	audio                     AudioManager
+	npcRegistry               *NPCRegistry
 
 	isMenuOpen       bool
 	menuIndex        int // 0: Resume, 1: Quicksave, 2: Load, 3: Quit
 	loadDialogActive bool
 	loadPathInput    string
 
-	saveMessage      string
-	saveMessageTimer int // Ticks to show the message
+	isCharacterSelect  bool
+	characterMenuIndex int
+	saveMessage        string
+	saveMessageTimer   int // Ticks to show the message
+
+	settings *Settings
 }
 
 func NewGame(assets fs.FS, initialMapID, initialMapTypeID string, input engine.Input, audio AudioManager, debug bool) *Game {
@@ -89,6 +98,9 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID string, input engine.I
 	// Registries
 	archetypeRegistry := NewArchetypeRegistry()
 	archetypeRegistry.LoadAll(assets)
+
+	playableCharacterRegistry := NewPlayableCharacterRegistry()
+	playableCharacterRegistry.LoadAll(assets)
 
 	mapTypeRegistry := NewMapTypeRegistry()
 	mapTypeRegistry.LoadAll(assets)
@@ -110,44 +122,45 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID string, input engine.I
 	}
 
 	g := &Game{
-		width:             1280,
-		height:            720,
-		mainCharacter:     mainCharacter,
-		camera:            engine.NewCamera(pIsoX, pIsoY),
-		assets:            assets,
-		generatedChunks:   make(map[image.Point]bool),
-		npcSpawnTimer:     0,
-		archetypeRegistry: archetypeRegistry,
-		mapTypeRegistry:   mapTypeRegistry,
-		campaignRegistry:  campaignRegistry,
-		obstacleRegistry:  obstacleRegistry,
-		npcRegistry:       npcRegistry,
-		currentMapType:    selectedMapType,
-		mapLevel:          1,
-		initialMapID:      initialMapID,
-		initialMapTypeID:  initialMapTypeID,
-		input:             input,
-		audio:             audio,
-		debug:             debug,
+		width:                     1280,
+		height:                    720,
+		mainCharacter:             mainCharacter,
+		camera:                    engine.NewCamera(pIsoX, pIsoY),
+		assets:                    assets,
+		generatedChunks:           make(map[image.Point]bool),
+		npcSpawnTimer:             0,
+		archetypeRegistry:         archetypeRegistry,
+		mapTypeRegistry:           mapTypeRegistry,
+		campaignRegistry:          campaignRegistry,
+		obstacleRegistry:          obstacleRegistry,
+		npcRegistry:               npcRegistry,
+		playableCharacterRegistry: playableCharacterRegistry,
+		currentMapType:            selectedMapType,
+		mapLevel:                  1,
+		initialMapID:              initialMapID,
+		initialMapTypeID:          initialMapTypeID,
+		input:                     input,
+		audio:                     audio,
+		debug:                     debug,
+	}
+
+	g.settings = LoadSettings()
+	if audio != nil {
+		audio.SetProbability(g.settings.GetSoundProbability())
 	}
 
 	SetDebugMode(debug)
 	DebugLog("Game Initialized | MapID: %s | MapTypeID: %s", initialMapID, initialMapTypeID)
 
-	if initialMapID == "" && initialMapTypeID == "" {
-		if len(g.campaignRegistry.IDs) > 0 {
-			g.isCampaignSelect = true
-		} else {
-			g.loadMapLevel()
-		}
-	} else {
-		g.loadMapLevel()
-	}
+	// Default to Main Menu for new games
+	g.isMainMenu = true
 
 	// WASM Auto-resumption from localStorage
 	if g.isWasm() {
 		if err := g.Load("quicksave"); err == nil {
 			log.Printf("Successfully Resumed Game from Browser Storage")
+			g.isMainMenu = false
+			g.isCharacterSelect = false
 			return g
 		}
 	}
@@ -184,6 +197,8 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID string, input engine.I
 			// Fallback: Check if it's a map type ID
 			if m, ok := g.mapTypeRegistry.Types[g.initialMapID]; ok {
 				g.currentMapType = *m
+				g.isMainMenu = false
+				g.isCharacterSelect = true
 				log.Printf("Using initial map type: %s", g.initialMapID)
 			} else {
 				log.Printf("Warning: requested map %s not found", g.initialMapID)
@@ -192,6 +207,8 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID string, input engine.I
 	} else if g.initialMapTypeID != "" {
 		if m, ok := g.mapTypeRegistry.Types[g.initialMapTypeID]; ok {
 			g.currentMapType = *m
+			g.isMainMenu = false
+			g.isCharacterSelect = true
 			log.Printf("Using initial map type target: %s", g.initialMapTypeID)
 		}
 	}
@@ -199,8 +216,8 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID string, input engine.I
 	// Initial generation around mainCharacter
 	g.updateChunks()
 
-	// Spawn NPCs if not loaded from instance
-	if !instanceLoaded {
+	// Spawn NPCs if not loaded from instance and not in menu
+	if !instanceLoaded && !g.isMainMenu {
 		g.npcs = make([]*NPC, 0)
 		g.loadMapLevel()
 	}
@@ -470,6 +487,181 @@ func (g *Game) loadMapLevel() {
 }
 
 func (g *Game) Update() error {
+	if g.isMainMenu {
+		nOptions := 4
+		if g.input.IsKeyJustPressed(engine.KeyUp) || g.input.IsKeyJustPressed(engine.KeyW) {
+			g.mainMenuIndex--
+			if g.mainMenuIndex < 0 {
+				g.mainMenuIndex = nOptions - 1
+			}
+		}
+		if g.input.IsKeyJustPressed(engine.KeyDown) || g.input.IsKeyJustPressed(engine.KeyS) {
+			g.mainMenuIndex++
+			if g.mainMenuIndex >= nOptions {
+				g.mainMenuIndex = 0
+			}
+		}
+
+		mx, my := g.input.MousePosition()
+		hoverIndex := -1
+		// Center alignment horizontal
+		centerX := g.width / 2
+		for i := 0; i < nOptions; i++ {
+			itemY := 300 + i*50
+			if mx >= centerX-100 && mx <= centerX+100 && my >= itemY-20 && my <= itemY+20 {
+				hoverIndex = i
+			}
+		}
+		if hoverIndex != -1 {
+			g.mainMenuIndex = hoverIndex
+		}
+
+		handleSelect := g.input.IsKeyJustPressed(engine.KeyEnter) || (hoverIndex != -1 && g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft))
+
+		if handleSelect {
+			switch g.mainMenuIndex {
+			case 0: // New Game
+				g.isMainMenu = false
+				g.isCharacterSelect = true
+			case 1: // Load Game
+				g.loadDialogActive = true
+			case 2: // Settings
+				// Load or create default settings
+				g.settings = LoadSettings()
+				g.settings.Save() // Ensure folder/file exists
+				// Find current index
+				for idx, val := range FrequencyOptions {
+					if val == g.settings.SoundFrequency {
+						g.settingsMenuIndex = idx
+						break
+					}
+				}
+				g.isMainMenu = false
+				g.isSettingsScreen = true
+			case 3: // Quit
+				if !g.isWasm() {
+					os.Exit(0)
+				}
+			}
+		}
+
+		if g.loadDialogActive {
+			path := g.openFilePicker()
+			if path != "" {
+				if err := g.Load(path); err == nil {
+					g.isMainMenu = false
+					g.isCharacterSelect = false
+				} else {
+					log.Printf("Failed to load map: %v", err)
+				}
+			}
+			g.loadDialogActive = false
+		}
+
+		return nil
+	}
+
+	if g.isSettingsScreen {
+		nO := len(FrequencyOptions)
+		if g.input.IsKeyJustPressed(engine.KeyUp) || g.input.IsKeyJustPressed(engine.KeyW) {
+			g.settingsMenuIndex--
+			if g.settingsMenuIndex < 0 {
+				g.settingsMenuIndex = nO - 1
+			}
+		}
+		if g.input.IsKeyJustPressed(engine.KeyDown) || g.input.IsKeyJustPressed(engine.KeyS) {
+			g.settingsMenuIndex++
+			if g.settingsMenuIndex >= nO {
+				g.settingsMenuIndex = 0
+			}
+		}
+
+		// Mouse selection
+		mx, my := g.input.MousePosition()
+		hoverIdx := -1
+		centerX := g.width / 2
+		for i := 0; i < nO; i++ {
+			itemY := 300 + i*30
+			if mx >= centerX-150 && mx <= centerX+150 && my >= itemY-15 && my <= itemY+15 {
+				hoverIdx = i
+			}
+		}
+		if hoverIdx != -1 {
+			g.settingsMenuIndex = hoverIdx
+		}
+
+		if g.input.IsKeyJustPressed(engine.KeyEnter) || (hoverIdx != -1 && g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft)) {
+			// Save setting
+			g.settings.SoundFrequency = FrequencyOptions[g.settingsMenuIndex]
+			g.settings.Save()
+			// Update probability
+			if g.audio != nil {
+				g.audio.SetProbability(g.settings.GetSoundProbability())
+			}
+			g.isSettingsScreen = false
+			g.isMainMenu = true
+		}
+
+		if g.input.IsKeyJustPressed(engine.KeyEscape) {
+			g.isSettingsScreen = false
+			g.isMainMenu = true
+		}
+		return nil
+	}
+
+	if g.isCharacterSelect {
+		nChars := len(g.playableCharacterRegistry.IDs)
+		if g.input.IsKeyJustPressed(engine.KeyUp) || g.input.IsKeyJustPressed(engine.KeyW) {
+			g.characterMenuIndex--
+			if g.characterMenuIndex < 0 {
+				g.characterMenuIndex = nChars - 1
+			}
+		}
+		if g.input.IsKeyJustPressed(engine.KeyDown) || g.input.IsKeyJustPressed(engine.KeyS) {
+			g.characterMenuIndex++
+			if g.characterMenuIndex >= nChars {
+				g.characterMenuIndex = 0
+			}
+		}
+
+		mx, my := g.input.MousePosition()
+		hoverIndex := -1
+		for i := 0; i < nChars; i++ {
+			if mx >= 100 && mx <= 400 && my >= 130+i*30-5 && my <= 130+i*30+25 {
+				hoverIndex = i
+			}
+		}
+		if hoverIndex != -1 {
+			g.characterMenuIndex = hoverIndex
+		}
+
+		handleSelect := g.input.IsKeyJustPressed(engine.KeyEnter) || (hoverIndex != -1 && g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft))
+
+		if handleSelect {
+			charID := g.playableCharacterRegistry.IDs[g.characterMenuIndex]
+			config := g.playableCharacterRegistry.Characters[charID]
+			g.mainCharacter.Config = config
+			g.mainCharacter.Health = config.Stats.HealthMin
+			g.mainCharacter.MaxHealth = config.Stats.HealthMin
+			g.mainCharacter.Speed = config.Stats.Speed
+			g.mainCharacter.BaseAttack = config.Stats.BaseAttack
+			g.mainCharacter.BaseDefense = config.Stats.BaseDefense
+			g.mainCharacter.Weapon = config.Weapon
+
+			g.isCharacterSelect = false
+			// If we're not in campaign select, load the map
+			if !g.isCampaignSelect {
+				g.loadMapLevel()
+			}
+		}
+		if g.input.IsKeyJustPressed(engine.KeyEscape) {
+			if !g.isWasm() {
+				os.Exit(0)
+			}
+		}
+		return nil
+	}
+
 	if g.isCampaignSelect {
 		nC := len(g.campaignRegistry.IDs)
 		nM := len(g.mapTypeRegistry.IDs)
@@ -748,7 +940,7 @@ func (g *Game) Update() error {
 	// Handle projectiles
 	activeProjectiles := []*Projectile{}
 	for _, p := range g.projectiles {
-		p.Update(g.mainCharacter, g.obstacles, &g.floatingTexts)
+		p.Update(g.mainCharacter, g.obstacles, &g.floatingTexts, g.audio)
 		if p.Alive {
 			activeProjectiles = append(activeProjectiles, p)
 		}

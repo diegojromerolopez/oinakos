@@ -1,7 +1,8 @@
 id: virculus
 name: Virculus
-category: construct
 description: "A crude, human-shaped automaton made from wood and sticks built in the 1500s. A large wooden chest forms its torso, revealing visible clockwork machinery whirring inside. It usually acts as a beggar and remains neutral unless attacked."
+unique: true
+gender: none
 behavior: wander
 stats:
   health_min: 150
