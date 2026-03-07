@@ -72,18 +72,10 @@ func main() {
 	npcReg.LoadAll(assets)
 	registerEntitySounds(npcReg.NPCs)
 
-	// Load main character sounds: assets/audio/characters/oinakos/<stem>.wav → "oinakos/<stem>"
-	const mainAudioDir = "assets/audio/characters/oinakos"
-	if entries, err := fs.ReadDir(assets, mainAudioDir); err == nil {
-		for _, e := range entries {
-			name := e.Name()
-			if len(name) < 5 || name[len(name)-4:] != ".wav" {
-				continue
-			}
-			stem := name[:len(name)-4]
-			engine.GlobalAudio.LoadSound("oinakos/"+stem, mainAudioDir+"/"+name)
-		}
-	}
+	// Load audio for ALL playable characters: assets/audio/characters/<id>/<stem>.wav → "<id>/<stem>"
+	charReg := game.NewPlayableCharacterRegistry()
+	charReg.LoadAll(assets)
+	registerEntitySounds(charReg.Characters)
 
 	// Providers
 	eg := engine.NewEbitenGraphics()
@@ -94,7 +86,7 @@ func main() {
 	gr.LoadAssets(assets)
 
 	ebiten.SetWindowSize(1280, 720)
-	ebiten.SetWindowTitle("Oinakos - Isometric RPG")
+	ebiten.SetWindowTitle("Oinakos")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 
 	// Set Window Icon from player character sprite

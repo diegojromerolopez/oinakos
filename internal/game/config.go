@@ -441,6 +441,7 @@ type EntityConfig struct {
 	Unique         bool             `yaml:"unique,omitempty"`
 	Gender         string           `yaml:"gender,omitempty"`
 	SoundID        string           `yaml:"-"` // ID used for audio lookups (e.g. "man_at_arms_male")
+	MainCharacter  string           `yaml:"-"` // Set to config.ID when this is the active playable character
 	PrimaryColor   string           `yaml:"primary_color,omitempty"`
 	SecondaryColor string           `yaml:"secondary_color,omitempty"`
 	XP             int              `yaml:"xp,omitempty"` // XP awarded on kill
@@ -650,6 +651,8 @@ func (r *PlayableCharacterRegistry) LoadAll(assets fs.FS) error {
 		variantName := config.ID
 		config.AssetDir = path.Join("assets/images/characters", variantName)
 		config.AudioDir = path.Join("assets/audio/characters", variantName)
+		config.SoundID = config.ID
+		config.MainCharacter = config.ID
 
 		// Link weapon
 		config.Weapon = GetWeaponByName(config.WeaponName)
