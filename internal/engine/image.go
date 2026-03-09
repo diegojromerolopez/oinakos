@@ -1,6 +1,9 @@
 package engine
 
-import "image"
+import (
+	"image"
+	"math"
+)
 
 // DrawImageOptions abstracts ebiten.DrawImageOptions
 type DrawImageOptions struct {
@@ -34,6 +37,10 @@ func (d *DrawImageOptions) Scale(x, y float64) {
 
 func (d *DrawImageOptions) Translate(tx, ty float64) {
 	d.GeoM.Translate(tx, ty)
+}
+
+func (d *DrawImageOptions) Rotate(theta float64) {
+	d.GeoM.Rotate(theta)
 }
 
 // Matrix abstracts ebiten.GeoM
@@ -71,6 +78,23 @@ func (m *Matrix) Reset() {
 func (m *Matrix) Translate(tx, ty float64) {
 	m.m[0][2] += tx
 	m.m[1][2] += ty
+}
+
+func (m *Matrix) Rotate(theta float64) {
+	sin, cos := math.Sincos(theta)
+	m00 := m.m[0][0]
+	m01 := m.m[0][1]
+	m02 := m.m[0][2]
+	m10 := m.m[1][0]
+	m11 := m.m[1][1]
+	m12 := m.m[1][2]
+
+	m.m[0][0] = cos*m00 - sin*m10
+	m.m[0][1] = cos*m01 - sin*m11
+	m.m[0][2] = cos*m02 - sin*m12
+	m.m[1][0] = sin*m00 + cos*m10
+	m.m[1][1] = sin*m01 + cos*m11
+	m.m[1][2] = sin*m02 + cos*m12
 }
 
 func (m *Matrix) SetElement(row, col int, val float64) {

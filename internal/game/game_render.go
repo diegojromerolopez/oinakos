@@ -59,46 +59,50 @@ func (gr *GameRenderer) LoadAssets(assets fs.FS) {
 		if mc.Config.AssetDir == "" {
 			mc.Config.AssetDir = "assets/images/characters/oinakos"
 		}
-		imgDir := mc.Config.AssetDir
-		staticPath := path.Join(imgDir, "static.png")
-		if _, err := fs.Stat(assets, staticPath); err == nil {
-			mc.Config.StaticImage = gr.graphics.LoadSprite(assets, staticPath, true)
-		}
+		if mc.Config.Engine == "paperdoll" {
+			mc.Config.LoadPaperdoll(assets, gr.graphics)
+		} else {
+			imgDir := mc.Config.AssetDir
+			staticPath := path.Join(imgDir, "static.png")
+			if _, err := fs.Stat(assets, staticPath); err == nil {
+				mc.Config.StaticImage = gr.graphics.LoadSprite(assets, staticPath, true)
+			}
 
-		backPath := path.Join(imgDir, "back.png")
-		if _, err := fs.Stat(assets, backPath); err == nil {
-			mc.Config.BackImage = gr.graphics.LoadSprite(assets, backPath, true)
-		}
+			backPath := path.Join(imgDir, "back.png")
+			if _, err := fs.Stat(assets, backPath); err == nil {
+				mc.Config.BackImage = gr.graphics.LoadSprite(assets, backPath, true)
+			}
 
-		corpsePath := path.Join(imgDir, "corpse.png")
-		if _, err := fs.Stat(assets, corpsePath); err == nil {
-			mc.Config.CorpseImage = gr.graphics.LoadSprite(assets, corpsePath, true)
-		}
+			corpsePath := path.Join(imgDir, "corpse.png")
+			if _, err := fs.Stat(assets, corpsePath); err == nil {
+				mc.Config.CorpseImage = gr.graphics.LoadSprite(assets, corpsePath, true)
+			}
 
-		attackPath := path.Join(imgDir, "attack.png")
-		if _, err := fs.Stat(assets, attackPath); err == nil {
-			mc.Config.AttackImage = gr.graphics.LoadSprite(assets, attackPath, true)
-		}
-		attack1Path := path.Join(imgDir, "attack1.png")
-		if _, err := fs.Stat(assets, attack1Path); err == nil {
-			mc.Config.Attack1Image = gr.graphics.LoadSprite(assets, attack1Path, true)
-		}
-		attack2Path := path.Join(imgDir, "attack2.png")
-		if _, err := fs.Stat(assets, attack2Path); err == nil {
-			mc.Config.Attack2Image = gr.graphics.LoadSprite(assets, attack2Path, true)
-		}
+			attackPath := path.Join(imgDir, "attack.png")
+			if _, err := fs.Stat(assets, attackPath); err == nil {
+				mc.Config.AttackImage = gr.graphics.LoadSprite(assets, attackPath, true)
+			}
+			attack1Path := path.Join(imgDir, "attack1.png")
+			if _, err := fs.Stat(assets, attack1Path); err == nil {
+				mc.Config.Attack1Image = gr.graphics.LoadSprite(assets, attack1Path, true)
+			}
+			attack2Path := path.Join(imgDir, "attack2.png")
+			if _, err := fs.Stat(assets, attack2Path); err == nil {
+				mc.Config.Attack2Image = gr.graphics.LoadSprite(assets, attack2Path, true)
+			}
 
-		hitPath := path.Join(imgDir, "hit.png")
-		if _, err := fs.Stat(assets, hitPath); err == nil {
-			mc.Config.HitImage = gr.graphics.LoadSprite(assets, hitPath, true)
-		}
-		hit1Path := path.Join(imgDir, "hit1.png")
-		if _, err := fs.Stat(assets, hit1Path); err == nil {
-			mc.Config.Hit1Image = gr.graphics.LoadSprite(assets, hit1Path, true)
-		}
-		hit2Path := path.Join(imgDir, "hit2.png")
-		if _, err := fs.Stat(assets, hit2Path); err == nil {
-			mc.Config.Hit2Image = gr.graphics.LoadSprite(assets, hit2Path, true)
+			hitPath := path.Join(imgDir, "hit.png")
+			if _, err := fs.Stat(assets, hitPath); err == nil {
+				mc.Config.HitImage = gr.graphics.LoadSprite(assets, hitPath, true)
+			}
+			hit1Path := path.Join(imgDir, "hit1.png")
+			if _, err := fs.Stat(assets, hit1Path); err == nil {
+				mc.Config.Hit1Image = gr.graphics.LoadSprite(assets, hit1Path, true)
+			}
+			hit2Path := path.Join(imgDir, "hit2.png")
+			if _, err := fs.Stat(assets, hit2Path); err == nil {
+				mc.Config.Hit2Image = gr.graphics.LoadSprite(assets, hit2Path, true)
+			}
 		}
 	}
 }
@@ -235,7 +239,7 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 	tasks = append(tasks, drawTask{
 		y: mcSortY,
 		draw: func() {
-			g.mainCharacter.Draw(screen, gr.graphics, gr.graphics, offsetX, offsetY)
+			g.mainCharacter.Draw(screen, gr.graphics, gr.graphics, gr.PaletteShader, offsetX, offsetY)
 		},
 	})
 
@@ -657,7 +661,38 @@ func (gr *GameRenderer) drawHeroPreview(screen engine.Image, char *EntityConfig,
 	gr.graphics.DebugPrintAt(screen, "--- HERO PROFILE ---", x, y, color.RGBA{218, 165, 32, 255})
 
 	// Portrait
-	if char.StaticImage != nil {
+	if char.Engine == "paperdoll" && char.Paperdoll != nil {
+		layers := []string{"body", "head_details", "tunic", "cape", "armor", "weapon_r"}
+		for _, layerName := range layers {
+			layerActions, ok := char.Paperdoll.Layers[layerName]
+			if !ok {
+				continue
+			}
+			layer, ok := layerActions["static"]
+			if !ok {
+				continue
+			}
+			img, ok := layer[DirSE]
+			if !ok {
+				continue
+			}
+
+			op := engine.NewDrawImageOptions()
+			op.Scale(1.5, 1.5)
+			op.Translate(float64(x), float64(y+30))
+
+			if (layerName == "tunic" || layerName == "cape") && gr.PaletteShader != nil && (char.PrimaryColor != "" || char.SecondaryColor != "") {
+				uniforms := make(map[string]interface{})
+				pArr := HexToRGBA(char.PrimaryColor)
+				sArr := HexToRGBA(char.SecondaryColor)
+				uniforms["PrimaryColor"] = pArr[:]
+				uniforms["SecondaryColor"] = sArr[:]
+				gr.graphics.DrawImageWithShader(screen, img, gr.PaletteShader, uniforms, op)
+			} else {
+				screen.DrawImage(img, op)
+			}
+		}
+	} else if char.StaticImage != nil {
 		img := char.StaticImage.(engine.Image)
 		op := engine.NewDrawImageOptions()
 		op.Scale(1.5, 1.5)

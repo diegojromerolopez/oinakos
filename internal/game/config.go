@@ -47,6 +47,20 @@ func forEachYAML(assets fs.FS, baseDir string, callback func(fpath string, data 
 			return nil
 		})
 	}
+
+	// 3. Local data directly (for development in repo root)
+	if _, err := os.Stat(baseDir); err == nil {
+		filepath.WalkDir(baseDir, func(fpath string, d fs.DirEntry, err error) error {
+			if err != nil || d.IsDir() || (filepath.Ext(fpath) != ".yaml" && filepath.Ext(fpath) != ".yml") {
+				return nil
+			}
+			data, err := os.ReadFile(fpath)
+			if err == nil {
+				callback(fpath, data)
+			}
+			return nil
+		})
+	}
 	return nil
 }
 
@@ -306,11 +320,10 @@ func (r *CampaignRegistry) LoadAll(assets fs.FS) error {
 			log.Printf("Warning: failed to unmarshal %s: %v", fpath, err)
 			return nil
 		}
-		if config.ID == "" {
-			config.ID = strings.TrimSuffix(filepath.Base(fpath), filepath.Ext(fpath))
+		if _, exists := r.Campaigns[config.ID]; !exists {
+			r.IDs = append(r.IDs, config.ID)
 		}
 		r.Campaigns[config.ID] = &config
-		r.IDs = append(r.IDs, config.ID)
 		return nil
 	})
 }
@@ -446,20 +459,27 @@ type EntityConfig struct {
 	SecondaryColor string           `yaml:"secondary_color,omitempty"`
 	XP             int              `yaml:"xp,omitempty"` // XP awarded on kill
 	Group          string           `yaml:"group,omitempty"`
+	Engine         string           `yaml:"engine,omitempty"`
 
 	// Run-time loaded assets
-	AssetDir     string      `yaml:"-"`
-	AudioDir     string      `yaml:"-"` // e.g. assets/audio/archetypes/orc/male
-	StaticImage  interface{} `yaml:"-"`
-	BackImage    interface{} `yaml:"-"` // back.png (instead of static.png when facing UP)
-	CorpseImage  interface{} `yaml:"-"`
-	AttackImage  interface{} `yaml:"-"` // attack.png (default)
-	Attack1Image interface{} `yaml:"-"` // attack1.png
-	Attack2Image interface{} `yaml:"-"` // attack2.png
-	HitImage     interface{} `yaml:"-"` // hit.png  (legacy / single hit frame)
-	Hit1Image    interface{} `yaml:"-"` // hit1.png (first variant)
-	Hit2Image    interface{} `yaml:"-"` // hit2.png (second variant, requires hit1.png)
-	Weapon       *Weapon     `yaml:"-"`
+	AssetDir     string           `yaml:"asset_dir,omitempty"`
+	AudioDir     string           `yaml:"audio_dir,omitempty"` // e.g. assets/audio/archetypes/orc/male
+	StaticImage  interface{}      `yaml:"-"`
+	BackImage    interface{}      `yaml:"-"` // back.png (instead of static.png when facing UP)
+	CorpseImage  interface{}      `yaml:"-"`
+	AttackImage  interface{}      `yaml:"-"` // attack.png (default)
+	Attack1Image interface{}      `yaml:"-"` // attack1.png
+	Attack2Image interface{}      `yaml:"-"` // attack2.png
+	HitImage     interface{}      `yaml:"-"` // hit.png  (legacy / single hit frame)
+	Hit1Image    interface{}      `yaml:"-"` // hit1.png (first variant)
+	Hit2Image    interface{}      `yaml:"-"` // hit2.png (second variant, requires hit1.png)
+	Weapon       *Weapon          `yaml:"-"`
+	Paperdoll    *PaperdollAssets `yaml:"-"`
+}
+
+type PaperdollAssets struct {
+	// Layers[layerName][actionName][direction]
+	Layers map[string]map[string]map[Direction]engine.Image
 }
 
 // PickAttackImage returns the sprite to display when this entity attacks.
@@ -563,7 +583,46 @@ func (r *ArchetypeRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics) {
 		if _, err := fs.Stat(assets, hit2Path); err == nil {
 			config.Hit2Image = graphics.LoadSprite(assets, hit2Path, true)
 		}
+
+		if config.Engine == "paperdoll" {
+			config.LoadPaperdoll(assets, graphics)
+		}
 	}
+}
+
+func (config *EntityConfig) LoadPaperdoll(assets fs.FS, graphics engine.Graphics) {
+	if assets == nil {
+		return
+	}
+	config.Paperdoll = &PaperdollAssets{
+		Layers: make(map[string]map[string]map[Direction]engine.Image),
+	}
+
+	layerNames := []string{"body", "head_details", "tunic", "cape", "armor", "weapon_r"}
+	actions := []string{"static", "walk1", "walk2", "walk3", "walk4", "attack", "hit"}
+	dirs := map[string]Direction{
+		"n": DirN, "ne": DirNE, "e": DirE, "se": DirSE,
+		"s": DirS, "sw": DirSW, "w": DirW, "nw": DirNW,
+	}
+
+	loadedCount := 0
+	for _, layer := range layerNames {
+		config.Paperdoll.Layers[layer] = make(map[string]map[Direction]engine.Image)
+		for _, action := range actions {
+			config.Paperdoll.Layers[layer][action] = make(map[Direction]engine.Image)
+			for suffix, dir := range dirs {
+				fpath := path.Join(config.AssetDir, layer, fmt.Sprintf("%s_%s.png", action, suffix))
+				if loadedCount == 0 {
+					log.Printf("DEBUG: First paperdoll path attempted: %s", fpath)
+				}
+				if _, serr := fs.Stat(assets, fpath); serr == nil {
+					config.Paperdoll.Layers[layer][action][dir] = graphics.LoadSprite(assets, fpath, true)
+					loadedCount++
+				}
+			}
+		}
+	}
+	log.Printf("DEBUG: Paperdoll for %s: loaded %d sprites from %s", config.ID, loadedCount, config.AssetDir)
 }
 
 func (r *ArchetypeRegistry) LoadAll(assets fs.FS) error {
@@ -646,67 +705,73 @@ func (r *PlayableCharacterRegistry) LoadAll(assets fs.FS) error {
 
 		sanitizeEntityConfig(&config, fpath)
 
-		// Set AssetDir for playable character sprites
-		// assets/images/characters/variant_name/
-		variantName := config.ID
-		config.AssetDir = path.Join("assets/images/characters", variantName)
-		config.AudioDir = path.Join("assets/audio/characters", variantName)
+		// Set AssetDir for playable character sprites if not specified
+		if config.AssetDir == "" {
+			config.AssetDir = path.Join("assets/images/characters", config.ID)
+		}
+		if config.AudioDir == "" {
+			config.AudioDir = path.Join("assets/audio/characters", config.ID)
+		}
 		config.SoundID = config.ID
 		config.MainCharacter = config.ID
 
 		// Link weapon
 		config.Weapon = GetWeaponByName(config.WeaponName)
 
+		if _, exists := r.Characters[config.ID]; !exists {
+			r.IDs = append(r.IDs, config.ID)
+		}
 		r.Characters[config.ID] = &config
-		r.IDs = append(r.IDs, config.ID)
+		log.Printf("DEBUG: Registered playable character: %s (%s) from %s", config.ID, config.Name, fpath)
 		return nil
 	})
 }
 
 func (r *PlayableCharacterRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics) {
 	for _, config := range r.Characters {
-		if config.AssetDir == "" {
-			continue
-		}
-		staticPath := path.Join(config.AssetDir, "static.png")
-		if _, err := fs.Stat(assets, staticPath); err == nil {
-			config.StaticImage = graphics.LoadSprite(assets, staticPath, true)
-		}
+		if config.Engine == "paperdoll" {
+			config.LoadPaperdoll(assets, graphics)
+		} else {
+			staticPath := path.Join(config.AssetDir, "static.png")
+			if _, err := fs.Stat(assets, staticPath); err == nil {
+				config.StaticImage = graphics.LoadSprite(assets, staticPath, true)
+			}
 
-		backPath := path.Join(config.AssetDir, "back.png")
-		if _, err := fs.Stat(assets, backPath); err == nil {
-			config.BackImage = graphics.LoadSprite(assets, backPath, true)
-		}
+			backPath := path.Join(config.AssetDir, "back.png")
+			if _, err := fs.Stat(assets, backPath); err == nil {
+				config.BackImage = graphics.LoadSprite(assets, backPath, true)
+			}
 
-		corpsePath := path.Join(config.AssetDir, "corpse.png")
-		if _, err := fs.Stat(assets, corpsePath); err == nil {
-			config.CorpseImage = graphics.LoadSprite(assets, corpsePath, true)
-		}
+			corpsePath := path.Join(config.AssetDir, "corpse.png")
+			if _, err := fs.Stat(assets, corpsePath); err == nil {
+				config.CorpseImage = graphics.LoadSprite(assets, corpsePath, true)
+			}
 
-		attackPath := path.Join(config.AssetDir, "attack.png")
-		if _, err := fs.Stat(assets, attackPath); err == nil {
-			config.AttackImage = graphics.LoadSprite(assets, attackPath, true)
-		}
-		attack1Path := path.Join(config.AssetDir, "attack1.png")
-		if _, err := fs.Stat(assets, attack1Path); err == nil {
-			config.Attack1Image = graphics.LoadSprite(assets, attack1Path, true)
-		}
-		attack2Path := path.Join(config.AssetDir, "attack2.png")
-		if _, err := fs.Stat(assets, attack2Path); err == nil {
-			config.Attack2Image = graphics.LoadSprite(assets, attack2Path, true)
-		}
+			attackPath := path.Join(config.AssetDir, "attack.png")
+			if _, err := fs.Stat(assets, attackPath); err == nil {
+				config.AttackImage = graphics.LoadSprite(assets, attackPath, true)
+			}
+			attack1Path := path.Join(config.AssetDir, "attack1.png")
+			if _, err := fs.Stat(assets, attack1Path); err == nil {
+				config.Attack1Image = graphics.LoadSprite(assets, attack1Path, true)
+			}
+			attack2Path := path.Join(config.AssetDir, "attack2.png")
+			if _, err := fs.Stat(assets, attack2Path); err == nil {
+				config.Attack2Image = graphics.LoadSprite(assets, attack2Path, true)
+			}
 
-		hitPath := path.Join(config.AssetDir, "hit.png")
-		if _, err := fs.Stat(assets, hitPath); err == nil {
-			config.HitImage = graphics.LoadSprite(assets, hitPath, true)
-		}
-		hit1Path := path.Join(config.AssetDir, "hit1.png")
-		if _, err := fs.Stat(assets, hit1Path); err == nil {
-			config.Hit1Image = graphics.LoadSprite(assets, hit1Path, true)
-		}
-		hit2Path := path.Join(config.AssetDir, "hit2.png")
-		if _, err := fs.Stat(assets, hit2Path); err == nil {
-			config.Hit2Image = graphics.LoadSprite(assets, hit2Path, true)
+			hitPath := path.Join(config.AssetDir, "hit.png")
+			if _, err := fs.Stat(assets, hitPath); err == nil {
+				config.HitImage = graphics.LoadSprite(assets, hitPath, true)
+			}
+			hit1Path := path.Join(config.AssetDir, "hit1.png")
+			if _, err := fs.Stat(assets, hit1Path); err == nil {
+				config.Hit1Image = graphics.LoadSprite(assets, hit1Path, true)
+			}
+			hit2Path := path.Join(config.AssetDir, "hit2.png")
+			if _, err := fs.Stat(assets, hit2Path); err == nil {
+				config.Hit2Image = graphics.LoadSprite(assets, hit2Path, true)
+			}
 		}
 	}
 }
@@ -866,9 +931,11 @@ func (r *NPCRegistry) LoadAll(assets fs.FS) error {
 		// Link weapon
 		config.Weapon = GetWeaponByName(config.WeaponName)
 
-		log.Printf("DEBUG: NPC Registry loading %s from %s", config.ID, fpath)
+		if _, exists := r.NPCs[config.ID]; !exists {
+			r.IDs = append(r.IDs, config.ID)
+		}
 		r.NPCs[config.ID] = &config
-		r.IDs = append(r.IDs, config.ID)
+		log.Printf("DEBUG: NPC Registry loading %s from %s", config.ID, fpath)
 		return nil
 	})
 }

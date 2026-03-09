@@ -9,7 +9,11 @@ stats:
   base_defense: 10
   speed: 0.07
   attack_cooldown: 30
+engine: paperdoll
+asset_dir: assets/images/characters/conde_olinos/paperdoll
 weapon: Long sword
+primary_color: "#2244AA" # Royal Blue tunic
+secondary_color: "#AA8822" # Noble Gold cape
 footprint:
   - x: -0.2
     y: -0.3

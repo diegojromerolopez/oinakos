@@ -44,6 +44,10 @@ const (
 	DirSW
 	DirNE
 	DirNW
+	DirS
+	DirW
+	DirN
+	DirE
 )
 
 type MainCharacter struct {
@@ -242,6 +246,17 @@ func (mc *MainCharacter) Update(input engine.Input, audio AudioManager, obstacle
 			mc.State = StateIdle
 			mc.Tick = 0
 		}
+		return
+	}
+
+	if mc.State == StateAttacking {
+		mc.Tick++
+		if mc.Tick > 20 { // 20 frames of attack pose
+			mc.State = StateIdle
+			mc.Tick = 0
+		}
+		// Allow small movement or rotation adjustments if desired,
+		// but typically we lock movement during attack.
 		return
 	}
 
