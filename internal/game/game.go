@@ -261,6 +261,12 @@ func (g *Game) loadMapLevel() {
 	g.mainCharacter.MapKills = make(map[string]int) // reset per-map kills
 	g.mapWonMenuIndex = 0
 
+	// Initial player position
+	if g.currentMapType.Player != nil {
+		g.mainCharacter.X = g.currentMapType.Player.X
+		g.mainCharacter.Y = g.currentMapType.Player.Y
+	}
+
 	// Camera Snap to player
 	pIsoX, pIsoY := engine.CartesianToIso(g.mainCharacter.X, g.mainCharacter.Y)
 	g.camera.SnapTo(pIsoX, pIsoY)

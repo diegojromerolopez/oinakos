@@ -4,6 +4,9 @@ type: reach_building
 difficulty: 1
 description: Reach the village center
 floor_tile: grass.png
+player:
+  x: 0.0
+  y: 0.0
 obstacles:
 - archetype: campfire
   x: 0.0
@@ -427,6 +430,86 @@ inhabitants:
 - archetype: peasant_female
   x: 26.0
   y: 31.4
+  alignment: neutral
+- npc: crimson_guard
+  x: 8.4
+  y: -28.5
+  alignment: neutral
+- npc: crimson_guard
+  x: -13.5
+  y: -16.6
+  alignment: neutral
+- npc: crimson_guard
+  x: 14.2
+  y: 10.6
+  alignment: neutral
+- npc: crimson_guard
+  x: 23.5
+  y: -24.8
+  alignment: neutral
+- npc: crimson_guard
+  x: -4.7
+  y: -28.2
+  alignment: neutral
+- npc: crimson_guard
+  x: -16.9
+  y: 0.3
+  alignment: neutral
+- npc: crimson_guard
+  x: -28.4
+  y: -18.1
+  alignment: neutral
+- npc: crimson_guard
+  x: 9.0
+  y: 2.7
+  alignment: neutral
+- npc: crimson_guard
+  x: -16.8
+  y: 5.4
+  alignment: neutral
+- npc: crimson_guard
+  x: 18.6
+  y: -29.6
+  alignment: neutral
+- npc: crimson_guard
+  x: 18.3
+  y: 11.9
+  alignment: neutral
+- npc: crimson_guard
+  x: -9.6
+  y: -20.7
+  alignment: neutral
+- npc: crimson_guard
+  x: 27.4
+  y: -9.8
+  alignment: neutral
+- npc: crimson_guard
+  x: -24.4
+  y: -24.2
+  alignment: neutral
+- npc: crimson_guard
+  x: 20.8
+  y: 6.2
+  alignment: neutral
+- npc: crimson_guard
+  x: 18.4
+  y: 13.8
+  alignment: neutral
+- npc: crimson_guard
+  x: 2.2
+  y: 28.4
+  alignment: neutral
+- npc: crimson_guard
+  x: -7.3
+  y: 3.1
+  alignment: neutral
+- npc: crimson_guard
+  x: 19.8
+  y: 7.1
+  alignment: neutral
+- npc: crimson_guard
+  x: 21.7
+  y: 4.6
   alignment: neutral
 floor_zones:
 - name: village_road

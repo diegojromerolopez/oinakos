@@ -91,16 +91,19 @@ func TestQuickSave(t *testing.T) {
 		t.Fatalf("Failed to create dummy map file: %v", err)
 	}
 
+	SetOinakosDir(dir)
+	defer SetOinakosDir("") // Reset after test
+
 	g := NewGame(nil, dummyMapPath, "", NewMockInputManager(), NewMockAudioManager(), false)
 	g.performQuicksave()
 
-	// Check if 'oinakos/saves' dir exists
-	savesDir := filepath.Join("oinakos", "saves")
+	// Check if 'saves' dir exists in the temp dir
+	savesDir := filepath.Join(dir, "saves")
 	if _, err := os.Stat(savesDir); os.IsNotExist(err) {
-		t.Error("'oinakos/saves' directory was not created")
+		t.Error("'saves' directory was not created in temp dir")
 	}
 
-	// Verify a .oinakos file was created in oinakos/saves/
+	// Verify a .oinakos file was created in savesDir/
 	files, _ := os.ReadDir(savesDir)
 	found := false
 	for _, f := range files {
@@ -142,10 +145,13 @@ func TestLoad_Errors(t *testing.T) {
 		t.Fatalf("Failed to create dummy map file: %v", err)
 	}
 
+	SetOinakosDir(dir)
+	defer SetOinakosDir("")
+
 	g := NewGame(nil, dummyMapPath, "", NewMockInputManager(), NewMockAudioManager(), false)
 
-	// Ensure the oinakos/saves directory exists for the save files
-	saveDir := filepath.Join("oinakos", "saves")
+	// Ensure the saves directory exists for the save files in the temp dir
+	saveDir := filepath.Join(dir, "saves")
 	if err := os.MkdirAll(saveDir, 0755); err != nil {
 		t.Fatalf("Failed to create save directory: %v", err)
 	}

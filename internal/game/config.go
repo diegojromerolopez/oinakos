@@ -253,8 +253,9 @@ type MapType struct {
 	FloorTile       string             `yaml:"floor_tile"`
 	FloorZones      []*FloorZone       `yaml:"floor_zones"`
 	TargetPointRaw  *TargetPointConfig `yaml:"target_point"` // Optional YAML-supplied target point
-	MapWidth        float64            `yaml:"-"`            // Cartesian width
-	MapHeight       float64            `yaml:"-"`            // Cartesian height
+	Player          *TargetPointConfig `yaml:"player,omitempty"`
+	MapWidth        float64            `yaml:"-"` // Cartesian width
+	MapHeight       float64            `yaml:"-"` // Cartesian height
 
 	TargetNPC      *EntityConfig `yaml:"-"`
 	TargetObstacle *Obstacle     `yaml:"-"`
