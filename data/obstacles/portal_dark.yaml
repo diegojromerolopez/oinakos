@@ -4,11 +4,11 @@ type: "building"
 destructible: false
 description: "A swirling portal of dark energy. Your only ticket out of this nightmare."
 footprint:
-  - x: -1.0
-    y: -0.5
-  - x: 1.0
-    y: -0.5
-  - x: 1.0
-    y: 0.5
-  - x: -1.0
-    y: 0.5
+  - x: -0.83
+    y: -1.8
+  - x: -0.03
+    y: -1.72
+  - x: -0.5
+    y: 0.63
+  - x: -1.2
+    y: 0.64
