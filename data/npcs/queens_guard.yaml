@@ -1,0 +1,11 @@
+id: "queens_guard"
+name: "Queen's Guard"
+archetype: "man_at_arms"
+gender: "male"
+behavior: "hunter"
+leader: "queen"
+primary_color: "#400080" # Dark Purple for the Queen's faction
+secondary_color: "#1a1a1a"
+description: "A loyal guard of the Queen. They fight with fanatical devotion until their leader falls."
+xp: 20
+group: "queen_faction"

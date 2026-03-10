@@ -85,9 +85,10 @@ type NPC struct {
 
 	TargetNPC    *NPC
 	TargetPlayer *MainCharacter
-	IsBoss       bool
 	Alignment    Alignment
 	Group        string
+	LeaderID     string
+	MustSurvive  bool
 }
 
 var npcNames = []string{
@@ -111,9 +112,11 @@ func NewNPC(x, y float64, archetype *Archetype, level int) *NPC {
 		Archetype: archetype,
 		State:     NPCIdle,
 		Facing:    DirSE,
-		Level:     level,
-		Alignment: AlignmentEnemy, // Default to Enemy
-		Group:     archetype.Group,
+		Level:       level,
+		Alignment:   AlignmentEnemy, // Default to Enemy
+		Group:       archetype.Group,
+		LeaderID:    archetype.LeaderID,
+		MustSurvive: archetype.MustSurvive,
 	}
 
 	if archetype.Unique {
@@ -321,6 +324,24 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 		hasTarget = true
 	}
 
+	// Check for leader death
+	if n.LeaderID != "" && n.Alignment != AlignmentNeutral {
+		leaderAlive := false
+		for _, other := range allNPCs {
+			if other.Archetype != nil && other.Archetype.ID == n.LeaderID && other.IsAlive() {
+				leaderAlive = true
+				break
+			}
+		}
+		if !leaderAlive {
+			DebugLog("NPC [%s] becomes NEUTRAL because leader [%s] died!", n.Name, n.LeaderID)
+			n.Alignment = AlignmentNeutral
+			n.TargetPlayer = nil
+			n.TargetNPC = nil
+			n.Behavior = BehaviorWander
+		}
+	}
+
 	// Reassess target for certain behaviors
 	if n.Behavior == BehaviorChaotic || n.Behavior == BehaviorNpcFighter {
 		// Clear existing target to force reassessment in the switch below
@@ -353,8 +374,8 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 					if other == n || !other.IsAlive() {
 						continue
 					}
-					// Only fight NPCs of different alignment
-					if n.Alignment == other.Alignment {
+					// Only fight NPCs that are enemies
+					if !n.isEnemy(other, allNPCs) {
 						continue
 					}
 					dist := math.Sqrt(math.Pow(n.X-other.X, 2) + math.Pow(n.Y-other.Y, 2))
@@ -801,4 +822,24 @@ func (n *NPC) updateEscort(mainCharacter *MainCharacter, obstacles []*Obstacle) 
 	} else {
 		n.State = NPCIdle
 	}
+}
+func (n *NPC) isEnemy(other *NPC, allNPCs []*NPC) bool {
+	if n.Alignment != other.Alignment {
+		return true
+	}
+
+	// Traitor check: if 'other' has a leader whose alignment matches MINE,
+	// but 'other' itself has switched to a different alignment, 'other' is a traitor.
+	if other.LeaderID != "" {
+		for _, potentialLeader := range allNPCs {
+			if potentialLeader.Archetype != nil && potentialLeader.Archetype.ID == other.LeaderID && potentialLeader.IsAlive() {
+				if other.Alignment != potentialLeader.Alignment && n.Alignment == potentialLeader.Alignment {
+					return true
+				}
+				break
+			}
+		}
+	}
+
+	return false
 }

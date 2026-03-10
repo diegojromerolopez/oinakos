@@ -420,17 +420,23 @@ func (g *Game) loadMapLevel() {
 		}
 
 		if ok {
+			// If this inhabitant is the character the player selected, we'll swap positions
+			if ps.NPC != "" && g.mainCharacter.Config != nil && ps.NPC == g.mainCharacter.Config.ID {
+				g.mainCharacter.X = ps.X
+				g.mainCharacter.Y = ps.Y
+				// We don't spawn the NPC instance if the player IS that NPC
+				continue
+			}
+
 			npc := NewNPC(ps.X, ps.Y, config, g.mapLevel)
 			npc.Alignment = ps.Alignment
+			npc.MustSurvive = ps.MustSurvive
 			if ps.Name != "" {
 				npc.Name = ps.Name
 			}
 			if ps.State == "dead" {
 				npc.Health = 0
 				npc.State = NPCDead
-			} else {
-				// Default to alive/active
-				npc.State = NPCIdle
 			}
 			g.npcs = append(g.npcs, npc)
 		} else {
@@ -1167,6 +1173,12 @@ func (g *Game) Update() error {
 	// Update all NPCs (keep corpses indefinitely per user request)
 	for _, n := range g.npcs {
 		n.Update(g.mainCharacter, g.obstacles, g.npcs, &g.projectiles, &g.floatingTexts, g.currentMapType.MapWidth, g.currentMapType.MapHeight, g.audio)
+		if n.MustSurvive && !n.IsAlive() {
+			if !g.isGameOver {
+				DebugLog("CRITICAL FAILURE: [%s] was killed! Quest Failed.", n.Name)
+			}
+			g.isGameOver = true
+		}
 	}
 
 	// Update floating texts

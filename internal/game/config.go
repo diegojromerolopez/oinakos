@@ -187,7 +187,8 @@ type Inhabitant struct {
 	X         float64   `yaml:"x"`
 	Y         float64   `yaml:"y"`
 	State     string    `yaml:"state,omitempty"` // e.g. "dead", empty means alive
-	Alignment Alignment `yaml:"alignment"`
+	Alignment   Alignment `yaml:"alignment"`
+	MustSurvive bool      `yaml:"must_survive,omitempty"`
 }
 
 type PreSpawnObstacle struct {
@@ -447,6 +448,8 @@ type EntityConfig struct {
 	SecondaryColor string           `yaml:"secondary_color,omitempty"`
 	XP             int              `yaml:"xp,omitempty"` // XP awarded on kill
 	Group          string           `yaml:"group,omitempty"`
+	LeaderID       string           `yaml:"leader,omitempty"`
+	MustSurvive    bool             `yaml:"must_survive,omitempty"`
 
 	// Run-time loaded assets
 	AssetDir     string      `yaml:"-"`

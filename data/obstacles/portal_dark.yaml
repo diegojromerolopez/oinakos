@@ -1,0 +1,14 @@
+id: "portal_dark"
+name: "Dark Portal"
+type: "building"
+destructible: false
+description: "A swirling portal of dark energy. Your only ticket out of this nightmare."
+footprint:
+  - x: -1.0
+    y: -0.5
+  - x: 1.0
+    y: -0.5
+  - x: 1.0
+    y: 0.5
+  - x: -1.0
+    y: 0.5

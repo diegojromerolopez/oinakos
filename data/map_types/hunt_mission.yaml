@@ -1,0 +1,19 @@
+id: "hunt_mission"
+name: "Royal Hunt"
+type: "reach_portal"
+description: "A high-stakes mission where a VIP must reach an extraction point."
+difficulty: 4
+target_radius: 5.0
+target_point:
+  x: 35.0
+  y: 35.0
+floor_tile: "grass.png"
+spawns:
+  - archetype: "man_at_arms_male"
+    alignment: "enemy"
+    probability: 0.5
+    frequency: 6.0
+  - archetype: "peasant_male"
+    alignment: "enemy"
+    probability: 0.7
+    frequency: 4.0

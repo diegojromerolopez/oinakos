@@ -1,0 +1,17 @@
+id: "queen"
+name: "The Queen"
+behavior: "wander"
+stats:
+  health_min: 500
+  health_max: 500
+  speed: 0.01
+  base_attack: 20
+  base_defense: 30
+  attack_cooldown: 120
+  attack_range: 5.0
+  projectile_speed: 0.1
+weapon: "Shouts"
+unique: true
+description: "A stern medieval queen. Her death will cause her guards to lose their will to fight."
+xp: 100
+group: "queen_faction"

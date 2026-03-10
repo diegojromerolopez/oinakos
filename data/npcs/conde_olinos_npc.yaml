@@ -1,0 +1,8 @@
+id: "conde_olinos_npc"
+name: "Conde Olinos"
+archetype: "conde_olinos"
+behavior: "hunter"
+unique: true
+description: "The noble knight and singer. He must survive the hunt."
+xp: 0
+group: "player_faction"

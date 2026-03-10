@@ -1,0 +1,62 @@
+name: "The Hunt of Conde Olinos"
+map:
+  id: "hunt_mission"
+  width_px: 5120
+  height_px: 5120
+  level: 1
+  play_time: 0
+  overrides:
+    description: "Protect the noble Conde Olinos from the Queen's wrath. Reach the portal in the upper right corner to escape."
+player:
+  x: -30.0
+  y: -30.0
+npcs:
+  - archetype_id: "conde_olinos_npc"
+    x: -28.0
+    y: -28.0
+    health: 500
+    max_health: 500
+    behavior: "escort"
+    name: "Conde Olinos"
+  - archetype_id: "queen"
+    x: 0.0
+    y: 0.0
+    health: 1000
+    max_health: 1000
+    behavior: "hunter"
+    name: "The Queen"
+  - archetype_id: "queens_guard"
+    x: 5.0
+    y: 5.0
+    health: 150
+    max_health: 150
+    behavior: "hunter"
+  - archetype_id: "queens_guard"
+    x: -5.0
+    y: 5.0
+    health: 150
+    max_health: 150
+    behavior: "hunter"
+  - archetype_id: "queens_guard"
+    x: 5.0
+    y: -5.0
+    health: 150
+    max_health: 150
+    behavior: "hunter"
+  - archetype_id: "peasant_male"
+    x: 10.0
+    y: 10.0
+    health: 40
+    max_health: 40
+    behavior: "wander"
+  - archetype_id: "peasant_female"
+    x: -10.0
+    y: -10.0
+    health: 40
+    max_health: 40
+    behavior: "wander"
+obstacles:
+  - id: "escape_portal"
+    archetype_id: "portal_dark"
+    x: 35.0
+    y: 35.0

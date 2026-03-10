@@ -21,9 +21,7 @@ Choose your knight before entering battle. Each character has unique stats, weap
 | **Boris Stronesco** | Serbian | Claws | A noble who arrived in Cartagena carrying a cursed coffin. Speaks Serbian. |
 | **Roland** | French | Durandal | A disciplined paladin of the Carolingian court. Speaks French. |
 | **Conde Olinos** | Spanish | Long Sword | A tragic noble whose song moved the sea. Speaks Spanish. |
-| **Durandarte** | Spanish | Sword | A knight whose heart was literally cut from his chest. Speaks Spanish. |
 | **Gaiferos** | Spanish | Axe | A brave knight on a quest to free his beloved Melisendra. Speaks Spanish. |
-| **Montesinos** | Spanish | Sword | Keeper of the deep cave and ancient knightly secrets. Speaks Spanish. |
 | **Conde Estruch** | Catalan | Sword | A noble entangled in the mysteries of the old Catalan lands. |
 
 ### ⚔️ Key Gameplay Features
