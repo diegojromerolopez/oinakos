@@ -52,6 +52,7 @@ const (
 	BehaviorKnightHunter
 	BehaviorNpcFighter
 	BehaviorChaotic
+	BehaviorEscort
 )
 
 type NPC struct {
@@ -149,6 +150,8 @@ func NewNPC(x, y float64, archetype *Archetype, level int) *NPC {
 		n.Behavior = BehaviorWander
 	case "patrol":
 		n.Behavior = BehaviorPatrol
+	case "escort":
+		n.Behavior = BehaviorEscort
 	default:
 		if archetype.Unique {
 			n.Behavior = BehaviorWander
@@ -248,6 +251,11 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 		n.BloodTimer--
 	}
 
+	var playerDist float64
+	if mainCharacter != nil {
+		playerDist = math.Sqrt(math.Pow(n.X-mainCharacter.X, 2) + math.Pow(n.Y-mainCharacter.Y, 2))
+	}
+
 	if n.State == NPCDead {
 		if n.DeadTimer == 0 {
 			// FIRST TICK OF DEATH: Ensure position is safe for the corpse.
@@ -259,11 +267,6 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 		return
 	}
 
-	// Custom Escort Logic
-	if n.Archetype != nil && n.Archetype.ID == "escort" {
-		n.updateEscort(mainCharacter, obstacles)
-		return
-	}
 
 	if n.State == NPCAttacking {
 		n.AttackTimer++
@@ -275,39 +278,37 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 
 	// Override behavior based on alignment
 	if n.Alignment == AlignmentAlly {
-		// Try to find nearest enemy NPC
-		var nearestEnemy *NPC
-		var minDist = 999.0
-		for _, other := range allNPCs {
-			if other == n {
-				continue
-			}
-			if !other.IsAlive() || other.Alignment != AlignmentEnemy {
-				continue
-			}
-			dist := math.Sqrt(math.Pow(n.X-other.X, 2) + math.Pow(n.Y-other.Y, 2))
-			if dist < 15.0 && dist < minDist { // 15 unit range for allies to notice enemies
-				minDist = dist
-				nearestEnemy = other
-			}
-		}
+		// Allies should stay near the player but fight nearby enemies
+		const followDistThreshold = 8.0 // Dist at which they stop fighting and rejoin player
+		const rejoinDistTarget = 3.0   // Ideal distance to maintain from player
+		const enemyDetectionRange = 12.0
 
-		if nearestEnemy != nil {
-			n.TargetNPC = nearestEnemy
-			n.TargetPlayer = nil
-			targetX, targetY = nearestEnemy.X, nearestEnemy.Y
-			hasTarget = true
-		} else {
-			// No enemies nearby
+		if mainCharacter != nil && playerDist > followDistThreshold {
+			// Player is too far, stop whatever we are doing and rejoin
 			n.TargetNPC = nil
-			// No enemies, follow player
-			distToPlayer := math.Sqrt(math.Pow(n.X-mainCharacter.X, 2) + math.Pow(n.Y-mainCharacter.Y, 2))
-			if distToPlayer > 3.0 {
+			n.TargetPlayer = mainCharacter
+			targetX, targetY = mainCharacter.X, mainCharacter.Y
+			hasTarget = true
+			isTargetPlayer = true
+		} else {
+			// Close enough to consider fighting
+			nearestEnemy := gNearestEnemy(n, mainCharacter, allNPCs, enemyDetectionRange)
+			if nearestEnemy != nil {
+				n.TargetNPC = nearestEnemy
+				n.TargetPlayer = nil
+				targetX, targetY = nearestEnemy.X, nearestEnemy.Y
+				hasTarget = true
+			} else if mainCharacter != nil && playerDist > rejoinDistTarget {
+				// No enemies, stay close to player
+				n.TargetNPC = nil
 				n.TargetPlayer = mainCharacter
 				targetX, targetY = mainCharacter.X, mainCharacter.Y
 				hasTarget = true
 				isTargetPlayer = true
 			} else {
+				// Close enough and no enemies
+				n.TargetNPC = nil
+				n.TargetPlayer = nil
 				n.State = NPCIdle
 				return
 			}
@@ -361,7 +362,7 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 		} else {
 			switch n.Behavior {
 			case BehaviorKnightHunter:
-				if mainCharacter.IsAlive() {
+				if mainCharacter != nil && mainCharacter.IsAlive() {
 					n.TargetPlayer = mainCharacter
 					targetX, targetY = mainCharacter.X, mainCharacter.Y
 					hasTarget = true
@@ -392,7 +393,10 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 				// Find nearest living actor (NPC or MainCharacter) that isn't me
 				var minDist = 999.0
 				var nearestNPC *NPC
-				var playerDist = math.Sqrt(math.Pow(n.X-mainCharacter.X, 2) + math.Pow(n.Y-mainCharacter.Y, 2))
+				var playerDist = 999.0
+				if mainCharacter != nil {
+					playerDist = math.Sqrt(math.Pow(n.X-mainCharacter.X, 2) + math.Pow(n.Y-mainCharacter.Y, 2))
+				}
 
 				for _, other := range allNPCs {
 					if other == n || !other.IsAlive() {
@@ -405,7 +409,7 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 					}
 				}
 
-				if mainCharacter.IsAlive() && playerDist < minDist {
+				if mainCharacter != nil && mainCharacter.IsAlive() && playerDist < minDist {
 					n.TargetPlayer = mainCharacter
 					n.TargetNPC = nil
 					targetX, targetY = mainCharacter.X, mainCharacter.Y
@@ -415,6 +419,32 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 					n.TargetPlayer = nil
 					targetX, targetY = nearestNPC.X, nearestNPC.Y
 					hasTarget = true
+				}
+			case BehaviorEscort:
+				if mainCharacter != nil {
+					// Follow player, but attack nearest enemy if in range
+					const seekEnemyRange = 12.0
+					nearestEnemy := gNearestEnemy(n, mainCharacter, allNPCs, seekEnemyRange)
+
+					if nearestEnemy != nil {
+						n.TargetNPC = nearestEnemy
+						n.TargetPlayer = nil
+						targetX, targetY = nearestEnemy.X, nearestEnemy.Y
+						hasTarget = true
+					} else {
+						// Follow player if too far
+						if playerDist > 3.0 {
+							n.TargetPlayer = mainCharacter
+							n.TargetNPC = nil
+							targetX, targetY = mainCharacter.X, mainCharacter.Y
+							hasTarget = true
+							isTargetPlayer = true
+						} else {
+							// Stay idle if near player and no enemies
+							n.State = NPCIdle
+							return
+						}
+					}
 				}
 			case BehaviorWander:
 				if n.Tick%120 == 0 {
@@ -770,64 +800,7 @@ func (n *NPC) IsAlive() bool {
 	return n.State != NPCDead
 }
 
-func (n *NPC) updateEscort(mainCharacter *MainCharacter, obstacles []*Obstacle) {
-	dx := mainCharacter.X - n.X
-	dy := mainCharacter.Y - n.Y
-	dist := math.Sqrt(dx*dx + dy*dy)
-
-	// Follow mainCharacter if further than 5 units, but don't get closer than 3
-	if dist > 5.0 {
-		n.State = NPCWalking
-		speed := 0.02
-		if n.Archetype != nil {
-			speed = n.Archetype.Stats.Speed
-			if speed == 0 {
-				speed = 0.02
-			}
-		}
-
-		vx := (dx / dist) * speed
-		vy := (dy / dist) * speed
-
-		if math.Abs(vx) > math.Abs(vy) {
-			if vx > 0 {
-				n.Facing = DirSE
-			} else {
-				n.Facing = DirNW
-			}
-		} else {
-			if vy > 0 {
-				n.Facing = DirSW
-			} else {
-				n.Facing = DirNE
-			}
-		}
-
-		newX := n.X + vx
-		newY := n.Y + vy
-
-		// Simple collision avoidance for escort
-		collision := false
-		bounds := n.GetFootprint().Transformed(newX, newY)
-		for _, o := range obstacles {
-			if engine.CheckCollision(bounds, o.GetFootprint()) {
-				collision = true
-				break
-			}
-		}
-		if !collision {
-			n.X = newX
-			n.Y = newY
-		}
-	} else {
-		n.State = NPCIdle
-	}
-}
 func (n *NPC) isEnemy(other *NPC, allNPCs []*NPC) bool {
-	if n.Alignment != other.Alignment {
-		return true
-	}
-
 	// Traitor check: if 'other' has a leader whose alignment matches MINE,
 	// but 'other' itself has switched to a different alignment, 'other' is a traitor.
 	if other.LeaderID != "" {
@@ -841,5 +814,32 @@ func (n *NPC) isEnemy(other *NPC, allNPCs []*NPC) bool {
 		}
 	}
 
+	// Neutrals are never enemies to anyone, and don't have enemies
+	// (Unless they were caught as traitors above)
+	if n.Alignment == AlignmentNeutral || other.Alignment == AlignmentNeutral {
+		return false
+	}
+
+	if n.Alignment != other.Alignment {
+		return true
+	}
+
 	return false
+}
+func gNearestEnemy(n *NPC, mainCharacter *MainCharacter, allNPCs []*NPC, maxRange float64) *NPC {
+	var nearest *NPC
+	minDist := maxRange
+	for _, other := range allNPCs {
+		if other == n || !other.IsAlive() {
+			continue
+		}
+		if n.isEnemy(other, allNPCs) {
+			dist := math.Sqrt(math.Pow(n.X-other.X, 2) + math.Pow(n.Y-other.Y, 2))
+			if dist < minDist {
+				minDist = dist
+				nearest = other
+			}
+		}
+	}
+	return nearest
 }

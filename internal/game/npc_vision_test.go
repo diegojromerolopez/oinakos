@@ -120,10 +120,10 @@ func TestNPCVision_SwitchTargetOnDeath(t *testing.T) {
 	fighter.Alignment = AlignmentEnemy
 
 	victim1 := NewNPC(2, 0, &Archetype{ID: "v1"}, 1)
-	victim1.Alignment = AlignmentNeutral
+	victim1.Alignment = AlignmentAlly
 
 	victim2 := NewNPC(5, 0, &Archetype{ID: "v2"}, 1)
-	victim2.Alignment = AlignmentNeutral
+	victim2.Alignment = AlignmentAlly
 
 	audio := NewMockAudioManager()
 	var projs []*Projectile
@@ -175,6 +175,7 @@ func TestNPCChaotic_TargetSwitch(t *testing.T) {
 	chaotic.Alignment = AlignmentEnemy
 
 	npc := NewNPC(10, 0, &Archetype{ID: "npc"}, 1) // npc at dist 10
+	npc.Alignment = AlignmentAlly
 
 	audio := NewMockAudioManager()
 	var projs []*Projectile

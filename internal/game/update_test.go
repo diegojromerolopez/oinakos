@@ -22,7 +22,7 @@ height_px: 1000
 `),
 		},
 	}
-	g := NewGame(mockFS, "type1", "", NewMockInputManager(), NewMockAudioManager(), false)
+	g := NewGame(mockFS, "type1", "", "", NewMockInputManager(), NewMockAudioManager(), false)
 	g.isMainMenu = false
 	g.isCharacterSelect = false
 
@@ -100,7 +100,7 @@ height_px: 1000
 		},
 	}
 	mockInput := NewMockInputManager()
-	g := NewGame(mockFS, "type1", "", mockInput, NewMockAudioManager(), false)
+	g := NewGame(mockFS, "type1", "", "", mockInput, NewMockAudioManager(), false)
 	g.isMainMenu = false
 	g.isCharacterSelect = false
 
@@ -296,7 +296,7 @@ spawn_frequency: 0
 `),
 		},
 	}
-	g := NewGame(mockFS, "duel", "", NewMockInputManager(), NewMockAudioManager(), false)
+	g := NewGame(mockFS, "duel", "", "", NewMockInputManager(), NewMockAudioManager(), false)
 	g.isMainMenu = false
 	g.isCharacterSelect = false
 
@@ -331,7 +331,7 @@ difficulty: 1
 `),
 		},
 	}
-	g := NewGame(mockFS, "test", "", NewMockInputManager(), NewMockAudioManager(), false)
+	g := NewGame(mockFS, "test", "", "", NewMockInputManager(), NewMockAudioManager(), false)
 	g.isMainMenu = false
 	g.isCharacterSelect = false
 	mc := g.mainCharacter

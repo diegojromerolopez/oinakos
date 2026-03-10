@@ -97,10 +97,20 @@ func TestNPCFootprint(t *testing.T) {
 	}
 }
 
-func TestNPCUpdateEscort(t *testing.T) {
-	n := NewNPC(0, 0, &Archetype{ID: "escort"}, 1)
-	mc := &MainCharacter{X: 10, Y: 10}
-	n.updateEscort(mc, nil)
+func TestNPCAllyFollowing(t *testing.T) {
+	n := NewNPC(0, 0, nil, 1)
+	n.Alignment = AlignmentAlly
+	mc := &MainCharacter{X: 10, Y: 10, State: StateIdle}
+	
+	// First update should set target to player because they are far away (dist 14.14 > 8.0)
+	n.Update(mc, nil, nil, nil, nil, 100, 100, nil)
+	
+	if n.TargetPlayer != mc {
+		t.Errorf("Expected ally NPC to target player for rejoining, got %v", n.TargetPlayer)
+	}
+	if n.State != NPCWalking {
+		t.Errorf("Expected ally NPC to be walking, got %v", n.State)
+	}
 }
 
 func TestNPCCollision(t *testing.T) {

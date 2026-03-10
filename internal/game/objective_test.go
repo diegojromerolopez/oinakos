@@ -44,7 +44,7 @@ obstacles:
 	}
 
 	// Reach Point — target_point is defined in the YAML, so no override needed
-	g := NewGame(mockFS, "portal", "", NewMockInputManager(), NewMockAudioManager(), false)
+	g := NewGame(mockFS, "portal", "", "", NewMockInputManager(), NewMockAudioManager(), false)
 	g.isMainMenu = false
 	g.isCharacterSelect = false
 	g.mainCharacter.X = 0
@@ -61,7 +61,7 @@ obstacles:
 	}
 
 	// Survive Time
-	g = NewGame(mockFS, "survive", "", NewMockInputManager(), NewMockAudioManager(), false)
+	g = NewGame(mockFS, "survive", "", "", NewMockInputManager(), NewMockAudioManager(), false)
 	g.isMainMenu = false
 	g.isCharacterSelect = false
 	g.playTime = 5.0
@@ -76,7 +76,7 @@ obstacles:
 	}
 
 	// Destroy Building — test the win condition logic directly without relying on YAML loading
-	g = NewGame(mockFS, "building", "", NewMockInputManager(), NewMockAudioManager(), false)
+	g = NewGame(mockFS, "building", "", "", NewMockInputManager(), NewMockAudioManager(), false)
 	g.isMainMenu = false
 	g.isCharacterSelect = false
 	// Inject the target obstacle directly into game state

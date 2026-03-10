@@ -197,8 +197,8 @@ func sanitizePlayerSaveData(p *PlayerSaveData, source string) {
 
 // sanitizeNPCSaveData validates NPC save data fields.
 func sanitizeNPCSaveData(n *NPCSaveData, idx int, source string) {
-	if n.ArchetypeID == "" {
-		log.Printf("Warning [%s]: NPC[%d] has empty archetype_id, will be skipped", source, idx)
+	if n.ArchetypeID == "" && n.NPCID == "" {
+		log.Printf("Warning [%s]: NPC[%d] has empty archetype_id and npc_id, will be skipped", source, idx)
 	}
 	if n.Health < 0 {
 		log.Printf("Warning [%s]: NPC[%d] %q health=%d is negative, clamping to 0", source, idx, n.Name, n.Health)

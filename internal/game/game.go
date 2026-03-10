@@ -64,6 +64,7 @@ type Game struct {
 	campaignRegistry          *CampaignRegistry
 	obstacleRegistry          *ObstacleRegistry
 	initialMapID              string
+	initialHeroID             string
 	lastSavePath              string
 	input                     engine.Input
 	showBoundaries            bool
@@ -85,7 +86,7 @@ type Game struct {
 	isSettingsFromPause bool
 }
 
-func NewGame(assets fs.FS, initialMapID, initialMapTypeID string, input engine.Input, audio AudioManager, debug bool) *Game {
+func NewGame(assets fs.FS, initialMapID, initialMapTypeID, initialHeroID string, input engine.Input, audio AudioManager, debug bool) *Game {
 	rand.Seed(time.Now().UnixNano())
 
 	// Load mainCharacter config
@@ -141,6 +142,7 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID string, input engine.I
 		mapLevel:                  1,
 		initialMapID:              initialMapID,
 		initialMapTypeID:          initialMapTypeID,
+		initialHeroID:             initialHeroID,
 		input:                     input,
 		audio:                     audio,
 		debug:                     debug,
@@ -167,6 +169,22 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID string, input engine.I
 		}
 	}
 
+	if g.initialHeroID != "" {
+		if config, ok := g.playableCharacterRegistry.Characters[g.initialHeroID]; ok {
+			g.mainCharacter.Config = config
+			g.mainCharacter.Health = config.Stats.HealthMin
+			g.mainCharacter.MaxHealth = config.Stats.HealthMin
+			g.mainCharacter.Speed = config.Stats.Speed
+			g.mainCharacter.BaseAttack = config.Stats.BaseAttack
+			g.mainCharacter.BaseDefense = config.Stats.BaseDefense
+			g.mainCharacter.Weapon = config.Weapon
+			g.isCharacterSelect = false
+			log.Printf("Using initial hero: %s", g.initialHeroID)
+		} else {
+			log.Printf("Warning: initial hero %s not found in registry", g.initialHeroID)
+		}
+	}
+
 	// Trigger map loading if requested
 	instanceLoaded := false
 	if g.initialMapID != "" {
@@ -189,9 +207,18 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID string, input engine.I
 		// Try each candidate
 		for _, path := range candidates {
 			if err := g.Load(path); err == nil {
-				log.Printf("Loaded map instance: %s", path)
+				log.Printf("Loaded map instance: %s | Closing Menu", path)
 				instanceLoaded = true
+				g.isMainMenu = false
+				// If hero wasn't selected via flag, and we don't have one from save, go to select
+				if g.initialHeroID == "" && g.mainCharacter.Config == nil {
+					g.isCharacterSelect = true
+				} else {
+					g.isCharacterSelect = false
+				}
 				break
+			} else {
+				log.Printf("DEBUG: Failed to load candidate %s: %v", path, err)
 			}
 		}
 
@@ -409,19 +436,32 @@ func (g *Game) loadMapLevel() {
 	}
 
 	// Spawn Inhabitants (Corpses, specific encounter targets, etc.)
-	for _, ps := range g.currentMapType.Inhabitants {
+	allInhabs := append(g.currentMapType.Inhabitants, g.currentMapType.NPCs...)
+	for _, ps := range allInhabs {
 		var config *EntityConfig
 		var ok bool
 
-		if ps.NPC != "" {
-			config, ok = g.npcRegistry.NPCs[ps.NPC]
-		} else if ps.Archetype != "" {
-			config, ok = g.archetypeRegistry.Archetypes[ps.Archetype]
+		id := ps.NPC
+		if ps.NPCID != "" {
+			id = ps.NPCID
+		}
+
+		if id != "" {
+			config, ok = g.npcRegistry.NPCs[id]
+		} else {
+			arch := ps.Archetype
+			if ps.ArchetypeID != "" {
+				arch = ps.ArchetypeID
+			}
+			if arch != "" {
+				config, ok = g.archetypeRegistry.Archetypes[arch]
+				id = arch
+			}
 		}
 
 		if ok {
 			// If this inhabitant is the character the player selected, we'll swap positions
-			if ps.NPC != "" && g.mainCharacter.Config != nil && ps.NPC == g.mainCharacter.Config.ID {
+			if id != "" && g.mainCharacter.Config != nil && id == g.mainCharacter.Config.ID {
 				g.mainCharacter.X = ps.X
 				g.mainCharacter.Y = ps.Y
 				// We don't spawn the NPC instance if the player IS that NPC
@@ -440,10 +480,6 @@ func (g *Game) loadMapLevel() {
 			}
 			g.npcs = append(g.npcs, npc)
 		} else {
-			id := ps.Archetype
-			if ps.NPC != "" {
-				id = ps.NPC
-			}
 			log.Printf("WARNING: Inhabitant archetype/NPC not found: %s", id)
 		}
 	}
@@ -453,7 +489,11 @@ func (g *Game) loadMapLevel() {
 		if po.Disabled {
 			continue
 		}
-		if config, ok := g.obstacleRegistry.Archetypes[po.Archetype]; ok {
+		arch := po.Archetype
+		if po.ArchetypeID != "" {
+			arch = po.ArchetypeID
+		}
+		if config, ok := g.obstacleRegistry.Archetypes[arch]; ok {
 			px, py := 0.0, 0.0
 			if po.X != nil {
 				px = *po.X
@@ -673,8 +713,10 @@ func (g *Game) Update() error {
 			g.mainCharacter.Weapon = config.Weapon
 
 			g.isCharacterSelect = false
-			// If we're not in campaign select, load the map
-			if !g.isCampaignSelect {
+			// If we didn't start with a specific map from flags, go to campaign/map select
+			if g.initialMapID == "" && g.initialMapTypeID == "" {
+				g.isCampaignSelect = true
+			} else {
 				g.loadMapLevel()
 			}
 		}
@@ -779,7 +821,7 @@ func (g *Game) Update() error {
 		}
 		if g.input.IsKeyJustPressed(engine.KeyEnter) {
 			if g.mapWonMenuIndex == 0 { // Replay
-				*g = *NewGame(g.assets, g.initialMapID, g.initialMapTypeID, g.input, g.audio, g.debug)
+				*g = *NewGame(g.assets, g.initialMapID, g.initialMapTypeID, g.initialHeroID, g.input, g.audio, g.debug)
 			} else { // Quit
 				os.Exit(0)
 			}
@@ -802,7 +844,7 @@ func (g *Game) Update() error {
 			os.Exit(0)
 		}
 		if g.input.IsKeyJustPressed(engine.KeyEnter) {
-			*g = *NewGame(g.assets, g.initialMapID, g.initialMapTypeID, g.input, g.audio, g.debug)
+			*g = *NewGame(g.assets, g.initialMapID, g.initialMapTypeID, g.initialHeroID, g.input, g.audio, g.debug)
 		}
 		return nil
 	}

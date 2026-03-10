@@ -10,7 +10,7 @@ func TestCampaignProgression(t *testing.T) {
 	// Setup mock assets with a simple campaign
 	// In a real test we'd mock the FS better, but for this project we'll rely on the logic itself.
 
-	g := NewGame(nil, "", "", engine.NewMockInput(), &DefaultAudioManager{}, false)
+	g := NewGame(nil, "", "", "", engine.NewMockInput(), &DefaultAudioManager{}, false)
 	g.isMainMenu = false
 	g.isCharacterSelect = false
 
@@ -77,7 +77,7 @@ func TestCampaignProgression(t *testing.T) {
 }
 
 func TestGameWon_ReplayClearsState(t *testing.T) {
-	g := NewGame(nil, "", "", engine.NewMockInput(), &DefaultAudioManager{}, false)
+	g := NewGame(nil, "", "", "", engine.NewMockInput(), &DefaultAudioManager{}, false)
 	g.isMainMenu = false
 	g.isCharacterSelect = false
 	g.isGameWon = true
@@ -94,7 +94,7 @@ func TestGameWon_ReplayClearsState(t *testing.T) {
 }
 
 func TestGameWon_MenuNavigatesDown(t *testing.T) {
-	g := NewGame(nil, "", "", engine.NewMockInput(), &DefaultAudioManager{}, false)
+	g := NewGame(nil, "", "", "", engine.NewMockInput(), &DefaultAudioManager{}, false)
 	g.isMainMenu = false
 	g.isCharacterSelect = false
 	g.isGameWon = true
@@ -110,7 +110,7 @@ func TestGameWon_MenuNavigatesDown(t *testing.T) {
 }
 
 func TestGameWon_MenuNavigatesUp(t *testing.T) {
-	g := NewGame(nil, "", "", engine.NewMockInput(), &DefaultAudioManager{}, false)
+	g := NewGame(nil, "", "", "", engine.NewMockInput(), &DefaultAudioManager{}, false)
 	g.isMainMenu = false
 	g.isCharacterSelect = false
 	g.isGameWon = true

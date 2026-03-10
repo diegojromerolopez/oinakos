@@ -1,7 +1,7 @@
-id: "conde_olinos_npc"
+id: "conde_olinos"
 name: "Conde Olinos"
 archetype: "conde_olinos"
-behavior: "hunter"
+behavior: "escort"
 unique: true
 description: "The noble knight and singer. He must survive the hunt."
 xp: 0

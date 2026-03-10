@@ -1,62 +1,91 @@
+id: "conde_olinos_hunt"
 name: "The Hunt of Conde Olinos"
-map:
-  id: "hunt_mission"
-  width_px: 5120
-  height_px: 5120
-  level: 1
-  play_time: 0
-  overrides:
-    description: "Protect the noble Conde Olinos from the Queen's wrath. Reach the portal in the upper right corner to escape."
+type: "reach_portal"
+description: "Protect the noble Conde Olinos from the Queen's wrath. Reach the portal in the upper right corner to escape."
+difficulty: 5
+width_px: 5120
+height_px: 5120
+floor_tile: "grass.png"
+
+target_radius: 5.0
+target_point:
+  x: 45.0
+  y: 0.0
+
 player:
-  x: -30.0
-  y: -30.0
+  x: -10.0
+  y: 2.0
+
+floor_zones:
+  - name: "Town Road"
+    tile: "dirt.png"
+    priority: 2
+    perimeter:
+      - {x: -30.0, y: -2.5}
+      - {x: 30.0, y: -2.5}
+      - {x: 30.0, y: 2.5}
+      - {x: -30.0, y: 2.5}
+
 npcs:
-  - archetype_id: "conde_olinos_npc"
-    x: -28.0
-    y: -28.0
-    health: 500
-    max_health: 500
-    behavior: "escort"
-    name: "Conde Olinos"
-  - archetype_id: "queen"
-    x: 0.0
+  - npc_id: "conde_olinos"
+    x: -8.0
+    y: 2.0
+    must_survive: true
+    alignment: "ally"
+  - npc_id: "queen"
+    x: 15.0
     y: 0.0
-    health: 1000
-    max_health: 1000
-    behavior: "hunter"
-    name: "The Queen"
-  - archetype_id: "queens_guard"
-    x: 5.0
-    y: 5.0
-    health: 150
-    max_health: 150
-    behavior: "hunter"
-  - archetype_id: "queens_guard"
-    x: -5.0
-    y: 5.0
-    health: 150
-    max_health: 150
-    behavior: "hunter"
-  - archetype_id: "queens_guard"
-    x: 5.0
-    y: -5.0
-    health: 150
-    max_health: 150
-    behavior: "hunter"
+    alignment: "enemy"
+  - npc_id: "queens_guard"
+    x: 17.0
+    y: 3.0
+    alignment: "enemy"
+    leader_id: "queen"
+  - npc_id: "queens_guard"
+    x: 17.0
+    y: -3.0
+    alignment: "enemy"
+    leader_id: "queen"
+  - npc_id: "queens_guard"
+    x: 19.0
+    y: 0.0
+    alignment: "enemy"
+    leader_id: "queen"
+  
+  # Village Peasants
   - archetype_id: "peasant_male"
-    x: 10.0
-    y: 10.0
-    health: 40
-    max_health: 40
-    behavior: "wander"
+    x: -5.0
+    y: 4.0
+    alignment: "neutral"
   - archetype_id: "peasant_female"
-    x: -10.0
-    y: -10.0
-    health: 40
-    max_health: 40
-    behavior: "wander"
+    x: 3.0
+    y: -4.0
+    alignment: "neutral"
+  - archetype_id: "peasant_male"
+    x: 8.0
+    y: 4.5
+    alignment: "neutral"
+
 obstacles:
   - id: "escape_portal"
-    archetype_id: "portal_dark"
-    x: 35.0
-    y: 35.0
+    archetype_id: "portal1"
+    x: 45.0
+    y: 0.0
+  - archetype_id: "house1"
+    x: -10.0
+    y: 6.0
+  - archetype_id: "house2"
+    x: 0.0
+    y: 6.0
+  - archetype_id: "house3"
+    x: 10.0
+    y: 6.0
+  - archetype_id: "tavern"
+    x: -10.0
+    y: -6.0
+  - archetype_id: "smithery"
+    x: 0.0
+    y: -6.0
+  - archetype_id: "well"
+    x: 5.0
+    y: 0.0

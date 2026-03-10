@@ -180,23 +180,26 @@ func (a *Alignment) UnmarshalYAML(value *yaml.Node) error {
 }
 
 type Inhabitant struct {
-	ID        string    `yaml:"id,omitempty"` // For internal mapping if needed
-	Name      string    `yaml:"name,omitempty"`
-	Archetype string    `yaml:"archetype,omitempty"`
-	NPC       string    `yaml:"npc,omitempty"`
-	X         float64   `yaml:"x"`
-	Y         float64   `yaml:"y"`
-	State     string    `yaml:"state,omitempty"` // e.g. "dead", empty means alive
+	ID          string    `yaml:"id,omitempty"` // For internal mapping if needed
+	Name        string    `yaml:"name,omitempty"`
+	Archetype   string    `yaml:"archetype,omitempty"`
+	ArchetypeID string    `yaml:"archetype_id,omitempty"`
+	NPC         string    `yaml:"npc,omitempty"`
+	NPCID       string    `yaml:"npc_id,omitempty"`
+	X           float64   `yaml:"x"`
+	Y           float64   `yaml:"y"`
+	State       string    `yaml:"state,omitempty"` // e.g. "dead", empty means alive
 	Alignment   Alignment `yaml:"alignment"`
 	MustSurvive bool      `yaml:"must_survive,omitempty"`
 }
 
 type PreSpawnObstacle struct {
-	ID        string   `yaml:"id"`
-	Archetype string   `yaml:"archetype"`
-	X         *float64 `yaml:"x,omitempty"`
-	Y         *float64 `yaml:"y,omitempty"`
-	Disabled  bool     `yaml:"disabled,omitempty"`
+	ID          string   `yaml:"id"`
+	Archetype   string   `yaml:"archetype"`
+	ArchetypeID string   `yaml:"archetype_id,omitempty"`
+	X           *float64 `yaml:"x,omitempty"`
+	Y           *float64 `yaml:"y,omitempty"`
+	Disabled    bool     `yaml:"disabled,omitempty"`
 }
 
 type SpawnConfig struct {
@@ -249,6 +252,7 @@ type MapType struct {
 	WidthPixels     int                `yaml:"width_px"`
 	HeightPixels    int                `yaml:"height_px"`
 	Inhabitants     []Inhabitant       `yaml:"inhabitants"`
+	NPCs            []Inhabitant       `yaml:"npcs,omitempty"`
 	Spawns          []SpawnConfig      `yaml:"spawns"`
 	Obstacles       []PreSpawnObstacle `yaml:"obstacles"`
 	FloorTile       string             `yaml:"floor_tile"`
@@ -829,12 +833,54 @@ func (r *NPCRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *
 		if config.AssetDir != "" {
 			if _, err := fs.Stat(assets, staticPath); err == nil {
 				config.StaticImage = graphics.LoadSprite(assets, staticPath, true)
+			} else if config.Unique {
+				// Fallback to characters directory for unique NPCs who are also playable heroes
+				charDir := path.Join("assets/images/characters", config.ID)
+				charStaticPath := path.Join(charDir, "static.png")
+				if _, err := fs.Stat(assets, charStaticPath); err == nil {
+					config.AssetDir = charDir
+					config.StaticImage = graphics.LoadSprite(assets, charStaticPath, true)
+					// Also update paths for other frames
+					staticPath = charStaticPath
+					backPath = path.Join(charDir, "back.png")
+					corpsePath = path.Join(charDir, "corpse.png")
+				}
 			}
-			if _, err := fs.Stat(assets, backPath); err == nil {
-				config.BackImage = graphics.LoadSprite(assets, backPath, true)
-			}
-			if _, err := fs.Stat(assets, corpsePath); err == nil {
-				config.CorpseImage = graphics.LoadSprite(assets, corpsePath, true)
+
+			// Load remaining frames from the (possibly updated) AssetDir
+			if config.StaticImage != nil {
+				if _, err := fs.Stat(assets, backPath); err == nil {
+					config.BackImage = graphics.LoadSprite(assets, backPath, true)
+				}
+				if _, err := fs.Stat(assets, corpsePath); err == nil {
+					config.CorpseImage = graphics.LoadSprite(assets, corpsePath, true)
+				}
+				
+				// Optional variants
+				a1p := path.Join(config.AssetDir, "attack.png")
+				if _, err := fs.Stat(assets, a1p); err == nil {
+					config.AttackImage = graphics.LoadSprite(assets, a1p, true)
+				}
+				a1p = path.Join(config.AssetDir, "attack1.png")
+				if _, err := fs.Stat(assets, a1p); err == nil {
+					config.Attack1Image = graphics.LoadSprite(assets, a1p, true)
+				}
+				a2p := path.Join(config.AssetDir, "attack2.png")
+				if _, err := fs.Stat(assets, a2p); err == nil {
+					config.Attack2Image = graphics.LoadSprite(assets, a2p, true)
+				}
+				h1p := path.Join(config.AssetDir, "hit.png")
+				if _, err := fs.Stat(assets, h1p); err == nil {
+					config.HitImage = graphics.LoadSprite(assets, h1p, true)
+				}
+				h1p = path.Join(config.AssetDir, "hit1.png")
+				if _, err := fs.Stat(assets, h1p); err == nil {
+					config.Hit1Image = graphics.LoadSprite(assets, h1p, true)
+				}
+				h2p := path.Join(config.AssetDir, "hit2.png")
+				if _, err := fs.Stat(assets, h2p); err == nil {
+					config.Hit2Image = graphics.LoadSprite(assets, h2p, true)
+				}
 			}
 		}
 

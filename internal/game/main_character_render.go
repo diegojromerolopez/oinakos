@@ -89,10 +89,8 @@ func (mc *MainCharacter) Draw(screen engine.Image, textRenderer engine.TextRende
 			tx -= lungeAmt // Lunge left
 		}
 	}
-	// Draw Alignment Ellipse under feet (Player is always Ally green)
-	if mc.State != StateDead && vectorRenderer != nil {
-		vectorRenderer.DrawEllipse(screen, float32(isoX+offsetX), float32(isoY+offsetY), 30, 15, ColorMainCharacter, 1, true)
-	}
+	// Draw Alignment Ellipse under feet
+	DrawAlignmentIndicator(screen, vectorRenderer, mc.X, mc.Y, offsetX, offsetY, AlignmentAlly, mc.IsAlive())
 
 	op.Translate(tx, ty)
 	screen.DrawImage(drawSprite, op)

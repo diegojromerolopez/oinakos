@@ -29,16 +29,21 @@ type PlayerSaveData struct {
 }
 
 type NPCSaveData struct {
-	ArchetypeID string  `yaml:"archetype_id"`
+	ArchetypeID string    `yaml:"archetype_id,omitempty"`
+	NPCID       string    `yaml:"npc_id,omitempty"`
 	X           float64 `yaml:"x"`
 	Y           float64 `yaml:"y"`
 	Health      int     `yaml:"health"`
 	MaxHealth   int     `yaml:"max_health"`
 	Level       int     `yaml:"level"`
-	Behavior    string  `yaml:"behavior"`
-	Name        string  `yaml:"name,omitempty"`
-	BaseAttack  int     `yaml:"base_attack,omitempty"`
-	BaseDefense int     `yaml:"base_defense,omitempty"`
+	Behavior    string    `yaml:"behavior"`
+	Name        string    `yaml:"name,omitempty"`
+	Alignment   Alignment `yaml:"alignment,omitempty"`
+	Group       string    `yaml:"group,omitempty"`
+	LeaderID    string    `yaml:"leader_id,omitempty"`
+	MustSurvive bool      `yaml:"must_survive,omitempty"`
+	BaseAttack  int       `yaml:"base_attack,omitempty"`
+	BaseDefense int       `yaml:"base_defense,omitempty"`
 }
 
 type ObstacleSaveData struct {
@@ -69,7 +74,8 @@ type SaveData struct {
 			Name            string         `yaml:"name,omitempty"`
 			Description     string         `yaml:"description,omitempty"`
 		} `yaml:"overrides,omitempty"`
-		FloorTile string `yaml:"floor_tile,omitempty"`
+		FloorTile  string       `yaml:"floor_tile,omitempty"`
+		FloorZones []*FloorZone `yaml:"floor_zones,omitempty"`
 	} `yaml:"map"`
 	Player    PlayerSaveData     `yaml:"player"`
 	NPCs      []NPCSaveData      `yaml:"npcs"`
@@ -167,15 +173,29 @@ func (g *Game) serialize() ([]byte, error) {
 			behaviorStr = "chaotic"
 		}
 
-		data.NPCs = append(data.NPCs, NPCSaveData{
-			ArchetypeID: n.Archetype.ID,
+		npcSave := NPCSaveData{
 			X:           n.X,
 			Y:           n.Y,
 			Health:      n.Health,
 			MaxHealth:   n.MaxHealth,
 			Level:       n.Level,
 			Behavior:    behaviorStr,
-		})
+			Name:        n.Name,
+			Alignment:   n.Alignment,
+			Group:       n.Group,
+			LeaderID:    n.LeaderID,
+			MustSurvive: n.MustSurvive,
+			BaseAttack:  n.BaseAttack,
+			BaseDefense: n.BaseDefense,
+		}
+		if n.Archetype != nil {
+			if n.Archetype.Unique {
+				npcSave.NPCID = n.Archetype.ID
+			} else {
+				npcSave.ArchetypeID = n.Archetype.ID
+			}
+		}
+		data.NPCs = append(data.NPCs, npcSave)
 	}
 
 	for _, o := range g.obstacles {
@@ -237,6 +257,19 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 		return fmt.Errorf("failed to unmarshal save data: %w", err)
 	}
 
+	// Structural validation: Distinguish between a Save File and a Map Template.
+	// Map templates have 'width_px' or 'floor_tile' at the top level.
+	// Save files have them nested under 'map:'.
+	// We use a raw map check for the most reliable detection.
+	var raw map[string]interface{}
+	yaml.Unmarshal(bytes, &raw)
+	if _, isTemplate := raw["width_px"]; isTemplate {
+		return fmt.Errorf("file appears to be a map template (width_px at top level), not a save file")
+	}
+	if _, isTemplate := raw["floor_tile"]; isTemplate {
+		return fmt.Errorf("file appears to be a map template (floor_tile at top level), not a save file")
+	}
+
 	// Restore Map Level and PlayTime
 	g.mapLevel = data.Map.Level
 	g.playTime = data.Map.PlayTime
@@ -273,6 +306,9 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 	}
 	if data.Map.FloorTile != "" {
 		g.currentMapType.FloorTile = data.Map.FloorTile
+	}
+	if len(data.Map.FloorZones) > 0 {
+		g.currentMapType.FloorZones = data.Map.FloorZones
 	}
 
 	// Restore Player
@@ -324,10 +360,15 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 		// Sanitize NPC data
 		sanitizeNPCSaveData(&nData, i, fpath)
 
-		config, ok := g.archetypeRegistry.Archetypes[nData.ArchetypeID]
+		id := nData.ArchetypeID
+		if id == "" {
+			id = nData.NPCID
+		}
+
+		config, ok := g.archetypeRegistry.Archetypes[id]
 		if !ok {
 			// Fallback: check NPC registry for unique/named NPCs
-			config, ok = g.npcRegistry.NPCs[nData.ArchetypeID]
+			config, ok = g.npcRegistry.NPCs[id]
 			if !ok {
 				var archIDs []string
 				for id := range g.archetypeRegistry.Archetypes {
@@ -369,6 +410,21 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 			n.Behavior = BehaviorNpcFighter
 		case "chaotic":
 			n.Behavior = BehaviorChaotic
+		case "escort":
+			n.Behavior = BehaviorEscort
+		}
+
+		if nData.Alignment != 0 {
+			n.Alignment = nData.Alignment
+		}
+		if nData.Group != "" {
+			n.Group = nData.Group
+		}
+		if nData.LeaderID != "" {
+			n.LeaderID = nData.LeaderID
+		}
+		if nData.MustSurvive {
+			n.MustSurvive = nData.MustSurvive
 		}
 
 		if n.Health <= 0 {
@@ -376,6 +432,7 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 		}
 		g.npcs = append(g.npcs, n)
 	}
+	DebugLog("RESTORED %d NPCs from save data", len(g.npcs))
 
 	// Restore Obstacles with merging logic
 	g.obstacles = nil

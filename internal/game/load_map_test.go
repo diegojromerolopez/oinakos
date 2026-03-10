@@ -14,7 +14,7 @@ func TestLoadMapLevel_AllObjectiveTypes(t *testing.T) {
 		"data/obstacles/house_burned.yaml": {Data: []byte("id: house_burned\nname: Burned House\n")},
 	}
 
-	g := NewGame(mockFS, "", "", NewMockInputManager(), NewMockAudioManager(), false)
+	g := NewGame(mockFS, "", "", "", NewMockInputManager(), NewMockAudioManager(), false)
 	g.archetypeRegistry.IDs = []string{"orc", "magi_male"}
 	g.archetypeRegistry.Archetypes["orc"] = &EntityConfig{ID: "orc"}
 	g.archetypeRegistry.Archetypes["magi_male"] = &EntityConfig{ID: "magi_male"}
@@ -72,7 +72,7 @@ func TestLoadMapLevel_AllObjectiveTypes(t *testing.T) {
 
 func TestLoadMapLevel_InhabitantsAndObstacles(t *testing.T) {
 	mockFS := fstest.MapFS{}
-	g := NewGame(mockFS, "", "", NewMockInputManager(), NewMockAudioManager(), false)
+	g := NewGame(mockFS, "", "", "", NewMockInputManager(), NewMockAudioManager(), false)
 
 	g.archetypeRegistry.Archetypes["orc"] = &EntityConfig{ID: "orc"}
 	g.npcRegistry.NPCs["unique_orc"] = &EntityConfig{ID: "unique_orc", ArchetypeID: "orc"}
@@ -120,7 +120,7 @@ func TestLoadMapLevel_InhabitantsAndObstacles(t *testing.T) {
 }
 
 func TestLoadMapLevel_Campaign(t *testing.T) {
-	g := NewGame(nil, "", "", NewMockInputManager(), NewMockAudioManager(), false)
+	g := NewGame(nil, "", "", "", NewMockInputManager(), NewMockAudioManager(), false)
 	g.mapTypeRegistry.Types["m1"] = &MapType{ID: "m1", Name: "Map 1"}
 	g.mapTypeRegistry.Types["m2"] = &MapType{ID: "m2", Name: "Map 2"}
 
@@ -139,7 +139,7 @@ func TestLoadMapLevel_Campaign(t *testing.T) {
 }
 
 func TestLoadMapLevel_InitialMapID(t *testing.T) {
-	g := NewGame(nil, "", "", NewMockInputManager(), NewMockAudioManager(), false)
+	g := NewGame(nil, "", "", "", NewMockInputManager(), NewMockAudioManager(), false)
 	g.mapTypeRegistry.Types["init_map"] = &MapType{ID: "init_map", Name: "Initial Map"}
 	g.initialMapID = "init_map"
 	g.mapLevel = 1
