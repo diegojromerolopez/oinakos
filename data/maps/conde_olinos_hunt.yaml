@@ -32,6 +32,10 @@ npcs:
     y: 2.0
     must_survive: true
     alignment: "ally"
+  - npc_id: "princess_elvira"
+    x: -9.0
+    y: 4.0
+    alignment: "ally"
   - npc_id: "queen"
     x: 15.0
     y: 0.0

@@ -1,0 +1,8 @@
+id: "princess_elvira"
+name: "Princess Elvira"
+behavior: "escort"
+unique: true
+description: "Daughter of the Queen, she secretly defied her mother to join Conde Olinos in his hunt."
+xp: 0
+group: "player_faction"
+must_survive: true
