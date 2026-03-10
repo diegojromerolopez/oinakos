@@ -5,8 +5,8 @@ import (
 	"testing"
 )
 
-func TestMainCharacterBoundaries(t *testing.T) {
-	mc := NewMainCharacter(0, 0, nil)
+func TestPlayableCharacterBoundaries(t *testing.T) {
+	mc := NewPlayableCharacter(0, 0, nil)
 	mc.Speed = 1.0
 
 	// Map 10x10 -> halfW=5, halfH=5
@@ -18,7 +18,7 @@ func TestMainCharacterBoundaries(t *testing.T) {
 	mc.Update(input, nil, nil, nil, nil, mapW, mapH)
 
 	if mc.X > 5.0 {
-		t.Errorf("MainCharacter moved beyond +X boundary: got %f, want <= 5.0", mc.X)
+		t.Errorf("PlayableCharacter moved beyond +X boundary: got %f, want <= 5.0", mc.X)
 	}
 
 	// 2. Try to move beyond negative X boundary
@@ -27,7 +27,7 @@ func TestMainCharacterBoundaries(t *testing.T) {
 	mc.Update(input, nil, nil, nil, nil, mapW, mapH)
 
 	if mc.X < -5.0 {
-		t.Errorf("MainCharacter moved beyond -X boundary: got %f, want >= -5.0", mc.X)
+		t.Errorf("PlayableCharacter moved beyond -X boundary: got %f, want >= -5.0", mc.X)
 	}
 
 	// 3. Try to move beyond positive Y boundary
@@ -36,7 +36,7 @@ func TestMainCharacterBoundaries(t *testing.T) {
 	mc.Update(input, nil, nil, nil, nil, mapW, mapH)
 
 	if mc.Y > 5.0 {
-		t.Errorf("MainCharacter moved beyond +Y boundary: got %f, want <= 5.0", mc.Y)
+		t.Errorf("PlayableCharacter moved beyond +Y boundary: got %f, want <= 5.0", mc.Y)
 	}
 
 	// 4. Try to move beyond negative Y boundary
@@ -45,14 +45,14 @@ func TestMainCharacterBoundaries(t *testing.T) {
 	mc.Update(input, nil, nil, nil, nil, mapW, mapH)
 
 	if mc.Y < -5.0 {
-		t.Errorf("MainCharacter moved beyond -Y boundary: got %f, want >= -5.0", mc.Y)
+		t.Errorf("PlayableCharacter moved beyond -Y boundary: got %f, want >= -5.0", mc.Y)
 	}
 
 	// 5. Teleport outside and check if it clamps anyway
 	mc.X, mc.Y = 100, 100
 	mc.Update(nil, nil, nil, nil, nil, mapW, mapH)
 	if mc.X > 5.0 || mc.Y > 5.0 {
-		t.Errorf("Teleported MainCharacter still outside boundaries after Update: got (%f, %f), want (<=5.0, <=5.0)", mc.X, mc.Y)
+		t.Errorf("Teleported PlayableCharacter still outside boundaries after Update: got (%f, %f), want (<=5.0, <=5.0)", mc.X, mc.Y)
 	}
 }
 

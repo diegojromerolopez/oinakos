@@ -15,82 +15,30 @@ import (
 // but ConfigID is preferred for dynamic loading.
 type NPCType string
 
-type NPCState int
+// NPCState, BehaviorType, Alignment, Direction and their constants are defined in actor.go
 
-const (
-	NPCIdle NPCState = iota
-	NPCWalking
-	NPCAttacking
-	NPCDead
-)
-
-type BehaviorType int
-type Alignment int
-
-const (
-	AlignmentEnemy Alignment = iota
-	AlignmentNeutral
-	AlignmentAlly
-)
-
-func (a Alignment) String() string {
-	switch a {
-	case AlignmentEnemy:
-		return "ENEMY"
-	case AlignmentNeutral:
-		return "NEUTRAL"
-	case AlignmentAlly:
-		return "ALLY"
-	default:
-		return "UNKNOWN"
-	}
-}
-
-const (
-	BehaviorWander BehaviorType = iota
-	BehaviorPatrol
-	BehaviorKnightHunter
-	BehaviorNpcFighter
-	BehaviorChaotic
-	BehaviorEscort
-)
 
 type NPC struct {
-	X, Y           float64
+	Actor // Embedded shared state
+
+	// Archetype is a convenience pointer to Actor.Config (which is *EntityConfig = *Archetype).
+	// It exists to avoid updating hundreds of n.Archetype references throughout the codebase.
 	Archetype      *Archetype
-	State          NPCState
-	Facing         Direction
-	Tick           int
-	Health         int
-	MaxHealth      int
-	Speed          float64
+
 	AttackCooldown int // frames between attacks
 	AttackTimer    int
-	Name           string
-	Level          int
-	XP             int
-	BaseAttack     int
-	BaseDefense    int
-	Weapon         *Weapon
 
 	// Behavior fields
 	Behavior   BehaviorType
 	WanderDirX float64
 	WanderDirY float64
-	// Combat & Effects
-	BloodTimer                 int
-	DeadTimer                  int
 	PatrolStartX, PatrolStartY float64
 	PatrolEndX, PatrolEndY     float64
 	PatrolHeading              bool // true = toward End, false = toward Start
 
-	TargetNPC    *NPC
-	TargetPlayer *MainCharacter
-	Alignment    Alignment
-	Group        string
-	LeaderID     string
-	MustSurvive  bool
+	TargetActor *Actor
 }
+
 
 var npcNames = []string{
 	"Grog", "Zog", "Bob", "Drok", "Gorak", "Mug", "Snarl", "Thrak", "Vrog", "Kurg",
@@ -108,16 +56,19 @@ func NewNPC(x, y float64, archetype *Archetype, level int) *NPC {
 		archetype.Weapon = WeaponTizon
 	}
 	n := &NPC{
-		X:         x,
-		Y:         y,
+		Actor: Actor{
+			X:           x,
+			Y:           y,
+			Config:      archetype,
+			State:       NPCIdle,
+			Facing:      DirSE,
+			Level:       level,
+			Alignment:   AlignmentEnemy, // Default to Enemy
+			Group:       archetype.Group,
+			LeaderID:    archetype.LeaderID,
+			MustSurvive: archetype.MustSurvive,
+		},
 		Archetype: archetype,
-		State:     NPCIdle,
-		Facing:    DirSE,
-		Level:       level,
-		Alignment:   AlignmentEnemy, // Default to Enemy
-		Group:       archetype.Group,
-		LeaderID:    archetype.LeaderID,
-		MustSurvive: archetype.MustSurvive,
 	}
 
 	if archetype.Unique {
@@ -187,26 +138,18 @@ func NewNPC(x, y float64, archetype *Archetype, level int) *NPC {
 	return n
 }
 
-func (n *NPC) GetTotalAttack() int {
-	return n.BaseAttack // Level is already baked during NewNPC for simple NPCs
-}
+// GetTotalAttack, GetTotalDefense, GetTotalProtection, calculateStat,
+// checkCollisionAt, GetFootprint, Heal, IsAlive are inherited from the embedded Actor.
 
-func (n *NPC) GetTotalDefense() int {
-	return n.BaseDefense
-}
-
-func (n *NPC) GetTotalProtection() int {
-	return 0 // Placeholder for armor system?
-}
-
-func (n *NPC) calculateStat(base, level int) int {
-	if level <= 1 {
-		return base
+// NPC overrides GetFootprint to use n.Archetype if available.
+func (n *NPC) GetFootprint() engine.Polygon {
+	if n.Archetype == nil {
+		return engine.Polygon{}
 	}
-	bonus := int(math.Log2(float64(level)) * 10)
-	return base + bonus
+	return n.Archetype.GetFootprint().Transformed(n.X, n.Y)
 }
 
+// NPC overrides checkCollisionAt to use n.Archetype.
 func (n *NPC) checkCollisionAt(newX, newY float64, obstacles []*Obstacle) bool {
 	if n.Archetype == nil {
 		return false
@@ -223,37 +166,17 @@ func (n *NPC) checkCollisionAt(newX, newY float64, obstacles []*Obstacle) bool {
 	return false
 }
 
-func (n *NPC) GetFootprint() engine.Polygon {
-	if n.Archetype == nil {
-		return engine.Polygon{}
-	}
-	return n.Archetype.GetFootprint().Transformed(n.X, n.Y)
-}
 
-func (n *NPC) Heal(amount int) {
-	if n.State == NPCDead {
-		return
-	}
-	oldHealth := n.Health
-	n.Health += amount
-	if n.Health > n.MaxHealth {
-		n.Health = n.MaxHealth
-	}
-	if n.Health > oldHealth {
-		DebugLog("NPC Healed [%s] %s! +%d | Health: %d -> %d", n.Alignment, n.Name, amount, oldHealth, n.Health)
-	}
-}
-
-func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPCs []*NPC, projectiles *[]*Projectile, fts *[]*FloatingText, mapW, mapH float64, audio AudioManager) {
+func (n *NPC) Update(playableCharacter *PlayableCharacter, obstacles []*Obstacle, allNPCs []*NPC, projectiles *[]*Projectile, fts *[]*FloatingText, mapW, mapH float64, audio AudioManager) {
 	n.Tick++
 
-	if n.BloodTimer > 0 {
-		n.BloodTimer--
+	if n.HitTimer > 0 {
+		n.HitTimer--
 	}
 
 	var playerDist float64
-	if mainCharacter != nil {
-		playerDist = math.Sqrt(math.Pow(n.X-mainCharacter.X, 2) + math.Pow(n.Y-mainCharacter.Y, 2))
+	if playableCharacter != nil {
+		playerDist = math.Sqrt(math.Pow(n.X-playableCharacter.X, 2) + math.Pow(n.Y-playableCharacter.Y, 2))
 	}
 
 	if n.State == NPCDead {
@@ -283,40 +206,35 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 		const rejoinDistTarget = 3.0   // Ideal distance to maintain from player
 		const enemyDetectionRange = 12.0
 
-		if mainCharacter != nil && playerDist > followDistThreshold {
+		if playableCharacter != nil && playerDist > followDistThreshold {
 			// Player is too far, stop whatever we are doing and rejoin
-			n.TargetNPC = nil
-			n.TargetPlayer = mainCharacter
-			targetX, targetY = mainCharacter.X, mainCharacter.Y
+			n.TargetActor = &playableCharacter.Actor
+			targetX, targetY = playableCharacter.X, playableCharacter.Y
 			hasTarget = true
 			isTargetPlayer = true
 		} else {
 			// Close enough to consider fighting
-			nearestEnemy := gNearestEnemy(n, mainCharacter, allNPCs, enemyDetectionRange)
+			nearestEnemy := gNearestEnemy(n, playableCharacter, allNPCs, enemyDetectionRange)
 			if nearestEnemy != nil {
-				n.TargetNPC = nearestEnemy
-				n.TargetPlayer = nil
+				n.TargetActor = &nearestEnemy.Actor
 				targetX, targetY = nearestEnemy.X, nearestEnemy.Y
 				hasTarget = true
-			} else if mainCharacter != nil && playerDist > rejoinDistTarget {
+			} else if playableCharacter != nil && playerDist > rejoinDistTarget {
 				// No enemies, stay close to player
-				n.TargetNPC = nil
-				n.TargetPlayer = mainCharacter
-				targetX, targetY = mainCharacter.X, mainCharacter.Y
+				n.TargetActor = &playableCharacter.Actor
+				targetX, targetY = playableCharacter.X, playableCharacter.Y
 				hasTarget = true
 				isTargetPlayer = true
 			} else {
 				// Close enough and no enemies
-				n.TargetNPC = nil
-				n.TargetPlayer = nil
+				n.TargetActor = nil
 				n.State = NPCIdle
 				return
 			}
 		}
 	} else if n.Alignment == AlignmentNeutral {
 		// Strictly wander, ignore player and NPCs
-		n.TargetPlayer = nil
-		n.TargetNPC = nil
+		n.TargetActor = nil
 		if n.Tick%120 == 0 {
 			n.WanderDirX = rand.Float64()*2 - 1
 			n.WanderDirY = rand.Float64()*2 - 1
@@ -337,8 +255,7 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 		if !leaderAlive {
 			DebugLog("NPC [%s] becomes NEUTRAL because leader [%s] died!", n.Name, n.LeaderID)
 			n.Alignment = AlignmentNeutral
-			n.TargetPlayer = nil
-			n.TargetNPC = nil
+			n.TargetActor = nil
 			n.Behavior = BehaviorWander
 		}
 	}
@@ -346,31 +263,30 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 	// Reassess target for certain behaviors
 	if n.Behavior == BehaviorChaotic || n.Behavior == BehaviorNpcFighter {
 		// Clear existing target to force reassessment in the switch below
-		n.TargetPlayer = nil
-		n.TargetNPC = nil
+		n.TargetActor = nil
 	}
 
 	if !hasTarget {
 		// Behavior Logic (Traditional Enemy behavior)
-		if n.TargetPlayer != nil && n.TargetPlayer.IsAlive() {
-			targetX, targetY = n.TargetPlayer.X, n.TargetPlayer.Y
+		if n.TargetActor != nil && n.TargetActor.IsAlive() {
+			targetX, targetY = n.TargetActor.X, n.TargetActor.Y
 			hasTarget = true
-			isTargetPlayer = true
-		} else if n.TargetNPC != nil && n.TargetNPC.IsAlive() {
-			targetX, targetY = n.TargetNPC.X, n.TargetNPC.Y
-			hasTarget = true
+			if playableCharacter != nil && n.TargetActor == &playableCharacter.Actor {
+				isTargetPlayer = true
+			}
 		} else {
 			switch n.Behavior {
 			case BehaviorKnightHunter:
-				if mainCharacter != nil && mainCharacter.IsAlive() {
-					n.TargetPlayer = mainCharacter
-					targetX, targetY = mainCharacter.X, mainCharacter.Y
+				if playableCharacter != nil && playableCharacter.IsAlive() {
+					n.TargetActor = &playableCharacter.Actor
+					targetX, targetY = playableCharacter.X, playableCharacter.Y
 					hasTarget = true
 					isTargetPlayer = true
 				}
 			case BehaviorNpcFighter:
 				// Find nearest living NPC that isn't me
 				var minDist = 999.0
+				var nearestNPC *NPC
 				for _, other := range allNPCs {
 					if other == n || !other.IsAlive() {
 						continue
@@ -382,20 +298,21 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 					dist := math.Sqrt(math.Pow(n.X-other.X, 2) + math.Pow(n.Y-other.Y, 2))
 					if dist < minDist {
 						minDist = dist
-						n.TargetNPC = other
+						nearestNPC = other
 					}
 				}
-				if n.TargetNPC != nil {
-					targetX, targetY = n.TargetNPC.X, n.TargetNPC.Y
+				if nearestNPC != nil {
+					n.TargetActor = &nearestNPC.Actor
+					targetX, targetY = nearestNPC.X, nearestNPC.Y
 					hasTarget = true
 				}
 			case BehaviorChaotic:
-				// Find nearest living actor (NPC or MainCharacter) that isn't me
+				// Find nearest living actor (NPC or PlayableCharacter) that isn't me
 				var minDist = 999.0
-				var nearestNPC *NPC
+				var nearestActor *Actor
 				var playerDist = 999.0
-				if mainCharacter != nil {
-					playerDist = math.Sqrt(math.Pow(n.X-mainCharacter.X, 2) + math.Pow(n.Y-mainCharacter.Y, 2))
+				if playableCharacter != nil {
+					playerDist = math.Sqrt(math.Pow(n.X-playableCharacter.X, 2) + math.Pow(n.Y-playableCharacter.Y, 2))
 				}
 
 				for _, other := range allNPCs {
@@ -405,38 +322,35 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 					dist := math.Sqrt(math.Pow(n.X-other.X, 2) + math.Pow(n.Y-other.Y, 2))
 					if dist < minDist {
 						minDist = dist
-						nearestNPC = other
+						nearestActor = &other.Actor
 					}
 				}
 
-				if mainCharacter != nil && mainCharacter.IsAlive() && playerDist < minDist {
-					n.TargetPlayer = mainCharacter
-					n.TargetNPC = nil
-					targetX, targetY = mainCharacter.X, mainCharacter.Y
+				if playableCharacter != nil && playableCharacter.IsAlive() && playerDist < minDist {
+					n.TargetActor = &playableCharacter.Actor
+					targetX, targetY = playableCharacter.X, playableCharacter.Y
 					hasTarget = true
-				} else if nearestNPC != nil {
-					n.TargetNPC = nearestNPC
-					n.TargetPlayer = nil
-					targetX, targetY = nearestNPC.X, nearestNPC.Y
+					isTargetPlayer = true
+				} else if nearestActor != nil {
+					n.TargetActor = nearestActor
+					targetX, targetY = nearestActor.X, nearestActor.Y
 					hasTarget = true
 				}
 			case BehaviorEscort:
-				if mainCharacter != nil {
+				if playableCharacter != nil {
 					// Follow player, but attack nearest enemy if in range
 					const seekEnemyRange = 12.0
-					nearestEnemy := gNearestEnemy(n, mainCharacter, allNPCs, seekEnemyRange)
+					nearestEnemy := gNearestEnemy(n, playableCharacter, allNPCs, seekEnemyRange)
 
 					if nearestEnemy != nil {
-						n.TargetNPC = nearestEnemy
-						n.TargetPlayer = nil
+						n.TargetActor = &nearestEnemy.Actor
 						targetX, targetY = nearestEnemy.X, nearestEnemy.Y
 						hasTarget = true
 					} else {
 						// Follow player if too far
 						if playerDist > 3.0 {
-							n.TargetPlayer = mainCharacter
-							n.TargetNPC = nil
-							targetX, targetY = mainCharacter.X, mainCharacter.Y
+							n.TargetActor = &playableCharacter.Actor
+							targetX, targetY = playableCharacter.X, playableCharacter.Y
 							hasTarget = true
 							isTargetPlayer = true
 						} else {
@@ -469,7 +383,7 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 			default:
 				// Fallback for generic Enemy alignment: attack player
 				if n.Alignment == AlignmentEnemy {
-					targetX, targetY = mainCharacter.X, mainCharacter.Y
+					targetX, targetY = playableCharacter.X, playableCharacter.Y
 					hasTarget = true
 					isTargetPlayer = true
 				}
@@ -519,19 +433,15 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 
 		// Check alignment before attacking
 		canAttack := false
-		if isTargetPlayer {
-			if n.Alignment != AlignmentAlly {
-				canAttack = true
-			}
-		} else if n.TargetNPC != nil {
-			if n.Alignment != n.TargetNPC.Alignment {
+		if n.TargetActor != nil {
+			if n.Alignment != n.TargetActor.Alignment {
 				canAttack = true
 			}
 		}
 
 		if canAttack {
 			if n.State != NPCAttacking && isTargetPlayer {
-				// Chance to say an attack line when starting to attack the mainCharacter
+				// Chance to say an attack line when starting to attack the playableCharacter
 				if rand.Float64() < 0.3 {
 					if audio != nil && n.Archetype != nil {
 						audio.PlayRandomSound(n.Archetype.SoundID + "/attack")
@@ -574,11 +484,11 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 				var targetProtection int
 
 				if isTargetPlayer {
-					targetProtection = mainCharacter.GetTotalProtection()
+					targetProtection = playableCharacter.GetTotalProtection()
 					// We need a wrapper or cast if we want to use the same interface,
 					// but for now let's just do it directly.
 					attk := float64(n.GetTotalAttack())
-					def := float64(mainCharacter.GetTotalDefense())
+					def := float64(playableCharacter.GetTotalDefense())
 					if def <= 0 {
 						def = 1
 					}
@@ -595,12 +505,12 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 						rawDmg := n.Weapon.RollDamage()
 						finalDmg := int(math.Max(1, float64(rawDmg-targetProtection)))
 						DebugLog("NPC [%s] attacks Player: HIT for %d damage (roll: %d/%d)", n.Name, finalDmg, roll, hitChance)
-						mainCharacter.TakeDamage(finalDmg, audio)
+						playableCharacter.TakeDamage(finalDmg, audio)
 
 						*fts = append(*fts, &FloatingText{
 							Text:  fmt.Sprintf("-%d", finalDmg),
-							X:     mainCharacter.X,
-							Y:     mainCharacter.Y,
+							X:     playableCharacter.X,
+							Y:     playableCharacter.Y,
 							Life:  45,
 							Color: ColorHarm,
 						})
@@ -609,22 +519,27 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 						DebugLog("NPC [%s] attacks Player: MISS (roll: %d/%d)", n.Name, roll, hitChance)
 						*fts = append(*fts, &FloatingText{
 							Text:  "MISS",
-							X:     mainCharacter.X,
-							Y:     mainCharacter.Y,
+							X:     playableCharacter.X,
+							Y:     playableCharacter.Y,
 							Life:  45,
 							Color: ColorMiss,
 						})
 					}
 				} else {
 					// NPC VS NPC
-					if n.TargetNPC == nil || !n.TargetNPC.IsAlive() {
-						n.TargetNPC = nil
+					var targetActor *Actor
+					if n.TargetActor != nil && n.TargetActor.IsAlive() && n.TargetActor != &playableCharacter.Actor {
+						targetActor = n.TargetActor
+					}
+
+					if targetActor == nil {
+						n.TargetActor = nil
 						return
 					}
-					targetProtection = n.TargetNPC.GetTotalProtection()
+					targetProtection = targetActor.GetTotalProtection()
 
 					attk := float64(n.GetTotalAttack())
-					def := float64(n.TargetNPC.GetTotalDefense())
+					def := float64(targetActor.GetTotalDefense())
 					if def <= 0 {
 						def = 1
 					}
@@ -640,23 +555,35 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 					if roll <= hitChance {
 						rawDmg := n.Weapon.RollDamage()
 						finalDmg := int(math.Max(1, float64(rawDmg-targetProtection)))
-						DebugLog("NPC [%s] attacks NPC [%s]: HIT for %d damage (roll: %d/%d)", n.Name, n.TargetNPC.Name, finalDmg, roll, hitChance)
-						n.TargetNPC.TakeDamage(finalDmg, nil, n, audio, allNPCs)
+						DebugLog("NPC [%s] attacks [%s]: HIT for %d damage (roll: %d/%d)", n.Name, targetActor.Name, finalDmg, roll, hitChance)
+						
+						// We need a way to call TakeDamage on the target. 
+						// For now, let's find the NPC if it is one.
+						var targetNPC *NPC
+						for _, other := range allNPCs {
+							if &other.Actor == targetActor {
+								targetNPC = other
+								break
+							}
+						}
+						if targetNPC != nil {
+							targetNPC.TakeDamage(finalDmg, nil, n, audio, allNPCs)
+						}
 
 						*fts = append(*fts, &FloatingText{
 							Text:  fmt.Sprintf("-%d", finalDmg),
-							X:     n.TargetNPC.X,
-							Y:     n.TargetNPC.Y,
+							X:     targetActor.X,
+							Y:     targetActor.Y,
 							Life:  45,
 							Color: ColorHarm,
 						})
 					} else {
 						// MISS
-						DebugLog("NPC [%s] attacks NPC [%s]: MISS (roll: %d/%d)", n.Name, n.TargetNPC.Name, roll, hitChance)
+						DebugLog("NPC [%s] attacks [%s]: MISS (roll: %d/%d)", n.Name, targetActor.Name, roll, hitChance)
 						*fts = append(*fts, &FloatingText{
 							Text:  "MISS",
-							X:     n.TargetNPC.X,
-							Y:     n.TargetNPC.Y,
+							X:     targetActor.X,
+							Y:     targetActor.Y,
 							Life:  45,
 							Color: ColorMiss,
 						})
@@ -726,7 +653,7 @@ func (n *NPC) Update(mainCharacter *MainCharacter, obstacles []*Obstacle, allNPC
 	}
 }
 
-func (n *NPC) TakeDamage(amount int, attackerPlayer *MainCharacter, attackerNPC *NPC, audio AudioManager, allNPCs []*NPC) {
+func (n *NPC) TakeDamage(amount int, attackerPlayer *PlayableCharacter, attackerNPC *NPC, audio AudioManager, allNPCs []*NPC) {
 	if n.State == NPCDead {
 		return
 	}
@@ -736,14 +663,13 @@ func (n *NPC) TakeDamage(amount int, attackerPlayer *MainCharacter, attackerNPC 
 
 	// Retaliation tracking
 	if attackerPlayer != nil {
-		n.TargetPlayer = attackerPlayer
-		n.TargetNPC = nil
+		n.TargetActor = &attackerPlayer.Actor
 		// Neutral or Ally NPCs become enemies if hit by the player
 		if n.Alignment != AlignmentEnemy {
 			DebugLog("NPC [%s] was %s and is now an ENEMY due to player attack!", n.Name, n.Alignment)
 			n.Alignment = AlignmentEnemy
 			n.Behavior = BehaviorKnightHunter
-
+ 
 			// GROUP ALERT: Alert all members of the same group in the "same zone" (e.g. 20 units)
 			if n.Group != "" {
 				for _, other := range allNPCs {
@@ -756,19 +682,18 @@ func (n *NPC) TakeDamage(amount int, attackerPlayer *MainCharacter, attackerNPC 
 							DebugLog("NPC [%s] joining fight of group [%s]!", other.Name, n.Group)
 							other.Alignment = AlignmentEnemy
 							other.Behavior = BehaviorKnightHunter
-							other.TargetPlayer = attackerPlayer
+							other.TargetActor = &attackerPlayer.Actor
 						}
 					}
 				}
 			}
 		}
 	} else if attackerNPC != nil {
-		n.TargetNPC = attackerNPC
-		n.TargetPlayer = nil
+		n.TargetActor = &attackerNPC.Actor
 	}
 
 	// Start blood effect
-	n.BloodTimer = 30
+	n.HitTimer = 30
 	// Play hit sound
 	if audio != nil && n.Archetype != nil {
 		audio.PlayRandomSound(n.Archetype.SoundID + "/hit")
@@ -796,9 +721,7 @@ func (n *NPC) TakeDamage(amount int, attackerPlayer *MainCharacter, attackerNPC 
 	}
 }
 
-func (n *NPC) IsAlive() bool {
-	return n.State != NPCDead
-}
+// IsAlive is inherited from the embedded Actor.
 
 func (n *NPC) isEnemy(other *NPC, allNPCs []*NPC) bool {
 	// Traitor check: if 'other' has a leader whose alignment matches MINE,
@@ -826,7 +749,7 @@ func (n *NPC) isEnemy(other *NPC, allNPCs []*NPC) bool {
 
 	return false
 }
-func gNearestEnemy(n *NPC, mainCharacter *MainCharacter, allNPCs []*NPC, maxRange float64) *NPC {
+func gNearestEnemy(n *NPC, playableCharacter *PlayableCharacter, allNPCs []*NPC, maxRange float64) *NPC {
 	var nearest *NPC
 	minDist := maxRange
 	for _, other := range allNPCs {

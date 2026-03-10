@@ -10,7 +10,7 @@ The current UI relies on basic debug-print text utilizing standard fonts. We nee
     - Replace `textRenderer.DebugPrintAt` with a custom bitmap font loader, or load a `.ttf` file (like a Gothic font) using `golang.org/x/image/font`.
 3. **Entity Status Bars**:
     - Create a floating health bar system for NPCs and the Player. 
-    - In `npc_render.go` and `main_character_render.go`, draw the red health fill proportional to `Health / MaxHealth` overlaid on a dark frame sprite.
+    - In `npc_render.go` and `playable_character_render.go`, draw the red health fill proportional to `Health / MaxHealth` overlaid on a dark frame sprite.
 4. **Main HUD Canvas**:
     - Create a dedicated `DrawHUD()` phase in the render loop.
     - Display the Player's profile portrait, structured HP/XP bars, and the current Kill Count in an aesthetic frame anchored to the screen edges.

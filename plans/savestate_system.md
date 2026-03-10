@@ -10,10 +10,10 @@ Currently, the game only supports basic configuration loading. We need the abili
         - `WorldState` (Generated Chunks, destroyed obstacles)
 2. **Serialization**:
     - Use Go's built-in `encoding/json`.
-    - Implement a `SaveGame()` function that maps the current active `game.mainCharacter` and `game.chunks` into the `GameStateSave` struct, then writes to `data/saves/slot_1.json`.
+    - Implement a `SaveGame()` function that maps the current active `game.playableCharacter` and `game.chunks` into the `GameStateSave` struct, then writes to `data/saves/slot_1.json`.
 3. **Deserialization**:
     - Implement a `LoadGame()` function attached to the main menu.
-    - It will parse the JSON, instantiate a new `MainCharacter` with the parsed stats, and pre-populate the `chunks` map so the player loads back into the exact world they left.
+    - It will parse the JSON, instantiate a new `PlayableCharacter` with the parsed stats, and pre-populate the `chunks` map so the player loads back into the exact world they left.
 4. **Autosave**:
     - Hook `SaveGame()` to trigger automatically when transitioning maps, or periodically (every 5 minutes) during endless exploration.
 

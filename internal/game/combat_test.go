@@ -7,7 +7,7 @@ import (
 
 func TestCombatMechanics(t *testing.T) {
 	// Setup a controlled combat scenario
-	mc := NewMainCharacter(0, 0, nil)
+	mc := NewPlayableCharacter(0, 0, nil)
 	mc.BaseAttack = 20
 	mc.BaseDefense = 5
 	mc.Health = 100
@@ -70,7 +70,7 @@ func TestCombatMechanics(t *testing.T) {
 
 func TestProjectileCombat(t *testing.T) {
 	// NPC projectile fires at player (the actual path in Projectile.Update)
-	mc := NewMainCharacter(0, 0, nil)
+	mc := NewPlayableCharacter(0, 0, nil)
 	mc.Health = 100
 
 	// NPC fires projectile at mc's position

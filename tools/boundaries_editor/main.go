@@ -1,5 +1,5 @@
 // Package main provides a standalone tool (boundaries_editor) for visualizing
-// entity boundaries (obstacles, NPCs, and the main character) and their
+// entity boundaries (obstacles, NPCs, and the playable character) and their
 // collision footprints in isometric space. It supports interactive vertex editing.
 package main
 
@@ -443,8 +443,8 @@ func main() {
 		}
 	}
 
-	// 3. Main Character
-	mcConfig, err := game.LoadMainCharacterConfig(assets)
+	// 3. Playable Character
+	mcConfig, err := game.LoadPlayableCharacterConfig(assets)
 	if err == nil {
 		// Override AssetDir for tool to find images
 		mcConfig.AssetDir = "assets/images/characters/oinakos"
@@ -452,13 +452,13 @@ func main() {
 		mcConfig.CorpseImage = graphics.LoadSprite(assets, filepath.Join(mcConfig.AssetDir, "corpse.png"), true)
 		mcConfig.AttackImage = graphics.LoadSprite(assets, filepath.Join(mcConfig.AssetDir, "attack.png"), true)
 
-		mc := game.NewMainCharacter(0, 0, mcConfig)
+		mc := game.NewPlayableCharacter(0, 0, mcConfig)
 		var img engine.Image
 		if mcConfig.StaticImage != nil {
 			img = mcConfig.StaticImage.(engine.Image)
 		}
 		entities = append(entities, &EditorEntity{
-			ID:        "main_character",
+			ID:        "playable_character",
 			Type:      "Character",
 			Image:     img,
 			Footprint: &mcConfig.Footprint,

@@ -139,20 +139,20 @@ func (g *Game) serialize() ([]byte, error) {
 	data.Map.PlayTime = g.playTime
 
 	data.Player = PlayerSaveData{
-		ArchetypeID: g.mainCharacter.Config.ID,
-		X:           g.mainCharacter.X,
-		Y:           g.mainCharacter.Y,
-		Health:      g.mainCharacter.Health,
-		MaxHealth:   g.mainCharacter.MaxHealth,
-		XP:          g.mainCharacter.XP,
-		Level:       g.mainCharacter.Level,
-		Kills:       g.mainCharacter.Kills,
-		MapKills:    g.mainCharacter.MapKills,
-		BaseAttack:  g.mainCharacter.BaseAttack,
-		BaseDefense: g.mainCharacter.BaseDefense,
+		ArchetypeID: g.playableCharacter.Config.ID,
+		X:           g.playableCharacter.X,
+		Y:           g.playableCharacter.Y,
+		Health:      g.playableCharacter.Health,
+		MaxHealth:   g.playableCharacter.MaxHealth,
+		XP:          g.playableCharacter.XP,
+		Level:       g.playableCharacter.Level,
+		Kills:       g.playableCharacter.Kills,
+		MapKills:    g.playableCharacter.MapKills,
+		BaseAttack:  g.playableCharacter.BaseAttack,
+		BaseDefense: g.playableCharacter.BaseDefense,
 	}
-	if g.mainCharacter.Weapon != nil {
-		data.Player.Weapon = g.mainCharacter.Weapon.Name
+	if g.playableCharacter.Weapon != nil {
+		data.Player.Weapon = g.playableCharacter.Weapon.Name
 	}
 
 	for _, n := range g.npcs {
@@ -314,7 +314,8 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 	// Restore Player
 	if data.Player.ArchetypeID != "" {
 		if config, ok := g.playableCharacterRegistry.Characters[data.Player.ArchetypeID]; ok {
-			g.mainCharacter.Config = config
+			g.playableCharacter.Config = config
+			g.playableCharacter.Name = config.Name
 			g.isCharacterSelect = false
 			g.isMainMenu = false
 			// Note: We might need to reload assets for this config if not already loaded
@@ -323,35 +324,35 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 		}
 	}
 
-	g.mainCharacter.X = data.Player.X
-	g.mainCharacter.Y = data.Player.Y
-	g.mainCharacter.Health = data.Player.Health
-	g.mainCharacter.MaxHealth = data.Player.MaxHealth
-	g.mainCharacter.XP = data.Player.XP
-	g.mainCharacter.Level = data.Player.Level
-	g.mainCharacter.Kills = data.Player.Kills
-	g.mainCharacter.MapKills = data.Player.MapKills
-	if g.mainCharacter.MapKills == nil {
-		g.mainCharacter.MapKills = make(map[string]int)
+	g.playableCharacter.X = data.Player.X
+	g.playableCharacter.Y = data.Player.Y
+	g.playableCharacter.Health = data.Player.Health
+	g.playableCharacter.MaxHealth = data.Player.MaxHealth
+	g.playableCharacter.XP = data.Player.XP
+	g.playableCharacter.Level = data.Player.Level
+	g.playableCharacter.Kills = data.Player.Kills
+	g.playableCharacter.MapKills = data.Player.MapKills
+	if g.playableCharacter.MapKills == nil {
+		g.playableCharacter.MapKills = make(map[string]int)
 	}
-	g.mainCharacter.BaseAttack = data.Player.BaseAttack
-	g.mainCharacter.BaseDefense = data.Player.BaseDefense
+	g.playableCharacter.BaseAttack = data.Player.BaseAttack
+	g.playableCharacter.BaseDefense = data.Player.BaseDefense
 	if data.Player.Weapon != "" {
-		g.mainCharacter.Weapon = GetWeaponByName(data.Player.Weapon)
+		g.playableCharacter.Weapon = GetWeaponByName(data.Player.Weapon)
 	}
 
-	if g.mainCharacter.Health > 0 {
-		g.mainCharacter.State = StateIdle
+	if g.playableCharacter.Health > 0 {
+		g.playableCharacter.State = StateIdle
 		g.isGameOver = false
 	} else {
-		g.mainCharacter.State = StateDead
+		g.playableCharacter.State = StateDead
 		g.isGameOver = true
 	}
 
 	g.mapWonMenuIndex = WinMenuContinue
 
 	// Snap camera
-	pIsoX, pIsoY := engine.CartesianToIso(g.mainCharacter.X, g.mainCharacter.Y)
+	pIsoX, pIsoY := engine.CartesianToIso(g.playableCharacter.X, g.playableCharacter.Y)
 	g.camera.SnapTo(pIsoX, pIsoY)
 
 	// Restore NPCs

@@ -2,10 +2,10 @@ package game
 
 import "testing"
 
-// Tests for MainCharacter.CheckAttackHits
+// Tests for PlayableCharacter.CheckAttackHits
 
 func TestCheckAttackHits_HitOrMiss(t *testing.T) {
-	mc := NewMainCharacter(0, 0, nil)
+	mc := NewPlayableCharacter(0, 0, nil)
 	mc.BaseAttack = 50 // Very high → typically hits
 	mc.Facing = DirSE
 
@@ -23,7 +23,7 @@ func TestCheckAttackHits_HitOrMiss(t *testing.T) {
 }
 
 func TestCheckAttackHits_DeadNPCSkipped(t *testing.T) {
-	mc := NewMainCharacter(0, 0, nil)
+	mc := NewPlayableCharacter(0, 0, nil)
 	mc.Facing = DirSE
 
 	npc := NewNPC(0.5, 0.5, nil, 1)
@@ -42,7 +42,7 @@ func TestCheckAttackHits_DeadNPCSkipped(t *testing.T) {
 }
 
 func TestCheckAttackHits_OutOfRange(t *testing.T) {
-	mc := NewMainCharacter(0, 0, nil)
+	mc := NewPlayableCharacter(0, 0, nil)
 	mc.Facing = DirSE
 
 	npc := NewNPC(50, 50, nil, 1) // Far away
@@ -65,7 +65,7 @@ func TestCheckAttackHits_AllDirections(t *testing.T) {
 	offsets := [][2]float64{{1, 0.5}, {-0.5, 1}, {1, -0.5}, {-0.5, -1}}
 
 	for i, dir := range directions {
-		mc := NewMainCharacter(0, 0, nil)
+		mc := NewPlayableCharacter(0, 0, nil)
 		mc.BaseAttack = 9999 // Guarantee a hit
 		mc.Facing = dir
 
@@ -93,11 +93,11 @@ func TestCheckAttackHits_AllDirections(t *testing.T) {
 }
 
 func TestCheckAttackHits_KillUpdatesMapKills(t *testing.T) {
-	mc := NewMainCharacter(0, 0, nil)
+	mc := NewPlayableCharacter(0, 0, nil)
 	mc.BaseAttack = 9999 // Guarantee a huge hit
 	mc.Facing = DirSE
 
-	// Ensure the MapKills map is initialized (it is inside NewMainCharacter)
+	// Ensure the MapKills map is initialized (it is inside NewPlayableCharacter)
 	npc := NewNPC(0.5, 0.5, &Archetype{ID: "crimson_guard", XP: 10}, 1)
 	npc.Health = 1
 	npc.BaseDefense = 0

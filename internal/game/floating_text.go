@@ -13,7 +13,7 @@ var (
 	ColorAlly          = color.RGBA{0, 255, 0, 150}
 	ColorEnemy         = color.RGBA{255, 0, 0, 150}
 	ColorNeutral       = color.RGBA{0, 255, 255, 150}
-	ColorMainCharacter = ColorAlly
+	ColorPlayableCharacter = ColorAlly
 )
 
 type FloatingText struct {

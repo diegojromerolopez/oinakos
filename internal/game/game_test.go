@@ -16,8 +16,8 @@ func TestGameInitialization(t *testing.T) {
 		t.Fatal("NewGame returned nil")
 	}
 
-	if g.mainCharacter == nil {
-		t.Error("MainCharacter not initialized")
+	if g.playableCharacter == nil {
+		t.Error("PlayableCharacter not initialized")
 	}
 
 	if g.camera == nil {
@@ -30,8 +30,8 @@ func TestUpdateChunks(t *testing.T) {
 	g := NewGame(assets, "", "", "", NewMockInputManager(), NewMockAudioManager(), false)
 
 	// Set player position
-	g.mainCharacter.X = 100
-	g.mainCharacter.Y = 100
+	g.playableCharacter.X = 100
+	g.playableCharacter.Y = 100
 
 	// Procedural updateChunks is now a no-op (disabled per user request)
 	g.updateChunks()
@@ -121,21 +121,21 @@ func TestHeroFlagOverride(t *testing.T) {
 	// Re-run the initialization logic that handles the flag
 	// Since we already called NewGame, we manually trigger the block we added
 	if config, ok := g.playableCharacterRegistry.Characters[g.initialHeroID]; ok {
-		g.mainCharacter.Config = config
-		g.mainCharacter.Health = config.Stats.HealthMin
-		g.mainCharacter.MaxHealth = config.Stats.HealthMin
-		g.mainCharacter.Speed = config.Stats.Speed
+		g.playableCharacter.Config = config
+		g.playableCharacter.Health = config.Stats.HealthMin
+		g.playableCharacter.MaxHealth = config.Stats.HealthMin
+		g.playableCharacter.Speed = config.Stats.Speed
 		g.isCharacterSelect = false
 	}
 
-	// Verify the main character has the correct config
-	if g.mainCharacter.Config.ID != "conde_olinos" {
-		t.Errorf("Expected main character ID conde_olinos, got %s", g.mainCharacter.Config.ID)
+	// Verify the playable character has the correct config
+	if g.playableCharacter.Config.ID != "conde_olinos" {
+		t.Errorf("Expected playable character ID conde_olinos, got %s", g.playableCharacter.Config.ID)
 	}
 
 	// Verify health was initialized
-	if g.mainCharacter.MaxHealth != 500 {
-		t.Errorf("Expected health 500, got %d", g.mainCharacter.MaxHealth)
+	if g.playableCharacter.MaxHealth != 500 {
+		t.Errorf("Expected health 500, got %d", g.playableCharacter.MaxHealth)
 	}
 
 	// Verify character selection screen is bypassed

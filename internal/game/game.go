@@ -26,7 +26,7 @@ const (
 
 type Game struct {
 	width, height     int
-	mainCharacter     *MainCharacter
+	playableCharacter     *PlayableCharacter
 	playerConfig      *EntityConfig
 	obstacles         []*Obstacle
 	npcs              []*NPC
@@ -89,14 +89,14 @@ type Game struct {
 func NewGame(assets fs.FS, initialMapID, initialMapTypeID, initialHeroID string, input engine.Input, audio AudioManager, debug bool) *Game {
 	rand.Seed(time.Now().UnixNano())
 
-	// Load mainCharacter config
-	pConfig, err := LoadMainCharacterConfig(assets)
+	// Load playableCharacter config
+	pConfig, err := LoadPlayableCharacterConfig(assets)
 	if err != nil {
-		log.Printf("Warning: failed to load main character: %v. Using default values.", err)
+		log.Printf("Warning: failed to load playable character: %v. Using default values.", err)
 	}
 
-	mainCharacter := NewMainCharacter(0, 0, pConfig)
-	pIsoX, pIsoY := engine.CartesianToIso(mainCharacter.X, mainCharacter.Y)
+	playableCharacter := NewPlayableCharacter(0, 0, pConfig)
+	pIsoX, pIsoY := engine.CartesianToIso(playableCharacter.X, playableCharacter.Y)
 
 	// Registries
 	archetypeRegistry := NewArchetypeRegistry()
@@ -127,7 +127,7 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID, initialHeroID string,
 	g := &Game{
 		width:                     1280,
 		height:                    720,
-		mainCharacter:             mainCharacter,
+		playableCharacter:             playableCharacter,
 		camera:                    engine.NewCamera(pIsoX, pIsoY),
 		assets:                    assets,
 		generatedChunks:           make(map[image.Point]bool),
@@ -171,13 +171,14 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID, initialHeroID string,
 
 	if g.initialHeroID != "" {
 		if config, ok := g.playableCharacterRegistry.Characters[g.initialHeroID]; ok {
-			g.mainCharacter.Config = config
-			g.mainCharacter.Health = config.Stats.HealthMin
-			g.mainCharacter.MaxHealth = config.Stats.HealthMin
-			g.mainCharacter.Speed = config.Stats.Speed
-			g.mainCharacter.BaseAttack = config.Stats.BaseAttack
-			g.mainCharacter.BaseDefense = config.Stats.BaseDefense
-			g.mainCharacter.Weapon = config.Weapon
+			g.playableCharacter.Config = config
+			g.playableCharacter.Health = config.Stats.HealthMin
+			g.playableCharacter.MaxHealth = config.Stats.HealthMin
+			g.playableCharacter.Speed = config.Stats.Speed
+			g.playableCharacter.BaseAttack = config.Stats.BaseAttack
+			g.playableCharacter.BaseDefense = config.Stats.BaseDefense
+			g.playableCharacter.Weapon = config.Weapon
+			g.playableCharacter.Name = config.Name
 			g.isCharacterSelect = false
 			log.Printf("Using initial hero: %s", g.initialHeroID)
 		} else {
@@ -211,7 +212,7 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID, initialHeroID string,
 				instanceLoaded = true
 				g.isMainMenu = false
 				// If hero wasn't selected via flag, and we don't have one from save, go to select
-				if g.initialHeroID == "" && g.mainCharacter.Config == nil {
+				if g.initialHeroID == "" && g.playableCharacter.Config == nil {
 					g.isCharacterSelect = true
 				} else {
 					g.isCharacterSelect = false
@@ -242,7 +243,7 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID, initialHeroID string,
 		}
 	}
 
-	// Initial generation around mainCharacter
+	// Initial generation around playableCharacter
 	g.updateChunks()
 
 	// Spawn NPCs if not loaded from instance and not in menu
@@ -285,17 +286,17 @@ func (g *Game) loadMapLevel() {
 	g.obstacles = make([]*Obstacle, 0)
 	g.floatingTexts = make([]*FloatingText, 0)
 	g.currentMapType.StartTime = 0
-	g.mainCharacter.MapKills = make(map[string]int) // reset per-map kills
+	g.playableCharacter.MapKills = make(map[string]int) // reset per-map kills
 	g.mapWonMenuIndex = 0
 
 	// Initial player position
 	if g.currentMapType.Player != nil {
-		g.mainCharacter.X = g.currentMapType.Player.X
-		g.mainCharacter.Y = g.currentMapType.Player.Y
+		g.playableCharacter.X = g.currentMapType.Player.X
+		g.playableCharacter.Y = g.currentMapType.Player.Y
 	}
 
 	// Camera Snap to player
-	pIsoX, pIsoY := engine.CartesianToIso(g.mainCharacter.X, g.mainCharacter.Y)
+	pIsoX, pIsoY := engine.CartesianToIso(g.playableCharacter.X, g.playableCharacter.Y)
 	g.camera.SnapTo(pIsoX, pIsoY)
 
 	// Apply Difficulty Multipliers
@@ -314,8 +315,8 @@ func (g *Game) loadMapLevel() {
 			vipID := g.archetypeRegistry.IDs[rand.Intn(len(g.archetypeRegistry.IDs))]
 			vipConfig := g.archetypeRegistry.Archetypes[vipID]
 			// Spawn far away
-			tpX := g.mainCharacter.X + (rand.Float64()*40 - 20)
-			tpY := g.mainCharacter.Y + (rand.Float64()*40 - 20)
+			tpX := g.playableCharacter.X + (rand.Float64()*40 - 20)
+			tpY := g.playableCharacter.Y + (rand.Float64()*40 - 20)
 			if tpX > -5 && tpX < 5 {
 				tpX += 10
 			}
@@ -355,8 +356,8 @@ func (g *Game) loadMapLevel() {
 				offY += 20
 			}
 			g.currentMapType.TargetPoint = engine.Point{
-				X: g.mainCharacter.X + offX,
-				Y: g.mainCharacter.Y + offY,
+				X: g.playableCharacter.X + offX,
+				Y: g.playableCharacter.Y + offY,
 			}
 		}
 	case ObjReachBuilding:
@@ -375,8 +376,8 @@ func (g *Game) loadMapLevel() {
 				offY += 20
 			}
 			g.currentMapType.TargetPoint = engine.Point{
-				X: g.mainCharacter.X + offX,
-				Y: g.mainCharacter.Y + offY,
+				X: g.playableCharacter.X + offX,
+				Y: g.playableCharacter.Y + offY,
 			}
 		}
 		// Spawn a building at the target
@@ -401,22 +402,22 @@ func (g *Game) loadMapLevel() {
 				offY += 40
 			}
 			g.currentMapType.TargetPoint = engine.Point{
-				X: g.mainCharacter.X + offX,
-				Y: g.mainCharacter.Y + offY,
+				X: g.playableCharacter.X + offX,
+				Y: g.playableCharacter.Y + offY,
 			}
 		}
 
-		// Spawn Escort right next to mainCharacter
+		// Spawn Escort right next to playableCharacter
 		if config, ok := g.archetypeRegistry.Archetypes["magi_male"]; ok {
-			escort := NewNPC(g.mainCharacter.X+2, g.mainCharacter.Y+2, config, g.mapLevel)
+			escort := NewNPC(g.playableCharacter.X+2, g.playableCharacter.Y+2, config, g.mapLevel)
 			g.npcs = append([]*NPC{escort}, g.npcs...) // Prepend so it's always index 0 for easy tracking
 		} else {
 			log.Println("WARNING: Magi config (magi_male) not found!")
 		}
 	case ObjDestroyBuilding:
 		g.currentMapType.TargetPoint = engine.Point{
-			X: g.mainCharacter.X + (rand.Float64()*80 - 40),
-			Y: g.mainCharacter.Y + (rand.Float64()*80 - 40),
+			X: g.playableCharacter.X + (rand.Float64()*80 - 40),
+			Y: g.playableCharacter.Y + (rand.Float64()*80 - 40),
 		}
 		if g.currentMapType.TargetPoint.X > -20 && g.currentMapType.TargetPoint.X < 20 {
 			g.currentMapType.TargetPoint.X += 40
@@ -461,9 +462,9 @@ func (g *Game) loadMapLevel() {
 
 		if ok {
 			// If this inhabitant is the character the player selected, we'll swap positions
-			if id != "" && g.mainCharacter.Config != nil && id == g.mainCharacter.Config.ID {
-				g.mainCharacter.X = ps.X
-				g.mainCharacter.Y = ps.Y
+			if id != "" && g.playableCharacter.Config != nil && id == g.playableCharacter.Config.ID {
+				g.playableCharacter.X = ps.X
+				g.playableCharacter.Y = ps.Y
 				// We don't spawn the NPC instance if the player IS that NPC
 				continue
 			}
@@ -523,21 +524,21 @@ func (g *Game) loadMapLevel() {
 		}
 	}
 
-	// Ensure MainCharacter starts in a safe (non-colliding) spot
+	// Ensure PlayableCharacter starts in a safe (non-colliding) spot
 	const maxTries = 500
 	radius := 1.0
 	for i := 0; i < maxTries; i++ {
-		if !g.mainCharacter.checkCollisionAt(g.mainCharacter.X, g.mainCharacter.Y, g.obstacles) {
+		if !g.playableCharacter.checkCollisionAt(g.playableCharacter.X, g.playableCharacter.Y, g.obstacles) {
 			break // Safe!
 		}
 		// Spiraling outward search for a safe spot — larger steps for huge building shadows
 		angle := float64(i) * 0.3
 		dist := radius + (float64(i) * 0.2)
-		g.mainCharacter.X += math.Cos(angle) * dist
-		g.mainCharacter.Y += math.Sin(angle) * dist
+		g.playableCharacter.X += math.Cos(angle) * dist
+		g.playableCharacter.Y += math.Sin(angle) * dist
 	}
 
-	DebugLog("Starting Map Level %d: %s at safe pos %.2f,%.2f", g.mapLevel, g.currentMapType.Name, g.mainCharacter.X, g.mainCharacter.Y)
+	DebugLog("Starting Map Level %d: %s at safe pos %.2f,%.2f", g.mapLevel, g.currentMapType.Name, g.playableCharacter.X, g.playableCharacter.Y)
 }
 
 func (g *Game) Update() error {
@@ -704,13 +705,14 @@ func (g *Game) Update() error {
 		if handleSelect {
 			charID := g.playableCharacterRegistry.IDs[g.characterMenuIndex]
 			config := g.playableCharacterRegistry.Characters[charID]
-			g.mainCharacter.Config = config
-			g.mainCharacter.Health = config.Stats.HealthMin
-			g.mainCharacter.MaxHealth = config.Stats.HealthMin
-			g.mainCharacter.Speed = config.Stats.Speed
-			g.mainCharacter.BaseAttack = config.Stats.BaseAttack
-			g.mainCharacter.BaseDefense = config.Stats.BaseDefense
-			g.mainCharacter.Weapon = config.Weapon
+			g.playableCharacter.Config = config
+			g.playableCharacter.Health = config.Stats.HealthMin
+			g.playableCharacter.MaxHealth = config.Stats.HealthMin
+			g.playableCharacter.Speed = config.Stats.Speed
+			g.playableCharacter.BaseAttack = config.Stats.BaseAttack
+			g.playableCharacter.BaseDefense = config.Stats.BaseDefense
+			g.playableCharacter.Weapon = config.Weapon
+			g.playableCharacter.Name = config.Name
 
 			g.isCharacterSelect = false
 			// If we didn't start with a specific map from flags, go to campaign/map select
@@ -1020,7 +1022,7 @@ func (g *Game) Update() error {
 	// Handle projectiles
 	activeProjectiles := []*Projectile{}
 	for _, p := range g.projectiles {
-		p.Update(g.mainCharacter, g.obstacles, &g.floatingTexts, g.audio)
+		p.Update(g.playableCharacter, g.obstacles, &g.floatingTexts, g.audio)
 		if p.Alive {
 			activeProjectiles = append(activeProjectiles, p)
 		}
@@ -1034,11 +1036,11 @@ func (g *Game) Update() error {
 		}
 	}
 
-	g.mainCharacter.Update(g.input, g.audio, g.obstacles, g.npcs, &g.floatingTexts, g.currentMapType.MapWidth, g.currentMapType.MapHeight)
+	g.playableCharacter.Update(g.input, g.audio, g.obstacles, g.npcs, &g.floatingTexts, g.currentMapType.MapWidth, g.currentMapType.MapHeight)
 
 	// Real-time position tracking for the USER and Agent
-	if g.mainCharacter.Tick%30 == 0 {
-		isIllegal := g.mainCharacter.checkCollisionAt(g.mainCharacter.X, g.mainCharacter.Y, g.obstacles)
+	if g.playableCharacter.Tick%30 == 0 {
+		isIllegal := g.playableCharacter.checkCollisionAt(g.playableCharacter.X, g.playableCharacter.Y, g.obstacles)
 		status := "OK"
 		if isIllegal {
 			status = "ILLEGAL POSITION (INSIDE BUILDING)"
@@ -1048,7 +1050,7 @@ func (g *Game) Update() error {
 		nearestDist := 999.0
 		nearestName := "None"
 		for _, o := range g.obstacles {
-			dist := math.Sqrt(math.Pow(g.mainCharacter.X-o.X, 2) + math.Pow(g.mainCharacter.Y-o.Y, 2))
+			dist := math.Sqrt(math.Pow(g.playableCharacter.X-o.X, 2) + math.Pow(g.playableCharacter.Y-o.Y, 2))
 			if dist < nearestDist {
 				nearestDist = dist
 				if o.Archetype != nil {
@@ -1058,10 +1060,10 @@ func (g *Game) Update() error {
 		}
 
 		DebugLog("[REALTIME] Player Pos: X=%.2f, Y=%.2f | Status: %s | Nearest: %s (Dist: %.2f)",
-			g.mainCharacter.X, g.mainCharacter.Y, status, nearestName, nearestDist)
+			g.playableCharacter.X, g.playableCharacter.Y, status, nearestName, nearestDist)
 	}
 	// Write to a dedicated file for the agent to poll
-	os.WriteFile("/tmp/oinakos_pos.txt", []byte(fmt.Sprintf("%.2f,%.2f", g.mainCharacter.X, g.mainCharacter.Y)), 0644)
+	os.WriteFile("/tmp/oinakos_pos.txt", []byte(fmt.Sprintf("%.2f,%.2f", g.playableCharacter.X, g.playableCharacter.Y)), 0644)
 
 	// Dynamic spawning
 	g.updateNPCSpawning()
@@ -1078,7 +1080,7 @@ func (g *Game) Update() error {
 	case ObjKillCount:
 		// Count kills made in this map session
 		mapKillTotal := 0
-		for _, v := range g.mainCharacter.MapKills {
+		for _, v := range g.playableCharacter.MapKills {
 			mapKillTotal += v
 		}
 
@@ -1090,7 +1092,7 @@ func (g *Game) Update() error {
 			hasTarget = true
 			allMet := true
 			for npcID, targetAmount := range g.currentMapType.TargetKills {
-				if g.mainCharacter.MapKills[npcID] < targetAmount {
+				if g.playableCharacter.MapKills[npcID] < targetAmount {
 					allMet = false
 					break
 				}
@@ -1119,8 +1121,8 @@ func (g *Game) Update() error {
 		}
 	case ObjReachPortal, ObjReachZone, ObjReachBuilding:
 		// Check distance
-		dx := g.mainCharacter.X - g.currentMapType.TargetPoint.X
-		dy := g.mainCharacter.Y - g.currentMapType.TargetPoint.Y
+		dx := g.playableCharacter.X - g.currentMapType.TargetPoint.X
+		dy := g.playableCharacter.Y - g.currentMapType.TargetPoint.Y
 		dist := math.Sqrt(dx*dx + dy*dy)
 
 		radius := g.currentMapType.TargetRadius
@@ -1169,7 +1171,7 @@ func (g *Game) Update() error {
 			mapWon = true
 		}
 		// Failure condition: Don't kill anything
-		for _, kills := range g.mainCharacter.MapKills {
+		for _, kills := range g.playableCharacter.MapKills {
 			if kills > 0 {
 				g.isGameOver = true
 				break
@@ -1183,7 +1185,7 @@ func (g *Game) Update() error {
 		}
 	}
 
-	if mapWon && !g.isGameOver && g.mainCharacter.IsAlive() {
+	if mapWon && !g.isGameOver && g.playableCharacter.IsAlive() {
 		// Show win dialog, don't auto-advance
 		if !g.isMapWon {
 			DebugLog("Objective Completed! Level %d cleared. Objective: %v", g.mapLevel, g.currentMapType.Type)
@@ -1192,7 +1194,7 @@ func (g *Game) Update() error {
 		return nil
 	}
 
-	if g.isGameOver && g.mainCharacter.IsAlive() == false {
+	if g.isGameOver && g.playableCharacter.IsAlive() == false {
 		// Only log if it just happened
 		// We need to check if we already logged it, or just log here once per game over
 	}
@@ -1207,14 +1209,14 @@ func (g *Game) Update() error {
 	}
 	g.obstacles = aliveObstacles
 
-	// Check if mainCharacter died
-	if !g.mainCharacter.IsAlive() {
+	// Check if playableCharacter died
+	if !g.playableCharacter.IsAlive() {
 		g.isGameOver = true
 	}
 
 	// Update all NPCs (keep corpses indefinitely per user request)
 	for _, n := range g.npcs {
-		n.Update(g.mainCharacter, g.obstacles, g.npcs, &g.projectiles, &g.floatingTexts, g.currentMapType.MapWidth, g.currentMapType.MapHeight, g.audio)
+		n.Update(g.playableCharacter, g.obstacles, g.npcs, &g.projectiles, &g.floatingTexts, g.currentMapType.MapWidth, g.currentMapType.MapHeight, g.audio)
 		if n.MustSurvive && !n.IsAlive() {
 			if !g.isGameOver {
 				DebugLog("CRITICAL FAILURE: [%s] was killed! Quest Failed.", n.Name)
@@ -1232,19 +1234,19 @@ func (g *Game) Update() error {
 	}
 	g.floatingTexts = activeTexts
 
-	// Camera follows mainCharacter
-	pIsoX, pIsoY := engine.CartesianToIso(g.mainCharacter.X, g.mainCharacter.Y)
+	// Camera follows playableCharacter
+	pIsoX, pIsoY := engine.CartesianToIso(g.playableCharacter.X, g.playableCharacter.Y)
 	g.camera.Follow(pIsoX, pIsoY, 0.1)
 
 	// Final safety check: ensure player is not stuck in a newly loaded obstacle
 	for i := 0; i < 50; i++ {
-		if !g.mainCharacter.checkCollisionAt(g.mainCharacter.X, g.mainCharacter.Y, g.obstacles) {
+		if !g.playableCharacter.checkCollisionAt(g.playableCharacter.X, g.playableCharacter.Y, g.obstacles) {
 			break
 		}
-		g.mainCharacter.X += rand.Float64()*2 - 1
-		g.mainCharacter.Y += rand.Float64()*2 - 1
+		g.playableCharacter.X += rand.Float64()*2 - 1
+		g.playableCharacter.Y += rand.Float64()*2 - 1
 		// Update camera to match new position
-		ncX, ncY := engine.CartesianToIso(g.mainCharacter.X, g.mainCharacter.Y)
+		ncX, ncY := engine.CartesianToIso(g.playableCharacter.X, g.playableCharacter.Y)
 		g.camera.SnapTo(ncX, ncY)
 	}
 
@@ -1259,10 +1261,10 @@ func (g *Game) updateChunks() {
 	// Procedural spawning disabled per user request: "obstacles MUST NOT spawn at all"
 	/*
 		const chunkSize = 10
-		cpX := int(math.Floor(g.mainCharacter.X / float64(chunkSize)))
-		cpY := int(math.Floor(g.mainCharacter.Y / float64(chunkSize)))
+		cpX := int(math.Floor(g.playableCharacter.X / float64(chunkSize)))
+		cpY := int(math.Floor(g.playableCharacter.Y / float64(chunkSize)))
 
-		// Check 9x9 grid around mainCharacter (radius 4)
+		// Check 9x9 grid around playableCharacter (radius 4)
 		// With chunkSize=10, this covers ±40 tiles, well beyond renderer's 25-tile limit.
 		for dy := -4; dy <= 4; dy++ {
 			for dx := -4; dx <= 4; dx++ {
@@ -1320,7 +1322,7 @@ func (g *Game) spawnObstaclesInChunk(cx, cy int) {
 	if r.Float64() < 0.08 {
 		bx := startX + r.Float64()*chunkSize
 		by := startY + r.Float64()*chunkSize
-		// Don't spawn on top of mainCharacter's initial position
+		// Don't spawn on top of playableCharacter's initial position
 		if math.Abs(bx) > 5 || math.Abs(by) > 5 {
 			// Ensure buildings are far from each other
 			tooClose := false
@@ -1412,7 +1414,7 @@ func (g *Game) updateNPCSpawning() {
 		g.npcSpawnTimer = 0
 		activeNPCs := make([]*NPC, 0)
 		for _, n := range g.npcs {
-			dist := math.Sqrt(math.Pow(n.X-g.mainCharacter.X, 2) + math.Pow(n.Y-g.mainCharacter.Y, 2))
+			dist := math.Sqrt(math.Pow(n.X-g.playableCharacter.X, 2) + math.Pow(n.Y-g.playableCharacter.Y, 2))
 			// Only cull if it's far away AND not a corpse
 			// Corpses remain forever per user rule
 			if n.IsAlive() {
@@ -1486,8 +1488,8 @@ func (g *Game) spawnNPCAtMapEdges(sc *SpawnConfig) {
 
 	const spawnDist = 30.0
 	angle := rand.Float64() * 2 * math.Pi
-	ex := g.mainCharacter.X + math.Cos(angle)*spawnDist
-	ey := g.mainCharacter.Y + math.Sin(angle)*spawnDist
+	ex := g.playableCharacter.X + math.Cos(angle)*spawnDist
+	ey := g.playableCharacter.Y + math.Sin(angle)*spawnDist
 
 	npcConfig := g.archetypeRegistry.Archetypes[sc.Archetype]
 	if npcConfig == nil {
@@ -1522,8 +1524,8 @@ func (g *Game) spawnNPCAtMapEdges(sc *SpawnConfig) {
 			break
 		}
 		angle := rand.Float64() * 2 * math.Pi
-		npc.X = g.mainCharacter.X + math.Cos(angle)*(spawnDist+rand.Float64()*2)
-		npc.Y = g.mainCharacter.Y + math.Sin(angle)*(spawnDist+rand.Float64()*2)
+		npc.X = g.playableCharacter.X + math.Cos(angle)*(spawnDist+rand.Float64()*2)
+		npc.Y = g.playableCharacter.Y + math.Sin(angle)*(spawnDist+rand.Float64()*2)
 	}
 
 	g.npcs = append(g.npcs, npc)
@@ -1551,9 +1553,9 @@ func (g *Game) updateProximityEffects() {
 			continue
 		}
 
-		// Process Entities: MainCharacter and NPCs
+		// Process Entities: PlayableCharacter and NPCs
 		entities := make([]interface{}, 0, len(g.npcs)+1)
-		entities = append(entities, g.mainCharacter)
+		entities = append(entities, g.playableCharacter)
 		for _, n := range g.npcs {
 			if n.IsAlive() {
 				entities = append(entities, n)
@@ -1566,7 +1568,7 @@ func (g *Game) updateProximityEffects() {
 			var isMC bool
 
 			switch e := entity.(type) {
-			case *MainCharacter:
+			case *PlayableCharacter:
 				ex, ey = e.X, e.Y
 				eFootprint = e.GetFootprint()
 				isMC = true
@@ -1598,7 +1600,7 @@ func (g *Game) updateProximityEffects() {
 					if o.EffectTimers[entity] <= 0 {
 						// Apply Damage
 						switch e := entity.(type) {
-						case *MainCharacter:
+						case *PlayableCharacter:
 							e.TakeDamage(action.Amount, g.audio)
 						case *NPC:
 							e.TakeDamage(action.Amount, nil, nil, g.audio, g.npcs)
@@ -1631,7 +1633,7 @@ func (g *Game) updateProximityEffects() {
 
 					if allowed && o.EffectTimers[entity] <= 0 {
 						switch e := entity.(type) {
-						case *MainCharacter:
+						case *PlayableCharacter:
 							e.Heal(action.Amount)
 						case *NPC:
 							e.Heal(action.Amount)

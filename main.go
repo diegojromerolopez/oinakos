@@ -28,7 +28,7 @@ func main() {
 	var configDir string
 	flag.StringVar(&initialMap, "map", "", "Map YAML file to load (save/instance)")
 	flag.StringVar(&initialMapType, "map-type", "", "Named map type to generate from")
-	flag.StringVar(&heroID, "hero", "", "Character ID to use as the main character")
+	flag.StringVar(&heroID, "hero", "", "Character ID to use as the playable character")
 	flag.StringVar(&loadGame, "load-game", "", "Saved game file to load (e.g. quicksaves/save_20240101_120000.yaml)")
 	flag.BoolVar(&debug, "debug", false, "Show collision perimeters (red borders)")
 	flag.StringVar(&configDir, "config", "", "Config directory to use for settings and saves")

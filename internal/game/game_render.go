@@ -54,7 +54,7 @@ func (gr *GameRenderer) LoadAssets(assets fs.FS) {
 	}
 
 	// Load player assets
-	mc := gr.game.mainCharacter
+	mc := gr.game.playableCharacter
 	if mc != nil && mc.Config != nil {
 		if mc.Config.AssetDir == "" {
 			mc.Config.AssetDir = "assets/images/characters/oinakos"
@@ -227,15 +227,15 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 		})
 	}
 
-	// Add mainCharacter
-	mcSortY := g.mainCharacter.X + g.mainCharacter.Y
-	if g.mainCharacter.State == StateDead {
+	// Add playableCharacter
+	mcSortY := g.playableCharacter.X + g.playableCharacter.Y
+	if g.playableCharacter.State == StateDead {
 		mcSortY -= 100.0
 	}
 	tasks = append(tasks, drawTask{
 		y: mcSortY,
 		draw: func() {
-			g.mainCharacter.Draw(screen, gr.graphics, gr.graphics, offsetX, offsetY)
+			g.playableCharacter.Draw(screen, gr.graphics, gr.graphics, offsetX, offsetY)
 		},
 	})
 
@@ -299,7 +299,7 @@ func (gr *GameRenderer) drawGameOver(screen engine.Image) {
 	minutes := int(g.playTime) / 60
 	seconds := int(g.playTime) % 60
 	gr.graphics.DebugPrintAt(screen, "GAME OVER", g.width/2-30, g.height/2-45, color.White)
-	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("Kills: %d", g.mainCharacter.Kills), g.width/2-25, g.height/2-15, color.White)
+	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("Kills: %d", g.playableCharacter.Kills), g.width/2-25, g.height/2-15, color.White)
 	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("Time: %02d:%02d", minutes, seconds), g.width/2-30, g.height/2+15, color.White)
 	gr.graphics.DebugPrintAt(screen, "Press ESC to exit, or ENTER to restart", g.width/2-110, g.height/2+45, color.White)
 }
@@ -308,7 +308,7 @@ func (gr *GameRenderer) drawMapWon(screen engine.Image) {
 	g := gr.game
 	gr.graphics.DrawFilledRect(screen, 0, 0, float32(g.width), float32(g.height), color.RGBA{20, 60, 20, 200}, false)
 	mapKillTotal := 0
-	for _, k := range g.mainCharacter.MapKills {
+	for _, k := range g.playableCharacter.MapKills {
 		mapKillTotal += k
 	}
 	gr.graphics.DebugPrintAt(screen, "MAP WON!", g.width/2-30, g.height/2-45, color.White)
@@ -321,12 +321,12 @@ func (gr *GameRenderer) drawHUD(screen engine.Image) {
 	// Use DrawFilledRect instead of NewImage every frame to avoid Metal leaks
 	gr.graphics.DrawFilledRect(screen, 10, 10, 350, 150, color.RGBA{0, 0, 0, 180}, false)
 
-	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("HP: %d/%d", g.mainCharacter.Health, g.mainCharacter.MaxHealth), 20, 20, color.White)
+	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("HP: %d/%d", g.playableCharacter.Health, g.playableCharacter.MaxHealth), 20, 20, color.White)
 
 	// Health bar background
 	gr.graphics.DrawFilledRect(screen, 100, 22, 200, 10, color.RGBA{100, 0, 0, 255}, false)
 
-	healthPct := float64(g.mainCharacter.Health) / float64(g.mainCharacter.MaxHealth)
+	healthPct := float64(g.playableCharacter.Health) / float64(g.playableCharacter.MaxHealth)
 	if healthPct > 0 {
 		var healthColor color.RGBA
 		if healthPct > 0.7 {
@@ -339,15 +339,15 @@ func (gr *GameRenderer) drawHUD(screen engine.Image) {
 		gr.graphics.DrawFilledRect(screen, 100, 22, float32(200*healthPct), 10, healthColor, false)
 	}
 
-	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("LVL: %d  XP: %d", g.mainCharacter.Level, g.mainCharacter.XP), 20, 45, color.White)
+	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("LVL: %d  XP: %d", g.playableCharacter.Level, g.playableCharacter.XP), 20, 45, color.White)
 	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("OBJ: %s", g.currentMapType.Description), 20, 57, color.White)
 	minutes := int(g.playTime) / 60
 	seconds := int(g.playTime) % 60
-	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("POS %.1f,%.1f  KILLS: %d  XP: %d  LVL: %d", g.mainCharacter.X, g.mainCharacter.Y, g.mainCharacter.Kills, g.mainCharacter.XP, g.mainCharacter.Level), 20, 77, color.White)
-	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("ATK: %d  DEF: %d  SHIELD: %d", g.mainCharacter.GetTotalAttack(), g.mainCharacter.GetTotalDefense(), g.mainCharacter.GetTotalProtection()), 20, 92, color.White)
-	weaponText := fmt.Sprintf("WEAPON: %s (%d-%d)", g.mainCharacter.Weapon.Name, g.mainCharacter.Weapon.MinDamage, g.mainCharacter.Weapon.MaxDamage)
-	if g.mainCharacter.Weapon.Bonus > 0 {
-		weaponText += fmt.Sprintf(" +%d", g.mainCharacter.Weapon.Bonus)
+	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("POS %.1f,%.1f  KILLS: %d  XP: %d  LVL: %d", g.playableCharacter.X, g.playableCharacter.Y, g.playableCharacter.Kills, g.playableCharacter.XP, g.playableCharacter.Level), 20, 77, color.White)
+	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("ATK: %d  DEF: %d  SHIELD: %d", g.playableCharacter.GetTotalAttack(), g.playableCharacter.GetTotalDefense(), g.playableCharacter.GetTotalProtection()), 20, 92, color.White)
+	weaponText := fmt.Sprintf("WEAPON: %s (%d-%d)", g.playableCharacter.Weapon.Name, g.playableCharacter.Weapon.MinDamage, g.playableCharacter.Weapon.MaxDamage)
+	if g.playableCharacter.Weapon.Bonus > 0 {
+		weaponText += fmt.Sprintf(" +%d", g.playableCharacter.Weapon.Bonus)
 	}
 	gr.graphics.DebugPrintAt(screen, weaponText, 20, 107, color.White)
 	gr.graphics.DebugPrintAt(screen, fmt.Sprintf("TIME: %02d:%02d", minutes, seconds), 20, 122, color.White)
@@ -429,7 +429,7 @@ func (gr *GameRenderer) drawDebug(screen engine.Image, offsetX, offsetY float64)
 	}
 
 	// Player: Green
-	drawPolygon(gr.game.mainCharacter.GetFootprint(), green)
+	drawPolygon(gr.game.playableCharacter.GetFootprint(), green)
 }
 
 func (gr *GameRenderer) drawHoverInfo(screen engine.Image) {

@@ -70,8 +70,8 @@ player:
 
 	t.Run("LoneString_DefaultMap", func(t *testing.T) {
 		g := NewGame(mockFS, "default1", "", "", NewMockInputManager(), NewMockAudioManager(), false)
-		if g.mainCharacter.X != 10 || g.mainCharacter.Y != 20 {
-			t.Errorf("Expected player at (10, 20), got (%f, %f)", g.mainCharacter.X, g.mainCharacter.Y)
+		if g.playableCharacter.X != 10 || g.playableCharacter.Y != 20 {
+			t.Errorf("Expected player at (10, 20), got (%f, %f)", g.playableCharacter.X, g.playableCharacter.Y)
 		}
 	})
 
@@ -106,15 +106,15 @@ player:
 
 	t.Run("LoneString_FallbackToMapType", func(t *testing.T) {
 		g := NewGame(mockFS, "type1", "", "", NewMockInputManager(), NewMockAudioManager(), false)
-		if g.mainCharacter.X != 0 || g.mainCharacter.Y != 0 {
-			t.Errorf("Expected player at (0, 0), got (%f, %f)", g.mainCharacter.X, g.mainCharacter.Y)
+		if g.playableCharacter.X != 0 || g.playableCharacter.Y != 0 {
+			t.Errorf("Expected player at (0, 0), got (%f, %f)", g.playableCharacter.X, g.playableCharacter.Y)
 		}
 	})
 
 	t.Run("Path_ExternalMap", func(t *testing.T) {
 		g := NewGame(mockFS, "external/ext1.yaml", "", "", NewMockInputManager(), NewMockAudioManager(), false)
-		if g.mainCharacter.X != 100 || g.mainCharacter.Y != 200 {
-			t.Errorf("Expected player at (100, 200), got (%f, %f)", g.mainCharacter.X, g.mainCharacter.Y)
+		if g.playableCharacter.X != 100 || g.playableCharacter.Y != 200 {
+			t.Errorf("Expected player at (100, 200), got (%f, %f)", g.playableCharacter.X, g.playableCharacter.Y)
 		}
 	})
 

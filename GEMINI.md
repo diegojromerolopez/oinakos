@@ -26,18 +26,18 @@ Oinakos is a performance-optimized, infinite isometric action RPG built in Go. T
 All game content is defined in YAML under `data/` and loaded at startup:
 - **`ArchetypeRegistry`** — shared stats, sprites, audio dir, and AI profile for a category of NPC (e.g. `orc/male`).
 - **`NPCRegistry`** — unique named NPCs (e.g. Stultus, Virculus). They can override archetype stats and have their own audio folder.
-- **`PlayableCharacterRegistry`** — player-selectable characters. Each sets `EntityConfig.MainCharacter = config.ID`.
+- **`PlayableCharacterRegistry`** — player-selectable characters. Each sets `EntityConfig.PlayableCharacter = config.ID`.
 - **`MapTypeRegistry`** — both standalone maps and individual campaign map levels.
 - **`CampaignRegistry`** — ordered sequences of map IDs.
 
-### Playable Characters & `MainCharacter`
+### Playable Characters
 - Defined in `data/characters/`. Loaded by `PlayableCharacterRegistry`.
-- The character the **player is currently controlling** is the **Main Character**.
-- `EntityConfig.MainCharacter` is set to `config.ID` for every entry in this registry (e.g. `"boris_stronesco"`).
+- The character the **player is currently controlling** is the **Playable Character**.
+- `EntityConfig.PlayableCharacter` is set to `config.ID` for every entry in this registry (e.g. `"boris_stronesco"`).
 - This field is the **canonical token** for all character-specific runtime logic:
-  - Audio prefix: `MainCharacter + "/attack"` → plays from `assets/audio/characters/<id>/`
+  - Audio prefix: `PlayableCharacter + "/attack"` → plays from `assets/audio/characters/<id>/`
   - Future uses: HUD portrait, dialogue triggers, quest flags, unique mechanics.
-- **Do not hardcode `"oinakos"` anywhere.** Always use `mc.Config.MainCharacter`.
+- **Do not hardcode `"oinakos"` anywhere.** Always use `pc.Config.PlayableCharacter`.
 
 ### Y-Sorting (Z-Ordering)
 - The renderer sorts all drawable entities by `Y + X` (Cartesian) before each draw call.
@@ -46,7 +46,7 @@ All game content is defined in YAML under `data/` and loaded at startup:
 ### NPC Audio Fallback Chain
 1. Check `assets/audio/npcs/<npc_id>/` for WAV files → use NPC-specific audio.
 2. Else fall back to `assets/audio/archetypes/<archetype_id>/` (the archetype's voice).
-3. Player character audio always uses `MainCharacter` as the key prefix.
+3. Player character audio always uses `PlayableCharacter` as the key prefix.
 
 ---
 
@@ -56,7 +56,7 @@ All game content is defined in YAML under `data/` and loaded at startup:
 - **Native**: Saves to `oinakos/saves/` beside the binary. Supports multiple named saves + load dialog.
 - **WASM**: Persists to browser `localStorage` under key `quicksave`. Auto-resumes on page load.
 - **Platform bridge**: `persistence_native.go` vs `persistence_js.go`, split via Go build tags.
-- **Character identity** is stored as `player.archetype_id` in the save file and looked up in `PlayableCharacterRegistry` on load — `MainCharacter` is then set automatically from the registry.
+- **Character identity** is stored as `player.archetype_id` in the save file and looked up in `PlayableCharacterRegistry` on load — `PlayableCharacter` is then set automatically from the registry.
 
 ---
 
@@ -157,6 +157,6 @@ All game content is defined in YAML under `data/` and loaded at startup:
 
 ---
 
-**Default Lead Character**: `Oinakos` — any character in `data/characters/` can be selected; the active one is identified at runtime by `EntityConfig.MainCharacter`.
+**Default Lead Character**: `Oinakos` — any character in `data/characters/` can be selected; the active one is identified at runtime by `EntityConfig.PlayableCharacter`.
 
 **Development Rule**: Always execute Python tools via `uv` in a virtual environment (`uv run …` or `.venv/bin/python`).

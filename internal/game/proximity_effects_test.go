@@ -7,10 +7,10 @@ import (
 
 func TestProximityHazards(t *testing.T) {
 	g := &Game{}
-	mc := NewMainCharacter(0, 0, nil)
+	mc := NewPlayableCharacter(0, 0, nil)
 	mc.Health = 100
 	mc.MaxHealth = 100
-	g.mainCharacter = mc
+	g.playableCharacter = mc
 
 	// 1. Test Aura Hazard
 	campfireArchetype := &ObstacleArchetype{
@@ -91,10 +91,10 @@ func TestProximityHazards(t *testing.T) {
 
 func TestProximityHealing(t *testing.T) {
 	g := &Game{}
-	mc := NewMainCharacter(0, 0, nil)
+	mc := NewPlayableCharacter(0, 0, nil)
 	mc.Health = 50
 	mc.MaxHealth = 100
-	g.mainCharacter = mc
+	g.playableCharacter = mc
 
 	// 1. Test Aura Healing
 	shrineArchetype := &ObstacleArchetype{
@@ -160,7 +160,7 @@ func TestProximityHealing(t *testing.T) {
 }
 
 func TestInteractiveHealing(t *testing.T) {
-	mc := NewMainCharacter(0, 0, nil)
+	mc := NewPlayableCharacter(0, 0, nil)
 	mc.Health = 10
 	mc.MaxHealth = 100
 
@@ -204,15 +204,17 @@ func TestNPCProximityEffects(t *testing.T) {
 		Name: "Peasant",
 	}
 	n := &NPC{
-		X:         0,
-		Y:         0,
+		Actor: Actor{
+			X:         0,
+			Y:         0,
+			Health:    50,
+			MaxHealth: 100,
+			State:     NPCIdle,
+		},
 		Archetype: arch,
-		Health:    50,
-		MaxHealth: 100,
-		State:     NPCIdle,
 	}
 	g.npcs = []*NPC{n}
-	g.mainCharacter = NewMainCharacter(100, 100, nil) // Keep MC away
+	g.playableCharacter = NewPlayableCharacter(100, 100, nil) // Keep MC away
 
 	// 1. Hazard Effect on NPC
 	campfireArch := &ObstacleArchetype{

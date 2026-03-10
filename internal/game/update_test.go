@@ -55,7 +55,7 @@ height_px: 1000
 	}
 
 	// 5. Test Entity Cleanup (Corpses should be retained, others cleaned up)
-	g.npcs = []*NPC{{State: NPCDead}}
+	g.npcs = []*NPC{{Actor: Actor{State: NPCDead}}}
 	g.projectiles = []*Projectile{{Alive: false}}
 	g.floatingTexts = []*FloatingText{{Life: 0}}
 
@@ -68,8 +68,8 @@ height_px: 1000
 	}
 }
 
-func TestMainCharacterUpdate_Detailed(t *testing.T) {
-	mc := NewMainCharacter(0, 0, nil)
+func TestPlayableCharacterUpdate_Detailed(t *testing.T) {
+	mc := NewPlayableCharacter(0, 0, nil)
 	mc.Weapon = WeaponTizon
 
 	// Test drinking state
@@ -152,7 +152,7 @@ func TestNPCUpdate_Detailed(t *testing.T) {
 	n := NewNPC(0, 0, nil, 1)
 	n.Weapon = WeaponTizon
 	n.Speed = 1.0 // Manually set speed since Archetype is nil
-	mc := NewMainCharacter(10, 10, nil)
+	mc := NewPlayableCharacter(10, 10, nil)
 	fts := []*FloatingText{}
 	projs := []*Projectile{}
 
@@ -171,8 +171,7 @@ func TestNPCUpdate_Detailed(t *testing.T) {
 	n.Behavior = BehaviorNpcFighter
 	n.X = 0
 	n.Y = 0
-	n.TargetPlayer = nil
-	n.TargetNPC = nil
+	n.TargetActor = nil
 	n.Update(mc, nil, npcs, &projs, &fts, 100, 100, nil)
 	if n.X == 0 && n.Y == 0 {
 		t.Error("Fighter NPC should move towards other NPC")
@@ -181,8 +180,7 @@ func TestNPCUpdate_Detailed(t *testing.T) {
 	// Test attack branch
 	n.X = otherNpc.X + 0.1
 	n.Y = otherNpc.Y + 0.1
-	n.TargetNPC = otherNpc // Ensure it still targets otherNpc
-	n.TargetPlayer = nil
+	n.TargetActor = &otherNpc.Actor // Ensure it still targets otherNpc
 	n.AttackTimer = 0
 	n.Update(mc, nil, npcs, &projs, &fts, 100, 100, nil)
 	if n.State != NPCAttacking {
@@ -191,7 +189,7 @@ func TestNPCUpdate_Detailed(t *testing.T) {
 }
 
 func TestCollisionDetailed(t *testing.T) {
-	mc := NewMainCharacter(0, 0, nil)
+	mc := NewPlayableCharacter(0, 0, nil)
 	obs := []*Obstacle{NewObstacle("test_obs_1", 1, 0, &ObstacleArchetype{ID: "test", Footprint: []FootprintPoint{{-1, -1}, {1, -1}, {1, 1}, {-1, 1}}})}
 
 	// Test collision detection
@@ -203,7 +201,7 @@ func TestCollisionDetailed(t *testing.T) {
 func TestNPCHitBranch_Detailed(t *testing.T) {
 	n := NewNPC(0, 0, nil, 1)
 	n.Weapon = WeaponTizon
-	mc := NewMainCharacter(1, 0, nil)
+	mc := NewPlayableCharacter(1, 0, nil)
 	projs := []*Projectile{}
 	fts := []*FloatingText{}
 	npcs := []*NPC{n}
@@ -217,8 +215,8 @@ func TestNPCHitBranch_Detailed(t *testing.T) {
 	n.Update(mc, nil, npcs, &projs, &fts, 100, 100, nil)
 }
 
-func TestMainCharacterTakeDamageDetailed(t *testing.T) {
-	mc := NewMainCharacter(0, 0, nil)
+func TestPlayableCharacterTakeDamageDetailed(t *testing.T) {
+	mc := NewPlayableCharacter(0, 0, nil)
 	mc.Health = 100
 	mc.TakeDamage(150, nil)
 	if mc.Health != 0 || mc.State != StateDead {
@@ -245,14 +243,14 @@ func TestObstacleUpdate_Detailed(t *testing.T) {
 
 func TestProjectileUpdate_Detailed(t *testing.T) {
 	p := NewProjectile(0, 0, 1, 0, 1.0, 10, true, 100.0)
-	mc := NewMainCharacter(0, 0, nil)
+	mc := NewPlayableCharacter(0, 0, nil)
 	fts := []*FloatingText{}
 
 	// Update until it hits nothing or expires
 	p.Update(mc, nil, &fts, nil)
 
 	// Update with entities
-	targetMc := NewMainCharacter(2, 0, nil)
+	targetMc := NewPlayableCharacter(2, 0, nil)
 	obstacles := []*Obstacle{NewObstacle("test_obs_3", 5, 0, &ObstacleArchetype{ID: "test", Footprint: []FootprintPoint{{-0.5, -0.5}, {0.5, -0.5}, {0.5, 0.5}, {-0.5, 0.5}}})}
 
 	// Manually move projectile to hit targetMc
@@ -334,7 +332,7 @@ difficulty: 1
 	g := NewGame(mockFS, "test", "", "", NewMockInputManager(), NewMockAudioManager(), false)
 	g.isMainMenu = false
 	g.isCharacterSelect = false
-	mc := g.mainCharacter
+	mc := g.playableCharacter
 
 	npc := NewNPC(0, 0, &Archetype{
 		ID: "test_npc",

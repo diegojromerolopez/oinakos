@@ -13,58 +13,14 @@ import (
 	"oinakos/internal/engine"
 )
 
-func (mc *MainCharacter) Heal(amount int) {
-	if mc.State == StateDead {
-		return
-	}
-	oldHealth := mc.Health
-	mc.Health += amount
-	if mc.Health > mc.MaxHealth {
-		mc.Health = mc.MaxHealth
-	}
-	if mc.Health > oldHealth {
-		DebugLog("Player Healed! +%d | Health: %d -> %d", amount, oldHealth, mc.Health)
-	}
-}
+// Heal is now handled by Actor.Heal
 
-type MainCharacterState int
+// PlayableCharacterState, Direction, and their constants are defined in actor.go
 
-const (
-	StateIdle MainCharacterState = iota
-	StateWalking
-	StateAttacking
-	StateDead
-	StateDrinking
-)
-
-type Direction int
-
-const (
-	DirSE Direction = iota
-	DirSW
-	DirNE
-	DirNW
-)
-
-type MainCharacter struct {
-	X, Y          float64
-	Config        *EntityConfig
-	Speed         float64
-	Facing        Direction
-	State         MainCharacterState
-	Tick          int
-	Health        int
-	MaxHealth     int
+type PlayableCharacter struct {
+	Actor         // Embedded shared state
 	Kills         int
 	MapKills      map[string]int
-	XP            int
-	Level         int
-	BaseAttack    int
-	BaseDefense   int
-	Weapon        *Weapon
-	EquippedArmor map[ArmorSlot]*Armor
-	HitTimer      int
-	DeadTimer     int
 }
 
 func loadPlayerImage(assets fs.FS, path string) (image.Image, error) {
@@ -86,7 +42,7 @@ func loadPlayerImage(assets fs.FS, path string) (image.Image, error) {
 	return img, err
 }
 
-func NewMainCharacter(x, y float64, config *EntityConfig) *MainCharacter {
+func NewPlayableCharacter(x, y float64, config *EntityConfig) *PlayableCharacter {
 	if config == nil {
 		config = &EntityConfig{
 			Name: "Knight",
@@ -97,23 +53,27 @@ func NewMainCharacter(x, y float64, config *EntityConfig) *MainCharacter {
 		config.Stats.Speed = 0.05
 		config.Weapon = WeaponTizon
 	}
-	mc := &MainCharacter{
-		X:           x,
-		Y:           y,
-		Config:      config,
-		Facing:      DirSE,
-		State:       StateIdle,
-		Health:      config.Stats.HealthMin,
-		MaxHealth:   config.Stats.HealthMin,
-		Speed:       config.Stats.Speed,
-		MapKills:    make(map[string]int),
-		BaseAttack:  config.Stats.BaseAttack,
-		BaseDefense: config.Stats.BaseDefense,
-		Weapon:      config.Weapon,
-		EquippedArmor: map[ArmorSlot]*Armor{
-			SlotBody: ArmorLeather,
+	mc := &PlayableCharacter{
+		Actor: Actor{
+			X:           x,
+			Y:           y,
+			Config:      config,
+			Facing:      DirSE,
+			State:       StateIdle,
+			Health:      config.Stats.HealthMin,
+			MaxHealth:   config.Stats.HealthMin,
+			Speed:       config.Stats.Speed,
+			BaseAttack:  config.Stats.BaseAttack,
+			BaseDefense: config.Stats.BaseDefense,
+			Weapon:      config.Weapon,
+			EquippedArmor: map[ArmorSlot]*Armor{
+				SlotBody: ArmorLeather,
+			},
+			Level:     1,
+			Alignment: AlignmentAlly,
+			Name:      config.Name,
 		},
-		Level: 1,
+		MapKills: make(map[string]int),
 	}
 	// Random quality bonus for starting weapon
 	if mc.Weapon != nil {
@@ -122,46 +82,9 @@ func NewMainCharacter(x, y float64, config *EntityConfig) *MainCharacter {
 	return mc
 }
 
-func (mc *MainCharacter) GetTotalAttack() int {
-	return mc.calculateStat(mc.BaseAttack, mc.Level)
-}
+// GetTotalAttack, GetTotalDefense, GetTotalProtection, calculateStat, AddXP are now in Actor.
 
-func (mc *MainCharacter) GetTotalDefense() int {
-	return mc.calculateStat(mc.BaseDefense, mc.Level)
-}
-
-func (mc *MainCharacter) GetTotalProtection() int {
-	total := 0
-	for _, a := range mc.EquippedArmor {
-		if a != nil {
-			total += a.Protection
-		}
-	}
-	return total
-}
-
-func (mc *MainCharacter) calculateStat(base, level int) int {
-	// Logarithmic scaling: stat = base + log2(level) * scalingFactor
-	// scalingFactor = 10 for meaningful growth
-	if level <= 1 {
-		return base
-	}
-	bonus := int(math.Log2(float64(level)) * 10)
-	return base + bonus
-}
-
-func (mc *MainCharacter) AddXP(amount int) {
-	mc.XP += amount
-	// Simple level up logic: level = XP / 100 + 1
-	newLevel := mc.XP/100 + 1
-	if newLevel > mc.Level {
-		mc.Level = newLevel
-		// Optionally heal on level up
-		mc.Health = mc.MaxHealth
-	}
-}
-
-func (mc *MainCharacter) TakeDamage(amount int, audio AudioManager) {
+func (mc *PlayableCharacter) TakeDamage(amount int, audio AudioManager) {
 	if mc.State == StateDead {
 		return
 	}
@@ -173,43 +96,25 @@ func (mc *MainCharacter) TakeDamage(amount int, audio AudioManager) {
 		mc.Health = 0
 		mc.State = StateDead
 		DebugLog("Player DIED at (%.2f, %.2f)", mc.X, mc.Y)
-		if audio != nil && mc.Config != nil && mc.Config.MainCharacter != "" {
-			audio.PlayRandomSound(mc.Config.MainCharacter + "/death")
+		if audio != nil && mc.Config != nil && mc.Config.PlayableCharacter != "" {
+			audio.PlayRandomSound(mc.Config.PlayableCharacter + "/death")
 		}
 	} else {
-		if audio != nil && mc.Config != nil && mc.Config.MainCharacter != "" {
-			audio.PlayRandomSound(mc.Config.MainCharacter + "/hit")
+		if audio != nil && mc.Config != nil && mc.Config.PlayableCharacter != "" {
+			audio.PlayRandomSound(mc.Config.PlayableCharacter + "/hit")
 		}
 	}
 }
 
-func (mc *MainCharacter) IsAlive() bool {
-	return mc.State != StateDead
-}
+// IsAlive is now in Actor.
 
-func (mc *MainCharacter) GetFootprint() engine.Polygon {
-	return engine.Polygon{Points: []engine.Point{
-		{X: -0.2, Y: -0.1}, {X: 0.2, Y: -0.1}, {X: 0.3, Y: 0}, {X: 0.2, Y: 0.1}, {X: -0.2, Y: 0.1}, {X: -0.3, Y: 0},
-	}}.Transformed(mc.X, mc.Y)
-}
+// GetFootprint is now in Actor (uses Config.Footprint).
+// PlayableCharacter currently uses a default hex footprint in its own version, 
+// which is also the fallback in Actor.GetFootprint.
 
-func (mc *MainCharacter) checkCollisionAt(newX, newY float64, obstacles []*Obstacle) bool {
-	pFootprint := engine.Polygon{Points: []engine.Point{
-		{X: -0.2, Y: -0.1}, {X: 0.2, Y: -0.1}, {X: 0.3, Y: 0}, {X: 0.2, Y: 0.1}, {X: -0.2, Y: 0.1}, {X: -0.3, Y: 0},
-	}}.Transformed(newX, newY)
+// checkCollisionAt is now in Actor.
 
-	for _, o := range obstacles {
-		if !o.Alive {
-			continue
-		}
-		if engine.CheckCollision(pFootprint, o.GetFootprint()) {
-			return true
-		}
-	}
-	return false
-}
-
-func (mc *MainCharacter) Update(input engine.Input, audio AudioManager, obstacles []*Obstacle, npcs []*NPC, fts *[]*FloatingText, mapW, mapH float64) {
+func (mc *PlayableCharacter) Update(input engine.Input, audio AudioManager, obstacles []*Obstacle, npcs []*NPC, fts *[]*FloatingText, mapW, mapH float64) {
 	if mc.State == StateDead {
 		if mc.DeadTimer == 0 {
 			if mc.Config != nil {
@@ -306,8 +211,8 @@ func (mc *MainCharacter) Update(input engine.Input, audio AudioManager, obstacle
 			mc.State = StateAttacking
 			mc.Tick = 0
 			DebugLog("Player is Attacking! Pos: (%.2f, %.2f) | Facing: %v", mc.X, mc.Y, mc.Facing)
-			if audio != nil && mc.Config != nil && mc.Config.MainCharacter != "" {
-				audio.PlayRandomSound(mc.Config.MainCharacter + "/attack")
+			if audio != nil && mc.Config != nil && mc.Config.PlayableCharacter != "" {
+				audio.PlayRandomSound(mc.Config.PlayableCharacter + "/attack")
 			}
 			return
 		}
@@ -386,14 +291,14 @@ func (mc *MainCharacter) Update(input engine.Input, audio AudioManager, obstacle
 	}
 }
 
-func (mc *MainCharacter) CheckAttackHits(npcs []*NPC, obstacles []*Obstacle, fts *[]*FloatingText, audio AudioManager) {
+func (mc *PlayableCharacter) CheckAttackHits(npcs []*NPC, obstacles []*Obstacle, fts *[]*FloatingText, audio AudioManager) {
 	attackDist := 0.9
 	atX, atY := mc.X, mc.Y
 
 	// Fix: Normalize attack center based on facing.
 	// SE is "right" in isometric view generally (X increases, Y increases)
 	// NE is X increases, Y decreases.
-	// We want the attack to land in front of the mainCharacter.
+	// We want the attack to land in front of the playableCharacter.
 	switch mc.Facing {
 	case DirSE:
 		atX += attackDist

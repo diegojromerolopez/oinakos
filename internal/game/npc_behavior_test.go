@@ -7,7 +7,7 @@ import (
 // Tests for NPC behavior branches (wander, fighter, chaotic, neutral, ally)
 
 func TestNPCBehavior_Wander_SetsDirection(t *testing.T) {
-	mc := NewMainCharacter(100, 100, nil)
+	mc := NewPlayableCharacter(100, 100, nil)
 	npc := NewNPC(0, 0, &Archetype{ID: "test"}, 1)
 	npc.Behavior = BehaviorWander
 	npc.Alignment = AlignmentEnemy
@@ -30,7 +30,7 @@ func TestNPCBehavior_Wander_SetsDirection(t *testing.T) {
 }
 
 func TestNPCBehavior_Fighter_TargetsNearestNPC(t *testing.T) {
-	mc := NewMainCharacter(100, 100, nil) // Far away
+	mc := NewPlayableCharacter(100, 100, nil) // Far away
 	fighter := NewNPC(0, 0, &Archetype{ID: "fighter"}, 1)
 	fighter.Behavior = BehaviorNpcFighter
 	fighter.Alignment = AlignmentEnemy
@@ -47,13 +47,13 @@ func TestNPCBehavior_Fighter_TargetsNearestNPC(t *testing.T) {
 		fighter.Update(mc, nil, allNPCs, &projs, &fts, 1000, 1000, audio)
 	}
 
-	if fighter.TargetNPC == nil {
+	if fighter.TargetActor == nil {
 		t.Error("Fighter NPC should have acquired a target NPC")
 	}
 }
 
 func TestNPCBehavior_Chaotic_TargetsNearestActor(t *testing.T) {
-	mc := NewMainCharacter(3, 0, nil) // Closer than farNPC
+	mc := NewPlayableCharacter(3, 0, nil) // Closer than farNPC
 	chaotic := NewNPC(0, 0, &Archetype{ID: "chaotic"}, 1)
 	chaotic.Behavior = BehaviorChaotic
 	chaotic.Alignment = AlignmentEnemy
@@ -68,13 +68,13 @@ func TestNPCBehavior_Chaotic_TargetsNearestActor(t *testing.T) {
 	chaotic.Update(mc, nil, []*NPC{chaotic, farNPC}, &projs, &fts, 1000, 1000, audio)
 
 	// Player at dist 3, farNPC at dist 20 → chaotic should target player
-	if chaotic.TargetPlayer == nil {
+	if chaotic.TargetActor != &mc.Actor {
 		t.Error("Chaotic NPC should target the nearest actor (player at dist 3)")
 	}
 }
 
-func TestNPCBehavior_Neutral_DoesNotTargetPlayer(t *testing.T) {
-	mc := NewMainCharacter(0, 0, nil)
+func TestNPCBehavior_Neutral_DoesNotTargetActor(t *testing.T) {
+	mc := NewPlayableCharacter(0, 0, nil)
 	npc := NewNPC(1, 0, nil, 1)
 	npc.Alignment = AlignmentNeutral
 
@@ -86,13 +86,13 @@ func TestNPCBehavior_Neutral_DoesNotTargetPlayer(t *testing.T) {
 		npc.Update(mc, nil, nil, &projs, &fts, 1000, 1000, audio)
 	}
 
-	if npc.TargetPlayer != nil {
+	if npc.TargetActor != nil && npc.TargetActor == &mc.Actor {
 		t.Error("Neutral NPC should never target the player")
 	}
 }
 
 func TestNPCBehavior_Ally_FollowsPlayerWhenNoEnemies(t *testing.T) {
-	mc := NewMainCharacter(10, 10, nil)
+	mc := NewPlayableCharacter(10, 10, nil)
 	ally := NewNPC(0, 0, &Archetype{ID: "ally"}, 1)
 	ally.Alignment = AlignmentAlly
 	ally.Speed = 0.2 // must be non-zero

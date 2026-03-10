@@ -40,7 +40,7 @@ func NewProjectile(x, y, dx, dy, speed float64, damage int, isPlayer bool, maxRa
 	}
 }
 
-func (p *Projectile) Update(mc *MainCharacter, obstacles []*Obstacle, fts *[]*FloatingText, audio AudioManager) {
+func (p *Projectile) Update(mc *PlayableCharacter, obstacles []*Obstacle, fts *[]*FloatingText, audio AudioManager) {
 	if !p.Alive {
 		return
 	}

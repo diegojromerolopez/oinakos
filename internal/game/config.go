@@ -447,7 +447,7 @@ type EntityConfig struct {
 	Unique         bool             `yaml:"unique,omitempty"`
 	Gender         string           `yaml:"gender,omitempty"`
 	SoundID        string           `yaml:"-"` // ID used for audio lookups (e.g. "man_at_arms_male")
-	MainCharacter  string           `yaml:"-"` // Set to config.ID when this is the active playable character
+	PlayableCharacter  string           `yaml:"-"` // Set to config.ID when this is the active playable character
 	PrimaryColor   string           `yaml:"primary_color,omitempty"`
 	SecondaryColor string           `yaml:"secondary_color,omitempty"`
 	XP             int              `yaml:"xp,omitempty"` // XP awarded on kill
@@ -660,7 +660,7 @@ func (r *PlayableCharacterRegistry) LoadAll(assets fs.FS) error {
 		config.AssetDir = path.Join("assets/images/characters", variantName)
 		config.AudioDir = path.Join("assets/audio/characters", variantName)
 		config.SoundID = config.ID
-		config.MainCharacter = config.ID
+		config.PlayableCharacter = config.ID
 
 		// Link weapon
 		config.Weapon = GetWeaponByName(config.WeaponName)
@@ -1001,7 +1001,7 @@ func (c *EntityConfig) GetFootprint() engine.Polygon {
 	return poly
 }
 
-func LoadMainCharacterConfig(assets fs.FS) (*EntityConfig, error) {
+func LoadPlayableCharacterConfig(assets fs.FS) (*EntityConfig, error) {
 	if assets == nil {
 		return &EntityConfig{}, nil
 	}
@@ -1024,12 +1024,12 @@ func LoadMainCharacterConfig(assets fs.FS) (*EntityConfig, error) {
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to read main character config: %w", err)
+		return nil, fmt.Errorf("failed to read playable character config: %w", err)
 	}
 
 	var config EntityConfig
 	if err := yaml.Unmarshal(data, &config); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal main character config %s: %w", configPath, err)
+		return nil, fmt.Errorf("failed to unmarshal playable character config %s: %w", configPath, err)
 	}
 
 	sanitizeEntityConfig(&config, configPath)

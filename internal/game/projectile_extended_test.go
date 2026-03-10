@@ -6,7 +6,7 @@ import (
 
 // TestProjectileLifecycle_Range verifies that projectiles despawn after traveling their maximum range.
 func TestProjectileLifecycle_Range(t *testing.T) {
-	mc := NewMainCharacter(0, 0, nil)
+	mc := NewPlayableCharacter(0, 0, nil)
 	// NewProjectile(x, y, dx, dy, speed, damage, isPlayer, maxRange)
 	p := NewProjectile(0, 0, 1, 0, 1.0, 10, true, 5.0)
 
@@ -34,7 +34,7 @@ func TestProjectileLifecycle_Range(t *testing.T) {
 // Let's test the mc collision instead.
 
 func TestProjectileCollision_MC(t *testing.T) {
-	mc := NewMainCharacter(2, 0, nil)
+	mc := NewPlayableCharacter(2, 0, nil)
 	mc.Health = 100
 
 	// Projectile at (0,0) moving East (+X) toward MC at (2,0)
@@ -62,7 +62,7 @@ func TestProjectileCollision_MC(t *testing.T) {
 
 // TestProjectileCollision_Obstacle verifies that projectiles are blocked by solid obstacles.
 func TestProjectileCollision_Obstacle(t *testing.T) {
-	mc := NewMainCharacter(0, 0, nil)
+	mc := NewPlayableCharacter(0, 0, nil)
 	p := NewProjectile(0, 0, 1, 0, 1.0, 10, true, 100.0)
 
 	// Rock obstacle at (3, 0)

@@ -34,17 +34,17 @@ func TestSaveLoad(t *testing.T) {
 		t.Fatalf("Failed to load: %v", err)
 	}
 
-	if g2.mainCharacter.X != g.mainCharacter.X || g2.mainCharacter.Y != g.mainCharacter.Y {
-		t.Errorf("Position mismatch: expected (%f,%f), got (%f,%f)", g.mainCharacter.X, g.mainCharacter.Y, g2.mainCharacter.X, g2.mainCharacter.Y)
+	if g2.playableCharacter.X != g.playableCharacter.X || g2.playableCharacter.Y != g.playableCharacter.Y {
+		t.Errorf("Position mismatch: expected (%f,%f), got (%f,%f)", g.playableCharacter.X, g.playableCharacter.Y, g2.playableCharacter.X, g2.playableCharacter.Y)
 	}
-	if g2.mainCharacter.Kills != g.mainCharacter.Kills {
-		t.Errorf("Kills mismatch: expected %d, got %d", g.mainCharacter.Kills, g2.mainCharacter.Kills)
+	if g2.playableCharacter.Kills != g.playableCharacter.Kills {
+		t.Errorf("Kills mismatch: expected %d, got %d", g.playableCharacter.Kills, g2.playableCharacter.Kills)
 	}
-	if g2.mainCharacter.XP != g.mainCharacter.XP {
-		t.Errorf("XP mismatch: expected %d, got %d", g.mainCharacter.XP, g2.mainCharacter.XP)
+	if g2.playableCharacter.XP != g.playableCharacter.XP {
+		t.Errorf("XP mismatch: expected %d, got %d", g.playableCharacter.XP, g2.playableCharacter.XP)
 	}
-	if g2.mainCharacter.Health != g.mainCharacter.Health {
-		t.Errorf("Health mismatch: expected %d, got %d", g.mainCharacter.Health, g2.mainCharacter.Health)
+	if g2.playableCharacter.Health != g.playableCharacter.Health {
+		t.Errorf("Health mismatch: expected %d, got %d", g.playableCharacter.Health, g2.playableCharacter.Health)
 	}
 	if g2.playTime != g.playTime {
 		t.Errorf("PlayTime mismatch: expected %f, got %f", g.playTime, g2.playTime)

@@ -13,7 +13,7 @@ func TestLeaderDeathConsequence(t *testing.T) {
 	follower := NewNPC(1, 1, followerArch, 1)
 	
 	npcs := []*NPC{leader, follower}
-	mc := &MainCharacter{X: 10, Y: 10} // Far away
+	mc := &PlayableCharacter{Actor: Actor{X: 10, Y: 10}} // Far away
 	
 	// Initial state
 	if follower.Alignment != AlignmentEnemy {
@@ -58,14 +58,14 @@ func TestTraitorTargeting(t *testing.T) {
 	traitor.Alignment = AlignmentNeutral // Switched!
 
 	npcs := []*NPC{leader, peer, traitor}
-	mc := &MainCharacter{X: 10, Y: 10}
+	mc := &PlayableCharacter{Actor: Actor{X: 10, Y: 10}}
 
 	// Peer should normally ignore Neutral NPCs if they weren't traitors,
 	// but because traitor has leader "queen" (Enemy), and Peer is Enemy,
 	// Peer should target the traitor.
 	peer.Update(mc, nil, npcs, nil, nil, 100, 100, nil)
 
-	if peer.TargetNPC != traitor {
-		t.Errorf("Peer should have targeted the traitor, got %v", peer.TargetNPC)
+	if peer.TargetActor != &traitor.Actor {
+		t.Errorf("Peer should have targeted the traitor, got %v", peer.TargetActor)
 	}
 }

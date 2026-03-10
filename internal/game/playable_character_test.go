@@ -6,11 +6,13 @@ import (
 	"testing/fstest"
 )
 
-func TestMainCharacterStats(t *testing.T) {
-	mc := &MainCharacter{
-		BaseAttack:  10,
-		BaseDefense: 5,
-		Level:       1,
+func TestPlayableCharacterStats(t *testing.T) {
+	mc := &PlayableCharacter{
+		Actor: Actor{
+			BaseAttack:  10,
+			BaseDefense: 5,
+			Level:       1,
+		},
 	}
 
 	if att := mc.GetTotalAttack(); att != 10 {
@@ -23,10 +25,12 @@ func TestMainCharacterStats(t *testing.T) {
 	}
 }
 
-func TestMainCharacterXPAndLevelUp(t *testing.T) {
-	mc := &MainCharacter{
-		Level: 1,
-		XP:    0,
+func TestPlayableCharacterXPAndLevelUp(t *testing.T) {
+	mc := &PlayableCharacter{
+		Actor: Actor{
+			Level: 1,
+			XP:    0,
+		},
 	}
 
 	mc.AddXP(50)
@@ -46,8 +50,8 @@ func TestMainCharacterXPAndLevelUp(t *testing.T) {
 	}
 }
 
-func TestMainCharacterTakeDamage(t *testing.T) {
-	mc := &MainCharacter{Health: 100, MaxHealth: 100}
+func TestPlayableCharacterTakeDamage(t *testing.T) {
+	mc := &PlayableCharacter{Actor: Actor{Health: 100, MaxHealth: 100}}
 	mc.TakeDamage(20, nil)
 	if mc.Health != 80 {
 		t.Errorf("Health after damage: got %d, want 80", mc.Health)
@@ -61,8 +65,8 @@ func TestMainCharacterTakeDamage(t *testing.T) {
 	}
 }
 
-func TestMainCharacterGetters(t *testing.T) {
-	mc := &MainCharacter{BaseDefense: 10}
+func TestPlayableCharacterGetters(t *testing.T) {
+	mc := &PlayableCharacter{Actor: Actor{BaseDefense: 10}}
 	if mc.GetTotalDefense() != 10 {
 		t.Errorf("GetTotalDefense: got %d, want 10", mc.GetTotalDefense())
 	}
@@ -76,27 +80,27 @@ func TestMainCharacterGetters(t *testing.T) {
 	}
 }
 
-func TestMainCharacterCheckAttackHits(t *testing.T) {
-	mc := NewMainCharacter(0, 0, nil)
+func TestPlayableCharacterCheckAttackHits(t *testing.T) {
+	mc := NewPlayableCharacter(0, 0, nil)
 	mc.Weapon = &Weapon{MinDamage: 10, MaxDamage: 10}
 	mc.Facing = DirSE
 
-	npc := &NPC{X: 1, Y: 0.5, State: NPCIdle}
+	npc := &NPC{Actor: Actor{X: 1, Y: 0.5, State: NPCIdle}}
 	npcs := []*NPC{npc}
 	fts := &[]*FloatingText{}
 	mc.CheckAttackHits(npcs, nil, fts, nil)
 }
 
-func TestMainCharacterFootprint(t *testing.T) {
-	mc := NewMainCharacter(10, 10, nil)
+func TestPlayableCharacterFootprint(t *testing.T) {
+	mc := NewPlayableCharacter(10, 10, nil)
 	fp := mc.GetFootprint()
 	if len(fp.Points) == 0 {
 		t.Error("Footprint should have points")
 	}
 }
 
-func TestMainCharacterCollision(t *testing.T) {
-	mc := NewMainCharacter(10, 10, nil)
+func TestPlayableCharacterCollision(t *testing.T) {
+	mc := NewPlayableCharacter(10, 10, nil)
 	colliders := []*Obstacle{NewObstacle("test_mc_collider", 10.5, 10.5, nil)}
 	if !mc.checkCollisionAt(10.5, 10.5, colliders) {
 		t.Error("Expected collision at 10.5, 10.5")
@@ -125,8 +129,8 @@ func TestLoadPlayerImage(t *testing.T) {
 	}
 }
 
-func TestMainCharacterUpdate_Full(t *testing.T) {
-	mc := NewMainCharacter(0, 0, nil)
+func TestPlayableCharacterUpdate_Full(t *testing.T) {
+	mc := NewPlayableCharacter(0, 0, nil)
 	mc.Health = mc.MaxHealth
 	mockInput := NewMockInputManager()
 	fts := &[]*FloatingText{}

@@ -47,14 +47,14 @@ obstacles:
 	g := NewGame(mockFS, "portal", "", "", NewMockInputManager(), NewMockAudioManager(), false)
 	g.isMainMenu = false
 	g.isCharacterSelect = false
-	g.mainCharacter.X = 0
-	g.mainCharacter.Y = 0
+	g.playableCharacter.X = 0
+	g.playableCharacter.Y = 0
 	g.Update()
 	if g.isMapWon {
 		t.Error("Portal objective should not be won at (0,0)")
 	}
-	g.mainCharacter.X = 5.1
-	g.mainCharacter.Y = 5.1
+	g.playableCharacter.X = 5.1
+	g.playableCharacter.Y = 5.1
 	g.Update()
 	if !g.isMapWon {
 		t.Errorf("Portal win logic failed at (5.1,5.1), distance to (5,5) should be within 2.0 radius (actual dist = ~0.14)")
