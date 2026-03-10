@@ -93,6 +93,13 @@ func (m *MockGraphics) NewImageFromImage(img image.Image) Image {
 }
 
 func (m *MockGraphics) DebugPrintAt(screen Image, str string, x, y int, clr color.Color) {}
+func (m *MockGraphics) LoadFont(assets fs.FS, path string) error                       { return nil }
+func (m *MockGraphics) DrawTextAt(screen Image, str string, x, y int, clr color.Color, size float64) {
+}
+
+func (m *MockGraphics) MeasureText(str string, size float64) (float64, float64) {
+	return float64(len(str)) * size * 0.5, size
+}
 func (m *MockGraphics) DrawFilledRect(screen Image, x, y, width, height float32, clr color.Color, antiAlias bool) {
 }
 func (m *MockGraphics) DrawFilledCircle(screen Image, x, y, radius float32, clr color.Color, antiAlias bool) {

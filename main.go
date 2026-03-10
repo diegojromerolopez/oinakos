@@ -8,6 +8,7 @@ import (
 	_ "image/png"
 	"io/fs"
 	"log"
+	"os"
 	"strings"
 
 	"oinakos/internal/engine"
@@ -18,6 +19,21 @@ import (
 
 //go:embed assets data
 var assets embed.FS
+
+type combinedFS struct {
+	local fs.FS
+	embed embed.FS
+}
+
+func (c *combinedFS) Open(name string) (fs.File, error) {
+	if c.local != nil {
+		f, err := c.local.Open(name)
+		if err == nil {
+			return f, nil
+		}
+	}
+	return c.embed.Open(name)
+}
 
 func main() {
 	var initialMap string
@@ -43,7 +59,19 @@ func main() {
 		initialMap = loadGame
 	}
 
-	engine.InitAudio(assets)
+	// Setup combined filesystem: check for local "oinakos/" folder OR local "assets/" (dev mode)
+	var finalAssets fs.FS = assets
+	if _, err := os.Stat("oinakos"); err == nil {
+		finalAssets = &combinedFS{local: os.DirFS("oinakos"), embed: assets}
+	} else if _, err := os.Stat("assets"); err == nil {
+		finalAssets = &combinedFS{local: os.DirFS("."), embed: assets}
+	}
+
+	// Discover fonts dynamically
+	fonts := game.DiscoverFonts(finalAssets)
+	game.SetFontOptions(fonts)
+
+	engine.InitAudio(finalAssets)
 
 	// Register sounds from both archetypes and NPCs
 	registerEntitySounds := func(configs map[string]*game.EntityConfig) {
@@ -51,7 +79,7 @@ func main() {
 			if conf.AudioDir == "" {
 				continue
 			}
-			entries, err := fs.ReadDir(assets, conf.AudioDir)
+			entries, err := fs.ReadDir(finalAssets, conf.AudioDir)
 			if err != nil {
 				continue
 			}
@@ -67,25 +95,47 @@ func main() {
 	}
 
 	archetypeReg := game.NewArchetypeRegistry()
-	archetypeReg.LoadAll(assets)
+	archetypeReg.LoadAll(finalAssets)
 	registerEntitySounds(archetypeReg.Archetypes)
 
 	npcReg := game.NewNPCRegistry()
-	npcReg.LoadAll(assets)
+	npcReg.LoadAll(finalAssets)
 	registerEntitySounds(npcReg.NPCs)
 
 	// Load audio for ALL playable characters: assets/audio/characters/<id>/<stem>.wav → "<id>/<stem>"
 	charReg := game.NewPlayableCharacterRegistry()
-	charReg.LoadAll(assets)
+	charReg.LoadAll(finalAssets)
 	registerEntitySounds(charReg.Characters)
 
 	// Providers
 	eg := engine.NewEbitenGraphics()
+	// Load initial font (default to first available or first from settings)
 	ei := engine.NewEbitenInput()
 
-	g := game.NewGame(assets, initialMap, initialMapType, heroID, ei, &game.DefaultAudioManager{}, debug)
-	gr := game.NewGameRenderer(g, assets, eg)
-	gr.LoadAssets(assets)
+	g := game.NewGame(finalAssets, initialMap, initialMapType, heroID, ei, &game.DefaultAudioManager{}, debug)
+	
+	// Hook font update
+	g.SetOnFontUpdate(func(fontName string) {
+		if fontName == "default" {
+			eg.LoadFont(nil, "")
+			return
+		}
+		fontPath := "assets/fonts/" + fontName + ".ttf"
+		if err := eg.LoadFont(finalAssets, fontPath); err != nil {
+			log.Printf("Warning: failed to reload font %s: %v", fontPath, err)
+		}
+	})
+	// Initial font apply from loaded settings
+	s := game.LoadSettings()
+	if s.Font != "" {
+		g.UpdateFont()
+	} else {
+		// Fallback to medieval if available, or just use default
+		eg.LoadFont(finalAssets, "assets/fonts/medieval.ttf")
+	}
+
+	gr := game.NewGameRenderer(g, finalAssets, eg)
+	gr.LoadAssets(finalAssets)
 
 	ebiten.SetWindowSize(1280, 720)
 	ebiten.SetWindowTitle("Oinakos")

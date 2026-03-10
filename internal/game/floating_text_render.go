@@ -22,6 +22,6 @@ func (ft *FloatingText) Draw(screen engine.Image, textRenderer engine.TextRender
 	c.A = alpha
 
 	if textRenderer != nil {
-		textRenderer.DebugPrintAt(screen, ft.Text, int(isoX+offsetX), int(isoY+offsetY), c)
+		textRenderer.DrawTextAt(screen, ft.Text, int(isoX+offsetX), int(isoY+offsetY), c, 16)
 	}
 }

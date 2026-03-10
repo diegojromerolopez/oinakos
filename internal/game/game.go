@@ -44,7 +44,6 @@ type Game struct {
 	isMainMenu        bool      // True if showing main menu
 	mainMenuIndex     int       // Index for main menu
 	isSettingsScreen  bool      // True if showing settings screen
-	settingsMenuIndex int       // Index for settings menu
 	isCampaignSelect  bool      // True if showing campaign picker
 	campaignMenuIndex int       // Index of selected campaign
 	initialMapTypeID  string
@@ -82,8 +81,24 @@ type Game struct {
 	saveMessageTimer   int // Ticks to show the message
 
 	settings *Settings
+	settingsFontIndex  int
+	settingsAudioIndex int
+	settingsMenuIndex  int
 
-	isSettingsFromPause bool
+	onFontUpdate func(fontName string)
+
+	lastMouseX, lastMouseY int
+	isSettingsFromPause    bool
+}
+
+func (g *Game) SetOnFontUpdate(cb func(string)) {
+	g.onFontUpdate = cb
+}
+
+func (g *Game) UpdateFont() {
+	if g.onFontUpdate != nil && g.settings != nil {
+		g.onFontUpdate(g.settings.Font)
+	}
 }
 
 func NewGame(assets fs.FS, initialMapID, initialMapTypeID, initialHeroID string, input engine.Input, audio AudioManager, debug bool) *Game {
@@ -544,13 +559,13 @@ func (g *Game) loadMapLevel() {
 func (g *Game) Update() error {
 	if g.isMainMenu {
 		nOptions := 4
-		if g.input.IsKeyJustPressed(engine.KeyUp) || g.input.IsKeyJustPressed(engine.KeyW) {
+		if g.input.IsKeyJustPressed(engine.KeyUp) || g.input.IsKeyJustPressed(engine.KeyW) || g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) {
 			g.mainMenuIndex--
 			if g.mainMenuIndex < 0 {
 				g.mainMenuIndex = nOptions - 1
 			}
 		}
-		if g.input.IsKeyJustPressed(engine.KeyDown) || g.input.IsKeyJustPressed(engine.KeyS) {
+		if g.input.IsKeyJustPressed(engine.KeyDown) || g.input.IsKeyJustPressed(engine.KeyS) || g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) {
 			g.mainMenuIndex++
 			if g.mainMenuIndex >= nOptions {
 				g.mainMenuIndex = 0
@@ -558,16 +573,18 @@ func (g *Game) Update() error {
 		}
 
 		mx, my := g.input.MousePosition()
+		mouseMoved := mx != g.lastMouseX || my != g.lastMouseY
+		g.lastMouseX, g.lastMouseY = mx, my
+
 		hoverIndex := -1
-		// Center alignment horizontal
 		centerX := g.width / 2
 		for i := 0; i < nOptions; i++ {
-			itemY := 300 + i*50
-			if mx >= centerX-100 && mx <= centerX+100 && my >= itemY-20 && my <= itemY+20 {
+			itemY := 350 + i*60
+			if mx >= centerX-200 && mx <= centerX+200 && my >= itemY-30 && my <= itemY+30 {
 				hoverIndex = i
 			}
 		}
-		if hoverIndex != -1 {
+		if hoverIndex != -1 && mouseMoved {
 			g.mainMenuIndex = hoverIndex
 		}
 
@@ -581,13 +598,20 @@ func (g *Game) Update() error {
 			case 1: // Load Game
 				g.loadDialogActive = true
 			case 2: // Settings
-				// Load or create default settings
 				g.settings = LoadSettings()
-				g.settings.Save() // Ensure folder/file exists
-				// Find current index
+				// Find current Font index
+				g.settingsFontIndex = 0
+				for idx, val := range FontOptions {
+					if val == g.settings.Font {
+						g.settingsFontIndex = idx
+						break
+					}
+				}
+				// Find current Audio index
+				g.settingsMenuIndex = 0
 				for idx, val := range FrequencyOptions {
 					if val == g.settings.SoundFrequency {
-						g.settingsMenuIndex = idx
+						g.settingsAudioIndex = idx
 						break
 					}
 				}
@@ -617,42 +641,80 @@ func (g *Game) Update() error {
 	}
 
 	if g.isSettingsScreen {
-		nO := len(FrequencyOptions)
+		nRows := 3 // 0: Font, 1: Audio, 2: Save & Back
 		if g.input.IsKeyJustPressed(engine.KeyUp) || g.input.IsKeyJustPressed(engine.KeyW) {
 			g.settingsMenuIndex--
 			if g.settingsMenuIndex < 0 {
-				g.settingsMenuIndex = nO - 1
+				g.settingsMenuIndex = nRows - 1
 			}
 		}
 		if g.input.IsKeyJustPressed(engine.KeyDown) || g.input.IsKeyJustPressed(engine.KeyS) {
 			g.settingsMenuIndex++
-			if g.settingsMenuIndex >= nO {
+			if g.settingsMenuIndex >= nRows {
 				g.settingsMenuIndex = 0
 			}
 		}
 
-		// Mouse selection
+		// Left/Right toggles
+		if g.settingsMenuIndex == 0 { // Font
+			if g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) {
+				g.settingsFontIndex--
+				if g.settingsFontIndex < 0 {
+					g.settingsFontIndex = len(FontOptions) - 1
+				}
+			}
+			if g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) {
+				g.settingsFontIndex++
+				if g.settingsFontIndex >= len(FontOptions) {
+					g.settingsFontIndex = 0
+				}
+			}
+		} else if g.settingsMenuIndex == 1 { // Audio
+			if g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) {
+				g.settingsAudioIndex--
+				if g.settingsAudioIndex < 0 {
+					g.settingsAudioIndex = len(FrequencyOptions) - 1
+				}
+			}
+			if g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) {
+				g.settingsAudioIndex++
+				if g.settingsAudioIndex >= len(FrequencyOptions) {
+					g.settingsAudioIndex = 0
+				}
+			}
+		}
+
+		// Mouse selection for settings
 		mx, my := g.input.MousePosition()
+		mouseMoved := mx != g.lastMouseX || my != g.lastMouseY
+		g.lastMouseX, g.lastMouseY = mx, my
+
 		hoverIdx := -1
 		centerX := g.width / 2
-		for i := 0; i < nO; i++ {
-			itemY := 300 + i*30
-			if mx >= centerX-150 && mx <= centerX+150 && my >= itemY-15 && my <= itemY+15 {
+		for i := 0; i < nRows; i++ {
+			itemY := 250 + i*60
+			if mx >= centerX-250 && mx <= centerX+250 && my >= itemY-30 && my <= itemY+30 {
 				hoverIdx = i
 			}
 		}
-		if hoverIdx != -1 {
+		if hoverIdx != -1 && mouseMoved {
 			g.settingsMenuIndex = hoverIdx
 		}
 
-		if g.input.IsKeyJustPressed(engine.KeyEnter) || (hoverIdx != -1 && g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft)) {
-			// Save setting
-			g.settings.SoundFrequency = FrequencyOptions[g.settingsMenuIndex]
+		if g.input.IsKeyJustPressed(engine.KeyEnter) || (hoverIdx == 2 && g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft)) {
+			// Save & Exit
+			g.settings.Font = FontOptions[g.settingsFontIndex]
+			g.settings.SoundFrequency = FrequencyOptions[g.settingsAudioIndex]
 			g.settings.Save()
-			// Update probability
+
+			// Apply Font Change immediately (if possible, main.go will need a way to trigger this or Game will)
+			g.UpdateFont()
+
+			// Update audio probability
 			if g.audio != nil {
 				g.audio.SetProbability(g.settings.GetSoundProbability())
 			}
+
 			g.isSettingsScreen = false
 			if g.isSettingsFromPause {
 				g.isMenuOpen = true
@@ -676,56 +738,74 @@ func (g *Game) Update() error {
 
 	if g.isCharacterSelect {
 		nChars := len(g.playableCharacterRegistry.IDs)
-		if g.input.IsKeyJustPressed(engine.KeyUp) || g.input.IsKeyJustPressed(engine.KeyW) {
+		nOptions := nChars + 1 // +1 for "Back"
+		if g.input.IsKeyJustPressed(engine.KeyUp) || g.input.IsKeyJustPressed(engine.KeyW) || g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) {
 			g.characterMenuIndex--
 			if g.characterMenuIndex < 0 {
-				g.characterMenuIndex = nChars - 1
+				g.characterMenuIndex = nOptions - 1
 			}
 		}
-		if g.input.IsKeyJustPressed(engine.KeyDown) || g.input.IsKeyJustPressed(engine.KeyS) {
+		if g.input.IsKeyJustPressed(engine.KeyDown) || g.input.IsKeyJustPressed(engine.KeyS) || g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) {
 			g.characterMenuIndex++
-			if g.characterMenuIndex >= nChars {
+			if g.characterMenuIndex >= nOptions {
 				g.characterMenuIndex = 0
 			}
 		}
 
 		mx, my := g.input.MousePosition()
+		mouseMoved := mx != g.lastMouseX || my != g.lastMouseY
+		g.lastMouseX, g.lastMouseY = mx, my
+
 		hoverIndex := -1
 		for i := 0; i < nChars; i++ {
-			if mx >= 100 && mx <= 400 && my >= 130+i*30-5 && my <= 130+i*30+25 {
+			itemY := 130 + i*35
+			if mx >= 100 && mx <= 400 && my >= itemY-15 && my <= itemY+15 {
 				hoverIndex = i
 			}
 		}
-		if hoverIndex != -1 {
+		// Back button hitbox
+		backY := 130 + nChars*35 + 20
+		if mx >= 100 && mx <= 300 && my >= backY-15 && my <= backY+15 {
+			hoverIndex = nChars
+		}
+
+		if hoverIndex != -1 && mouseMoved {
 			g.characterMenuIndex = hoverIndex
 		}
 
 		handleSelect := g.input.IsKeyJustPressed(engine.KeyEnter) || (hoverIndex != -1 && g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft))
 
 		if handleSelect {
-			charID := g.playableCharacterRegistry.IDs[g.characterMenuIndex]
-			config := g.playableCharacterRegistry.Characters[charID]
-			g.playableCharacter.Config = config
-			g.playableCharacter.Health = config.Stats.HealthMin
-			g.playableCharacter.MaxHealth = config.Stats.HealthMin
-			g.playableCharacter.Speed = config.Stats.Speed
-			g.playableCharacter.BaseAttack = config.Stats.BaseAttack
-			g.playableCharacter.BaseDefense = config.Stats.BaseDefense
-			g.playableCharacter.Weapon = config.Weapon
-			g.playableCharacter.Name = config.Name
+			if g.characterMenuIndex < nChars {
+				charID := g.playableCharacterRegistry.IDs[g.characterMenuIndex]
+				config := g.playableCharacterRegistry.Characters[charID]
+				g.playableCharacter.Config = config
+				g.playableCharacter.Health = config.Stats.HealthMin
+				g.playableCharacter.MaxHealth = config.Stats.HealthMin
+				g.playableCharacter.Speed = config.Stats.Speed
+				g.playableCharacter.BaseAttack = config.Stats.BaseAttack
+				g.playableCharacter.BaseDefense = config.Stats.BaseDefense
+				g.playableCharacter.Weapon = config.Weapon
+				g.playableCharacter.Name = config.Name
 
-			g.isCharacterSelect = false
-			// If we didn't start with a specific map from flags, go to campaign/map select
-			if g.initialMapID == "" && g.initialMapTypeID == "" {
-				g.isCampaignSelect = true
+				g.isCharacterSelect = false
+				// If we didn't start with a specific map from flags, go to campaign/map select
+				if g.initialMapID == "" && g.initialMapTypeID == "" {
+					g.isCampaignSelect = true
+				} else {
+					g.loadMapLevel()
+				}
 			} else {
-				g.loadMapLevel()
+				// Back to menu
+				g.isCharacterSelect = false
+				g.isMainMenu = true
+				g.characterMenuIndex = 0
 			}
 		}
 		if g.input.IsKeyJustPressed(engine.KeyEscape) {
-			if !g.isWasm() {
-				os.Exit(0)
-			}
+			g.isCharacterSelect = false
+			g.isMainMenu = true
+			g.characterMenuIndex = 0
 		}
 		return nil
 	}
@@ -746,16 +826,36 @@ func (g *Game) Update() error {
 				g.campaignMenuIndex = 0
 			}
 		}
+		// Multi-column navigation
+		if g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) {
+			if g.campaignMenuIndex < nC {
+				g.campaignMenuIndex += nC // Jump to maps
+				if g.campaignMenuIndex > nC+nM-1 {
+					g.campaignMenuIndex = nC + nM - 1
+				}
+			}
+		}
+		if g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) {
+			if g.campaignMenuIndex >= nC && g.campaignMenuIndex < nC+nM {
+				g.campaignMenuIndex -= nC // Jump back to campaigns
+				if g.campaignMenuIndex < 0 {
+					g.campaignMenuIndex = 0
+				}
+			}
+		}
 
 		// Handle Mouse Hover & Click
 		mx, my := g.input.MousePosition()
+		mouseMoved := mx != g.lastMouseX || my != g.lastMouseY
+		g.lastMouseX, g.lastMouseY = mx, my
+
 		hoverIndex := -1
 		col1X := 100
 		col2X := g.width / 2
 
 		for i := 0; i < nC; i++ {
-			cy := 130 + i*25
-			if mx >= col1X && mx <= col1X+300 && my >= cy && my <= cy+20 {
+			cy := 130 + i*30 // Adjusted spacing
+			if mx >= col1X && mx <= col1X+300 && my >= cy-15 && my <= cy+15 {
 				hoverIndex = i
 			}
 		}
@@ -763,13 +863,21 @@ func (g *Game) Update() error {
 			colOffset := col2X
 			rowOffset := i
 			if i > 15 {
-				colOffset += 250 // Shift to a third column if there are tons of maps
+				colOffset += 250
 				rowOffset = i - 16
 			}
-			cy := 130 + rowOffset*25
-			if mx >= colOffset && mx <= colOffset+300 && my >= cy && my <= cy+20 {
+			cy := 130 + rowOffset*30
+			if mx >= colOffset && mx <= colOffset+300 && my >= cy-15 && my <= cy+15 {
 				hoverIndex = nC + i
 			}
+		}
+		// Quit option hitbox
+		if mx >= g.width/2-100 && mx <= g.width/2+100 && my >= g.height-110 && my <= g.height-70 {
+			hoverIndex = nC + nM
+		}
+
+		if hoverIndex != -1 && mouseMoved {
+			g.campaignMenuIndex = hoverIndex
 		}
 
 		quitText := "  QUIT"
@@ -815,10 +923,10 @@ func (g *Game) Update() error {
 	}
 
 	if g.isGameWon {
-		if g.input.IsKeyJustPressed(engine.KeyUp) || g.input.IsKeyJustPressed(engine.KeyW) {
+		if g.input.IsKeyJustPressed(engine.KeyUp) || g.input.IsKeyJustPressed(engine.KeyW) || g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) {
 			g.mapWonMenuIndex = 0
 		}
-		if g.input.IsKeyJustPressed(engine.KeyDown) || g.input.IsKeyJustPressed(engine.KeyS) {
+		if g.input.IsKeyJustPressed(engine.KeyDown) || g.input.IsKeyJustPressed(engine.KeyS) || g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) {
 			g.mapWonMenuIndex = 1
 		}
 		if g.input.IsKeyJustPressed(engine.KeyEnter) {
@@ -852,11 +960,11 @@ func (g *Game) Update() error {
 	}
 
 	if g.isMapWon {
-		// Player beat the map — wait for ENTER or ESC or Up/Down
-		if g.input.IsKeyJustPressed(engine.KeyUp) || g.input.IsKeyJustPressed(engine.KeyW) {
+		// Player beat the map — wait for ENTER or ESC or Arrows
+		if g.input.IsKeyJustPressed(engine.KeyUp) || g.input.IsKeyJustPressed(engine.KeyW) || g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) {
 			g.mapWonMenuIndex = 0
 		}
-		if g.input.IsKeyJustPressed(engine.KeyDown) || g.input.IsKeyJustPressed(engine.KeyS) {
+		if g.input.IsKeyJustPressed(engine.KeyDown) || g.input.IsKeyJustPressed(engine.KeyS) || g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) {
 			g.mapWonMenuIndex = 1
 		}
 
@@ -914,13 +1022,13 @@ func (g *Game) Update() error {
 			g.isMenuOpen = false
 			return nil
 		}
-		if g.input.IsKeyJustPressed(engine.KeyUp) || g.input.IsKeyJustPressed(engine.KeyW) {
+		if g.input.IsKeyJustPressed(engine.KeyUp) || g.input.IsKeyJustPressed(engine.KeyW) || g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) {
 			g.menuIndex--
 			if g.menuIndex < 0 {
 				g.menuIndex = 4
 			}
 		}
-		if g.input.IsKeyJustPressed(engine.KeyDown) || g.input.IsKeyJustPressed(engine.KeyS) {
+		if g.input.IsKeyJustPressed(engine.KeyDown) || g.input.IsKeyJustPressed(engine.KeyS) || g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) {
 			g.menuIndex++
 			if g.menuIndex > 4 {
 				g.menuIndex = 0
@@ -930,6 +1038,8 @@ func (g *Game) Update() error {
 		mw, mh := 400, 280
 		bx, by := (g.width-mw)/2, (g.height-mh)/2
 		mx, my := g.input.MousePosition()
+		mouseMoved := mx != g.lastMouseX || my != g.lastMouseY
+		g.lastMouseX, g.lastMouseY = mx, my
 
 		hoverIndex := -1
 		for i := 0; i < 5; i++ {
@@ -940,7 +1050,7 @@ func (g *Game) Update() error {
 			}
 		}
 
-		if hoverIndex != -1 {
+		if hoverIndex != -1 && mouseMoved {
 			g.menuIndex = hoverIndex
 		}
 

@@ -1,23 +1,49 @@
 package game
 
 import (
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
 
+func DiscoverFonts(assets fs.FS) []string {
+	fonts := []string{}
+	entries, err := fs.ReadDir(assets, "assets/fonts")
+	if err != nil {
+		return []string{"default"}
+	}
+	for _, e := range entries {
+		name := e.Name()
+		if !e.IsDir() && strings.HasSuffix(strings.ToLower(name), ".ttf") {
+			stem := name[:len(name)-4]
+			fonts = append(fonts, stem)
+		}
+	}
+	fonts = append(fonts, "default")
+	return fonts
+}
+
 type Settings struct {
 	SoundFrequency string `yaml:"sound_frequency"`
+	Font           string `yaml:"font"`
 }
 
 var FrequencyOptions = []string{"never", "rare", "infrequent", "half the time", "frequent", "always"}
+var FontOptions = []string{"medieval", "modern_antiqua", "uncial_antiqua", "glass_antiqua", "kings", "eagle_lake", "default"}
+
+func SetFontOptions(fonts []string) {
+	FontOptions = fonts
+}
 
 func DefaultSettings() *Settings {
 	return &Settings{
 		SoundFrequency: "rare",
+		Font:           "medieval",
 	}
 }
 

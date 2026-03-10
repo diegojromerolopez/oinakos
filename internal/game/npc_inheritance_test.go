@@ -39,6 +39,12 @@ func (m *MockGraphicsInheritance) DrawLine(screen engine.Image, x1, y1, x2, y2 f
 
 func (m *MockGraphicsInheritance) DebugPrintAt(screen engine.Image, str string, x, y int, clr color.Color) {
 }
+func (m *MockGraphicsInheritance) LoadFont(assets fs.FS, path string) error { return nil }
+func (m *MockGraphicsInheritance) DrawTextAt(screen engine.Image, str string, x, y int, clr color.Color, size float64) {
+}
+func (m *MockGraphicsInheritance) MeasureText(str string, size float64) (float64, float64) {
+	return float64(len(str)) * size * 0.5, size
+}
 
 func TestNPC_InheritanceAndSoundID(t *testing.T) {
 	// Setup a mock filesystem

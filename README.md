@@ -276,3 +276,11 @@ actions:
 
 ## 📜 License
 This project is licensed under the MIT License. Code and assets have been developed with AI-assisted tooling.
+
+### Fonts
+- **MedievalSharp** is licensed under the [SIL Open Font License, Version 1.1](https://fonts.google.com/specimen/MedievalSharp).
+- **Modern Antiqua** is licensed under the [SIL Open Font License, Version 1.1](https://fonts.google.com/specimen/Modern+Antiqua).
+- **Uncial Antiqua** is licensed under the [SIL Open Font License, Version 1.1](https://fonts.google.com/specimen/Uncial+Antiqua).
+- **Glass Antiqua** is licensed under the [SIL Open Font License, Version 1.1](https://fonts.google.com/specimen/Glass+Antiqua).
+- **Kings** is licensed under the [SIL Open Font License, Version 1.1](https://fonts.google.com/specimen/Kings).
+- **Eagle Lake** is licensed under the [SIL Open Font License, Version 1.1](https://fonts.google.com/specimen/Eagle+Lake).

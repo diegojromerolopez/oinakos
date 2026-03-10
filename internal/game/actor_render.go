@@ -185,7 +185,7 @@ func DrawActor(a *Actor, screen engine.Image, textRenderer engine.TextRenderer, 
 				if !isPlayableCharacter && a.Config.Unique {
 					textColor = color.RGBA{218, 165, 32, 255} // Golden
 				}
-				textRenderer.DebugPrintAt(screen, name, nameX, nameY, textColor)
+				textRenderer.DrawTextAt(screen, name, nameX, nameY, textColor, 12)
 			}
 		}
 	}

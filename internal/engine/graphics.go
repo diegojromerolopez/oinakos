@@ -33,4 +33,7 @@ type VectorRenderer interface {
 // TextRenderer defines text drawing operations.
 type TextRenderer interface {
 	DebugPrintAt(screen Image, str string, x, y int, clr color.Color)
+	LoadFont(assets fs.FS, path string) error
+	DrawTextAt(screen Image, str string, x, y int, clr color.Color, size float64)
+	MeasureText(str string, size float64) (w, h float64)
 }

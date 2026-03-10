@@ -3,6 +3,7 @@
 package engine
 
 import (
+	"bytes"
 	"image"
 	"image/color"
 	"io/fs"
@@ -13,6 +14,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
@@ -279,6 +281,7 @@ type EbitenGraphics struct {
 	whiteImage  *ebiten.Image
 	circleImage *ebiten.Image // Pre-rendered white circle for efficient ellipses
 	debugTxtImg *ebiten.Image // Reusable buffer for colored debug print
+	fontSource  *text.GoTextFaceSource
 }
 
 func NewEbitenGraphics() *EbitenGraphics {
@@ -313,7 +316,8 @@ func (e *EbitenGraphics) DebugPrintAt(screen Image, str string, x, y int, clr co
 		return
 	}
 
-	// If no special color (defaults to white in many contexts) or pure white, use optimized call
+	// For simple development debug, we keep using ebitenutil.DebugPrintAt
+	// if it is pure white (most common case).
 	r, g, b, a := clr.RGBA()
 	if r == 0xffff && g == 0xffff && b == 0xffff && a == 0xffff {
 		ebitenutil.DebugPrintAt(wrapper.img, str, x, y)
@@ -339,6 +343,63 @@ func (e *EbitenGraphics) DebugPrintAt(screen Image, str string, x, y int, clr co
 	// Draw only the part of the buffer we used
 	sub := e.debugTxtImg.SubImage(image.Rect(0, 0, neededW, 16)).(*ebiten.Image)
 	wrapper.img.DrawImage(sub, &op)
+}
+
+func (e *EbitenGraphics) LoadFont(assets fs.FS, path string) error {
+	if path == "" {
+		e.fontSource = nil
+		return nil
+	}
+	data, err := fs.ReadFile(assets, path)
+	if err != nil {
+		// Try direct OS read if fallback is needed
+		data, err = os.ReadFile(path)
+	}
+	if err != nil {
+		return err
+	}
+
+	s, err := text.NewGoTextFaceSource(bytes.NewReader(data))
+	if err != nil {
+		return err
+	}
+	e.fontSource = s
+	return nil
+}
+
+func (e *EbitenGraphics) DrawTextAt(screen Image, str string, x, y int, clr color.Color, size float64) {
+	wrapper, ok := screen.(*EbitenImageWrapper)
+	if !ok || wrapper == nil || wrapper.img == nil {
+		return
+	}
+
+	if e.fontSource == nil {
+		e.DebugPrintAt(screen, str, x, y, clr)
+		return
+	}
+
+	face := &text.GoTextFace{
+		Source: e.fontSource,
+		Size:   size,
+	}
+
+	op := &text.DrawOptions{}
+	op.GeoM.Translate(float64(x), float64(y))
+	op.ColorScale.ScaleWithColor(clr)
+	text.Draw(wrapper.img, str, face, op)
+}
+
+func (e *EbitenGraphics) MeasureText(str string, size float64) (float64, float64) {
+	if e.fontSource == nil {
+		return float64(len(str) * 6), 16
+	}
+
+	face := &text.GoTextFace{
+		Source: e.fontSource,
+		Size:   size,
+	}
+
+	return text.Measure(str, face, 0)
 }
 
 func (e *EbitenGraphics) LoadSprite(assets fs.FS, path string, removeBg bool) Image {
