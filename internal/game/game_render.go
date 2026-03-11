@@ -418,6 +418,67 @@ func (gr *GameRenderer) drawHUD(screen engine.Image) {
 		sttw, _ := gr.graphics.MeasureText(msg, 18)
 		gr.graphics.DrawTextAt(screen, msg, (g.width-int(sttw))/2, g.height-40, color.RGBA{218, 165, 32, 255}, 18)
 	}
+
+	// Objective Arrow (Direction pointer)
+	gr.drawObjectiveArrow(screen)
+}
+
+func (gr *GameRenderer) drawObjectiveArrow(screen engine.Image) {
+	g := gr.game
+	targetX, targetY := 0.0, 0.0
+	hasTarget := false
+
+	switch g.currentMapType.Type {
+	case ObjReachPortal, ObjReachZone, ObjReachBuilding, ObjProtectNPC, ObjDestroyBuilding:
+		targetX, targetY = g.currentMapType.TargetPoint.X, g.currentMapType.TargetPoint.Y
+		hasTarget = true
+	case ObjKillVIP:
+		// Target the first alive enemy NPC
+		for _, n := range g.npcs {
+			if n.Alignment == AlignmentEnemy && n.IsAlive() {
+				targetX, targetY = n.X, n.Y
+				hasTarget = true
+				break
+			}
+		}
+	}
+
+	if !hasTarget {
+		return
+	}
+
+	// Calculate screen direction for more intuitive movement
+	dx := targetX - g.playableCharacter.X
+	dy := targetY - g.playableCharacter.Y
+	dist := math.Sqrt(dx*dx + dy*dy)
+
+	// Hide if very close
+	if dist < 4.0 {
+		return
+	}
+
+	// Red Arrow in Top-Right
+	arrowX := float64(g.width - 50)
+	arrowY := 120.0
+
+	// We need to convert Cartesian direction to Screen direction for the compass
+	// iso = x - y, y = (x + y) * 0.5
+	screenDX := dx - dy
+	screenDY := (dx + dy) * 0.5
+	screenAngle := math.Atan2(screenDY, screenDX)
+
+	size := 15.0
+	p1 := engine.Point{X: arrowX + math.Cos(screenAngle)*size, Y: arrowY + math.Sin(screenAngle)*size}
+	p2 := engine.Point{X: arrowX + math.Cos(screenAngle+2.5)*size*0.7, Y: arrowY + math.Sin(screenAngle+2.5)*size*0.7}
+	p3 := engine.Point{X: arrowX + math.Cos(screenAngle-2.5)*size*0.7, Y: arrowY + math.Sin(screenAngle-2.5)*size*0.7}
+
+	// Shadow
+	p1s := engine.Point{X: p1.X + 2, Y: p1.Y + 2}
+	p2s := engine.Point{X: p2.X + 2, Y: p2.Y + 2}
+	p3s := engine.Point{X: p3.X + 2, Y: p3.Y + 2}
+	gr.graphics.DrawFilledPolygon(screen, []engine.Point{p1s, p2s, p3s}, color.RGBA{0, 0, 0, 150}, true)
+	// Red Arrow
+	gr.graphics.DrawFilledPolygon(screen, []engine.Point{p1, p2, p3}, color.RGBA{220, 20, 60, 255}, true)
 }
 
 func (gr *GameRenderer) drawDebug(screen engine.Image, offsetX, offsetY float64) {
@@ -771,10 +832,28 @@ func (gr *GameRenderer) getTileAt(x, y int) engine.Image {
 
 	for _, zone := range gr.game.currentMapType.FloorZones {
 		if zone.Priority > highestPriority {
-			if zone.GetPolygon().Contains(float64(x), float64(y)) {
+			if zone.Contains(float64(x), float64(y)) {
 				resolvedTile = zone.Tile
 				highestPriority = zone.Priority
 			}
+		}
+	}
+
+	// Variant Hashing for Grass (Anti-Tiling) applies to all standard floors now
+	switch resolvedTile {
+	case "grass.png", "mud.png", "paved_ground.png", "dirt.png", "big_stones.png",
+		"wheat_field.png", "desert_sand.png", "yellow_grass.png", "dry_ground.png",
+		"water.png", "dark_water.png":
+		
+		hash := (x*73856093 ^ y*19349663)
+		if hash < 0 {
+			hash = -hash
+		}
+		variant := hash % 3
+		if variant == 1 {
+			resolvedTile = resolvedTile[:len(resolvedTile)-4] + "_2.png"
+		} else if variant == 2 {
+			resolvedTile = resolvedTile[:len(resolvedTile)-4] + "_3.png"
 		}
 	}
 

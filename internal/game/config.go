@@ -225,6 +225,12 @@ type FloorZone struct {
 	Priority  int              `yaml:"priority"`
 	Perimeter []FootprintPoint `yaml:"perimeter"`
 	Polygon   engine.Polygon   `yaml:"-"`
+
+	MinX float64 `yaml:"-"`
+	MaxX float64 `yaml:"-"`
+	MinY float64 `yaml:"-"`
+	MaxY float64 `yaml:"-"`
+	AABBCalculated bool `yaml:"-"`
 }
 
 func (fz *FloorZone) GetPolygon() engine.Polygon {
@@ -232,11 +238,37 @@ func (fz *FloorZone) GetPolygon() engine.Polygon {
 		return fz.Polygon
 	}
 	pts := make([]engine.Point, len(fz.Perimeter))
+	
+	if len(fz.Perimeter) > 0 {
+		fz.MinX, fz.MaxX = fz.Perimeter[0].X, fz.Perimeter[0].X
+		fz.MinY, fz.MaxY = fz.Perimeter[0].Y, fz.Perimeter[0].Y
+	}
+
 	for i, pt := range fz.Perimeter {
 		pts[i] = engine.Point{X: pt.X, Y: pt.Y}
+		if pt.X < fz.MinX { fz.MinX = pt.X }
+		if pt.X > fz.MaxX { fz.MaxX = pt.X }
+		if pt.Y < fz.MinY { fz.MinY = pt.Y }
+		if pt.Y > fz.MaxY { fz.MaxY = pt.Y }
 	}
+	
+	fz.AABBCalculated = true
 	fz.Polygon = engine.Polygon{Points: pts}
 	return fz.Polygon
+}
+
+func (fz *FloorZone) Contains(x, y float64) bool {
+	// Ensure the polygon and bounds are initialized
+	poly := fz.GetPolygon()
+	
+	// Fast AABB rejection
+	if fz.AABBCalculated {
+		if x < fz.MinX || x > fz.MaxX || y < fz.MinY || y > fz.MaxY {
+			return false
+		}
+	}
+	
+	return poly.Contains(x, y)
 }
 
 type MapType struct {
@@ -267,6 +299,20 @@ type MapType struct {
 	TargetPoint    engine.Point  `yaml:"-"` // Resolved at loadMapLevel time
 	StartTime      float64       `yaml:"-"`
 	IsCompleted    bool          `yaml:"-"`
+}
+
+func (m *MapType) GetTileAt(x, y float64) string {
+	resolvedTile := m.FloorTile
+	highestPriority := -1
+	for _, zone := range m.FloorZones {
+		if zone.Priority > highestPriority {
+			if zone.Contains(x, y) {
+				resolvedTile = zone.Tile
+				highestPriority = zone.Priority
+			}
+		}
+	}
+	return resolvedTile
 }
 
 type MapTypeRegistry struct {

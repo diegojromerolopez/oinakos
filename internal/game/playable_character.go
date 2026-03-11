@@ -226,8 +226,8 @@ func (mc *PlayableCharacter) Update(input engine.Input, audio AudioManager, obst
 		dx /= mag
 		dy /= mag
 
-		moveX := dx * mc.Speed
-		moveY := dy * mc.Speed
+		moveX := dx * mc.Speed * mc.GetSpeedModifier()
+		moveY := dy * mc.Speed * mc.GetSpeedModifier()
 
 		if !mc.checkCollisionAt(mc.X+moveX, mc.Y+moveY, obstacles) {
 			mc.X += moveX
@@ -243,6 +243,15 @@ func (mc *PlayableCharacter) Update(input engine.Input, audio AudioManager, obst
 
 		if mc.Tick%30 == 0 {
 			DebugLog("Player Moved to (%.2f, %.2f)", mc.X, mc.Y)
+			if audio != nil {
+				if mc.CurrentTile == "water.png" || mc.CurrentTile == "dark_water.png" {
+					audio.PlayRandomSound("footstep_water")
+				} else if mc.CurrentTile == "paved_ground.png" || mc.CurrentTile == "big_stones.png" {
+					audio.PlayRandomSound("footstep_stone")
+				} else {
+					audio.PlayRandomSound("footstep_grass")
+				}
+			}
 		}
 
 		if dx > 0 {

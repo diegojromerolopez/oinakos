@@ -385,8 +385,18 @@ func (n *NPC) Update(playableCharacter *PlayableCharacter, obstacles []*Obstacle
 				}
 			case BehaviorWander:
 				if n.Tick%120 == 0 {
+					// Add slight preference to wander back toward the player if they are an ally or neutral and very far away
 					n.WanderDirX = rand.Float64()*2 - 1
 					n.WanderDirY = rand.Float64()*2 - 1
+					if n.Alignment != AlignmentEnemy && playableCharacter != nil && playerDist > 15.0 {
+						dx := playableCharacter.X - n.X
+						dy := playableCharacter.Y - n.Y
+						mag := math.Sqrt(dx*dx + dy*dy)
+						if mag > 0 {
+							n.WanderDirX = (n.WanderDirX + (dx/mag)*0.5)
+							n.WanderDirY = (n.WanderDirY + (dy/mag)*0.5)
+						}
+					}
 				}
 				targetX, targetY = n.X+n.WanderDirX, n.Y+n.WanderDirY
 				hasTarget = true
@@ -395,20 +405,38 @@ func (n *NPC) Update(playableCharacter *PlayableCharacter, obstacles []*Obstacle
 					targetX, targetY = n.PatrolEndX, n.PatrolEndY
 					if math.Sqrt(math.Pow(n.X-n.PatrolEndX, 2)+math.Pow(n.Y-n.PatrolEndY, 2)) < 0.5 {
 						n.PatrolHeading = false
+						if rand.Float64() < 0.3 { // Randomly re-anchor patrol to wander roughly around the same area
+							n.PatrolStartX = n.X + (rand.Float64()*10 - 5)
+							n.PatrolStartY = n.Y + (rand.Float64()*10 - 5)
+						}
 					}
 				} else {
 					targetX, targetY = n.PatrolStartX, n.PatrolStartY
 					if math.Sqrt(math.Pow(n.X-n.PatrolStartX, 2)+math.Pow(n.Y-n.PatrolStartY, 2)) < 0.5 {
 						n.PatrolHeading = true
+						if rand.Float64() < 0.3 {
+							n.PatrolEndX = n.X + (rand.Float64()*10 - 5)
+							n.PatrolEndY = n.Y + (rand.Float64()*10 - 5)
+						}
 					}
 				}
 				hasTarget = true
 			default:
 				// Fallback for generic Enemy alignment: attack player
 				if n.Alignment == AlignmentEnemy {
-					targetX, targetY = playableCharacter.X, playableCharacter.Y
-					hasTarget = true
-					isTargetPlayer = true
+					if playerDist < 20.0 { // Actively attack if close enough, else wander
+						targetX, targetY = playableCharacter.X, playableCharacter.Y
+						hasTarget = true
+						isTargetPlayer = true
+					} else {
+						// Behave like wander
+						if n.Tick%120 == 0 {
+							n.WanderDirX = rand.Float64()*2 - 1
+							n.WanderDirY = rand.Float64()*2 - 1
+						}
+						targetX, targetY = n.X+n.WanderDirX, n.Y+n.WanderDirY
+						hasTarget = true
+					}
 				}
 			}
 		}
@@ -435,8 +463,8 @@ func (n *NPC) Update(playableCharacter *PlayableCharacter, obstacles []*Obstacle
 			// Kite away if too close
 			kMag := math.Sqrt(dx*dx + dy*dy)
 			if kMag > 0 {
-				moveX := -(dx / kMag) * n.Speed
-				moveY := -(dy / kMag) * n.Speed
+				moveX := -(dx / kMag) * n.Speed * n.GetSpeedModifier()
+				moveY := -(dy / kMag) * n.Speed * n.GetSpeedModifier()
 				// Sliding collision for NPC kiting
 				if !n.checkCollisionAt(n.X+moveX, n.Y+moveY, obstacles) {
 					n.X += moveX
@@ -622,8 +650,8 @@ func (n *NPC) Update(playableCharacter *PlayableCharacter, obstacles []*Obstacle
 			ndx := dx / mag
 			ndy := dy / mag
 
-			moveX := ndx * n.Speed
-			moveY := ndy * n.Speed
+			moveX := ndx * n.Speed * n.GetSpeedModifier()
+			moveY := ndy * n.Speed * n.GetSpeedModifier()
 
 			// Sliding collision for NPC
 			if !n.checkCollisionAt(n.X+moveX, n.Y+moveY, obstacles) {

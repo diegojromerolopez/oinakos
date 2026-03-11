@@ -3,36 +3,126 @@ name: Demon Invasion
 type: survive # ObjSurvive
 difficulty: 3
 target_time: 120.0 # 2 minutes
-description: "Survive the demonic onslaught!"
-floor_tile: "grass.png"
+description: "Survive the demonic onslaught! Use the muddy terrain and ruins to slow their advance."
+width_px: 6000
+height_px: 6000
+floor_tile: "dry_ground.png"
+
+floor_zones:
+  - name: "Ruined Town Square"
+    tile: "dirt.png"
+    priority: 5
+    perimeter:
+      - {x: -15, y: -15}
+      - {x: 15, y: -15}
+      - {x: 15, y: 15}
+      - {x: -15, y: 15}
+  - name: "Slowing Mud South"
+    tile: "mud.png"
+    priority: 4
+    perimeter:
+      - {x: -30, y: 15}
+      - {x: 30, y: 15}
+      - {x: 30, y: 40}
+      - {x: -30, y: 40}
+  - name: "Northern Dark Water"
+    tile: "dark_water.png"
+    priority: 3
+    perimeter:
+      - {x: -40, y: -40}
+      - {x: 40, y: -40}
+      - {x: 40, y: -15}
+      - {x: -40, y: -15}
+
+spawns:
+  # The waves of enemies that are actually missing
+  - archetype: demon_male
+    alignment: enemy
+    probability: 0.35
+    frequency: 1.5
+    y: 30
+  - archetype: demon_male
+    alignment: enemy
+    probability: 0.25
+    frequency: 2.0
+    x: 35
+  - archetype: demon_male
+    alignment: enemy
+    probability: 0.2
+    frequency: 2.5
+    y: -30
+
+inhabitants:
+  # Desperate defenders
+  - npc: golden_guard
+    x: -5
+    y: 0
+    alignment: ally
+    behavior: patrol
+  - npc: golden_guard
+    x: 5
+    y: 0
+    alignment: ally
+    behavior: patrol
+  - archetype: peasant_male
+    x: 0
+    y: 5
+    alignment: ally
+    behavior: flee
+  - archetype: peasant_female
+    x: 2
+    y: -2
+    alignment: ally
+    behavior: flee
+
 obstacles:
-  - archetype: house_burned
+  # Town Ruins
+  - archetype: house3
     x: 0.0
     y: 10.0
-  - archetype: house_burned
+  - archetype: house2
     x: 10.0
     y: 0.0
-  - archetype: house_burned
+  - archetype: warehouse
     x: -10.0
     y: 0.0
-  - archetype: house_burned
+  - archetype: temple
     x: 0.0
     y: -10.0
   - archetype: well
-    x: 25.0
-    y: 25.0
+    x: 0.0
+    y: 0.0
+  
+  # Destroyed barricades/Trees
+  - archetype: tree5
+    x: -20
+    y: -5
+  - archetype: tree5
+    x: -22
+    y: 0
+  - archetype: tree5
+    x: -20
+    y: 5
+  - archetype: rock1
+    x: 20
+    y: -5
+  - archetype: rock2
+    x: 22
+    y: 0
+  - archetype: rock3
+    x: 20
+    y: 5
+
+  # Perimeter
+  - archetype: tree6
+    x: -35
+    y: 35
+  - archetype: tree6
+    x: 35
+    y: 35
   - archetype: bush1
     x: 5.0
     y: 5.0
   - archetype: bush2
     x: -5.0
     y: -5.0
-  - archetype: bush3
-    x: 5.0
-    y: -5.0
-  - archetype: bush4
-    x: -5.0
-    y: 5.0
-  - archetype: bush5
-    x: 15.0
-    y: 15.0

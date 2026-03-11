@@ -1,0 +1,50 @@
+id: "sandbox"
+name: "Floor Systems Sandbox"
+type: "survive"
+description: "A sandbox testing area showing off various floor types and variants."
+difficulty: 1
+target_time: 1000
+width_px: 2560
+height_px: 2560
+floor_tile: "grass.png"
+player:
+  x: 0
+  y: 0
+floor_zones:
+  - name: "Water Pit"
+    tile: "water.png"
+    priority: 10
+    perimeter:
+      - {x: -10, y: -10}
+      - {x: -2, y: -10}
+      - {x: -2, y: -2}
+      - {x: -10, y: -2}
+  - name: "Paved Road"
+    tile: "paved_ground.png"
+    priority: 10
+    perimeter:
+      - {x: 2, y: -15}
+      - {x: 8, y: -15}
+      - {x: 8, y: 15}
+      - {x: 2, y: 15}
+  - name: "Muddy Swamp"
+    tile: "mud.png"
+    priority: 10
+    perimeter:
+      - {x: -15, y: 2}
+      - {x: -5, y: 2}
+      - {x: -5, y: 12}
+      - {x: -15, y: 12}
+  - name: "Dark Water Pit"
+    tile: "dark_water.png"
+    priority: 10
+    perimeter:
+      - {x: 10, y: -10}
+      - {x: 18, y: -10}
+      - {x: 18, y: -2}
+      - {x: 10, y: -2}
+inhabitants:
+  - archetype: "peasant_male"
+    x: 5
+    y: 5
+    alignment: neutral

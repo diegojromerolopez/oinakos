@@ -1,14 +1,118 @@
 id: burning_fields
 name: "Burning Fields"
 type: survive
-description: "Survive the demonic onslaught in the scorched fields."
+description: "Survive the demonic onslaught in the scorched fields. The Dark Waters trap the unwary."
 difficulty: 3
 target_time: 120
-width_px: 4000
-height_px: 4000
-floor_tile: grass.png
+width_px: 6000
+height_px: 6000
+floor_tile: dry_ground.png
+
+floor_zones:
+  - name: "Scorched Road"
+    tile: "dirt.png"
+    priority: 5
+    perimeter:
+      - {x: -20, y: -4}
+      - {x: 20, y: -4}
+      - {x: 20, y: 4}
+      - {x: -20, y: 4}
+  - name: "Northern Dark Water"
+    tile: "dark_water.png"
+    priority: 3
+    perimeter:
+      - {x: -30, y: -40}
+      - {x: 30, y: -40}
+      - {x: 30, y: -10}
+      - {x: -30, y: -10}
+  - name: "Southern Dark Water"
+    tile: "dark_water.png"
+    priority: 3
+    perimeter:
+      - {x: -30, y: 10}
+      - {x: 30, y: 10}
+      - {x: 30, y: 40}
+      - {x: -30, y: 40}
+
 spawns:
+  # Highly aggressive demons rising from the waters
   - archetype: demon_male
     alignment: enemy
-    probability: 0.15
-    frequency: 2
+    probability: 0.25
+    frequency: 1.0
+    y: 20
+  - archetype: demon_male
+    alignment: enemy
+    probability: 0.25
+    frequency: 1.0
+    y: -20
+  
+inhabitants:
+  # Few remaining guards attempting to hold the line
+  - npc: queens_guard
+    x: -10
+    y: 0
+    alignment: ally
+    behavior: patrol
+  - npc: queens_guard
+    x: 10
+    y: 0
+    alignment: ally
+    behavior: patrol
+  - archetype: peasant_male
+    x: 0
+    y: 2
+    alignment: neutral
+    behavior: flee
+
+obstacles:
+  # Ruins of a small field village
+  - archetype: house1
+    x: -8
+    y: -8
+  - archetype: house2
+    x: 0
+    y: -9
+  - archetype: house3
+    x: 8
+    y: -8
+  - archetype: warehouse
+    x: -12
+    y: 8
+  - archetype: house1
+    x: 12
+    y: 8
+  
+  # Dead trees marking the corrupted fields
+  - archetype: tree5
+    x: -25
+    y: -6
+  - archetype: tree5
+    x: -27
+    y: 0
+  - archetype: tree6
+    x: -25
+    y: 6
+  - archetype: tree5
+    x: 25
+    y: -6
+  - archetype: tree6
+    x: 27
+    y: 0
+  - archetype: tree5
+    x: 25
+    y: 6
+  
+  # Scattered rocks along the corrupted shorelines
+  - archetype: rock4
+    x: -10
+    y: -12
+  - archetype: rock5
+    x: 10
+    y: -12
+  - archetype: rock4
+    x: -10
+    y: 12
+  - archetype: rock5
+    x: 10
+    y: 12

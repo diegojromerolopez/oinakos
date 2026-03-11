@@ -75,6 +75,7 @@ func TestNPCNeutral_Retaliation(t *testing.T) {
 	npc := NewNPC(5, 0, &Archetype{ID: "villager"}, 1)
 	npc.Alignment = AlignmentNeutral
 	npc.Behavior = BehaviorWander
+	npc.Health = 100
 
 	audio := NewMockAudioManager()
 
@@ -197,6 +198,7 @@ func TestNPCAlly_RetaliationHostile(t *testing.T) {
 	mc := NewPlayableCharacter(0, 0, nil)
 	ally := NewNPC(5, 0, &Archetype{ID: "ally"}, 1)
 	ally.Alignment = AlignmentAlly
+	ally.Health = 100
 
 	audio := NewMockAudioManager()
 

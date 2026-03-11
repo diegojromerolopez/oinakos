@@ -1273,6 +1273,7 @@ func (g *Game) Update() error {
 		}
 	}
 
+	g.playableCharacter.CurrentTile = g.currentMapType.GetTileAt(g.playableCharacter.X, g.playableCharacter.Y)
 	g.playableCharacter.Update(g.input, g.audio, g.obstacles, g.npcs, &g.floatingTexts, g.currentMapType.MapWidth, g.currentMapType.MapHeight)
 
 	// Real-time position tracking for the USER and Agent
@@ -1453,6 +1454,7 @@ func (g *Game) Update() error {
 
 	// Update all NPCs (keep corpses indefinitely per user request)
 	for _, n := range g.npcs {
+		n.CurrentTile = g.currentMapType.GetTileAt(n.X, n.Y)
 		n.Update(g.playableCharacter, g.obstacles, g.npcs, &g.projectiles, &g.floatingTexts, g.currentMapType.MapWidth, g.currentMapType.MapHeight, g.audio)
 		if n.MustSurvive && !n.IsAlive() {
 			if !g.isGameOver {

@@ -46,924 +46,924 @@ floor_zones:
   - x: 10.0
     y: -10.0
 inhabitants:
-- npc: m_peasant
+- archetype: peasant_male
   x: 39.4
   y: -28.8
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 18.7
   y: -25.8
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 39.7
   y: 19.7
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 52.1
   y: -19.7
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 33.9
   y: 21.2
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 6.1
   y: 30.7
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 17.1
   y: 35.9
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: -5.9
   y: -4.1
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 34.4
   y: -37.5
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 9.5
   y: 14.7
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 28.0
   y: 9.4
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 36.1
   y: -39.5
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 48.4
   y: 0.9
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 45.7
   y: 10.0
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 42.6
   y: -13.4
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: -9.1
   y: -6.4
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 13.4
   y: -32.8
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: -8.8
   y: 4.8
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 52.9
   y: -0.2
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 27.4
   y: 32.3
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 29.5
   y: -11.2
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 20.3
   y: 15.7
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: -8.9
   y: -21.2
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 52.1
   y: -12.6
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 8.4
   y: -0.4
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 45.4
   y: -0.4
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 42.4
   y: 31.5
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 45.7
   y: 37.3
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: -7.9
   y: 11.6
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 20.3
   y: 14.1
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 38.0
   y: -10.9
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 26.2
   y: 16.9
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 34.5
   y: -10.3
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 45.3
   y: -2.7
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 52.4
   y: -17.7
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 31.9
   y: -2.1
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 43.8
   y: -34.6
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 36.4
   y: 29.6
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 47.3
   y: 4.8
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 46.1
   y: 36.7
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 53.3
   y: -29.6
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: -7.8
   y: -33.4
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 7.6
   y: 29.0
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 14.8
   y: 24.9
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 5.2
   y: 34.8
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 35.6
   y: 5.2
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 36.9
   y: 4.1
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 59.7
   y: -19.6
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: -1.1
   y: 4.9
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 13.0
   y: 23.3
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 40.5
   y: 34.0
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: -7.0
   y: 2.7
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 22.2
   y: -5.8
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 49.8
   y: -27.9
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 40.9
   y: 28.1
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 39.6
   y: 4.5
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 27.1
   y: -10.3
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 56.1
   y: 8.6
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 47.2
   y: -26.8
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 43.3
   y: -8.2
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 27.5
   y: 24.5
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 53.5
   y: 6.1
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 4.6
   y: 25.0
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 44.3
   y: 3.0
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 16.5
   y: -24.9
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: -6.8
   y: 22.6
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 53.8
   y: -4.2
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 48.0
   y: -9.2
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: -1.8
   y: -29.1
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: -0.2
   y: 15.9
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: -1.4
   y: 29.3
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 38.0
   y: -26.4
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 56.0
   y: 8.4
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 0.6
   y: -35.7
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 18.5
   y: -39.5
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 18.5
   y: -23.3
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 34.3
   y: 9.6
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 53.2
   y: 21.7
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: -6.9
   y: 29.6
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 36.2
   y: 9.0
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 41.7
   y: 36.2
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: -1.8
   y: 26.9
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 6.1
   y: 25.8
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 11.1
   y: -21.8
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 44.0
   y: -20.6
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 58.0
   y: 11.8
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 52.5
   y: -31.5
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 7.9
   y: 1.7
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 19.7
   y: -11.2
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 27.6
   y: -17.9
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 33.2
   y: 28.4
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 49.5
   y: -16.5
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 40.3
   y: 16.5
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 26.9
   y: -19.0
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 0.7
   y: 8.9
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: -8.8
   y: -3.8
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: -3.3
   y: -30.7
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 25.0
   y: 17.6
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 41.6
   y: -18.7
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 12.0
   y: 38.4
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 24.1
   y: 14.8
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 26.5
   y: -34.2
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 22.4
   y: -21.8
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 47.5
   y: 7.6
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 45.2
   y: 7.0
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 12.2
   y: 34.7
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 11.7
   y: 29.2
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: -6.9
   y: -23.0
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 12.6
   y: 37.5
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 20.0
   y: 21.2
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 57.3
   y: 14.4
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 45.6
   y: -25.6
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 50.6
   y: -37.7
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 22.5
   y: 27.0
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: -4.1
   y: -11.0
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 50.7
   y: -33.0
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 46.8
   y: -3.2
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: -2.8
   y: -34.8
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 8.8
   y: -18.7
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 33.5
   y: -6.8
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 52.9
   y: -28.2
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 45.1
   y: -31.2
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 12.7
   y: 13.2
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 20.4
   y: -33.2
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: -7.5
   y: 27.2
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 27.9
   y: -23.7
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 25.1
   y: -12.7
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 47.3
   y: -25.8
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 20.9
   y: -34.7
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 21.3
   y: 13.8
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 40.7
   y: -19.8
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 9.0
   y: -7.8
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 26.8
   y: -32.5
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 2.7
   y: 33.2
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 45.0
   y: 36.8
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 11.1
   y: -22.1
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 23.0
   y: 18.8
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 27.5
   y: -12.8
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 33.9
   y: -0.8
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 24.5
   y: 30.7
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: -7.4
   y: -0.3
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 3.4
   y: -11.1
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 26.4
   y: -25.1
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 46.3
   y: 15.6
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 46.0
   y: -39.5
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 20.7
   y: 7.9
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 58.5
   y: -29.7
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 35.3
   y: 16.4
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: -4.8
   y: 4.8
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 30.4
   y: 2.7
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 26.0
   y: -12.8
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 12.4
   y: -17.4
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 34.0
   y: -33.4
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: -7.5
   y: -9.7
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 10.6
   y: 16.7
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 53.6
   y: -21.3
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 48.6
   y: -14.1
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: -7.5
   y: -22.1
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 50.7
   y: 24.0
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 1.4
   y: 23.5
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 34.9
   y: -23.2
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 22.6
   y: 3.8
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 0.5
   y: -0.4
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 22.2
   y: -20.8
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 15.0
   y: -6.8
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 19.5
   y: 35.8
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 22.1
   y: 28.9
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: -9.4
   y: -0.9
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 7.9
   y: 28.1
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 52.8
   y: -11.5
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 40.6
   y: -20.3
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 7.2
   y: -10.7
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 6.7
   y: -26.2
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 31.2
   y: 23.3
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: -9.9
   y: -34.5
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: -1.1
   y: -12.1
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 36.4
   y: -7.1
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 58.9
   y: 10.0
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 16.7
   y: 11.4
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 0.2
   y: -37.6
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: -6.7
   y: 9.7
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 56.5
   y: -24.3
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 4.9
   y: 2.0
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 50.9
   y: 0.8
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 17.0
   y: -32.2
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 25.9
   y: 31.2
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 50.5
   y: -26.0
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 35.4
   y: -21.7
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 12.2
   y: -38.2
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 48.4
   y: -22.3
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 44.0
   y: 24.8
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 13.4
   y: -9.2
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: -5.3
   y: -31.1
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 7.1
   y: -11.7
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 18.0
   y: 32.2
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: -5.7
   y: 19.7
   alignment: enemy
-- npc: m_peasant
+- archetype: peasant_male
   x: 22.3
   y: -1.5
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 29.3
   y: -27.3
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: 44.0
   y: 33.7
   alignment: enemy
-- npc: f_peasant
+- archetype: peasant_female
   x: -5.5
   y: -25.8
   alignment: enemy
 obstacles:
-- archetype: tree_oak
+- archetype: tree6
   x: 33.6
   y: -21.3
-- archetype: tree_pine
+- archetype: tree5
   x: 3.5
   y: 13.5
-- archetype: tree_pine
+- archetype: tree5
   x: 35.7
   y: 11.5
-- archetype: tree_pine
+- archetype: tree5
   x: 12.1
   y: 10.1
-- archetype: tree_pine
+- archetype: tree5
   x: 49.6
   y: -33.0
-- archetype: tree_oak
+- archetype: tree6
   x: 18.8
   y: -19.3
-- archetype: tree_oak
+- archetype: tree6
   x: 23.1
   y: 30.7
-- archetype: tree_pine
+- archetype: tree5
   x: 28.1
   y: -12.8
-- archetype: tree_oak
+- archetype: tree6
   x: 40.1
   y: 35.3
-- archetype: tree_pine
+- archetype: tree5
   x: 7.9
   y: -15.7
-- archetype: tree_pine
+- archetype: tree5
   x: 10.5
   y: -9.8
-- archetype: tree_oak
+- archetype: tree6
   x: 15.1
   y: 17.8
-- archetype: tree_oak
+- archetype: tree6
   x: 21.5
   y: 5.6
-- archetype: tree_oak
+- archetype: tree6
   x: 45.1
   y: -8.0
-- archetype: tree_oak
+- archetype: tree6
   x: 3.5
   y: -3.3
-- archetype: tree_oak
+- archetype: tree6
   x: 13.9
   y: 31.2
-- archetype: tree_pine
+- archetype: tree5
   x: 39.1
   y: 8.6
-- archetype: tree_oak
+- archetype: tree6
   x: 28.1
   y: 15.1
-- archetype: tree_oak
+- archetype: tree6
   x: 17.5
   y: -32.8
-- archetype: tree_oak
+- archetype: tree6
   x: 25.5
   y: 21.5
-- archetype: tree_oak
+- archetype: tree6
   x: 20.0
   y: 26.9
-- archetype: tree_oak
+- archetype: tree6
   x: 33.2
   y: 6.1
-- archetype: tree_oak
+- archetype: tree6
   x: 22.5
   y: -21.8
-- archetype: tree_pine
+- archetype: tree5
   x: 5.4
   y: -31.2
-- archetype: tree_pine
+- archetype: tree5
   x: 36.2
   y: 35.7
-- archetype: tree_oak
+- archetype: tree6
   x: 30.3
   y: 29.0
-- archetype: tree_oak
+- archetype: tree6
   x: 39.1
   y: 17.5
-- archetype: tree_pine
+- archetype: tree5
   x: 49.3
   y: 31.1
-- archetype: tree_oak
+- archetype: tree6
   x: 36.5
   y: -20.4
-- archetype: tree_pine
+- archetype: tree5
   x: 27.6
   y: -13.4
-- archetype: house_burned
+- archetype: house2
   x: 40.4
   y: -27.7
-- archetype: house_burned
+- archetype: house2
   x: 16.8
   y: 16.4
-- archetype: house_burned
+- archetype: house2
   x: 10.2
   y: -5.6
-- archetype: house_burned
+- archetype: house2
   x: 0.5
   y: 25.8
-- archetype: house_burned
+- archetype: house2
   x: 19.9
   y: -20.7
-- archetype: house_burned
+- archetype: house2
   x: 9.6
   y: 11.4
-- archetype: house_burned
+- archetype: house2
   x: 19.3
   y: 21.2
-- archetype: house_burned
+- archetype: house2
   x: 39.5
   y: 7.6
-- archetype: house_burned
+- archetype: house2
   x: 45.4
   y: -13.5
-- archetype: house_burned
+- archetype: house2
   x: 48.3
   y: -14.1

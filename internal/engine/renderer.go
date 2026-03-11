@@ -55,7 +55,7 @@ func (r *Renderer) DrawTileMap(screen Image, offsetX, offsetY float64, getTile f
 
 			r.grassOptions.GeoM.Reset()
 			r.grassOptions.GeoM.Scale(scaleX, scaleY)
-			r.grassOptions.GeoM.Translate(drawX-32, drawY)
+			r.grassOptions.GeoM.Translate(drawX-32, drawY-16)
 			screen.DrawImage(tileSprite, r.grassOptions)
 		}
 	}

@@ -22,6 +22,8 @@ func (m *MockGraphicsInheritance) NewImage(w, h int) engine.Image               
 func (m *MockGraphicsInheritance) NewImageFromImage(img image.Image) engine.Image { return nil }
 func (m *MockGraphicsInheritance) DrawPolygon(screen engine.Image, points []engine.Point, clr color.Color, width float32) {
 }
+func (m *MockGraphicsInheritance) DrawFilledPolygon(screen engine.Image, points []engine.Point, clr color.Color, antiAlias bool) {
+}
 func (m *MockGraphicsInheritance) NewShader(src []byte) (engine.Shader, error) { return nil, nil }
 func (m *MockGraphicsInheritance) DrawImageWithShader(screen engine.Image, img engine.Image, shader engine.Shader, uniforms map[string]interface{}, options *engine.DrawImageOptions) {
 }

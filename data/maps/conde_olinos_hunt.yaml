@@ -3,8 +3,8 @@ name: "The Hunt of Conde Olinos"
 type: "reach_portal"
 description: "Protect the noble Conde Olinos from the Queen's wrath. Reach the portal in the upper right corner to escape."
 difficulty: 5
-width_px: 5120
-height_px: 5120
+width_px: 6000
+height_px: 6000
 floor_tile: "grass.png"
 
 target_radius: 5.0
@@ -13,83 +13,199 @@ target_point:
   y: 0.0
 
 player:
-  x: -10.0
+  x: -12.0
   y: 2.0
 
 floor_zones:
-  - name: "Town Road"
-    tile: "dirt.png"
-    priority: 2
+  - name: "Town Square"
+    tile: "paved_ground.png"
+    priority: 5
     perimeter:
-      - {x: -30.0, y: -2.5}
-      - {x: 30.0, y: -2.5}
-      - {x: 30.0, y: 2.5}
-      - {x: -30.0, y: 2.5}
+      - {x: -15.0, y: -6.0}
+      - {x: -5.0, y: -6.0}
+      - {x: -5.0, y: 6.0}
+      - {x: -15.0, y: 6.0}
+  - name: "Eastern Road"
+    tile: "paved_ground.png"
+    priority: 4
+    perimeter:
+      - {x: -5.0, y: -2.0}
+      - {x: 8.0, y: -2.0}
+      - {x: 8.0, y: 2.0}
+      - {x: -5.0, y: 2.0}
+  - name: "Escape Trail"
+    tile: "mud.png"
+    priority: 3
+    perimeter:
+      - {x: 8.0, y: -3.0}
+      - {x: 40.0, y: -10.0}
+      - {x: 50.0, y: 5.0}
+      - {x: 8.0, y: 3.0}
 
 npcs:
+  # Nobles
   - npc_id: "conde_olinos"
-    x: -8.0
+    x: -10.0
     y: 2.0
     must_survive: true
     alignment: "ally"
   - npc_id: "princess_elvira"
-    x: -9.0
+    x: -11.0
     y: 4.0
     alignment: "ally"
+    must_survive: true
+  
+  # Queen and Guard Escort
   - npc_id: "queen"
-    x: 15.0
+    x: 10.0
     y: 0.0
     alignment: "enemy"
   - npc_id: "queens_guard"
-    x: 17.0
+    x: 12.0
     y: 3.0
     alignment: "enemy"
     leader_id: "queen"
   - npc_id: "queens_guard"
-    x: 17.0
+    x: 12.0
     y: -3.0
     alignment: "enemy"
     leader_id: "queen"
   - npc_id: "queens_guard"
-    x: 19.0
+    x: 14.0
     y: 0.0
     alignment: "enemy"
     leader_id: "queen"
-  
-  # Village Peasants
+  - npc_id: "queens_guard"
+    x: 16.0
+    y: 2.0
+    alignment: "enemy"
+    leader_id: "queen"
+  - npc_id: "queens_guard"
+    x: 16.0
+    y: -2.0
+    alignment: "enemy"
+    leader_id: "queen"
+
+  # Town Inhabitants in a panic
   - archetype_id: "peasant_male"
-    x: -5.0
+    x: -8.0
     y: 4.0
     alignment: "neutral"
+    behavior: flee
   - archetype_id: "peasant_female"
-    x: 3.0
+    x: -12.0
     y: -4.0
     alignment: "neutral"
+    behavior: flee
   - archetype_id: "peasant_male"
-    x: 8.0
+    x: -2.0
     y: 4.5
     alignment: "neutral"
+    behavior: flee
+  - archetype_id: "peasant_male"
+    x: 0.0
+    y: -4.0
+    alignment: "neutral"
+    behavior: flee
+  - archetype_id: "peasant_male"
+    x: 2.0
+    y: 5.0
+    alignment: "neutral"
+    behavior: flee
+  - archetype_id: "peasant_female"
+    x: 4.0
+    y: -5.0
+    alignment: "neutral"
+    behavior: flee
 
 obstacles:
   - id: "escape_portal"
     archetype_id: "portal1"
     x: 45.0
     y: 0.0
+  
+  # Town Buildings
   - archetype_id: "house1"
     x: -10.0
-    y: 6.0
+    y: 9.0
   - archetype_id: "house2"
-    x: 0.0
-    y: 6.0
+    x: -5.0
+    y: 9.0
   - archetype_id: "house3"
-    x: 10.0
-    y: 6.0
+    x: 0.0
+    y: 9.0
   - archetype_id: "tavern"
     x: -10.0
-    y: -6.0
+    y: -9.0
   - archetype_id: "smithery"
-    x: 0.0
-    y: -6.0
+    x: -5.0
+    y: -9.0
   - archetype_id: "well"
-    x: 5.0
-    y: 0.0
+    x: -2.0
+    y: -9.0
+  - archetype_id: "house1"
+    x: 4.0
+    y: -9.0
+  - archetype_id: "farm"
+    x: 4.0
+    y: 9.0
+
+  # Thick forest bottlenecking the escape
+  - archetype_id: "tree5"
+    x: 15.0
+    y: 10.0
+  - archetype_id: "tree6"
+    x: 18.0
+    y: 12.0
+  - archetype_id: "tree5"
+    x: 20.0
+    y: 8.0
+  - archetype_id: "tree6"
+    x: 22.0
+    y: 14.0
+  - archetype_id: "tree5"
+    x: 25.0
+    y: 9.0
+  
+  - archetype_id: "tree5"
+    x: 15.0
+    y: -10.0
+  - archetype_id: "tree6"
+    x: 18.0
+    y: -12.0
+  - archetype_id: "tree5"
+    x: 20.0
+    y: -8.0
+  - archetype_id: "tree6"
+    x: 22.0
+    y: -14.0
+  - archetype_id: "tree5"
+    x: 25.0
+    y: -9.0
+  
+  - archetype_id: "tree6"
+    x: 30.0
+    y: -12.0
+  - archetype_id: "tree5"
+    x: 35.0
+    y: -8.0
+  - archetype_id: "tree5"
+    x: 30.0
+    y: 10.0
+  - archetype_id: "tree6"
+    x: 35.0
+    y: 12.0
+  
+  # Rocks near portal
+  - archetype_id: "rock1"
+    x: 42.0
+    y: 5.0
+  - archetype_id: "rock2"
+    x: 44.0
+    y: 6.0
+  - archetype_id: "rock3"
+    x: 42.0
+    y: -5.0
+  - archetype_id: "rock1"
+    x: 46.0
+    y: -6.0

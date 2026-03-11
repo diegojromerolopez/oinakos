@@ -103,6 +103,7 @@ type Actor struct {
 	Level       int
 	XP          int
 	Name        string
+	CurrentTile string // Set by Game loop before Update
 
 	// Timers
 	HitTimer  int // How long to show hit sprite (BloodTimer on NPC)
@@ -139,6 +140,18 @@ func (a *Actor) calculateStat(base, level int) int {
 	}
 	bonus := int(math.Log2(float64(level)) * 10)
 	return base + bonus
+}
+
+// GetSpeedModifier returns a movement multiplier based on the current tile type.
+func (a *Actor) GetSpeedModifier() float64 {
+	switch a.CurrentTile {
+	case "water.png", "dark_water.png":
+		return 0.5
+	case "mud.png":
+		return 0.8
+	default:
+		return 1.0
+	}
 }
 
 // GetTotalAttack returns the level-scaled attack value.

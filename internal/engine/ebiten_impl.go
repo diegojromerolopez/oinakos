@@ -496,6 +496,38 @@ func (e *EbitenGraphics) NewShader(src []byte) (Shader, error) {
 	return &EbitenShaderWrapper{shader: s}, nil
 }
 
+func (e *EbitenGraphics) DrawFilledPolygon(screen Image, points []Point, clr color.Color, antiAlias bool) {
+	if len(points) < 3 {
+		return
+	}
+	wrapper, ok := screen.(*EbitenImageWrapper)
+	if !ok || wrapper == nil || wrapper.img == nil {
+		return
+	}
+
+	var path vector.Path
+	path.MoveTo(float32(points[0].X), float32(points[0].Y))
+	for i := 1; i < len(points); i++ {
+		path.LineTo(float32(points[i].X), float32(points[i].Y))
+	}
+	path.Close()
+
+	vertices, indices := path.AppendVerticesAndIndicesForFilling(nil, nil)
+	for i := range vertices {
+		r32, g32, b32, a32 := clr.RGBA()
+		vertices[i].ColorR = float32(r32) / 0xffff
+		vertices[i].ColorG = float32(g32) / 0xffff
+		vertices[i].ColorB = float32(b32) / 0xffff
+		vertices[i].ColorA = float32(a32) / 0xffff
+	}
+
+	var op ebiten.DrawTrianglesOptions
+	if antiAlias {
+		op.FillRule = ebiten.FillRuleEvenOdd
+	}
+	wrapper.img.DrawTriangles(vertices, indices, e.whiteImage, &op)
+}
+
 func (e *EbitenGraphics) DrawImageWithShader(screen Image, img Image, shader Shader, uniforms map[string]interface{}, options *DrawImageOptions) {
 	screenWrapper, ok := screen.(*EbitenImageWrapper)
 	if !ok || screenWrapper == nil || screenWrapper.img == nil {

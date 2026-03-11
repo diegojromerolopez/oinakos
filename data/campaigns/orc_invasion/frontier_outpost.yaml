@@ -1,14 +1,170 @@
 id: frontier_outpost
 name: "Frontier Outpost"
 type: kill_count
-description: "Defend the outpost from the first wave of invaders."
+description: "Defend the outpost from the first wave of invaders. The muddy perimeter will slow their approach."
 difficulty: 2
-target_kill_count: 15
-width_px: 2000
-height_px: 2000
+target_kill_count: 50
+width_px: 6000
+height_px: 6000
 floor_tile: grass.png
+
+floor_zones:
+  - name: "Outpost Interior"
+    tile: "dirt.png"
+    priority: 5
+    perimeter:
+      - {x: -15, y: -15}
+      - {x: 15, y: -15}
+      - {x: 15, y: 15}
+      - {x: -15, y: 15}
+  - name: "Northern Mud Field"
+    tile: "mud.png"
+    priority: 3
+    perimeter:
+      - {x: -40, y: -45}
+      - {x: 40, y: -45}
+      - {x: 40, y: -15}
+      - {x: -40, y: -15}
+  - name: "Southern Mud Field"
+    tile: "mud.png"
+    priority: 3
+    perimeter:
+      - {x: -40, y: 15}
+      - {x: 40, y: 15}
+      - {x: 40, y: 45}
+      - {x: -40, y: 45}
+  - name: "Connecting Path"
+    tile: "paved_ground.png"
+    priority: 4
+    perimeter:
+      - {x: -3, y: -20}
+      - {x: 3, y: -20}
+      - {x: 3, y: 20}
+      - {x: -3, y: 20}
+
 spawns:
+  # Waves of attackers from the deep mud
   - archetype: orc_male
     alignment: enemy
-    probability: 0.1
-    frequency: 3
+    probability: 0.35
+    frequency: 1.5
+    y: -40
+  - archetype: orc_female
+    alignment: enemy
+    probability: 0.25
+    frequency: 2.0
+    y: 40
+
+inhabitants:
+  # Outpost Defenders
+  - npc: golden_guard
+    x: -5
+    y: -10
+    alignment: ally
+    behavior: patrol
+  - npc: golden_guard
+    x: 5
+    y: -10
+    alignment: ally
+    behavior: patrol
+  - npc: golden_guard
+    x: -5
+    y: 10
+    alignment: ally
+    behavior: patrol
+  - npc: golden_guard
+    x: 5
+    y: 10
+    alignment: ally
+    behavior: patrol
+  - npc: queens_guard
+    x: 0
+    y: -14
+    alignment: ally
+    behavior: patrol
+  - npc: queens_guard
+    x: 0
+    y: 14
+    alignment: ally
+    behavior: patrol
+  
+  # Workers/Squires
+  - archetype: peasant_male
+    x: -8
+    y: -2
+    alignment: ally
+    behavior: wander
+  - archetype: peasant_female
+    x: 8
+    y: 2
+    alignment: ally
+    behavior: wander
+
+obstacles:
+  # Outpost Walls (Simulated via clustered buildings)
+  - archetype: warehouse
+    x: -10
+    y: -15
+  - archetype: warehouse
+    x: 10
+    y: -15
+  - archetype: house3
+    x: -15
+    y: -10
+  - archetype: house3
+    x: 15
+    y: -10
+  - archetype: house2
+    x: -15
+    y: 10
+  - archetype: house2
+    x: 15
+    y: 10
+  - archetype: warehouse
+    x: -10
+    y: 15
+  - archetype: warehouse
+    x: 10
+    y: 15
+  
+  # Interior
+  - archetype: smithery
+    x: 0
+    y: -5
+  - archetype: well
+    x: -3
+    y: 3
+  
+  # Barricade rubble/rocks leading into mud
+  - archetype: rock1
+    x: -5
+    y: -20
+  - archetype: rock2
+    x: 5
+    y: -20
+  - archetype: rock3
+    x: -6
+    y: 20
+  - archetype: rock1
+    x: 6
+    y: 20
+  
+  # Treeline
+  - archetype: tree5
+    x: -30
+    y: -10
+  - archetype: tree6
+    x: -32
+    y: 0
+  - archetype: tree5
+    x: -30
+    y: 10
+  - archetype: tree5
+    x: 30
+    y: -10
+  - archetype: tree6
+    x: 32
+    y: 0
+  - archetype: tree5
+    x: 30
+    y: 10

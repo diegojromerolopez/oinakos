@@ -2,22 +2,60 @@ id: assassination
 name: The Dark Ritual
 type: kill_vip # ObjKillVIP
 difficulty: 2
-description: "Hunt down and assassinate the VIP Target"
+description: "Hunt down and assassinate the VIP Target conducting the dark ritual."
+width_px: 6000
+height_px: 6000
 floor_tile: "grass.png"
+
+floor_zones:
+  - name: "Ritual Clearing"
+    tile: "dirt.png"
+    priority: 3
+    perimeter:
+      - {x: 5, y: 5}
+      - {x: 20, y: 5}
+      - {x: 20, y: 20}
+      - {x: 5, y: 20}
+  - name: "Escape Path"
+    tile: "mud.png"
+    priority: 2
+    perimeter:
+      - {x: -20, y: -20}
+      - {x: -15, y: -20}
+      - {x: 10, y: 5}
+      - {x: 5, y: 10}
+
+inhabitants:
+  - npc: staro_rovinec
+    x: 14.0
+    y: 14.0
+    alignment: enemy
+  - archetype: demon_female
+    x: 12.0
+    y: 16.0
+    alignment: enemy
+  - archetype: demon_male
+    x: 16.0
+    y: 12.0
+    alignment: enemy
+
 obstacles:
   - archetype: temple
     x: 10.0
     y: 10.0
-  - archetype: house_burned
+  - archetype: house3
     x: 12.0
-    y: 8.0
-  - archetype: house_burned
-    x: 8.0
+    y: 6.0
+  - archetype: house1
+    x: 6.0
     y: 12.0
   - archetype: well
     x: 15.0
     y: 15.0
-  - archetype: bush1
+  - archetype: campfire
+    x: 14.0
+    y: 12.0
+  - archetype: tree5
     x: -5.0
     y: 0.0
   - archetype: bush2
@@ -29,6 +67,6 @@ obstacles:
   - archetype: bush4
     x: -10.0
     y: 15.0
-  - archetype: bush5
+  - archetype: tree6
     x: 20.0
     y: 25.0
