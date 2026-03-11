@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"image"
 	"io/fs"
 	"log"
 	"oinakos/internal/engine"
@@ -76,6 +77,7 @@ type SaveData struct {
 		} `yaml:"overrides,omitempty"`
 		FloorTile  string       `yaml:"floor_tile,omitempty"`
 		FloorZones []*FloorZone `yaml:"floor_zones,omitempty"`
+		ExploredTiles []image.Point `yaml:"explored_tiles,omitempty"`
 	} `yaml:"map"`
 	Player    PlayerSaveData     `yaml:"player"`
 	NPCs      []NPCSaveData      `yaml:"npcs"`
@@ -137,6 +139,9 @@ func (g *Game) serialize() ([]byte, error) {
 	data.Map.HeightPixels = g.currentMapType.HeightPixels
 	data.Map.Level = g.mapLevel
 	data.Map.PlayTime = g.playTime
+	for pt := range g.ExploredTiles {
+		data.Map.ExploredTiles = append(data.Map.ExploredTiles, pt)
+	}
 
 	data.Player = PlayerSaveData{
 		ArchetypeID: g.playableCharacter.Config.ID,
@@ -309,6 +314,10 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 	}
 	if len(data.Map.FloorZones) > 0 {
 		g.currentMapType.FloorZones = data.Map.FloorZones
+	}
+	g.ExploredTiles = make(map[image.Point]bool)
+	for _, pt := range data.Map.ExploredTiles {
+		g.ExploredTiles[pt] = true
 	}
 
 	// Restore Player

@@ -83,12 +83,18 @@ type Game struct {
 	settings *Settings
 	settingsFontIndex  int
 	settingsAudioIndex int
+	settingsFogIndex   int
 	settingsMenuIndex  int
 
 	onFontUpdate func(fontName string)
 
 	lastMouseX, lastMouseY int
 	isSettingsFromPause    bool
+
+	ExploredTiles map[image.Point]bool
+
+	isQuitConfirmationOpen bool
+	quitConfirmationIndex  int // 0: Yes, 1: No
 }
 
 func (g *Game) SetOnFontUpdate(cb func(string)) {
@@ -161,6 +167,7 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID, initialHeroID string,
 		input:                     input,
 		audio:                     audio,
 		debug:                     debug,
+		ExploredTiles:             make(map[image.Point]bool),
 	}
 
 	g.settings = LoadSettings()
@@ -389,6 +396,7 @@ func (g *Game) loadMapLevel() {
 	g.currentMapType.StartTime = 0
 	g.playableCharacter.MapKills = make(map[string]int) // reset per-map kills
 	g.mapWonMenuIndex = 0
+	g.ExploredTiles = make(map[image.Point]bool)
 
 	// Initial player position
 	if g.currentMapType.Player != nil {
@@ -646,6 +654,10 @@ func (g *Game) loadMapLevel() {
 }
 
 func (g *Game) Update() error {
+	if g.isQuitConfirmationOpen {
+		return g.updateQuitConfirmation()
+	}
+
 	if g.isMainMenu {
 		nOptions := 4
 		if g.input.IsKeyJustPressed(engine.KeyUp) || g.input.IsKeyJustPressed(engine.KeyW) || g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) {
@@ -697,18 +709,28 @@ func (g *Game) Update() error {
 					}
 				}
 				// Find current Audio index
-				g.settingsMenuIndex = 0
+				g.settingsAudioIndex = 0
 				for idx, val := range FrequencyOptions {
 					if val == g.settings.SoundFrequency {
 						g.settingsAudioIndex = idx
 						break
 					}
 				}
+				// Find current Fog index
+				g.settingsFogIndex = 0
+				for idx, val := range FogOfWarOptions {
+					if val == g.settings.FogOfWar {
+						g.settingsFogIndex = idx
+						break
+					}
+				}
+				g.settingsMenuIndex = 0
 				g.isMainMenu = false
 				g.isSettingsScreen = true
 			case 3: // Quit
 				if !g.isWasm() {
-					os.Exit(0)
+					g.isQuitConfirmationOpen = true
+					g.quitConfirmationIndex = 1
 				}
 			}
 		}
@@ -730,7 +752,7 @@ func (g *Game) Update() error {
 	}
 
 	if g.isSettingsScreen {
-		nRows := 3 // 0: Font, 1: Audio, 2: Save & Back
+		nRows := 4 // 0: Font, 1: Audio, 2: Fog of War, 3: Save & Back
 		if g.input.IsKeyJustPressed(engine.KeyUp) || g.input.IsKeyJustPressed(engine.KeyW) {
 			g.settingsMenuIndex--
 			if g.settingsMenuIndex < 0 {
@@ -751,12 +773,16 @@ func (g *Game) Update() error {
 				if g.settingsFontIndex < 0 {
 					g.settingsFontIndex = len(FontOptions) - 1
 				}
+				g.settings.Font = FontOptions[g.settingsFontIndex]
+				g.UpdateFont()
 			}
 			if g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) {
 				g.settingsFontIndex++
 				if g.settingsFontIndex >= len(FontOptions) {
 					g.settingsFontIndex = 0
 				}
+				g.settings.Font = FontOptions[g.settingsFontIndex]
+				g.UpdateFont()
 			}
 		} else if g.settingsMenuIndex == 1 { // Audio
 			if g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) {
@@ -764,12 +790,35 @@ func (g *Game) Update() error {
 				if g.settingsAudioIndex < 0 {
 					g.settingsAudioIndex = len(FrequencyOptions) - 1
 				}
+				g.settings.SoundFrequency = FrequencyOptions[g.settingsAudioIndex]
+				if g.audio != nil {
+					g.audio.SetProbability(g.settings.GetSoundProbability())
+				}
 			}
 			if g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) {
 				g.settingsAudioIndex++
 				if g.settingsAudioIndex >= len(FrequencyOptions) {
 					g.settingsAudioIndex = 0
 				}
+				g.settings.SoundFrequency = FrequencyOptions[g.settingsAudioIndex]
+				if g.audio != nil {
+					g.audio.SetProbability(g.settings.GetSoundProbability())
+				}
+			}
+		} else if g.settingsMenuIndex == 2 { // Fog of War
+			if g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) {
+				g.settingsFogIndex--
+				if g.settingsFogIndex < 0 {
+					g.settingsFogIndex = len(FogOfWarOptions) - 1
+				}
+				g.settings.FogOfWar = FogOfWarOptions[g.settingsFogIndex]
+			}
+			if g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) {
+				g.settingsFogIndex++
+				if g.settingsFogIndex >= len(FogOfWarOptions) {
+					g.settingsFogIndex = 0
+				}
+				g.settings.FogOfWar = FogOfWarOptions[g.settingsFogIndex]
 			}
 		}
 
@@ -790,13 +839,10 @@ func (g *Game) Update() error {
 			g.settingsMenuIndex = hoverIdx
 		}
 
-		if g.input.IsKeyJustPressed(engine.KeyEnter) || (hoverIdx == 2 && g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft)) {
-			// Save & Exit
-			g.settings.Font = FontOptions[g.settingsFontIndex]
-			g.settings.SoundFrequency = FrequencyOptions[g.settingsAudioIndex]
+		if g.input.IsKeyJustPressed(engine.KeyEnter) || (hoverIdx == 3 && g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft)) {
 			g.settings.Save()
 
-			// Apply Font Change immediately (if possible, main.go will need a way to trigger this or Game will)
+			// Apply Font Change immediately
 			g.UpdateFont()
 
 			// Update audio probability
@@ -848,23 +894,34 @@ func (g *Game) Update() error {
 		hoverIndex := -1
 		for i := 0; i < nChars; i++ {
 			itemY := 130 + i*35
-			if mx >= 100 && mx <= 400 && my >= itemY-15 && my <= itemY+15 {
+			// Hitbox covers full row from X:100 to X:g.width (if needed), but 100-600 is plenty
+			if mx >= 100 && mx <= 600 && my >= itemY-15 && my <= itemY+15 {
 				hoverIndex = i
 			}
 		}
 		// Back button hitbox
 		backY := 130 + nChars*35 + 20
-		if mx >= 100 && mx <= 300 && my >= backY-15 && my <= backY+15 {
+		if mx >= 100 && mx <= 400 && my >= backY-15 && my <= backY+15 {
 			hoverIndex = nChars
 		}
 
-		if hoverIndex != -1 && mouseMoved {
+		// Hero Preview Portrait Hitbox
+		if g.characterMenuIndex < nChars {
+			px, py := g.width/2+50, 130+30
+			if mx >= px && mx <= px+240 && my >= py && my <= py+240 {
+				hoverIndex = g.characterMenuIndex
+			}
+		}
+
+		isClick := g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft)
+		if hoverIndex != -1 && (mouseMoved || isClick) {
 			g.characterMenuIndex = hoverIndex
 		}
 
-		handleSelect := g.input.IsKeyJustPressed(engine.KeyEnter) || (hoverIndex != -1 && g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft))
+		handleSelect := g.input.IsKeyJustPressed(engine.KeyEnter) || (hoverIndex != -1 && isClick)
 
 		if handleSelect {
+			DebugLog("Selected Hero Index: %d", g.characterMenuIndex)
 			if g.characterMenuIndex < nChars {
 				charID := g.playableCharacterRegistry.IDs[g.characterMenuIndex]
 				config := g.playableCharacterRegistry.Characters[charID]
@@ -1006,7 +1063,8 @@ func (g *Game) Update() error {
 			}
 		}
 		if g.input.IsKeyJustPressed(engine.KeyEscape) {
-			os.Exit(0)
+			g.isQuitConfirmationOpen = true
+			g.quitConfirmationIndex = 1
 		}
 		return nil
 	}
@@ -1041,13 +1099,20 @@ func (g *Game) Update() error {
 			if g.mapWonMenuIndex == 0 { // Replay
 				*g = *NewGame(g.assets, g.initialMapID, g.initialMapTypeID, g.initialHeroID, g.input, g.audio, g.debug)
 			} else { // Quit
-				os.Exit(0)
+				g.isQuitConfirmationOpen = true
+				g.quitConfirmationIndex = 1
 			}
 		}
 		if g.input.IsKeyJustPressed(engine.KeyEscape) {
-			os.Exit(0)
+			g.isQuitConfirmationOpen = true
+			g.quitConfirmationIndex = 1
 		}
 		return nil
+	}
+
+	// Update Fog of War
+	if !g.isPaused {
+		g.updateFogOfWar()
 	}
 
 	// Handle debug boundaries toggle
@@ -1113,11 +1178,13 @@ func (g *Game) Update() error {
 					g.isMapWon = false
 				}
 			} else if g.mapWonMenuIndex == WinMenuQuit {
-				os.Exit(0)
+				g.isQuitConfirmationOpen = true
+				g.quitConfirmationIndex = 1
 			}
 		}
 		if g.input.IsKeyJustPressed(engine.KeyEscape) {
-			os.Exit(0)
+			g.isQuitConfirmationOpen = true
+			g.quitConfirmationIndex = 1
 		}
 		return nil
 	}
@@ -1196,19 +1263,35 @@ func (g *Game) Update() error {
 			case 3: // Settings
 				// Load or create default settings
 				g.settings = LoadSettings()
-				g.settings.Save() // Ensure folder/file exists
-				// Find current index
-				for idx, val := range FrequencyOptions {
-					if val == g.settings.SoundFrequency {
-						g.settingsMenuIndex = idx
+				// Find current indices
+				g.settingsFontIndex = 0
+				for idx, val := range FontOptions {
+					if val == g.settings.Font {
+						g.settingsFontIndex = idx
 						break
 					}
 				}
+				g.settingsAudioIndex = 0
+				for idx, val := range FrequencyOptions {
+					if val == g.settings.SoundFrequency {
+						g.settingsAudioIndex = idx
+						break
+					}
+				}
+				g.settingsFogIndex = 0
+				for idx, val := range FogOfWarOptions {
+					if val == g.settings.FogOfWar {
+						g.settingsFogIndex = idx
+						break
+					}
+				}
+				g.settingsMenuIndex = 0
 				g.isSettingsFromPause = true
 				g.isMenuOpen = false
 				g.isSettingsScreen = true
 			case 4: // Quit
-				os.Exit(0)
+				g.isQuitConfirmationOpen = true
+				g.quitConfirmationIndex = 1
 			}
 		}
 		return nil
@@ -1782,6 +1865,32 @@ func (g *Game) openFilePicker() string {
 	}
 	return ""
 }
+
+func (g *Game) updateFogOfWar() {
+	if g.settings == nil || g.settings.FogOfWar == "none" {
+		return
+	}
+
+	radius := 8.0
+	px, py := g.playableCharacter.X, g.playableCharacter.Y
+
+	startX := int(px - radius)
+	endX := int(px + radius)
+	startY := int(py - radius)
+	endY := int(py + radius)
+
+	for x := startX; x <= endX; x++ {
+		for y := startY; y <= endY; y++ {
+			dx := float64(x) - px
+			dy := float64(y) - py
+			if dx*dx+dy*dy <= radius*radius {
+				g.ExploredTiles[image.Point{X: x, Y: y}] = true
+			}
+		}
+	}
+}
+
+
 func (g *Game) updateProximityEffects() {
 	if g.isPaused || g.isGameOver || g.isMapWon {
 		return
@@ -1890,4 +1999,48 @@ func (g *Game) updateProximityEffects() {
 			}
 		}
 	}
+}
+func (g *Game) updateQuitConfirmation() error {
+	mx, my := g.input.MousePosition()
+	mouseMoved := mx != g.lastMouseX || my != g.lastMouseY
+	g.lastMouseX, g.lastMouseY = mx, my
+
+	pw, ph := 400, 200
+	px, py := (g.width-pw)/2, (g.height-ph)/2
+
+	hoverIndex := -1
+	for i := 0; i < 2; i++ {
+		itemY := py + 100 + i*40
+		if mx >= px+100 && mx <= px+300 && my >= itemY-10 && my <= itemY+30 {
+			hoverIndex = i
+			break
+		}
+	}
+
+	if hoverIndex != -1 && mouseMoved {
+		g.quitConfirmationIndex = hoverIndex
+	}
+
+	if g.input.IsKeyJustPressed(engine.KeyUp) || g.input.IsKeyJustPressed(engine.KeyW) || g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) {
+		g.quitConfirmationIndex = (g.quitConfirmationIndex - 1 + 2) % 2
+	}
+	if g.input.IsKeyJustPressed(engine.KeyDown) || g.input.IsKeyJustPressed(engine.KeyS) || g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) {
+		g.quitConfirmationIndex = (g.quitConfirmationIndex + 1) % 2
+	}
+
+	handleSelect := g.input.IsKeyJustPressed(engine.KeyEnter) || (hoverIndex != -1 && g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft))
+
+	if handleSelect {
+		if g.quitConfirmationIndex == 0 { // Yes, quit
+			if !g.isWasm() {
+				os.Exit(0)
+			}
+		} else { // No, stay here
+			g.isQuitConfirmationOpen = false
+		}
+	}
+	if g.input.IsKeyJustPressed(engine.KeyEscape) {
+		g.isQuitConfirmationOpen = false
+	}
+	return nil
 }

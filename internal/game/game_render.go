@@ -11,6 +11,7 @@ import (
 
 	"oinakos/internal/engine"
 	"strings"
+	"image"
 )
 
 // GameRenderer handles the Ebiten-dependent rendering of the game.
@@ -25,6 +26,9 @@ type GameRenderer struct {
 
 	tileCache  map[string]engine.Image
 	coordCache map[string]string
+
+	fogImage   engine.Image
+	torchImage engine.Image
 }
 
 func NewGameRenderer(g *Game, assets fs.FS, graphics engine.Graphics) *GameRenderer {
@@ -38,6 +42,8 @@ func NewGameRenderer(g *Game, assets fs.FS, graphics engine.Graphics) *GameRende
 	gr.emptyImage.Fill(color.White)
 	gr.tileCache = make(map[string]engine.Image)
 	gr.coordCache = make(map[string]string)
+
+	gr.torchImage = generateTorchImage(graphics, 250)
 	return gr
 }
 
@@ -97,33 +103,24 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 
 	if g.isMainMenu {
 		gr.drawMainMenu(screen)
-		return
-	}
-
-	if g.isCharacterSelect {
+	} else if g.isCharacterSelect {
 		gr.drawCharacterSelect(screen)
-		return
-	}
-
-	if g.isCampaignSelect {
+	} else if g.isCampaignSelect {
 		gr.drawCampaignSelect(screen)
-		return
-	}
-
-	if g.isSettingsScreen {
+	} else if g.isSettingsScreen {
 		gr.drawSettingsScreen(screen)
-		return
-	}
+	} else {
+		if g.currentMapType.FloorTile != "" && g.currentMapType.FloorTile != gr.lastFloorPath {
+			// Clear caches when map floor base changes
+			gr.coordCache = make(map[string]string)
+			gr.lastFloorPath = g.currentMapType.FloorTile
+		}
 
-	if g.currentMapType.FloorTile != "" && g.currentMapType.FloorTile != gr.lastFloorPath {
-		// Clear caches when map floor base changes
-		gr.coordCache = make(map[string]string)
-		gr.lastFloorPath = g.currentMapType.FloorTile
-	}
+		gr.renderer.DrawTileMap(screen, offsetX, offsetY, func(x, y int) engine.Image {
+			return gr.getTileAt(x, y)
+		})
 
-	gr.renderer.DrawTileMap(screen, offsetX, offsetY, func(x, y int) engine.Image {
-		return gr.getTileAt(x, y)
-	})
+		// Continue into world drawing logic
 
 	// Collect all drawable entities for Y-sorting
 	type drawTask struct {
@@ -263,8 +260,14 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 	} else if g.isPaused {
 		gr.drawPauseMenu(screen)
 	} else {
+		gr.drawFog(screen)
 		gr.drawHUD(screen)
 		gr.drawHoverInfo(screen)
+	}
+	}
+
+	if g.isQuitConfirmationOpen {
+		gr.drawQuitConfirmation(screen)
 	}
 }
 
@@ -681,7 +684,7 @@ func (gr *GameRenderer) drawSettingsScreen(screen engine.Image) {
 	tw, _ := gr.graphics.MeasureText(title, 40)
 	gr.graphics.DrawTextAt(screen, title, (g.width-int(tw))/2, 100, color.RGBA{218, 165, 32, 255}, 40)
 
-	rows := []string{"Font Style", "Sound Effects", "Save and Back"}
+	rows := []string{"Font Style", "Sound Effects", "Fog of War", "Save and Back"}
 	for i, row := range rows {
 		var clr color.Color = color.White
 		prefix := "  "
@@ -695,6 +698,8 @@ func (gr *GameRenderer) drawSettingsScreen(screen engine.Image) {
 			label += fmt.Sprintf(": [%s]", strings.ToUpper(FontOptions[g.settingsFontIndex]))
 		} else if i == 1 {
 			label += fmt.Sprintf(": [%s]", strings.ToUpper(FrequencyOptions[g.settingsAudioIndex]))
+		} else if i == 2 {
+			label += fmt.Sprintf(": [%s]", strings.ToUpper(FogOfWarOptions[g.settingsFogIndex]))
 		}
 
 		lw, _ := gr.graphics.MeasureText(label, 24)
@@ -866,4 +871,114 @@ func (gr *GameRenderer) getTileAt(x, y int) engine.Image {
 	}
 
 	return gr.tileCache[resolvedTile]
+}
+
+func (gr *GameRenderer) drawFog(screen engine.Image) {
+	g := gr.game
+	if g.settings == nil || g.settings.FogOfWar == "none" {
+		return
+	}
+
+	if g.playableCharacter.Tick%60 == 0 {
+		DebugLog("Fog Mode: %s | Explored: %d", g.settings.FogOfWar, len(g.ExploredTiles))
+	}
+
+	w, h := screen.Size()
+	if gr.fogImage == nil {
+		gr.fogImage = gr.graphics.NewImage(w, h)
+	}
+
+	gr.fogImage.Fill(color.Black)
+
+	offsetX, offsetY := g.camera.GetOffsets(g.width, g.height)
+	px, py := g.playableCharacter.X, g.playableCharacter.Y
+	isoX, isoY := engine.CartesianToIso(px, py)
+
+	// Invert the darkness mask by "erasing" areas
+	op := engine.NewDrawImageOptions()
+	op.Blend = engine.BlendDestinationOut
+
+	if g.settings.FogOfWar == "vision" {
+		// Draw torch at player position
+		tw, th := gr.torchImage.Size()
+		op.GeoM.Translate(isoX+offsetX-float64(tw/2), isoY+offsetY-float64(th/2))
+		gr.fogImage.DrawImage(gr.torchImage, op)
+	} else if g.settings.FogOfWar == "exploration" {
+		// Draw all explored tiles as white-ish squares on the mask to erase fog
+		for pt := range g.ExploredTiles {
+			eisoX, eisoY := engine.CartesianToIso(float64(pt.X), float64(pt.Y))
+			scrX, scrY := eisoX+offsetX, eisoY+offsetY
+			
+			// Culling
+			if scrX < -64 || scrX > float64(g.width)+64 || scrY < -64 || scrY > float64(g.height)+64 {
+				continue
+			}
+			
+			// Erase a chunk
+			rectOp := engine.NewDrawImageOptions()
+			rectOp.Blend = engine.BlendDestinationOut
+			rectOp.GeoM.Scale(64.0/3.0, 32.0/3.0) // emptyImage is 3x3
+			rectOp.GeoM.Translate(scrX-32, scrY-16)
+			gr.fogImage.DrawImage(gr.emptyImage, rectOp)
+		}
+		
+		// To make the transition smoother, we always draw the torch too
+		tw, th := gr.torchImage.Size()
+		op.GeoM.Reset()
+		op.GeoM.Translate(isoX+offsetX-float64(tw/2), isoY+offsetY-float64(th/2))
+		gr.fogImage.DrawImage(gr.torchImage, op)
+	}
+
+	// Draw the resulting fog overlay to screen
+	screen.DrawImage(gr.fogImage, nil)
+}
+
+func generateTorchImage(g engine.Graphics, radius int) engine.Image {
+	size := radius * 2
+	img := image.NewRGBA(image.Rect(0, 0, size, size))
+	for y := 0; y < size; y++ {
+		for x := 0; x < size; x++ {
+			dx := float64(x - radius)
+			dy := float64(y - radius)
+			distSq := dx*dx + dy*dy
+			radSq := float64(radius * radius)
+			if distSq < radSq {
+				// Linear falloff for the radial gradient
+				alpha := uint8(255 * (1 - math.Sqrt(distSq/radSq)))
+				img.SetRGBA(x, y, color.RGBA{255, 255, 255, alpha})
+			}
+		}
+	}
+	return g.NewImageFromImage(img)
+}
+func (gr *GameRenderer) drawQuitConfirmation(screen engine.Image) {
+	g := gr.game
+	// Dark overlay
+	gr.graphics.DrawFilledRect(screen, 0, 0, float32(g.width), float32(g.height), color.RGBA{0, 0, 0, 200}, false)
+
+	// Panel
+	pw, ph := 400, 200
+	px, py := (g.width-pw)/2, (g.height-ph)/2
+	gr.graphics.DrawFilledRect(screen, float32(px), float32(py), float32(pw), float32(ph), color.RGBA{30, 30, 30, 255}, false)
+
+	// Border
+	gr.graphics.DrawLine(screen, float32(px), float32(py), float32(px+pw), float32(py), color.White, 2)
+	gr.graphics.DrawLine(screen, float32(px+pw), float32(py), float32(px+pw), float32(py+ph), color.White, 2)
+	gr.graphics.DrawLine(screen, float32(px+pw), float32(py+ph), float32(px), float32(py+ph), color.White, 2)
+	gr.graphics.DrawLine(screen, float32(px), float32(py+ph), float32(px), float32(py), color.White, 2)
+
+	// Text
+	msg := "Really quit?"
+	tw, _ := gr.graphics.MeasureText(msg, 24)
+	gr.graphics.DrawTextAt(screen, msg, px+(pw-int(tw))/2, py+50, color.White, 24)
+
+	// Options
+	options := []string{"Yes, quit", "No, stay here"}
+	for i, opt := range options {
+		var clr color.Color = color.White
+		if i == g.quitConfirmationIndex {
+			clr = color.RGBA{255, 255, 0, 255} // Yellow for selected
+		}
+		gr.graphics.DrawTextAt(screen, opt, px+100, py+100+i*40, clr, 20)
+	}
 }

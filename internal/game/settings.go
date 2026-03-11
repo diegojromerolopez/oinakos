@@ -31,10 +31,12 @@ func DiscoverFonts(assets fs.FS) []string {
 type Settings struct {
 	SoundFrequency string `yaml:"sound_frequency"`
 	Font           string `yaml:"font"`
+	FogOfWar       string `yaml:"fog_of_war"` // none | vision | exploration
 }
 
 var FrequencyOptions = []string{"never", "rare", "infrequent", "half the time", "frequent", "always"}
 var FontOptions = []string{"medieval", "modern_antiqua", "uncial_antiqua", "glass_antiqua", "kings", "eagle_lake", "default"}
+var FogOfWarOptions = []string{"none", "vision", "exploration"}
 
 func SetFontOptions(fonts []string) {
 	FontOptions = fonts
@@ -44,6 +46,7 @@ func DefaultSettings() *Settings {
 	return &Settings{
 		SoundFrequency: "rare",
 		Font:           "medieval",
+		FogOfWar:       "none",
 	}
 }
 

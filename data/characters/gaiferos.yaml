@@ -5,7 +5,7 @@ description: "The fiercely independent Paladin of Charlemagne's court. Famous fo
 stats:
   health_min: 105
   health_max: 105
-  base_attack: 65
+  base_attack: 85
   base_defense: 12
   speed: 0.09
   attack_cooldown: 25

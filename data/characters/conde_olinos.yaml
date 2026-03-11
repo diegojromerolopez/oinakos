@@ -5,7 +5,7 @@ description: "A tragic noble from early Spanish ballads. Known for his enchantin
 stats:
   health_min: 100
   health_max: 100
-  base_attack: 55
+  base_attack: 75
   base_defense: 10
   speed: 0.07
   attack_cooldown: 30

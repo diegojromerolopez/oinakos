@@ -60,6 +60,15 @@ func (w *EbitenImageWrapper) DrawImage(img Image, options *DrawImageOptions) {
 		// If there is a flip/scale, ensure both exist in the matrix representation properly
 		op.GeoM.Scale(scaleX, scaleY)
 		op.GeoM.Translate(tx, ty)
+
+		switch options.Blend {
+		case BlendSourceOver:
+			op.Blend = ebiten.BlendSourceOver
+		case BlendDestinationOut:
+			op.Blend = ebiten.BlendDestinationOut
+		case BlendDestinationIn:
+			op.Blend = ebiten.BlendDestinationIn
+		}
 	}
 	w.img.DrawImage(wrapper.img, &op)
 }

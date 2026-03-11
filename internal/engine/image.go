@@ -6,7 +6,16 @@ import "image"
 type DrawImageOptions struct {
 	GeoM       Matrix
 	ColorScale ColorScale
+	Blend      Blend
 }
+
+type Blend int
+
+const (
+	BlendSourceOver Blend = iota
+	BlendDestinationOut
+	BlendDestinationIn
+)
 
 type ColorScale struct {
 	R, G, B, A float32
@@ -21,6 +30,7 @@ func NewDrawImageOptions() *DrawImageOptions {
 			},
 		},
 		ColorScale: ColorScale{1, 1, 1, 1},
+		Blend:      BlendSourceOver,
 	}
 }
 
