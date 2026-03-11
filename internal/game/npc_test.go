@@ -100,6 +100,7 @@ func TestNPCFootprint(t *testing.T) {
 func TestNPCAllyFollowing(t *testing.T) {
 	n := NewNPC(0, 0, nil, 1)
 	n.Alignment = AlignmentAlly
+	n.Behavior = BehaviorWander // Fix flakiness: avoid default random behavior clearing TargetActor
 	mc := &PlayableCharacter{Actor: Actor{X: 10, Y: 10, State: StateIdle}}
 	
 	// First update should set target to player because they are far away (dist 14.14 > 8.0)

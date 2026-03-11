@@ -60,45 +60,28 @@ func (gr *GameRenderer) LoadAssets(assets fs.FS) {
 			mc.Config.AssetDir = "assets/images/characters/oinakos"
 		}
 		imgDir := mc.Config.AssetDir
-		staticPath := path.Join(imgDir, "static.png")
-		if _, err := fs.Stat(assets, staticPath); err == nil {
-			mc.Config.StaticImage = gr.graphics.LoadSprite(assets, staticPath, true)
+		var jobs []*SpriteLoadJob
+		addJob := func(filename string, target *interface{}) {
+			if *target == nil {
+				jobs = append(jobs, &SpriteLoadJob{
+					Path: path.Join(imgDir, filename),
+					Dest: target,
+				})
+			}
 		}
 
-		backPath := path.Join(imgDir, "back.png")
-		if _, err := fs.Stat(assets, backPath); err == nil {
-			mc.Config.BackImage = gr.graphics.LoadSprite(assets, backPath, true)
-		}
+		addJob("static.png", &mc.Config.StaticImage)
+		addJob("back.png", &mc.Config.BackImage)
+		addJob("corpse.png", &mc.Config.CorpseImage)
+		addJob("attack.png", &mc.Config.AttackImage)
+		addJob("attack1.png", &mc.Config.Attack1Image)
+		addJob("attack2.png", &mc.Config.Attack2Image)
+		addJob("hit.png", &mc.Config.HitImage)
+		addJob("hit1.png", &mc.Config.Hit1Image)
+		addJob("hit2.png", &mc.Config.Hit2Image)
 
-		corpsePath := path.Join(imgDir, "corpse.png")
-		if _, err := fs.Stat(assets, corpsePath); err == nil {
-			mc.Config.CorpseImage = gr.graphics.LoadSprite(assets, corpsePath, true)
-		}
-
-		attackPath := path.Join(imgDir, "attack.png")
-		if _, err := fs.Stat(assets, attackPath); err == nil {
-			mc.Config.AttackImage = gr.graphics.LoadSprite(assets, attackPath, true)
-		}
-		attack1Path := path.Join(imgDir, "attack1.png")
-		if _, err := fs.Stat(assets, attack1Path); err == nil {
-			mc.Config.Attack1Image = gr.graphics.LoadSprite(assets, attack1Path, true)
-		}
-		attack2Path := path.Join(imgDir, "attack2.png")
-		if _, err := fs.Stat(assets, attack2Path); err == nil {
-			mc.Config.Attack2Image = gr.graphics.LoadSprite(assets, attack2Path, true)
-		}
-
-		hitPath := path.Join(imgDir, "hit.png")
-		if _, err := fs.Stat(assets, hitPath); err == nil {
-			mc.Config.HitImage = gr.graphics.LoadSprite(assets, hitPath, true)
-		}
-		hit1Path := path.Join(imgDir, "hit1.png")
-		if _, err := fs.Stat(assets, hit1Path); err == nil {
-			mc.Config.Hit1Image = gr.graphics.LoadSprite(assets, hit1Path, true)
-		}
-		hit2Path := path.Join(imgDir, "hit2.png")
-		if _, err := fs.Stat(assets, hit2Path); err == nil {
-			mc.Config.Hit2Image = gr.graphics.LoadSprite(assets, hit2Path, true)
+		if len(jobs) > 0 {
+			loadSpritesParallel(assets, jobs, gr.graphics)
 		}
 	}
 }
@@ -313,7 +296,7 @@ func (gr *GameRenderer) drawGameOver(screen engine.Image) {
 
 	kills := fmt.Sprintf("Kills: %d", g.playableCharacter.Kills)
 	time := fmt.Sprintf("Time: %02d:%02d", minutes, seconds)
-	msg := "Press ESC to exit, or ENTER to restart"
+	msg := "Press ESC to exit, or CLICK/ENTER to restart"
 
 	kw, _ := gr.graphics.MeasureText(kills, 20)
 	tmw, _ := gr.graphics.MeasureText(time, 20)
@@ -337,13 +320,19 @@ func (gr *GameRenderer) drawMapWon(screen engine.Image) {
 	gr.graphics.DrawTextAt(screen, title, (g.width-int(tw))/2, g.height/2-80, color.White, 48)
 
 	kills := fmt.Sprintf("Map Kills: %d", mapKillTotal)
-	msg := "Press ENTER to continue, ESC to quit"
-
 	kw, _ := gr.graphics.MeasureText(kills, 20)
-	mw, _ := gr.graphics.MeasureText(msg, 16)
-
 	gr.graphics.DrawTextAt(screen, kills, (g.width-int(kw))/2, g.height/2-15, color.White, 20)
-	gr.graphics.DrawTextAt(screen, msg, (g.width-int(mw))/2, g.height/2+60, color.White, 16)
+
+	options := []string{"Continue", "Quit"}
+	for i, opt := range options {
+		var clr color.Color = color.White
+		prefix := "  "
+		if g.mapWonMenuIndex == i {
+			clr = color.RGBA{255, 255, 0, 255}
+			prefix = "> "
+		}
+		gr.graphics.DrawTextAt(screen, prefix+opt, g.width/2-50, g.height/2+60+i*35, clr, 18)
+	}
 }
 
 func (gr *GameRenderer) drawHUD(screen engine.Image) {
@@ -766,7 +755,7 @@ func (gr *GameRenderer) drawGameWon(screen engine.Image) {
 			clr = color.RGBA{255, 255, 0, 255}
 			prefix = "> "
 		}
-		gr.graphics.DebugPrintAt(screen, prefix+opt, g.width/2-40, 200+i*40, clr)
+		gr.graphics.DrawTextAt(screen, prefix+opt, g.width/2-50, 200+i*40, clr, 20)
 	}
 }
 

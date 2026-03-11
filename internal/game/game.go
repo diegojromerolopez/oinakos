@@ -270,6 +270,92 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID, initialHeroID string,
 	return g
 }
 
+func (g *Game) loadMapAudio() {
+	configs := make(map[string]*EntityConfig)
+
+	// Helper to collect configs from various sources
+	collect := func(id string, isNPC bool) {
+		if id == "" {
+			return
+		}
+		if isNPC {
+			if conf, ok := g.npcRegistry.NPCs[id]; ok {
+				configs[conf.ID] = conf
+				// Also collect parent archetype
+				if conf.ArchetypeID != "" {
+					if arch, ok := g.archetypeRegistry.Archetypes[conf.ArchetypeID]; ok {
+						configs[arch.ID] = arch
+					}
+				}
+			}
+		}
+		if arch, ok := g.archetypeRegistry.Archetypes[id]; ok {
+			configs[arch.ID] = arch
+		}
+	}
+
+	// 1. Playable Character
+	if g.playableCharacter.Config != nil {
+		configs[g.playableCharacter.Config.ID] = g.playableCharacter.Config
+	}
+
+	// 2. Inhabitants & NPCs defined in the map
+	allInhabs := append(g.currentMapType.Inhabitants, g.currentMapType.NPCs...)
+	for _, ps := range allInhabs {
+		if ps.NPCID != "" {
+			collect(ps.NPCID, true)
+		} else if ps.NPC != "" {
+			collect(ps.NPC, true)
+		} else if ps.ArchetypeID != "" {
+			collect(ps.ArchetypeID, false)
+		} else if ps.Archetype != "" {
+			collect(ps.Archetype, false)
+		}
+	}
+
+	// 3. Spawns
+	for _, s := range g.currentMapType.Spawns {
+		collect(s.Archetype, false)
+	}
+
+	// 4. Objective targets
+	if g.currentMapType.Type == ObjKillVIP {
+		// VIP maps can spawn any archetype
+		for _, arch := range g.archetypeRegistry.Archetypes {
+			configs[arch.ID] = arch
+		}
+	}
+
+	// Create jobs for all collected configs
+	var jobs []*AudioLoadJob
+	for _, conf := range configs {
+		if conf.AudioDir == "" {
+			continue
+		}
+		// Basic check for directory existence in assets
+		entries, err := fs.ReadDir(g.assets, conf.AudioDir)
+		if err != nil {
+			continue
+		}
+		for _, e := range entries {
+			if e.IsDir() || !strings.HasSuffix(strings.ToLower(e.Name()), ".wav") {
+				continue
+			}
+			stem := e.Name()[:len(e.Name())-4]
+			key := conf.ID + "/" + stem
+			jobs = append(jobs, &AudioLoadJob{
+				Name: key,
+				Path: conf.AudioDir + "/" + e.Name(),
+			})
+		}
+	}
+
+	if len(jobs) > 0 {
+		DebugLog("Parallel Loading %d audio files for map...", len(jobs))
+		loadAudioParallel(g.assets, jobs)
+	}
+}
+
 func (g *Game) loadMapLevel() {
 	if g.isCampaign && g.currentCampaign != nil {
 		if g.campaignIndex < len(g.currentCampaign.Maps) {
@@ -554,6 +640,9 @@ func (g *Game) loadMapLevel() {
 	}
 
 	DebugLog("Starting Map Level %d: %s at safe pos %.2f,%.2f", g.mapLevel, g.currentMapType.Name, g.playableCharacter.X, g.playableCharacter.Y)
+
+	// Load audio for the map (lazy loading)
+	g.loadMapAudio()
 }
 
 func (g *Game) Update() error {
@@ -929,7 +1018,26 @@ func (g *Game) Update() error {
 		if g.input.IsKeyJustPressed(engine.KeyDown) || g.input.IsKeyJustPressed(engine.KeyS) || g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) {
 			g.mapWonMenuIndex = 1
 		}
-		if g.input.IsKeyJustPressed(engine.KeyEnter) {
+
+		mx, my := g.input.MousePosition()
+		mouseMoved := mx != g.lastMouseX || my != g.lastMouseY
+		g.lastMouseX, g.lastMouseY = mx, my
+
+		hoverIndex := -1
+		// Detection matches drawGameWon positions
+		for i := 0; i < 2; i++ {
+			itemY := 200 + i*40
+			if mx >= g.width/2-100 && mx <= g.width/2+100 && my >= itemY && my <= itemY+30 {
+				hoverIndex = i
+			}
+		}
+		if hoverIndex != -1 && mouseMoved {
+			g.mapWonMenuIndex = hoverIndex
+		}
+
+		handleSelect := g.input.IsKeyJustPressed(engine.KeyEnter) || (hoverIndex != -1 && g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft))
+
+		if handleSelect {
 			if g.mapWonMenuIndex == 0 { // Replay
 				*g = *NewGame(g.assets, g.initialMapID, g.initialMapTypeID, g.initialHeroID, g.input, g.audio, g.debug)
 			} else { // Quit
@@ -953,7 +1061,7 @@ func (g *Game) Update() error {
 		if g.input.IsKeyJustPressed(engine.KeyEscape) {
 			os.Exit(0)
 		}
-		if g.input.IsKeyJustPressed(engine.KeyEnter) {
+		if g.input.IsKeyJustPressed(engine.KeyEnter) || g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft) {
 			*g = *NewGame(g.assets, g.initialMapID, g.initialMapTypeID, g.initialHeroID, g.input, g.audio, g.debug)
 		}
 		return nil
@@ -968,7 +1076,26 @@ func (g *Game) Update() error {
 			g.mapWonMenuIndex = 1
 		}
 
-		if g.input.IsKeyJustPressed(engine.KeyEnter) {
+		mx, my := g.input.MousePosition()
+		mouseMoved := mx != g.lastMouseX || my != g.lastMouseY
+		g.lastMouseX, g.lastMouseY = mx, my
+
+		hoverIndex := -1
+		// Rough detection for MapWon (where Continue/Quit might be)
+		if mx >= g.width/2-100 && mx <= g.width/2+100 {
+			if my >= g.height/2+50 && my <= g.height/2+80 {
+				hoverIndex = 0 // Continue
+			} else if my >= g.height/2+90 && my <= g.height/2+120 {
+				hoverIndex = 1 // Quit
+			}
+		}
+		if hoverIndex != -1 && mouseMoved {
+			g.mapWonMenuIndex = hoverIndex
+		}
+
+		handleSelect := g.input.IsKeyJustPressed(engine.KeyEnter) || g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft)
+
+		if handleSelect {
 			if g.mapWonMenuIndex == WinMenuContinue {
 				// Advance
 				if g.isCampaign && g.currentCampaign != nil {

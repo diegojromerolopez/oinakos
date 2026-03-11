@@ -80,6 +80,7 @@ const (
 	BehaviorNpcFighter
 	BehaviorChaotic
 	BehaviorEscort
+	BehaviorFlee
 )
 
 // Actor holds all runtime state shared between the player character and any NPC.

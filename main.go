@@ -9,7 +9,6 @@ import (
 	"io/fs"
 	"log"
 	"os"
-	"strings"
 
 	"oinakos/internal/engine"
 	"oinakos/internal/game"
@@ -73,39 +72,15 @@ func main() {
 
 	engine.InitAudio(finalAssets)
 
-	// Register sounds from both archetypes and NPCs
-	registerEntitySounds := func(configs map[string]*game.EntityConfig) {
-		for _, conf := range configs {
-			if conf.AudioDir == "" {
-				continue
-			}
-			entries, err := fs.ReadDir(finalAssets, conf.AudioDir)
-			if err != nil {
-				continue
-			}
-			for _, e := range entries {
-				if e.IsDir() || !strings.HasSuffix(strings.ToLower(e.Name()), ".wav") {
-					continue
-				}
-				stem := e.Name()[:len(e.Name())-4]
-				key := conf.ID + "/" + stem
-				engine.GlobalAudio.LoadSound(key, conf.AudioDir+"/"+e.Name())
-			}
-		}
-	}
-
 	archetypeReg := game.NewArchetypeRegistry()
 	archetypeReg.LoadAll(finalAssets)
-	registerEntitySounds(archetypeReg.Archetypes)
 
 	npcReg := game.NewNPCRegistry()
 	npcReg.LoadAll(finalAssets)
-	registerEntitySounds(npcReg.NPCs)
 
 	// Load audio for ALL playable characters: assets/audio/characters/<id>/<stem>.wav → "<id>/<stem>"
 	charReg := game.NewPlayableCharacterRegistry()
 	charReg.LoadAll(finalAssets)
-	registerEntitySounds(charReg.Characters)
 
 	// Providers
 	eg := engine.NewEbitenGraphics()

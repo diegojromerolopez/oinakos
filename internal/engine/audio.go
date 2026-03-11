@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"sync"
 
 	"math/rand"
 
@@ -23,6 +24,7 @@ type AudioManager struct {
 	audioContext *audio.Context
 	sounds       map[string]*audio.Player
 	fs           fs.FS
+	mu           sync.RWMutex
 }
 
 var GlobalAudio *AudioManager
@@ -46,52 +48,15 @@ func InitAudio(assets fs.FS) {
 }
 
 func (m *AudioManager) LoadSound(name, path string) {
-	var f fs.File
-	var err error
-
-	// Check for local override in oinakos/assets folder
-	localPath := "oinakos/" + path
-	if _, statErr := os.Stat(localPath); statErr == nil {
-		f, err = os.Open(localPath)
-	} else {
-		// Try embedded FS
-		if m.fs != nil {
-			f, err = m.fs.Open(path)
-		}
-		// Fallback to direct os.Open if not in embedded FS or not found
-		if f == nil {
-			f, err = os.Open(path)
-		}
-	}
-
-	if err != nil {
-		log.Printf("Warning: could not open sound file %s: %v", path, err)
+	m.mu.RLock()
+	if _, ok := m.sounds[name]; ok {
+		m.mu.RUnlock()
 		return
 	}
-	defer f.Close()
+	m.mu.RUnlock()
 
-	var d io.Reader
-	if len(path) > 4 {
-		ext := path[len(path)-3:]
-		switch ext {
-		case "wav":
-			d, err = wav.DecodeWithSampleRate(sampleRate, f)
-		case "mp3":
-			d, err = mp3.DecodeWithSampleRate(sampleRate, f)
-		default:
-			log.Printf("Warning: unsupported audio format: %s", ext)
-			return
-		}
-	}
-
+	data, err := DecodeAudioRaw(m.fs, path)
 	if err != nil {
-		log.Printf("Warning: could not decode sound file %s: %v", path, err)
-		return
-	}
-
-	data, err := io.ReadAll(d)
-	if err != nil {
-		log.Printf("Warning: could not read sound data %s: %v", path, err)
 		return
 	}
 
@@ -106,11 +71,69 @@ func (m *AudioManager) LoadSound(name, path string) {
 		return
 	}
 
+	m.mu.Lock()
 	m.sounds[name] = p
+	m.mu.Unlock()
+}
+
+// DecodeAudioRaw performs file reading and decoding into raw PCM data.
+// This can be safely called from background goroutines.
+func DecodeAudioRaw(assets fs.FS, path string) ([]byte, error) {
+	var f fs.File
+	var err error
+
+	// Check for local override in oinakos/assets folder
+	localPath := "oinakos/" + path
+	if _, statErr := os.Stat(localPath); statErr == nil {
+		f, err = os.Open(localPath)
+	} else {
+		// Try embedded FS
+		if assets != nil {
+			f, err = assets.Open(path)
+		}
+		// Fallback to direct os.Open if not in embedded FS or not found
+		if f == nil {
+			f, err = os.Open(path)
+		}
+	}
+
+	if err != nil {
+		log.Printf("Warning: could not open sound file %s: %v", path, err)
+		return nil, err
+	}
+	defer f.Close()
+
+	var d io.Reader
+	if len(path) > 4 {
+		ext := path[len(path)-3:]
+		switch ext {
+		case "wav":
+			d, err = wav.DecodeWithSampleRate(sampleRate, f)
+		case "mp3":
+			d, err = mp3.DecodeWithSampleRate(sampleRate, f)
+		default:
+			log.Printf("Warning: unsupported audio format: %s", ext)
+			return nil, io.ErrUnexpectedEOF
+		}
+	}
+
+	if err != nil {
+		log.Printf("Warning: could not decode sound file %s: %v", path, err)
+		return nil, err
+	}
+
+	data, err := io.ReadAll(d)
+	if err != nil {
+		log.Printf("Warning: could not read sound data %s: %v", path, err)
+		return nil, err
+	}
+	return data, nil
 }
 
 func (m *AudioManager) Play(name string) {
+	m.mu.RLock()
 	p, ok := m.sounds[name]
+	m.mu.RUnlock()
 	if !ok {
 		return
 	}
@@ -123,6 +146,8 @@ func (m *AudioManager) Play(name string) {
 
 func (m *AudioManager) getMatchingKeys(prefix string) []string {
 	var matches []string
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	for k := range m.sounds {
 		// Key matches prefix exactly, or key starts with prefix + "_" or "/" (e.g. attack_1, orc/hit)
 		if k == prefix || (len(k) > len(prefix) && k[:len(prefix)] == prefix && (k[len(prefix)] == '_' || k[len(prefix)] == '/')) {

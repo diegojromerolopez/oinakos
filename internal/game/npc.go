@@ -233,14 +233,37 @@ func (n *NPC) Update(playableCharacter *PlayableCharacter, obstacles []*Obstacle
 			}
 		}
 	} else if n.Alignment == AlignmentNeutral {
-		// Strictly wander, ignore player and NPCs
-		n.TargetActor = nil
-		if n.Tick%120 == 0 {
-			n.WanderDirX = rand.Float64()*2 - 1
-			n.WanderDirY = rand.Float64()*2 - 1
+		if n.Behavior == BehaviorFlee {
+			if n.TargetActor != nil && n.TargetActor.IsAlive() {
+				if playableCharacter != nil && n.TargetActor == &playableCharacter.Actor {
+					isTargetPlayer = true
+				}
+				dx := n.X - n.TargetActor.X
+				dy := n.Y - n.TargetActor.Y
+				mag := math.Sqrt(dx*dx + dy*dy)
+				if mag > 0 {
+					targetX, targetY = n.X+(dx/mag)*5.0, n.Y+(dy/mag)*5.0
+				} else {
+					targetX, targetY = n.X+1, n.Y+1
+				}
+				hasTarget = true
+			} else {
+				// No target to flee from, so wander
+				n.Behavior = BehaviorWander
+				n.TargetActor = nil
+			}
 		}
-		targetX, targetY = n.X+n.WanderDirX, n.Y+n.WanderDirY
-		hasTarget = true
+
+		if !hasTarget {
+			// Strictly wander, ignore player and NPCs
+			n.TargetActor = nil
+			if n.Tick%120 == 0 {
+				n.WanderDirX = rand.Float64()*2 - 1
+				n.WanderDirY = rand.Float64()*2 - 1
+			}
+			targetX, targetY = n.X+n.WanderDirX, n.Y+n.WanderDirY
+			hasTarget = true
+		}
 	}
 
 	// Check for leader death
@@ -662,14 +685,30 @@ func (n *NPC) TakeDamage(amount int, attackerPlayer *PlayableCharacter, attacker
 	DebugLog("NPC Hit! [%s] Name: %s | Damage: %d | Health: %d -> %d", n.Alignment, n.Name, amount, oldHealth, n.Health)
 
 	// Retaliation tracking
+	var attackerHealth int
+	var attacker *Actor
 	if attackerPlayer != nil {
-		n.TargetActor = &attackerPlayer.Actor
-		// Neutral or Ally NPCs become enemies if hit by the player
-		if n.Alignment != AlignmentEnemy {
-			DebugLog("NPC [%s] was %s and is now an ENEMY due to player attack!", n.Name, n.Alignment)
+		attackerHealth = attackerPlayer.Health
+		attacker = &attackerPlayer.Actor
+	} else if attackerNPC != nil {
+		attackerHealth = attackerNPC.Health
+		attacker = &attackerNPC.Actor
+	}
+
+	if attacker != nil {
+		n.TargetActor = attacker
+		
+		if float64(n.Health) < float64(attackerHealth)*0.2 {
+			DebugLog("NPC [%s] is fleeing from [%s]! (Health: %d vs %d)", n.Name, attacker.Name, n.Health, attackerHealth)
+			n.Alignment = AlignmentNeutral
+			n.Behavior = BehaviorFlee
+		} else {
+			if n.Alignment != AlignmentEnemy || n.Behavior != BehaviorKnightHunter {
+				DebugLog("NPC [%s] becomes AGGRESSIVE towards [%s]! (Health: %d vs %d)", n.Name, attacker.Name, n.Health, attackerHealth)
+			}
 			n.Alignment = AlignmentEnemy
 			n.Behavior = BehaviorKnightHunter
- 
+			
 			// GROUP ALERT: Alert all members of the same group in the "same zone" (e.g. 20 units)
 			if n.Group != "" {
 				for _, other := range allNPCs {
@@ -682,14 +721,12 @@ func (n *NPC) TakeDamage(amount int, attackerPlayer *PlayableCharacter, attacker
 							DebugLog("NPC [%s] joining fight of group [%s]!", other.Name, n.Group)
 							other.Alignment = AlignmentEnemy
 							other.Behavior = BehaviorKnightHunter
-							other.TargetActor = &attackerPlayer.Actor
+							other.TargetActor = attacker
 						}
 					}
 				}
 			}
 		}
-	} else if attackerNPC != nil {
-		n.TargetActor = &attackerNPC.Actor
 	}
 
 	// Start blood effect

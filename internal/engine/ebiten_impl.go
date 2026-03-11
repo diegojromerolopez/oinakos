@@ -7,7 +7,6 @@ import (
 	"image"
 	"image/color"
 	"io/fs"
-	"log"
 	"math"
 	"os"
 
@@ -557,38 +556,10 @@ func (e *EbitenGraphics) DrawTriangles(screen Image, vertices []Vertex, indices 
 }
 
 func LoadSprite(assets fs.FS, path string, removeBg bool) Image {
-	var f fs.File
-	var err error
-
-	// Check for local override in oinakos/assets folder
-	localPath := "oinakos/" + path
-	if _, statErr := os.Stat(localPath); statErr == nil {
-		f, err = os.Open(localPath)
-	} else {
-		if assets != nil {
-			f, err = assets.Open(path)
-		}
-		if f == nil {
-			f, err = os.Open(path)
-		}
-	}
-
-	if err != nil {
-		log.Printf("Warning: failed to open sprite '%s': %v", path, err)
+	img, err := DecodeSpriteRaw(assets, path, removeBg)
+	if err != nil || img == nil {
 		return nil
 	}
-	defer f.Close()
-
-	img, _, err := image.Decode(f)
-	if err != nil {
-		log.Printf("Warning: failed to decode sprite '%s': %v", path, err)
-		return nil
-	}
-
-	if removeBg {
-		img = Transparentize(img)
-	}
-
 	return &EbitenImageWrapper{img: ebiten.NewImageFromImage(img)}
 }
 func toEbitenGeoM(m Matrix) ebiten.GeoM {

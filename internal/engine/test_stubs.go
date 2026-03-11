@@ -28,3 +28,8 @@ func (m *AudioManager) PlayRandom(prefix string)    {}
 func (m *AudioManager) Play(name string)            {}
 
 var GlobalAudio *AudioManager
+
+// DecodeAudioRaw stub for test builds.
+func DecodeAudioRaw(assets fs.FS, path string) ([]byte, error) {
+	return nil, nil
+}

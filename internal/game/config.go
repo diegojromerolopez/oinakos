@@ -524,54 +524,30 @@ func NewArchetypeRegistry() *ArchetypeRegistry {
 
 func (r *ArchetypeRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics) {
 	log.Printf(">>>> LOADING ARCHETYPE ASSETS: found %d archetypes in registry", len(r.Archetypes))
+	var jobs []*SpriteLoadJob
 	for _, config := range r.Archetypes {
 		if config.AssetDir == "" {
 			continue
 		}
-		staticPath := path.Join(config.AssetDir, "static.png")
-		if config.ID == "man_at_arms_male" {
-			log.Printf("Archetype %s: checking %s", config.ID, staticPath)
+		
+		addJob := func(filename string, target *interface{}) {
+			jobs = append(jobs, &SpriteLoadJob{
+				Path: path.Join(config.AssetDir, filename),
+				Dest: target,
+			})
 		}
-		if _, err := fs.Stat(assets, staticPath); err == nil {
-			config.StaticImage = graphics.LoadSprite(assets, staticPath, true)
-		}
-
-		backPath := path.Join(config.AssetDir, "back.png")
-		if _, err := fs.Stat(assets, backPath); err == nil {
-			config.BackImage = graphics.LoadSprite(assets, backPath, true)
-		}
-
-		corpsePath := path.Join(config.AssetDir, "corpse.png")
-		if _, err := fs.Stat(assets, corpsePath); err == nil {
-			config.CorpseImage = graphics.LoadSprite(assets, corpsePath, true)
-		}
-
-		attackPath := path.Join(config.AssetDir, "attack.png")
-		if _, err := fs.Stat(assets, attackPath); err == nil {
-			config.AttackImage = graphics.LoadSprite(assets, attackPath, true)
-		}
-		attack1Path := path.Join(config.AssetDir, "attack1.png")
-		if _, err := fs.Stat(assets, attack1Path); err == nil {
-			config.Attack1Image = graphics.LoadSprite(assets, attack1Path, true)
-		}
-		attack2Path := path.Join(config.AssetDir, "attack2.png")
-		if _, err := fs.Stat(assets, attack2Path); err == nil {
-			config.Attack2Image = graphics.LoadSprite(assets, attack2Path, true)
-		}
-
-		hitPath := path.Join(config.AssetDir, "hit.png")
-		if _, err := fs.Stat(assets, hitPath); err == nil {
-			config.HitImage = graphics.LoadSprite(assets, hitPath, true)
-		}
-		hit1Path := path.Join(config.AssetDir, "hit1.png")
-		if _, err := fs.Stat(assets, hit1Path); err == nil {
-			config.Hit1Image = graphics.LoadSprite(assets, hit1Path, true)
-		}
-		hit2Path := path.Join(config.AssetDir, "hit2.png")
-		if _, err := fs.Stat(assets, hit2Path); err == nil {
-			config.Hit2Image = graphics.LoadSprite(assets, hit2Path, true)
-		}
+		
+		addJob("static.png", &config.StaticImage)
+		addJob("back.png", &config.BackImage)
+		addJob("corpse.png", &config.CorpseImage)
+		addJob("attack.png", &config.AttackImage)
+		addJob("attack1.png", &config.Attack1Image)
+		addJob("attack2.png", &config.Attack2Image)
+		addJob("hit.png", &config.HitImage)
+		addJob("hit1.png", &config.Hit1Image)
+		addJob("hit2.png", &config.Hit2Image)
 	}
+	loadSpritesParallel(assets, jobs, graphics)
 }
 
 func (r *ArchetypeRegistry) LoadAll(assets fs.FS) error {
@@ -672,51 +648,30 @@ func (r *PlayableCharacterRegistry) LoadAll(assets fs.FS) error {
 }
 
 func (r *PlayableCharacterRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics) {
+	var jobs []*SpriteLoadJob
 	for _, config := range r.Characters {
 		if config.AssetDir == "" {
 			continue
 		}
-		staticPath := path.Join(config.AssetDir, "static.png")
-		if _, err := fs.Stat(assets, staticPath); err == nil {
-			config.StaticImage = graphics.LoadSprite(assets, staticPath, true)
+		
+		addJob := func(filename string, target *interface{}) {
+			jobs = append(jobs, &SpriteLoadJob{
+				Path: path.Join(config.AssetDir, filename),
+				Dest: target,
+			})
 		}
-
-		backPath := path.Join(config.AssetDir, "back.png")
-		if _, err := fs.Stat(assets, backPath); err == nil {
-			config.BackImage = graphics.LoadSprite(assets, backPath, true)
-		}
-
-		corpsePath := path.Join(config.AssetDir, "corpse.png")
-		if _, err := fs.Stat(assets, corpsePath); err == nil {
-			config.CorpseImage = graphics.LoadSprite(assets, corpsePath, true)
-		}
-
-		attackPath := path.Join(config.AssetDir, "attack.png")
-		if _, err := fs.Stat(assets, attackPath); err == nil {
-			config.AttackImage = graphics.LoadSprite(assets, attackPath, true)
-		}
-		attack1Path := path.Join(config.AssetDir, "attack1.png")
-		if _, err := fs.Stat(assets, attack1Path); err == nil {
-			config.Attack1Image = graphics.LoadSprite(assets, attack1Path, true)
-		}
-		attack2Path := path.Join(config.AssetDir, "attack2.png")
-		if _, err := fs.Stat(assets, attack2Path); err == nil {
-			config.Attack2Image = graphics.LoadSprite(assets, attack2Path, true)
-		}
-
-		hitPath := path.Join(config.AssetDir, "hit.png")
-		if _, err := fs.Stat(assets, hitPath); err == nil {
-			config.HitImage = graphics.LoadSprite(assets, hitPath, true)
-		}
-		hit1Path := path.Join(config.AssetDir, "hit1.png")
-		if _, err := fs.Stat(assets, hit1Path); err == nil {
-			config.Hit1Image = graphics.LoadSprite(assets, hit1Path, true)
-		}
-		hit2Path := path.Join(config.AssetDir, "hit2.png")
-		if _, err := fs.Stat(assets, hit2Path); err == nil {
-			config.Hit2Image = graphics.LoadSprite(assets, hit2Path, true)
-		}
+		
+		addJob("static.png", &config.StaticImage)
+		addJob("back.png", &config.BackImage)
+		addJob("corpse.png", &config.CorpseImage)
+		addJob("attack.png", &config.AttackImage)
+		addJob("attack1.png", &config.Attack1Image)
+		addJob("attack2.png", &config.Attack2Image)
+		addJob("hit.png", &config.HitImage)
+		addJob("hit1.png", &config.Hit1Image)
+		addJob("hit2.png", &config.Hit2Image)
 	}
+	loadSpritesParallel(assets, jobs, graphics)
 }
 
 type NPCRegistry struct {
@@ -979,11 +934,16 @@ func (r *ObstacleRegistry) LoadAll(assets fs.FS) error {
 	})
 }
 func (r *ObstacleRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics) {
+	var jobs []*SpriteLoadJob
 	for _, config := range r.Archetypes {
 		// Derive image path from ID: assets/images/obstacles/<id>.png
 		imagePath := path.Join("assets/images/obstacles", config.ID+".png")
-		config.Image = graphics.LoadSprite(assets, imagePath, true)
+		jobs = append(jobs, &SpriteLoadJob{
+			Path: imagePath,
+			Dest: &config.Image,
+		})
 	}
+	loadSpritesParallel(assets, jobs, graphics)
 }
 
 func (c *EntityConfig) GetFootprint() engine.Polygon {
