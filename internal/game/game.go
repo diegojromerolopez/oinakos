@@ -524,24 +524,46 @@ func (g *Game) loadMapLevel() {
 			log.Println("WARNING: Magi config (magi_male) not found!")
 		}
 	case ObjDestroyBuilding:
-		g.currentMapType.TargetPoint = engine.Point{
-			X: g.playableCharacter.X + (rand.Float64()*80 - 40),
-			Y: g.playableCharacter.Y + (rand.Float64()*80 - 40),
-		}
-		if g.currentMapType.TargetPoint.X > -20 && g.currentMapType.TargetPoint.X < 20 {
-			g.currentMapType.TargetPoint.X += 40
-		}
-		if g.currentMapType.TargetPoint.Y > -20 && g.currentMapType.TargetPoint.Y < 20 {
-			g.currentMapType.TargetPoint.Y += 40
+		// First, check if there's already an obstacle with ID "target_building" in the list
+		var targetObs *Obstacle
+		for _, o := range g.obstacles {
+			if o.ID == "target_building" {
+				targetObs = o
+				break
+			}
 		}
 
-		// Spawn a target building like a warehouse or farm
-		if config, ok := g.obstacleRegistry.Archetypes["house_burned"]; ok {
-			targetObs := NewObstacle("target_building", g.currentMapType.TargetPoint.X, g.currentMapType.TargetPoint.Y, config)
-			g.obstacles = append(g.obstacles, targetObs)
+		if targetObs != nil {
 			g.currentMapType.TargetObstacle = targetObs
+			g.currentMapType.TargetPoint = engine.Point{X: targetObs.X, Y: targetObs.Y}
 		} else {
-			log.Println("WARNING: house_burned config not found for ObjDestroyBuilding!")
+			// Fallback: spawn a new target building
+			if g.currentMapType.TargetPointRaw != nil {
+				g.currentMapType.TargetPoint = engine.Point{
+					X: g.currentMapType.TargetPointRaw.X,
+					Y: g.currentMapType.TargetPointRaw.Y,
+				}
+			} else {
+				g.currentMapType.TargetPoint = engine.Point{
+					X: g.playableCharacter.X + (rand.Float64()*80 - 40),
+					Y: g.playableCharacter.Y + (rand.Float64()*80 - 40),
+				}
+				if g.currentMapType.TargetPoint.X > -20 && g.currentMapType.TargetPoint.X < 20 {
+					g.currentMapType.TargetPoint.X += 40
+				}
+				if g.currentMapType.TargetPoint.Y > -20 && g.currentMapType.TargetPoint.Y < 20 {
+					g.currentMapType.TargetPoint.Y += 40
+				}
+			}
+
+			// Try to spawn a warehouse as the target building
+			if config, ok := g.obstacleRegistry.Archetypes["warehouse"]; ok {
+				targetObs = NewObstacle("target_building", g.currentMapType.TargetPoint.X, g.currentMapType.TargetPoint.Y, config)
+				g.obstacles = append(g.obstacles, targetObs)
+				g.currentMapType.TargetObstacle = targetObs
+			} else {
+				log.Println("WARNING: warehouse config not found for ObjDestroyBuilding fallback!")
+			}
 		}
 	}
 
