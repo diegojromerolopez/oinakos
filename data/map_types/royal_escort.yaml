@@ -23,3 +23,17 @@ obstacles:
   - archetype: temple
     x: -15.0
     y: 50.0
+
+spawns:
+  - archetype: peasant_male
+    alignment: enemy
+    probability: 0.8
+    frequency: 3.0
+  - archetype: peasant_female
+    alignment: enemy
+    probability: 0.6
+    frequency: 4.0
+  - archetype: man_at_arms_male
+    alignment: enemy
+    probability: 0.2
+    frequency: 10.0

@@ -18,3 +18,23 @@ obstacles:
   - archetype: house3
     x: 12.0
     y: 0.0
+
+spawns:
+  - archetype: goblin_male
+    alignment: enemy
+    probability: 0.6
+    frequency: 3.0
+  - archetype: goblin_female
+    alignment: enemy
+    probability: 0.4
+    frequency: 4.5
+  - archetype: goblin_male
+    x: 20
+    alignment: enemy
+    probability: 0.5
+    frequency: 5.0
+  - archetype: goblin_female
+    y: 20
+    alignment: enemy
+    probability: 0.5
+    frequency: 5.0

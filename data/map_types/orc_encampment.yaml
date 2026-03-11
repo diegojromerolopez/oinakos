@@ -17,3 +17,29 @@ obstacles:
   - archetype: warehouse
     x: 10.0
     y: 10.0
+
+inhabitants:
+  - archetype: orc_male
+    x: 15.0
+    y: 15.0
+    alignment: enemy
+    name: "Golg the Dreaded"
+    stats:
+      health_min: 150
+      health_max: 150
+      base_attack: 25
+      base_defense: 10
+  - archetype: orc_male
+    x: 14.0
+    y: 16.0
+    alignment: enemy
+  - archetype: orc_female
+    x: 16.0
+    y: 14.0
+    alignment: enemy
+
+spawns:
+  - archetype: orc_male
+    alignment: enemy
+    probability: 0.3
+    frequency: 8.0

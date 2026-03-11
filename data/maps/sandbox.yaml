@@ -48,3 +48,11 @@ inhabitants:
     x: 5
     y: 5
     alignment: neutral
+  - archetype: "peasant_female"
+    x: 7
+    y: 5
+    alignment: neutral
+  - archetype: "orc_male"
+    x: 20
+    y: 20
+    alignment: enemy

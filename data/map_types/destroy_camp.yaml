@@ -4,8 +4,29 @@ type: destroy_building # ObjDestroyBuilding
 difficulty: 2
 description: "Destroy the enemy warehouse"
 floor_tile: "grass.png"
+target_point:
+  x: 20.0
+  y: 20.0
+inhabitants:
+  - archetype: orc_male
+    x: 18.0
+    y: 18.0
+    alignment: enemy
+  - archetype: orc_female
+    x: 22.0
+    y: 22.0
+    alignment: enemy
+  - archetype: orc_male
+    x: 15.0
+    y: 20.0
+    alignment: enemy
+  - archetype: orc_female
+    x: 25.0
+    y: 20.0
+    alignment: enemy
 obstacles:
-  - archetype: warehouse
+  - id: target_building
+    archetype: warehouse
     x: 20.0
     y: 20.0
   - archetype: smithery
