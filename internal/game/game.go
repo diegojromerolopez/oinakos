@@ -176,6 +176,7 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID, initialHeroID string,
 		audio:                     audio,
 		debug:                     debug,
 		ExploredTiles:             make(map[image.Point]bool),
+		LoadingProgress:           1000,
 	}
 
 	g.settings = LoadSettings()
@@ -284,7 +285,11 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID, initialHeroID string,
 	// Spawn NPCs if not loaded from instance and not in menu
 	if !instanceLoaded && !g.isMainMenu {
 		g.npcs = make([]*NPC, 0)
-		g.worldManager.LoadMapLevel()
+		if isTestingEnvironment {
+			g.worldManager.LoadMapLevel()
+		} else {
+			go g.worldManager.LoadMapLevel()
+		}
 	}
 
 	return g

@@ -67,7 +67,7 @@ func (mh *MenuHandler) updateCharacterSelect() error {
 			if g.initialMapID == "" && g.initialMapTypeID == "" {
 				g.isCampaignSelect = true
 			} else {
-				g.worldManager.LoadMapLevel()
+				go g.worldManager.LoadMapLevel()
 			}
 		} else {
 			g.isCharacterSelect = false

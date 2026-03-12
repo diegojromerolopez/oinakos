@@ -36,9 +36,19 @@ func (mh *MenuHandler) updateQuitConfirmation() error {
 	handleSelect := g.input.IsKeyJustPressed(engine.KeyEnter) || (hoverIndex != -1 && g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft))
 
 	if handleSelect {
-		if g.quitConfirmationIndex == 0 { // Yes, quit
-			g.CloseWindow()
-		} else { // No, stay here
+		if g.quitConfirmationIndex == 0 { // Option 0: Quit
+			if g.isMainMenu {
+				g.CloseWindow()
+			} else {
+				// Quit to Menu
+				g.isMainMenu = true
+				g.isQuitConfirmationOpen = false
+				g.isMenuOpen = false
+				g.isGameOver = false
+				g.isMapWon = false
+				g.isGameWon = false
+			}
+		} else { // Option 1: Cancel / Stay
 			g.isQuitConfirmationOpen = false
 		}
 	}

@@ -126,13 +126,12 @@ func (wm *WorldManager) LoadMapLevel() {
 	log.Printf("Starting Async Map Load: %s", g.LoadingMessage)
 
 	startTime := time.Now()
-	go func() {
-		defer func() {
-			atomic.StoreInt32(&g.LoadingProgress, 1000)
-			log.Printf("Async Map Load Complete. Total Time: %v", time.Since(startTime))
-		}()
+	defer func() {
+		atomic.StoreInt32(&g.LoadingProgress, 1000)
+		log.Printf("Async Map Load Complete. Total Time: %v", time.Since(startTime))
+	}()
 
-		if g.isCampaign && g.currentCampaign != nil {
+	if g.isCampaign && g.currentCampaign != nil {
 		if g.campaignIndex < len(g.currentCampaign.Maps) {
 			mapID := g.currentCampaign.Maps[g.campaignIndex]
 			if m, ok := g.mapTypeRegistry.Types[mapID]; ok {
@@ -337,7 +336,6 @@ func (wm *WorldManager) LoadMapLevel() {
 
 		DebugLog("Starting Map Level %d: %s at safe pos %.2f,%.2f", g.mapLevel, g.currentMapType.Name, g.playableCharacter.X, g.playableCharacter.Y)
 		wm.LoadMapAudio()
-	}()
 }
 
 func (wm *WorldManager) UpdateChunks() {

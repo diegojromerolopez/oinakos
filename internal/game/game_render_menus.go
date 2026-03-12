@@ -246,6 +246,9 @@ func (gr *GameRenderer) drawQuitConfirmation(screen engine.Image) {
 	gr.graphics.DrawTextAt(screen, msg, px+(pw-int(tw))/2, py+50, color.White, 24)
 
 	options := []string{"Yes, quit", "No, stay here"}
+	if !g.isMainMenu {
+		options = []string{"Quit to menu", "Cancel"}
+	}
 	for i, opt := range options {
 		var clr color.Color = color.White
 		if i == g.quitConfirmationIndex {

@@ -292,10 +292,28 @@ func (r *NPCRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *
 		}
 
 		arch, ok := archs.Archetypes[lookupID]
-		if ok {
-			config.SoundID = lookupID
-		} else {
+
+		// Determine SoundID: favor local audio if files exist in config.AudioDir
+		hasLocalAudio := false
+		if config.AudioDir != "" {
+			if entries, err := fs.ReadDir(assets, config.AudioDir); err == nil {
+				for _, entry := range entries {
+					if !entry.IsDir() {
+						hasLocalAudio = true
+						break
+					}
+				}
+			}
+		}
+
+		if hasLocalAudio {
 			config.SoundID = config.ID
+		} else {
+			if ok {
+				config.SoundID = lookupID
+			} else {
+				config.SoundID = config.ID
+			}
 		}
 
 		// Fallback stats/colors/sounds from archetype...
