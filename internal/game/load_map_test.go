@@ -38,7 +38,7 @@ func TestLoadMapLevel_AllObjectiveTypes(t *testing.T) {
 				ID:   "test_map",
 				Type: obj,
 			}
-			g.loadMapLevel()
+			g.worldManager.LoadMapLevel()
 
 			// Basic checks depending on objective
 			switch obj {
@@ -90,7 +90,7 @@ func TestLoadMapLevel_InhabitantsAndObstacles(t *testing.T) {
 		},
 	}
 
-	g.loadMapLevel()
+	g.worldManager.LoadMapLevel()
 
 	if len(g.npcs) != 2 {
 		t.Errorf("Expected 2 NPCs, got %d", len(g.npcs))
@@ -131,7 +131,7 @@ func TestLoadMapLevel_Campaign(t *testing.T) {
 	g.isCampaign = true
 	g.campaignIndex = 1
 
-	g.loadMapLevel()
+	g.worldManager.LoadMapLevel()
 
 	if g.currentMapType.ID != "m2" {
 		t.Errorf("Expected campaign map m2, got %s", g.currentMapType.ID)
@@ -145,7 +145,7 @@ func TestLoadMapLevel_InitialMapID(t *testing.T) {
 	g.mapLevel = 1
 	g.isCampaign = false
 
-	g.loadMapLevel()
+	g.worldManager.LoadMapLevel()
 
 	if g.currentMapType.ID != "init_map" {
 		t.Errorf("Expected initial map init_map, got %s", g.currentMapType.ID)

@@ -1,17 +1,13 @@
 package game
 
 import (
-	"fmt"
 	"image/color"
 	"io/fs"
 	"log"
-	"math"
 	"path"
 	"sort"
 
 	"oinakos/internal/engine"
-	"strings"
-	"image"
 )
 
 // GameRenderer handles the Ebiten-dependent rendering of the game.
@@ -97,7 +93,6 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 		log.Println("GameRenderer.Draw called with nil screen!")
 		return
 	}
-	// log.Printf("GameRenderer.Draw Frame") // No longer needed
 	g := gr.game
 	offsetX, offsetY := g.camera.GetOffsets(g.width, g.height)
 
@@ -111,7 +106,6 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 		gr.drawSettingsScreen(screen)
 	} else {
 		if g.currentMapType.FloorTile != "" && g.currentMapType.FloorTile != gr.lastFloorPath {
-			// Clear caches when map floor base changes
 			gr.coordCache = make(map[string]string)
 			gr.lastFloorPath = g.currentMapType.FloorTile
 		}
@@ -120,865 +114,129 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 			return gr.getTileAt(x, y)
 		})
 
-		// Continue into world drawing logic
-
-	// Collect all drawable entities for Y-sorting
-	type drawTask struct {
-		y    float64
-		draw func()
-	}
-	tasks := make([]drawTask, 0, len(g.obstacles)+len(g.npcs)+1)
-
-	// Add obstacles
-	for _, o := range g.obstacles {
-		img, _ := o.Archetype.Image.(engine.Image)
-		if img == nil {
-			continue
+		type drawTask struct {
+			y    float64
+			draw func()
 		}
-		sw, sh := img.Size()
+		tasks := make([]drawTask, 0, len(g.obstacles)+len(g.npcs)+1)
 
-		isoX, isoY := engine.CartesianToIso(o.X, o.Y)
-		drawX := isoX + offsetX
-		drawY := isoY + offsetY
-
-		// Dynamic culling: use sprite dimensions to ensure large buildings don't flicker
-		marginW := float64(sw)
-		marginH := float64(sh)
-		if drawX < -marginW || drawX > float64(g.width)+marginW || drawY < -marginH || drawY > float64(g.height)+marginH {
-			continue
-		}
-
-		obj := o // local copy
-		sortY := obj.X + obj.Y
-		if obj.Archetype.Type == "static" || obj.Archetype.Type == "well" {
-			sortY += 2.0
-		} else {
-			// Center of footprint
-			p := obj.GetFootprint()
-			if len(p.Points) > 0 {
-				var minX, maxX, minY, maxY float64
-				for i, pt := range p.Points {
-					if i == 0 || pt.X < minX {
-						minX = pt.X
-					}
-					if i == 0 || pt.X > maxX {
-						maxX = pt.X
-					}
-					if i == 0 || pt.Y < minY {
-						minY = pt.Y
-					}
-					if i == 0 || pt.Y > maxY {
-						maxY = pt.Y
-					}
-				}
-				// The footprint is already absolute, so we convert back to world "depth"
-				sortY = (minX + maxX + minY + maxY) / 2
+		for _, o := range g.obstacles {
+			img, _ := o.Archetype.Image.(engine.Image)
+			if img == nil {
+				continue
 			}
+			sw, sh := img.Size()
+
+			isoX, isoY := engine.CartesianToIso(o.X, o.Y)
+			drawX := isoX + offsetX
+			drawY := isoY + offsetY
+
+			marginW := float64(sw)
+			marginH := float64(sh)
+			if drawX < -marginW || drawX > float64(g.width)+marginW || drawY < -marginH || drawY > float64(g.height)+marginH {
+				continue
+			}
+
+			obj := o
+			sortY := obj.X + obj.Y
+			if obj.Archetype.Type == "static" || obj.Archetype.Type == "well" {
+				sortY += 2.0
+			} else {
+				p := obj.GetFootprint()
+				if len(p.Points) > 0 {
+					var minX, maxX, minY, maxY float64
+					for i, pt := range p.Points {
+						if i == 0 || pt.X < minX { minX = pt.X }
+						if i == 0 || pt.X > maxX { maxX = pt.X }
+						if i == 0 || pt.Y < minY { minY = pt.Y }
+						if i == 0 || pt.Y > maxY { maxY = pt.Y }
+					}
+					sortY = (minX + maxX + minY + maxY) / 2
+				}
+			}
+
+			tasks = append(tasks, drawTask{
+				y: sortY,
+				draw: func() {
+					obj.Draw(screen, gr.graphics, offsetX, offsetY)
+				},
+			})
 		}
 
-		tasks = append(tasks, drawTask{
-			y: sortY,
-			draw: func() {
-				obj.Draw(screen, gr.graphics, offsetX, offsetY)
-			},
-		})
-	}
+		for _, n := range g.npcs {
+			isoX, isoY := engine.CartesianToIso(n.X, n.Y)
+			drawX := isoX + offsetX
+			drawY := isoY + offsetY
+			if drawX < -256 || drawX > float64(g.width)+256 || drawY < -256 || drawY > float64(g.height)+256 {
+				continue
+			}
 
-	// Add NPCs
-	for _, n := range g.npcs {
-		isoX, isoY := engine.CartesianToIso(n.X, n.Y)
-		drawX := isoX + offsetX
-		drawY := isoY + offsetY
-		// Culling margin
-		if drawX < -256 || drawX > float64(g.width)+256 || drawY < -256 || drawY > float64(g.height)+256 {
-			continue
+			npc := n
+			sortY := npc.X + npc.Y
+			if npc.State == NPCDead {
+				sortY -= 100.0
+			}
+			tasks = append(tasks, drawTask{
+				y: sortY,
+				draw: func() {
+					npc.Draw(screen, gr.graphics, gr.graphics, gr.PaletteShader, offsetX, offsetY)
+				},
+			})
 		}
 
-		npc := n // local copy
-		sortY := npc.X + npc.Y
-		if npc.State == NPCDead {
-			sortY -= 100.0 // Push corpses behind a lot of things
+		mcSortY := g.playableCharacter.X + g.playableCharacter.Y
+		if g.playableCharacter.State == StateDead {
+			mcSortY -= 100.0
 		}
 		tasks = append(tasks, drawTask{
-			y: sortY,
+			y: mcSortY,
 			draw: func() {
-				npc.Draw(screen, gr.graphics, gr.graphics, gr.PaletteShader, offsetX, offsetY)
+				g.playableCharacter.Draw(screen, gr.graphics, gr.graphics, offsetX, offsetY)
 			},
 		})
-	}
 
-	// Add playableCharacter
-	mcSortY := g.playableCharacter.X + g.playableCharacter.Y
-	if g.playableCharacter.State == StateDead {
-		mcSortY -= 100.0
-	}
-	tasks = append(tasks, drawTask{
-		y: mcSortY,
-		draw: func() {
-			g.playableCharacter.Draw(screen, gr.graphics, gr.graphics, offsetX, offsetY)
-		},
-	})
+		for _, p := range g.projectiles {
+			proj := p
+			tasks = append(tasks, drawTask{
+				y: proj.X + proj.Y,
+				draw: func() {
+					proj.Draw(screen, gr.graphics, offsetX, offsetY)
+				},
+			})
+		}
 
-	// Add projectiles
-	for _, p := range g.projectiles {
-		proj := p // local copy
-		tasks = append(tasks, drawTask{
-			y: proj.X + proj.Y,
-			draw: func() {
-				proj.Draw(screen, gr.graphics, offsetX, offsetY)
-			},
+		sort.Slice(tasks, func(i, j int) bool {
+			return tasks[i].y < tasks[j].y
 		})
-	}
 
-	// Sort tasks by Y coordinate to achieve correct depth rendering
-	// Because of isometric projection, higher X+Y means further "down" on the screen
-	sort.Slice(tasks, func(i, j int) bool {
-		return tasks[i].y < tasks[j].y
-	})
+		for _, t := range tasks {
+			t.draw()
+		}
 
-	// Execute draw tasks (everything including buildings, projectiles, etc.)
-	for _, t := range tasks {
-		t.draw()
-	}
+		if g.debug || g.showBoundaries {
+			gr.drawDebug(screen, offsetX, offsetY)
+		}
 
-	// Draw debug information if enabled
-	if g.debug || g.showBoundaries {
-		gr.drawDebug(screen, offsetX, offsetY)
-	}
+		for _, ft := range g.floatingTexts {
+			ft.Draw(screen, gr.graphics, offsetX, offsetY)
+		}
 
-	// Draw floating texts (always on top of entities)
-	for _, ft := range g.floatingTexts {
-		ft.Draw(screen, gr.graphics, offsetX, offsetY)
-	}
-
-	if g.isGameWon {
-		gr.drawGameWon(screen)
-	} else if g.isGameOver {
-		gr.drawGameOver(screen)
-	} else if g.isMapWon {
-		gr.drawMapWon(screen)
-	} else if g.isPaused {
-		gr.drawPauseMenu(screen)
-	} else {
-		gr.drawFog(screen)
-		gr.drawHUD(screen)
-		gr.drawHoverInfo(screen)
-	}
+		if g.isGameWon {
+			gr.drawGameWon(screen)
+		} else if g.isGameOver {
+			gr.drawGameOver(screen)
+		} else if g.isMapWon {
+			gr.drawMapWon(screen)
+		} else if g.isPaused {
+			gr.drawPauseMenu(screen)
+		} else {
+			gr.drawFog(screen)
+			gr.drawHUD(screen)
+			gr.drawHoverInfo(screen)
+		}
 	}
 
 	if g.isQuitConfirmationOpen {
 		gr.drawQuitConfirmation(screen)
-	}
-}
-
-func (gr *GameRenderer) drawPauseMenu(screen engine.Image) {
-	g := gr.game
-	gr.graphics.DrawFilledRect(screen, 0, 0, float32(g.width), float32(g.height), color.RGBA{0, 0, 0, 180}, false)
-
-	title := "GAME PAUSED"
-	tw, _ := gr.graphics.MeasureText(title, 32)
-	gr.graphics.DrawTextAt(screen, title, (g.width-int(tw))/2, g.height/2-50, color.White, 32)
-
-	msg1 := "Press S to SAVE and QUIT"
-	msg2 := "Press any other key to RESUME"
-	mw1, _ := gr.graphics.MeasureText(msg1, 18)
-	mw2, _ := gr.graphics.MeasureText(msg2, 18)
-	gr.graphics.DrawTextAt(screen, msg1, (g.width-int(mw1))/2, g.height/2, color.White, 18)
-	gr.graphics.DrawTextAt(screen, msg2, (g.width-int(mw2))/2, g.height/2+30, color.White, 18)
-}
-
-func (gr *GameRenderer) drawGameOver(screen engine.Image) {
-	g := gr.game
-	gr.graphics.DrawFilledRect(screen, 0, 0, float32(g.width), float32(g.height), color.RGBA{0, 0, 0, 180}, false)
-	minutes := int(g.playTime) / 60
-	seconds := int(g.playTime) % 60
-
-	title := "GAME OVER"
-	tw, _ := gr.graphics.MeasureText(title, 48)
-	gr.graphics.DrawTextAt(screen, title, (g.width-int(tw))/2, g.height/2-80, color.White, 48)
-
-	kills := fmt.Sprintf("Kills: %d", g.playableCharacter.Kills)
-	time := fmt.Sprintf("Time: %02d:%02d", minutes, seconds)
-	msg := "Press ESC to exit, or CLICK/ENTER to restart"
-
-	kw, _ := gr.graphics.MeasureText(kills, 20)
-	tmw, _ := gr.graphics.MeasureText(time, 20)
-	mw, _ := gr.graphics.MeasureText(msg, 16)
-
-	gr.graphics.DrawTextAt(screen, kills, (g.width-int(kw))/2, g.height/2-15, color.White, 20)
-	gr.graphics.DrawTextAt(screen, time, (g.width-int(tmw))/2, g.height/2+20, color.White, 20)
-	gr.graphics.DrawTextAt(screen, msg, (g.width-int(mw))/2, g.height/2+60, color.White, 16)
-}
-
-func (gr *GameRenderer) drawMapWon(screen engine.Image) {
-	g := gr.game
-	gr.graphics.DrawFilledRect(screen, 0, 0, float32(g.width), float32(g.height), color.RGBA{20, 60, 20, 200}, false)
-	mapKillTotal := 0
-	for _, k := range g.playableCharacter.MapKills {
-		mapKillTotal += k
-	}
-
-	title := "MAP WON!"
-	tw, _ := gr.graphics.MeasureText(title, 48)
-	gr.graphics.DrawTextAt(screen, title, (g.width-int(tw))/2, g.height/2-80, color.White, 48)
-
-	kills := fmt.Sprintf("Map Kills: %d", mapKillTotal)
-	kw, _ := gr.graphics.MeasureText(kills, 20)
-	gr.graphics.DrawTextAt(screen, kills, (g.width-int(kw))/2, g.height/2-15, color.White, 20)
-
-	options := []string{"Continue", "Quit"}
-	for i, opt := range options {
-		var clr color.Color = color.White
-		prefix := "  "
-		if g.mapWonMenuIndex == i {
-			clr = color.RGBA{255, 255, 0, 255}
-			prefix = "> "
-		}
-		gr.graphics.DrawTextAt(screen, prefix+opt, g.width/2-50, g.height/2+60+i*35, clr, 18)
-	}
-}
-
-func (gr *GameRenderer) drawHUD(screen engine.Image) {
-	g := gr.game
-	// Use DrawFilledRect instead of NewImage every frame to avoid Metal leaks
-	gr.graphics.DrawFilledRect(screen, 10, 10, 350, 150, color.RGBA{0, 0, 0, 180}, false)
-
-	gr.graphics.DrawTextAt(screen, fmt.Sprintf("HP: %d/%d", g.playableCharacter.Health, g.playableCharacter.MaxHealth), 20, 20, color.White, 16)
-
-	// Health bar background
-	gr.graphics.DrawFilledRect(screen, 100, 22, 200, 10, color.RGBA{100, 0, 0, 255}, false)
-
-	healthPct := float64(g.playableCharacter.Health) / float64(g.playableCharacter.MaxHealth)
-	if healthPct > 0 {
-		var healthColor color.RGBA
-		if healthPct > 0.7 {
-			healthColor = color.RGBA{0, 200, 0, 255}
-		} else if healthPct > 0.5 {
-			healthColor = color.RGBA{200, 200, 0, 255}
-		} else {
-			healthColor = color.RGBA{200, 0, 0, 255}
-		}
-		gr.graphics.DrawFilledRect(screen, 100, 22, float32(200*healthPct), 10, healthColor, false)
-	}
-
-	gr.graphics.DrawTextAt(screen, fmt.Sprintf("LVL: %d  XP: %d", g.playableCharacter.Level, g.playableCharacter.XP), 20, 45, color.White, 14)
-	gr.graphics.DrawTextAt(screen, fmt.Sprintf("OBJ: %s", g.currentMapType.Description), 20, 60, color.White, 12)
-
-	minutes := int(g.playTime) / 60
-	seconds := int(g.playTime) % 60
-	gr.graphics.DrawTextAt(screen, fmt.Sprintf("POS %.1f,%.1f  KILLS: %d  XP: %d  LVL: %d", g.playableCharacter.X, g.playableCharacter.Y, g.playableCharacter.Kills, g.playableCharacter.XP, g.playableCharacter.Level), 20, 80, color.White, 12)
-	gr.graphics.DrawTextAt(screen, fmt.Sprintf("ATK: %d  DEF: %d  SHIELD: %d", g.playableCharacter.GetTotalAttack(), g.playableCharacter.GetTotalDefense(), g.playableCharacter.GetTotalProtection()), 20, 95, color.White, 12)
-
-	weaponText := fmt.Sprintf("WEAPON: %s (%d-%d)", g.playableCharacter.Weapon.Name, g.playableCharacter.Weapon.MinDamage, g.playableCharacter.Weapon.MaxDamage)
-	if g.playableCharacter.Weapon.Bonus > 0 {
-		weaponText += fmt.Sprintf(" +%d", g.playableCharacter.Weapon.Bonus)
-	}
-	gr.graphics.DrawTextAt(screen, weaponText, 20, 110, color.White, 12)
-	gr.graphics.DrawTextAt(screen, fmt.Sprintf("TIME: %02d:%02d", minutes, seconds), 20, 125, color.White, 12)
-
-	// Menu Button (Top-Right)
-	gr.graphics.DrawFilledRect(screen, float32(g.width-110), 20, 100, 30, color.RGBA{50, 50, 50, 200}, false)
-	gr.graphics.DrawTextAt(screen, "MENU", g.width-85, 28, color.White, 16)
-
-	// Map Name below Menu
-	mapTitle := strings.ToUpper(g.currentMapType.Name)
-	if g.isCampaign && g.currentCampaign != nil {
-		mapTitle = strings.ToUpper(g.currentCampaign.Name)
-	}
-	mtw, _ := gr.graphics.MeasureText(mapTitle, 16)
-	gr.graphics.DrawTextAt(screen, mapTitle, g.width-int(mtw)-20, 60, color.RGBA{218, 165, 32, 255}, 16)
-
-	// Menu Overlay
-	if g.isMenuOpen {
-		mw, mh := 400, 280
-		mx, my := (g.width-mw)/2, (g.height-mh)/2
-		// Border & Backdrop
-		gr.graphics.DrawFilledRect(screen, float32(mx-2), float32(my-2), float32(mw+4), float32(mh+4), color.RGBA{218, 165, 32, 255}, false)
-		gr.graphics.DrawFilledRect(screen, float32(mx), float32(my), float32(mw), float32(mh), color.RGBA{0, 0, 0, 240}, false)
-
-		menuTitle := "GAME MENU"
-		mtw, _ := gr.graphics.MeasureText(menuTitle, 24)
-		gr.graphics.DrawTextAt(screen, menuTitle, mx+(mw-int(mtw))/2, my+30, color.RGBA{218, 165, 32, 255}, 24)
-
-		options := []string{"Resume", "Quicksave (Q)", "Load", "Settings", "Quit"}
-		for i, opt := range options {
-			var clr color.Color = color.White
-			prefix := "  "
-			if g.menuIndex == i {
-				clr = color.RGBA{255, 255, 0, 255}
-				prefix = "> "
-			}
-			gr.graphics.DrawTextAt(screen, prefix+opt, mx+100, my+80+i*35, clr, 18)
-		}
-		instr := "Press ENTER to select"
-		itw, _ := gr.graphics.MeasureText(instr, 14)
-		gr.graphics.DrawTextAt(screen, instr, mx+(mw-int(itw))/2, my+mh-30, color.RGBA{136, 136, 136, 255}, 14)
-	}
-
-	// Save Message (Bottom Center)
-	if g.saveMessageTimer > 0 {
-		msg := g.saveMessage
-		sttw, _ := gr.graphics.MeasureText(msg, 18)
-		gr.graphics.DrawTextAt(screen, msg, (g.width-int(sttw))/2, g.height-40, color.RGBA{218, 165, 32, 255}, 18)
-	}
-
-	// Objective Arrow (Direction pointer)
-	gr.drawObjectiveArrow(screen)
-}
-
-func (gr *GameRenderer) drawObjectiveArrow(screen engine.Image) {
-	g := gr.game
-	targetX, targetY := 0.0, 0.0
-	hasTarget := false
-
-	switch g.currentMapType.Type {
-	case ObjReachPortal, ObjReachZone, ObjReachBuilding, ObjProtectNPC, ObjDestroyBuilding:
-		targetX, targetY = g.currentMapType.TargetPoint.X, g.currentMapType.TargetPoint.Y
-		hasTarget = true
-	case ObjKillVIP:
-		// Target the first alive enemy NPC
-		for _, n := range g.npcs {
-			if n.Alignment == AlignmentEnemy && n.IsAlive() {
-				targetX, targetY = n.X, n.Y
-				hasTarget = true
-				break
-			}
-		}
-	}
-
-	if !hasTarget {
-		return
-	}
-
-	// Calculate screen direction for more intuitive movement
-	dx := targetX - g.playableCharacter.X
-	dy := targetY - g.playableCharacter.Y
-	dist := math.Sqrt(dx*dx + dy*dy)
-
-	// Hide if very close
-	if dist < 4.0 {
-		return
-	}
-
-	// Red Arrow in Top-Right
-	arrowX := float64(g.width - 50)
-	arrowY := 120.0
-
-	// We need to convert Cartesian direction to Screen direction for the compass
-	// iso = x - y, y = (x + y) * 0.5
-	screenDX := dx - dy
-	screenDY := (dx + dy) * 0.5
-	screenAngle := math.Atan2(screenDY, screenDX)
-
-	size := 15.0
-	p1 := engine.Point{X: arrowX + math.Cos(screenAngle)*size, Y: arrowY + math.Sin(screenAngle)*size}
-	p2 := engine.Point{X: arrowX + math.Cos(screenAngle+2.5)*size*0.7, Y: arrowY + math.Sin(screenAngle+2.5)*size*0.7}
-	p3 := engine.Point{X: arrowX + math.Cos(screenAngle-2.5)*size*0.7, Y: arrowY + math.Sin(screenAngle-2.5)*size*0.7}
-
-	// Shadow
-	p1s := engine.Point{X: p1.X + 2, Y: p1.Y + 2}
-	p2s := engine.Point{X: p2.X + 2, Y: p2.Y + 2}
-	p3s := engine.Point{X: p3.X + 2, Y: p3.Y + 2}
-	gr.graphics.DrawFilledPolygon(screen, []engine.Point{p1s, p2s, p3s}, color.RGBA{0, 0, 0, 150}, true)
-	// Red Arrow
-	gr.graphics.DrawFilledPolygon(screen, []engine.Point{p1, p2, p3}, color.RGBA{220, 20, 60, 255}, true)
-}
-
-func (gr *GameRenderer) drawDebug(screen engine.Image, offsetX, offsetY float64) {
-	red := color.RGBA{255, 0, 0, 255}
-	green := color.RGBA{0, 255, 0, 255}
-	cyan := color.RGBA{0, 255, 255, 255}
-
-	// Helper to draw a Cartesian polygon in Isometric space
-	drawPolygon := func(poly engine.Polygon, clr color.Color) {
-		isoPoints := make([]engine.Point, len(poly.Points))
-		for i, p := range poly.Points {
-			ix, iy := engine.CartesianToIso(p.X, p.Y)
-			isoPoints[i] = engine.Point{X: ix + offsetX, Y: iy + offsetY}
-		}
-		gr.graphics.DrawPolygon(screen, isoPoints, clr, 1.0)
-	}
-
-	// Obstacles: Cyan
-	for _, o := range gr.game.obstacles {
-		drawPolygon(o.GetFootprint(), cyan)
-	}
-
-	// NPCs
-	for _, n := range gr.game.npcs {
-		clr := red // Default: Enemy
-		if n.Alignment == AlignmentAlly {
-			clr = green
-		} else if n.Alignment == AlignmentNeutral {
-			clr = cyan
-		}
-		drawPolygon(n.GetFootprint(), clr)
-	}
-
-	// Player: Green
-	drawPolygon(gr.game.playableCharacter.GetFootprint(), green)
-}
-
-func (gr *GameRenderer) drawHoverInfo(screen engine.Image) {
-	g := gr.game
-	mx, my := g.input.MousePosition()
-	offsetX, offsetY := g.camera.GetOffsets(g.width, g.height)
-
-	// Check NPCs
-	for _, n := range g.npcs {
-		if !n.IsAlive() {
-			continue
-		}
-		isoX, isoY := engine.CartesianToIso(n.X, n.Y)
-		scrX, scrY := isoX+offsetX, isoY+offsetY
-
-		// Radius check for hover (offset by head height roughly)
-		dist := math.Sqrt(math.Pow(float64(mx)-scrX, 2) + math.Pow(float64(my)-scrY+40, 2))
-		if dist < 40 {
-			if n.Archetype != nil && n.Archetype.Description != "" {
-				gr.drawInfoBox(screen, n.Name, n.Archetype.Description, mx, my)
-				return // Only one info box at a time
-			}
-		}
-	}
-}
-
-func (gr *GameRenderer) drawInfoBox(screen engine.Image, title, desc string, x, y int) {
-	// Draw a dark translucent box
-	boxW, boxH := 300.0, 160.0
-	bx, by := float32(x+20), float32(y+20)
-
-	// Keep on screen
-	if float64(bx)+boxW > float64(gr.game.width) {
-		bx = float32(float64(x) - boxW - 20)
-	}
-	if float64(by)+boxH > float64(gr.game.height) {
-		by = float32(float64(y) - boxH - 20)
-	}
-
-	gr.graphics.DrawFilledRect(screen, bx-2, by-2, float32(boxW+4), float32(boxH+4), color.RGBA{218, 165, 32, 255}, false)
-	gr.graphics.DrawFilledRect(screen, bx, by, float32(boxW), float32(boxH), color.RGBA{0, 0, 0, 240}, false)
-	gr.graphics.DebugPrintAt(screen, title, int(bx)+10, int(by)+10, color.RGBA{218, 165, 32, 255})
-
-	// Wrap text manually for DebugPrint (it doesn't wrap)
-	words := strings.Fields(desc)
-	line := ""
-	lineNum := 0
-	for _, w := range words {
-		if len(line)+len(w) > 35 {
-			gr.graphics.DebugPrintAt(screen, line, int(bx)+10, int(by)+35+lineNum*15, color.White)
-			line = w + " "
-			lineNum++
-		} else {
-			line += w + " "
-		}
-	}
-	gr.graphics.DebugPrintAt(screen, line, int(bx)+10, int(by)+35+lineNum*15, color.White)
-}
-func (gr *GameRenderer) drawCampaignSelect(screen engine.Image) {
-	g := gr.game
-	// Black background
-	gr.graphics.DrawFilledRect(screen, 0, 0, float32(g.width), float32(g.height), color.Black, false)
-
-	// Title
-	title := "OINAKOS: SELECT YOUR JOURNEY"
-	tw, _ := gr.graphics.MeasureText(title, 32)
-	gr.graphics.DrawTextAt(screen, title, (g.width-int(tw))/2, 50, color.RGBA{218, 165, 32, 255}, 32)
-
-	col1X := 100
-	col2X := g.width / 2
-
-	gr.graphics.DrawTextAt(screen, "--- CAMPAIGNS ---", col1X-20, 100, color.RGBA{150, 150, 150, 255}, 18)
-	gr.graphics.DrawTextAt(screen, "--- MAPS ---", col2X-20, 100, color.RGBA{150, 150, 150, 255}, 18)
-
-	nC := len(g.campaignRegistry.IDs)
-	nM := len(g.mapTypeRegistry.IDs)
-	y := 130
-
-	// Draw campaigns in the first column
-	for i, id := range g.campaignRegistry.IDs {
-		camp := g.campaignRegistry.Campaigns[id]
-		var clr color.Color = color.White
-		prefix := "  "
-		if g.campaignMenuIndex == i {
-			clr = color.RGBA{255, 255, 0, 255}
-			prefix = "> "
-		}
-		gr.graphics.DrawTextAt(screen, prefix+camp.Name, col1X, y+i*30, clr, 16)
-	}
-
-	// Draw maps in the second column, possibly wrapping around if there are too many
-	for i, id := range g.mapTypeRegistry.IDs {
-		m := g.mapTypeRegistry.Types[id]
-		var clr color.Color = color.White
-		prefix := "  "
-		idx := nC + i
-		if g.campaignMenuIndex == idx {
-			clr = color.RGBA{150, 255, 150, 255}
-			prefix = "> "
-		}
-
-		// Calculate row and column wrapping (max ~15 items per column)
-		colOffset := col2X
-		rowOffset := i
-		if i > 15 {
-			colOffset += 250 // Shift to a third column if there are tons of maps
-			rowOffset = i - 16
-		}
-
-		gr.graphics.DrawTextAt(screen, prefix+m.Name, colOffset, y+rowOffset*30, clr, 16)
-	}
-
-	// Quit option at bottom
-	var clr color.Color = color.White
-	prefix := "  "
-	if g.campaignMenuIndex == nC+nM {
-		clr = color.RGBA{255, 0, 0, 255}
-		prefix = "> "
-	}
-	quitText := prefix + "QUIT"
-	qw, _ := gr.graphics.MeasureText(quitText, 24)
-	gr.graphics.DrawTextAt(screen, quitText, (g.width-int(qw))/2, g.height-90, clr, 24)
-
-	msg := "Press UP/DOWN to navigate, ENTER to begin."
-	mw, _ := gr.graphics.MeasureText(msg, 14)
-	gr.graphics.DrawTextAt(screen, msg, (g.width-int(mw))/2, g.height-50, color.RGBA{136, 136, 136, 255}, 14)
-}
-
-func (gr *GameRenderer) drawMainMenu(screen engine.Image) {
-	g := gr.game
-	// Black background
-	gr.graphics.DrawFilledRect(screen, 0, 0, float32(g.width), float32(g.height), color.Black, false)
-
-	// Large Title
-	title := "OINAKOS"
-	tw, _ := gr.graphics.MeasureText(title, 60)
-	gr.graphics.DrawTextAt(screen, title, (g.width-int(tw))/2, 150, color.RGBA{218, 165, 32, 255}, 60)
-
-	subtitle := "A KNIGHT'S PATH"
-	stw, _ := gr.graphics.MeasureText(subtitle, 24)
-	gr.graphics.DrawTextAt(screen, subtitle, (g.width-int(stw))/2, 220, color.RGBA{150, 150, 150, 255}, 24)
-
-	options := []string{"NEW GAME", "LOAD GAME", "SETTINGS", "QUIT"}
-
-	for i, opt := range options {
-		var clr color.Color = color.White
-		prefix := "  "
-		if g.mainMenuIndex == i {
-			clr = color.RGBA{255, 255, 0, 255}
-			prefix = "> "
-		}
-		label := prefix + opt
-		lw, _ := gr.graphics.MeasureText(label, 32)
-		gr.graphics.DrawTextAt(screen, label, (g.width-int(lw))/2, 350+i*60, clr, 32)
-	}
-
-	gr.graphics.DrawTextAt(screen, "v0.9.0-alpha", 20, g.height-30, color.RGBA{80, 80, 80, 255}, 14)
-}
-
-func (gr *GameRenderer) drawSettingsScreen(screen engine.Image) {
-	g := gr.game
-	gr.graphics.DrawFilledRect(screen, 0, 0, float32(g.width), float32(g.height), color.Black, false)
-
-	title := "SETTINGS"
-	tw, _ := gr.graphics.MeasureText(title, 40)
-	gr.graphics.DrawTextAt(screen, title, (g.width-int(tw))/2, 100, color.RGBA{218, 165, 32, 255}, 40)
-
-	rows := []string{"Font Style", "Sound Effects", "Fog of War", "Save and Back"}
-	for i, row := range rows {
-		var clr color.Color = color.White
-		prefix := "  "
-		if g.settingsMenuIndex == i {
-			clr = color.RGBA{255, 255, 0, 255}
-			prefix = "> "
-		}
-
-		label := prefix + row
-		if i == 0 {
-			label += fmt.Sprintf(": [%s]", strings.ToUpper(FontOptions[g.settingsFontIndex]))
-		} else if i == 1 {
-			label += fmt.Sprintf(": [%s]", strings.ToUpper(FrequencyOptions[g.settingsAudioIndex]))
-		} else if i == 2 {
-			label += fmt.Sprintf(": [%s]", strings.ToUpper(FogOfWarOptions[g.settingsFogIndex]))
-		}
-
-		lw, _ := gr.graphics.MeasureText(label, 24)
-		gr.graphics.DrawTextAt(screen, label, (g.width-int(lw))/2, 250+i*60, clr, 24)
-	}
-
-	hint := "UP/DOWN to navigate, LEFT/RIGHT to change value, ENTER to confirm."
-	hw, _ := gr.graphics.MeasureText(hint, 14)
-	gr.graphics.DrawTextAt(screen, hint, (g.width-int(hw))/2, g.height-100, color.RGBA{136, 136, 136, 255}, 14)
-}
-
-func (gr *GameRenderer) drawCharacterSelect(screen engine.Image) {
-	g := gr.game
-	// Black background
-	gr.graphics.DrawFilledRect(screen, 0, 0, float32(g.width), float32(g.height), color.Black, false)
-
-	// Title
-	title := "OINAKOS: CHOOSE YOUR HERO"
-	tw, _ := gr.graphics.MeasureText(title, 32)
-	gr.graphics.DrawTextAt(screen, title, (g.width-int(tw))/2, 50, color.RGBA{218, 165, 32, 255}, 32)
-
-	mx, my := g.input.MousePosition()
-	hoverIndex := -1
-
-	for i, id := range g.playableCharacterRegistry.IDs {
-		char := g.playableCharacterRegistry.Characters[id]
-		var clr color.Color = color.White
-		prefix := "  "
-
-		// Mouse hover detection: X in [100, 400], Y in [130+i*30-5, 130+i*30+25]
-		if mx >= 100 && mx <= 400 && my >= 130+i*30-5 && my <= 130+i*30+25 {
-			hoverIndex = i
-		}
-
-		if g.characterMenuIndex == i {
-			clr = color.RGBA{255, 255, 0, 255}
-			prefix = "> "
-
-			// Draw full info for selected hero
-			gr.drawHeroPreview(screen, char, g.width/2+50, 130)
-		}
-		gr.graphics.DrawTextAt(screen, prefix+char.Name, 100, 130+i*35, clr, 18)
-	}
-	// Back button
-	var clrBack color.Color = color.White
-	prefixBack := "  "
-	if g.characterMenuIndex == len(g.playableCharacterRegistry.IDs) {
-		clrBack = color.RGBA{255, 255, 0, 255}
-		prefixBack = "> "
-	}
-	gr.graphics.DrawTextAt(screen, prefixBack+"BACK", 100, 130+len(g.playableCharacterRegistry.IDs)*35+20, clrBack, 18)
-
-	// If hovering but not selecting via keyboard, we can optionally show preview or update index.
-	// But usually we want mouse and keyboard to stay in sync.
-	if hoverIndex != -1 {
-		// We don't update g.characterMenuIndex here directly, but handle it in Game.Update
-		// However, for visual feedback we could highlight it.
-	}
-
-	msg := "Press UP/DOWN to navigate, ENTER to select hero."
-	mw, _ := gr.graphics.MeasureText(msg, 14)
-	gr.graphics.DrawTextAt(screen, msg, (g.width-int(mw))/2, g.height-50, color.RGBA{136, 136, 136, 255}, 14)
-}
-
-func (gr *GameRenderer) drawHeroPreview(screen engine.Image, char *EntityConfig, x, y int) {
-	gr.graphics.DrawTextAt(screen, "--- HERO PROFILE ---", x, y, color.RGBA{218, 165, 32, 255}, 20)
-
-	// Portrait
-	if char.StaticImage != nil {
-		img := char.StaticImage.(engine.Image)
-		op := engine.NewDrawImageOptions()
-		op.Scale(1.5, 1.5)
-		op.Translate(float64(x), float64(y+30))
-		screen.DrawImage(img, op)
-	}
-
-	statsX := x + 180
-	statsY := y + 40
-	gr.graphics.DrawTextAt(screen, fmt.Sprintf("Health:  %d", char.Stats.HealthMin), statsX, statsY, color.White, 16)
-	gr.graphics.DrawTextAt(screen, fmt.Sprintf("Attack:  %d", char.Stats.BaseAttack), statsX, statsY+25, color.White, 16)
-	gr.graphics.DrawTextAt(screen, fmt.Sprintf("Defense: %d", char.Stats.BaseDefense), statsX, statsY+50, color.White, 16)
-	gr.graphics.DrawTextAt(screen, fmt.Sprintf("Speed:   %.2f", char.Stats.Speed), statsX, statsY+75, color.White, 16)
-	gr.graphics.DrawTextAt(screen, fmt.Sprintf("Weapon:  %s", char.WeaponName), statsX, statsY+100, color.White, 16)
-
-	// Description
-	gr.graphics.DrawTextAt(screen, "--- BIOGRAPHY ---", x, y+230, color.RGBA{218, 165, 32, 255}, 20)
-	words := strings.Fields(char.Description)
-	line := ""
-	lineNum := 0
-	for _, w := range words {
-		if len(line)+len(w) > 40 {
-			gr.graphics.DrawTextAt(screen, line, x, y+260+lineNum*20, color.White, 14)
-			line = w + " "
-			lineNum++
-		} else {
-			line += w + " "
-		}
-	}
-	gr.graphics.DrawTextAt(screen, line, x, y+260+lineNum*20, color.White, 14)
-}
-
-func (gr *GameRenderer) drawGameWon(screen engine.Image) {
-	g := gr.game
-	// Semi-transparent overlay
-	gr.graphics.DrawFilledRect(screen, 0, 0, float32(g.width), float32(g.height), color.RGBA{0, 0, 0, 200}, false)
-
-	title := "YOU WIN!"
-	if g.isCampaign {
-		title = "CAMPAIGN COMPLETED: YOU WIN!"
-	}
-	tw, _ := gr.graphics.MeasureText(title, 40)
-	gr.graphics.DrawTextAt(screen, title, (g.width-int(tw))/2, 100, color.RGBA{218, 165, 32, 255}, 40)
-
-	options := []string{"Replay", "Quit"}
-	for i, opt := range options {
-		var clr color.Color = color.White
-		prefix := "  "
-		if g.mapWonMenuIndex == i {
-			clr = color.RGBA{255, 255, 0, 255}
-			prefix = "> "
-		}
-		gr.graphics.DrawTextAt(screen, prefix+opt, g.width/2-50, 200+i*40, clr, 20)
-	}
-}
-
-func (gr *GameRenderer) getTileAt(x, y int) engine.Image {
-	key := fmt.Sprintf("%d_%d", x, y)
-
-	if tilePath, ok := gr.coordCache[key]; ok {
-		return gr.tileCache[tilePath]
-	}
-
-	resolvedTile := gr.game.currentMapType.FloorTile
-	highestPriority := -1
-
-	for _, zone := range gr.game.currentMapType.FloorZones {
-		if zone.Priority > highestPriority {
-			if zone.Contains(float64(x), float64(y)) {
-				resolvedTile = zone.Tile
-				highestPriority = zone.Priority
-			}
-		}
-	}
-
-	// Variant Hashing for Grass (Anti-Tiling) applies to all standard floors now
-	switch resolvedTile {
-	case "grass.png", "mud.png", "paved_ground.png", "dirt.png", "big_stones.png",
-		"wheat_field.png", "desert_sand.png", "yellow_grass.png", "dry_ground.png",
-		"water.png", "dark_water.png":
-		
-		hash := (x*73856093 ^ y*19349663)
-		if hash < 0 {
-			hash = -hash
-		}
-		variant := hash % 3
-		if variant == 1 {
-			resolvedTile = resolvedTile[:len(resolvedTile)-4] + "_2.png"
-		} else if variant == 2 {
-			resolvedTile = resolvedTile[:len(resolvedTile)-4] + "_3.png"
-		}
-	}
-
-	gr.coordCache[key] = resolvedTile
-
-	if _, ok := gr.tileCache[resolvedTile]; !ok {
-		floorPath := path.Join("assets/images/floors", resolvedTile)
-		loaded := gr.graphics.LoadSprite(gr.game.assets, floorPath, true)
-		gr.tileCache[resolvedTile] = loaded
-	}
-
-	return gr.tileCache[resolvedTile]
-}
-
-func (gr *GameRenderer) drawFog(screen engine.Image) {
-	g := gr.game
-	if g.settings == nil || g.settings.FogOfWar == "none" {
-		return
-	}
-
-	if g.playableCharacter.Tick%60 == 0 {
-		DebugLog("Fog Mode: %s | Explored: %d", g.settings.FogOfWar, len(g.ExploredTiles))
-	}
-
-	w, h := screen.Size()
-	if gr.fogImage == nil {
-		gr.fogImage = gr.graphics.NewImage(w, h)
-	}
-
-	gr.fogImage.Fill(color.Black)
-
-	offsetX, offsetY := g.camera.GetOffsets(g.width, g.height)
-	px, py := g.playableCharacter.X, g.playableCharacter.Y
-	isoX, isoY := engine.CartesianToIso(px, py)
-
-	// Invert the darkness mask by "erasing" areas
-	op := engine.NewDrawImageOptions()
-	op.Blend = engine.BlendDestinationOut
-
-	if g.settings.FogOfWar == "vision" {
-		// Draw torch at player position
-		tw, th := gr.torchImage.Size()
-		op.GeoM.Translate(isoX+offsetX-float64(tw/2), isoY+offsetY-float64(th/2))
-		gr.fogImage.DrawImage(gr.torchImage, op)
-	} else if g.settings.FogOfWar == "exploration" {
-		// Draw all explored tiles as white-ish squares on the mask to erase fog
-		for pt := range g.ExploredTiles {
-			eisoX, eisoY := engine.CartesianToIso(float64(pt.X), float64(pt.Y))
-			scrX, scrY := eisoX+offsetX, eisoY+offsetY
-			
-			// Culling
-			if scrX < -64 || scrX > float64(g.width)+64 || scrY < -64 || scrY > float64(g.height)+64 {
-				continue
-			}
-			
-			// Erase a chunk
-			rectOp := engine.NewDrawImageOptions()
-			rectOp.Blend = engine.BlendDestinationOut
-			rectOp.GeoM.Scale(64.0/3.0, 32.0/3.0) // emptyImage is 3x3
-			rectOp.GeoM.Translate(scrX-32, scrY-16)
-			gr.fogImage.DrawImage(gr.emptyImage, rectOp)
-		}
-		
-		// To make the transition smoother, we always draw the torch too
-		tw, th := gr.torchImage.Size()
-		op.GeoM.Reset()
-		op.GeoM.Translate(isoX+offsetX-float64(tw/2), isoY+offsetY-float64(th/2))
-		gr.fogImage.DrawImage(gr.torchImage, op)
-	}
-
-	// Draw the resulting fog overlay to screen
-	screen.DrawImage(gr.fogImage, nil)
-}
-
-func generateTorchImage(g engine.Graphics, radius int) engine.Image {
-	size := radius * 2
-	img := image.NewRGBA(image.Rect(0, 0, size, size))
-	for y := 0; y < size; y++ {
-		for x := 0; x < size; x++ {
-			dx := float64(x - radius)
-			dy := float64(y - radius)
-			distSq := dx*dx + dy*dy
-			radSq := float64(radius * radius)
-			if distSq < radSq {
-				// Linear falloff for the radial gradient
-				alpha := uint8(255 * (1 - math.Sqrt(distSq/radSq)))
-				img.SetRGBA(x, y, color.RGBA{255, 255, 255, alpha})
-			}
-		}
-	}
-	return g.NewImageFromImage(img)
-}
-func (gr *GameRenderer) drawQuitConfirmation(screen engine.Image) {
-	g := gr.game
-	// Dark overlay
-	gr.graphics.DrawFilledRect(screen, 0, 0, float32(g.width), float32(g.height), color.RGBA{0, 0, 0, 200}, false)
-
-	// Panel
-	pw, ph := 400, 200
-	px, py := (g.width-pw)/2, (g.height-ph)/2
-	gr.graphics.DrawFilledRect(screen, float32(px), float32(py), float32(pw), float32(ph), color.RGBA{30, 30, 30, 255}, false)
-
-	// Border
-	gr.graphics.DrawLine(screen, float32(px), float32(py), float32(px+pw), float32(py), color.White, 2)
-	gr.graphics.DrawLine(screen, float32(px+pw), float32(py), float32(px+pw), float32(py+ph), color.White, 2)
-	gr.graphics.DrawLine(screen, float32(px+pw), float32(py+ph), float32(px), float32(py+ph), color.White, 2)
-	gr.graphics.DrawLine(screen, float32(px), float32(py+ph), float32(px), float32(py), color.White, 2)
-
-	// Text
-	msg := "Really quit?"
-	tw, _ := gr.graphics.MeasureText(msg, 24)
-	gr.graphics.DrawTextAt(screen, msg, px+(pw-int(tw))/2, py+50, color.White, 24)
-
-	// Options
-	options := []string{"Yes, quit", "No, stay here"}
-	for i, opt := range options {
-		var clr color.Color = color.White
-		if i == g.quitConfirmationIndex {
-			clr = color.RGBA{255, 255, 0, 255} // Yellow for selected
-		}
-		gr.graphics.DrawTextAt(screen, opt, px+100, py+100+i*40, clr, 20)
 	}
 }

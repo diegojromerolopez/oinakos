@@ -34,7 +34,7 @@ func TestUpdateChunks(t *testing.T) {
 	g.playableCharacter.Y = 100
 
 	// Procedural updateChunks is now a no-op (disabled per user request)
-	g.updateChunks()
+	g.worldManager.UpdateChunks()
 	if len(g.generatedChunks) != 0 {
 		t.Error("No chunks should be created (procedural spawning disabled)")
 	}
@@ -57,6 +57,7 @@ func TestGameWinMenu(t *testing.T) {
 		isMapWon:        true,
 		mapWonMenuIndex: 0,
 	}
+	g.worldManager = NewWorldManager(g)
 
 	// This test essentially checks that the logic added exists and doesn't panic.
 	// We can't easily mock inpututil in standard tests without a lot of setup,
@@ -80,7 +81,7 @@ func TestSpawningLogic(t *testing.T) {
 	// Trigger spawn cycle
 	// The new logic requires ticking until threshold
 	for i := 0; i < 10; i++ {
-		g.updateNPCSpawning()
+		g.worldManager.UpdateNPCSpawning()
 	}
 
 	if len(g.npcs) == 0 {
