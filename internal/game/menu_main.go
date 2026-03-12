@@ -73,10 +73,8 @@ func (mh *MenuHandler) updateMainMenu() error {
 			g.isMainMenu = false
 			g.isSettingsScreen = true
 		case 3: // Quit
-			if !g.isWasm() {
-				g.isQuitConfirmationOpen = true
-				g.quitConfirmationIndex = 1
-			}
+			g.isQuitConfirmationOpen = true
+			g.quitConfirmationIndex = 1
 		}
 	}
 

@@ -5,9 +5,11 @@ import (
 	"io/fs"
 	"log"
 	"path"
+	"runtime"
 	"sort"
 
 	"oinakos/internal/engine"
+	"sync/atomic"
 )
 
 // GameRenderer handles the Ebiten-dependent rendering of the game.
@@ -44,10 +46,26 @@ func NewGameRenderer(g *Game, assets fs.FS, graphics engine.Graphics) *GameRende
 }
 
 func (gr *GameRenderer) LoadAssets(assets fs.FS) {
-	gr.game.archetypeRegistry.LoadAssets(assets, gr.graphics)
-	gr.game.playableCharacterRegistry.LoadAssets(assets, gr.graphics)
-	gr.game.obstacleRegistry.LoadAssets(assets, gr.graphics)
-	gr.game.npcRegistry.LoadAssets(assets, gr.graphics, gr.game.archetypeRegistry)
+	g := gr.game
+	g.LoadingMessage = "Initializing Oinakos..."
+	atomic.StoreInt32(&g.LoadingProgress, 50)
+	g.archetypeRegistry.LoadAssets(assets, gr.graphics, &g.LoadingProgress)
+	
+	atomic.StoreInt32(&g.LoadingProgress, 300)
+	g.LoadingMessage = "Preparing Heroes..."
+	g.playableCharacterRegistry.LoadAssets(assets, gr.graphics, &g.LoadingProgress)
+	
+	atomic.StoreInt32(&g.LoadingProgress, 500)
+	g.LoadingMessage = "Loading Environment..."
+	g.obstacleRegistry.LoadAssets(assets, gr.graphics, &g.LoadingProgress)
+	
+	atomic.StoreInt32(&g.LoadingProgress, 700)
+	g.LoadingMessage = "Populating World..."
+	g.npcRegistry.LoadAssets(assets, gr.graphics, g.archetypeRegistry, &g.LoadingProgress)
+	
+	atomic.StoreInt32(&g.LoadingProgress, 900)
+	g.LoadingMessage = "Finalizing Graphics..."
+	runtime.Gosched()
 
 	var err error
 	gr.PaletteShader, err = gr.graphics.NewShader(paletteSwapShaderSource)
@@ -83,9 +101,10 @@ func (gr *GameRenderer) LoadAssets(assets fs.FS) {
 		addJob("hit2.png", &mc.Config.Hit2Image)
 
 		if len(jobs) > 0 {
-			loadSpritesParallel(assets, jobs, gr.graphics)
-		}
+	loadSpritesParallel(assets, jobs, gr.graphics, &g.LoadingProgress)
+}
 	}
+	atomic.StoreInt32(&g.LoadingProgress, 1000)
 }
 
 func (gr *GameRenderer) Draw(screen engine.Image) {
@@ -94,6 +113,10 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 		return
 	}
 	g := gr.game
+	if atomic.LoadInt32(&g.LoadingProgress) < 1000 {
+		gr.drawLoadingProgress(screen)
+		return
+	}
 	offsetX, offsetY := g.camera.GetOffsets(g.width, g.height)
 
 	if g.isMainMenu {

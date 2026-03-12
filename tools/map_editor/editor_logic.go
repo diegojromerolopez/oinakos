@@ -19,7 +19,7 @@ func (m *MapEditor) loadLibrary() {
 
 	obsReg := game.NewObstacleRegistry()
 	if err := obsReg.LoadAll(assets); err == nil {
-		obsReg.LoadAssets(assets, m.Graphics)
+		obsReg.LoadAssets(assets, m.Graphics, nil)
 		for _, id := range obsReg.IDs {
 			arch := obsReg.Archetypes[id]
 			var img engine.Image
@@ -37,7 +37,7 @@ func (m *MapEditor) loadLibrary() {
 
 	npcReg := game.NewArchetypeRegistry()
 	if err := npcReg.LoadAll(assets); err == nil {
-		npcReg.LoadAssets(assets, m.Graphics)
+		npcReg.LoadAssets(assets, m.Graphics, nil)
 		for _, id := range npcReg.IDs {
 			arch := npcReg.Archetypes[id]
 			var img engine.Image

@@ -6,7 +6,11 @@ import (
 	"log"
 	"math"
 	"math/rand"
+	"runtime"
 	"strings"
+	"sync/atomic"
+	"time"
+
 	"oinakos/internal/engine"
 )
 
@@ -19,6 +23,7 @@ func NewWorldManager(g *Game) *WorldManager {
 }
 
 func (wm *WorldManager) LoadMapAudio() {
+	startTime := time.Now()
 	g := wm.game
 	configs := make(map[string]*EntityConfig)
 
@@ -62,9 +67,9 @@ func (wm *WorldManager) LoadMapAudio() {
 		collect(s.Archetype, false)
 	}
 
-	if g.currentMapType.Type == ObjKillVIP {
-		for _, arch := range g.archetypeRegistry.Archetypes {
-			configs[arch.ID] = arch
+	for _, n := range g.npcs {
+		if n.Config != nil {
+			configs[n.Config.ID] = n.Config
 		}
 	}
 
@@ -78,11 +83,22 @@ func (wm *WorldManager) LoadMapAudio() {
 			continue
 		}
 		for _, e := range entries {
-			if e.IsDir() || !strings.HasSuffix(strings.ToLower(e.Name()), ".wav") {
+			if e.IsDir() {
 				continue
 			}
-			stem := e.Name()[:len(e.Name())-4]
+			lowerName := strings.ToLower(e.Name())
+			if !strings.HasSuffix(lowerName, ".mp3") && !strings.HasSuffix(lowerName, ".wav") {
+				continue
+			}
+			extLen := 4
+			if strings.HasSuffix(lowerName, ".mp3") {
+				extLen = 4
+			}
+			stem := e.Name()[:len(e.Name())-extLen]
 			key := conf.ID + "/" + stem
+			if engine.GlobalAudio != nil && engine.GlobalAudio.HasSound(key) {
+				continue
+			}
 			jobs = append(jobs, &AudioLoadJob{
 				Name: key,
 				Path: conf.AudioDir + "/" + e.Name(),
@@ -92,13 +108,31 @@ func (wm *WorldManager) LoadMapAudio() {
 
 	if len(jobs) > 0 {
 		DebugLog("Parallel Loading %d audio files for map...", len(jobs))
-		loadAudioParallel(g.assets, jobs)
+		loadAudioParallel(g.assets, jobs, &g.LoadingProgress)
 	}
+	log.Printf("LoadMapAudio: processed %d jobs in %v", len(jobs), time.Since(startTime))
 }
 
 func (wm *WorldManager) LoadMapLevel() {
 	g := wm.game
-	if g.isCampaign && g.currentCampaign != nil {
+	if atomic.LoadInt32(&g.LoadingProgress) < 1000 {
+		return // Already loading
+	}
+	atomic.StoreInt32(&g.LoadingProgress, 0)
+	g.LoadingMessage = "Loading Map..."
+	if g.isCampaign {
+		g.LoadingMessage = "Loading Campaign..."
+	}
+	log.Printf("Starting Async Map Load: %s", g.LoadingMessage)
+
+	startTime := time.Now()
+	go func() {
+		defer func() {
+			atomic.StoreInt32(&g.LoadingProgress, 1000)
+			log.Printf("Async Map Load Complete. Total Time: %v", time.Since(startTime))
+		}()
+
+		if g.isCampaign && g.currentCampaign != nil {
 		if g.campaignIndex < len(g.currentCampaign.Maps) {
 			mapID := g.currentCampaign.Maps[g.campaignIndex]
 			if m, ok := g.mapTypeRegistry.Types[mapID]; ok {
@@ -252,23 +286,42 @@ func (wm *WorldManager) LoadMapLevel() {
 		}
 	}
 
-	for _, po := range g.currentMapType.Obstacles {
-		if po.Disabled { continue }
+	for i, po := range g.currentMapType.Obstacles {
+		if po.Disabled {
+			continue
+		}
 		arch := po.Archetype
-		if po.ArchetypeID != "" { arch = po.ArchetypeID }
+		if po.ArchetypeID != "" {
+			arch = po.ArchetypeID
+		}
 		if config, ok := g.obstacleRegistry.Archetypes[arch]; ok {
 			px, py := 0.0, 0.0
-			if po.X != nil { px = *po.X }
-			if po.Y != nil { py = *po.Y }
+			if po.X != nil {
+				px = *po.X
+			}
+			if po.Y != nil {
+				py = *po.Y
+			}
 			g.obstacles = append(g.obstacles, NewObstacle(po.ID, px, py, config))
+		}
+		if i%10 == 0 {
+			runtime.Gosched()
 		}
 	}
 
 	for _, n := range g.npcs {
-		if !n.IsAlive() { continue }
+		if !n.IsAlive() {
+			continue
+		}
 		for i := 0; i < 500; i++ {
-			if !n.checkCollisionAt(n.X, n.Y, g.obstacles) { break }
-			n.X += 0.5; n.Y += 0.5
+			if !n.checkCollisionAt(n.X, n.Y, g.obstacles) {
+				break
+			}
+			n.X += 0.5
+			n.Y += 0.5
+			if i%50 == 0 {
+				runtime.Gosched()
+			}
 		}
 	}
 
@@ -277,10 +330,14 @@ func (wm *WorldManager) LoadMapLevel() {
 		angle := float64(i) * 0.3; dist := 1.0 + (float64(i) * 0.2)
 		g.playableCharacter.X += math.Cos(angle) * dist
 		g.playableCharacter.Y += math.Sin(angle) * dist
+		if i%25 == 0 {
+			runtime.Gosched()
+		}
 	}
 
-	DebugLog("Starting Map Level %d: %s at safe pos %.2f,%.2f", g.mapLevel, g.currentMapType.Name, g.playableCharacter.X, g.playableCharacter.Y)
-	wm.LoadMapAudio()
+		DebugLog("Starting Map Level %d: %s at safe pos %.2f,%.2f", g.mapLevel, g.currentMapType.Name, g.playableCharacter.X, g.playableCharacter.Y)
+		wm.LoadMapAudio()
+	}()
 }
 
 func (wm *WorldManager) UpdateChunks() {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image/color"
 	"strings"
+	"sync/atomic"
 	"oinakos/internal/engine"
 )
 
@@ -326,4 +327,27 @@ func (gr *GameRenderer) drawGameWon(screen engine.Image) {
 		}
 		gr.graphics.DrawTextAt(screen, prefix+opt, g.width/2-50, 200+i*40, clr, 20)
 	}
+}
+func (gr *GameRenderer) drawLoadingProgress(screen engine.Image) {
+	g := gr.game
+	// Reverted to black background as requested
+	gr.graphics.DrawFilledRect(screen, 0, 0, float32(g.width), float32(g.height), color.Black, false)
+
+	msg := g.LoadingMessage
+	if msg == "" {
+		msg = "LOADING OINAKOS..."
+	}
+	
+	tw, _ := gr.graphics.MeasureText(msg, 32)
+	gr.graphics.DrawTextAt(screen, msg, (g.width-int(tw))/2, g.height/2, color.RGBA{218, 165, 32, 255}, 32)
+
+	hint := "Please wait while assets are being prepared"
+	hw, _ := gr.graphics.MeasureText(hint, 14)
+	gr.graphics.DrawTextAt(screen, hint, (g.width-int(hw))/2, g.height/2+50, color.RGBA{180, 180, 180, 255}, 14)
+
+	// Minimal tech indicator at the bottom
+	prog := atomic.LoadInt32(&g.LoadingProgress)
+	percent := fmt.Sprintf("LOADING PROGRESS: %d%%", int(float64(prog)/10.0))
+	pw, _ := gr.graphics.MeasureText(percent, 12)
+	gr.graphics.DrawTextAt(screen, percent, g.width-int(pw)-20, g.height-30, color.RGBA{100, 100, 100, 255}, 12)
 }

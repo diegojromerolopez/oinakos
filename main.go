@@ -110,7 +110,7 @@ func main() {
 	}
 
 	gr := game.NewGameRenderer(g, finalAssets, eg)
-	gr.LoadAssets(finalAssets)
+	go gr.LoadAssets(finalAssets)
 
 	ebiten.SetWindowSize(1280, 720)
 	ebiten.SetWindowTitle("Oinakos")

@@ -55,6 +55,8 @@ type EntityConfig struct {
 	Hit1Image    interface{} `yaml:"-"` // hit1.png (first variant)
 	Hit2Image    interface{} `yaml:"-"` // hit2.png (second variant, requires hit1.png)
 	Weapon       *Weapon     `yaml:"-"`
+
+	CachedBaseFootprint *engine.Polygon `yaml:"-"`
 }
 
 func (e *EntityConfig) PickAttackImage(seed int) engine.Image {
@@ -90,16 +92,23 @@ func (e *EntityConfig) PickHitImage(seed int) engine.Image {
 }
 
 func (c *EntityConfig) GetFootprint() engine.Polygon {
+	if c.CachedBaseFootprint != nil {
+		return *c.CachedBaseFootprint
+	}
+
+	var poly engine.Polygon
 	if len(c.Footprint) == 0 {
-		return engine.Polygon{Points: []engine.Point{
+		poly = engine.Polygon{Points: []engine.Point{
 			{X: -0.15, Y: -0.15}, {X: 0.15, Y: -0.15},
 			{X: 0.15, Y: 0.15}, {X: -0.15, Y: 0.15},
 		}}
+	} else {
+		poly = engine.Polygon{Points: make([]engine.Point, len(c.Footprint))}
+		for i, p := range c.Footprint {
+			poly.Points[i] = engine.Point{X: p.X, Y: p.Y}
+		}
 	}
-	poly := engine.Polygon{Points: make([]engine.Point, len(c.Footprint))}
-	for i, p := range c.Footprint {
-		poly.Points[i] = engine.Point{X: p.X, Y: p.Y}
-	}
+	c.CachedBaseFootprint = &poly
 	return poly
 }
 
@@ -117,7 +126,7 @@ func NewArchetypeRegistry() *ArchetypeRegistry {
 	}
 }
 
-func (r *ArchetypeRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics) {
+func (r *ArchetypeRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, progress *int32) {
 	var jobs []*SpriteLoadJob
 	for _, config := range r.Archetypes {
 		if config.AssetDir == "" {
@@ -141,7 +150,7 @@ func (r *ArchetypeRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics) {
 		addJob("hit1.png", &config.Hit1Image)
 		addJob("hit2.png", &config.Hit2Image)
 	}
-	loadSpritesParallel(assets, jobs, graphics)
+	loadSpritesParallel(assets, jobs, graphics, progress)
 }
 
 func (r *ArchetypeRegistry) LoadAll(assets fs.FS) error {
@@ -232,7 +241,7 @@ func (r *PlayableCharacterRegistry) LoadAll(assets fs.FS) error {
 	})
 }
 
-func (r *PlayableCharacterRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics) {
+func (r *PlayableCharacterRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, progress *int32) {
 	var jobs []*SpriteLoadJob
 	for _, config := range r.Characters {
 		if config.AssetDir == "" {
@@ -256,7 +265,7 @@ func (r *PlayableCharacterRegistry) LoadAssets(assets fs.FS, graphics engine.Gra
 		addJob("hit1.png", &config.Hit1Image)
 		addJob("hit2.png", &config.Hit2Image)
 	}
-	loadSpritesParallel(assets, jobs, graphics)
+	loadSpritesParallel(assets, jobs, graphics, progress)
 }
 
 type NPCRegistry struct {
@@ -271,7 +280,8 @@ func NewNPCRegistry() *NPCRegistry {
 	}
 }
 
-func (r *NPCRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *ArchetypeRegistry) {
+func (r *NPCRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *ArchetypeRegistry, progress *int32) {
+	var jobs []*SpriteLoadJob
 	for _, config := range r.NPCs {
 		lookupID := config.ArchetypeID
 		if config.Gender != "" && !strings.Contains(config.ArchetypeID, config.Gender) {
@@ -288,135 +298,69 @@ func (r *NPCRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *
 			config.SoundID = config.ID
 		}
 
-		if config.AudioDir != "" {
-			if entries, err := fs.ReadDir(assets, config.AudioDir); err == nil {
-				for _, e := range entries {
-					if !e.IsDir() && strings.HasSuffix(strings.ToLower(e.Name()), ".wav") {
-						config.SoundID = config.ID
-						break
-					}
-				}
-			}
-		}
-
-		if !ok {
-			if config.Unique {
-				DebugLog("Unique NPC %s has no archetype, using self-contained config", config.ID)
-			} else if config.ArchetypeID != "" {
-				log.Printf("Warning: NPC %s uses unknown archetype %s. Proceeding with self-contained config.", config.ID, config.ArchetypeID)
-			}
-		}
-
+		// Fallback stats/colors/sounds from archetype...
 		if arch != nil {
-			if config.Stats.HealthMin == 0 {
-				config.Stats.HealthMin = arch.Stats.HealthMin
-			}
-			if config.Stats.HealthMax == 0 {
-				config.Stats.HealthMax = arch.Stats.HealthMax
-			}
-			if config.Stats.Speed == 0 {
-				config.Stats.Speed = arch.Stats.Speed
-			}
-			if config.Stats.BaseAttack == 0 {
-				config.Stats.BaseAttack = arch.Stats.BaseAttack
-			}
-			if config.Stats.ProjectileSpeed == 0 {
-				config.Stats.ProjectileSpeed = arch.Stats.ProjectileSpeed
-			}
-			if config.Stats.AttackCooldown == 0 {
-				config.Stats.AttackCooldown = arch.Stats.AttackCooldown
-			}
-			if config.Stats.BaseDefense == 0 {
-				config.Stats.BaseDefense = arch.Stats.BaseDefense
-			}
-
-			if config.PrimaryColor == "" {
-				config.PrimaryColor = arch.PrimaryColor
-			}
-			if config.SecondaryColor == "" {
-				config.SecondaryColor = arch.SecondaryColor
-			}
-
-			if len(config.Footprint) == 0 {
-				config.Footprint = arch.Footprint
-			}
+			if config.Stats.HealthMin == 0 { config.Stats.HealthMin = arch.Stats.HealthMin }
+			if config.Stats.HealthMax == 0 { config.Stats.HealthMax = arch.Stats.HealthMax }
+			if config.Stats.Speed == 0 { config.Stats.Speed = arch.Stats.Speed }
+			if config.Stats.BaseAttack == 0 { config.Stats.BaseAttack = arch.Stats.BaseAttack }
+			if config.Stats.ProjectileSpeed == 0 { config.Stats.ProjectileSpeed = arch.Stats.ProjectileSpeed }
+			if config.Stats.AttackCooldown == 0 { config.Stats.AttackCooldown = arch.Stats.AttackCooldown }
+			if config.Stats.BaseDefense == 0 { config.Stats.BaseDefense = arch.Stats.BaseDefense }
+			if config.PrimaryColor == "" { config.PrimaryColor = arch.PrimaryColor }
+			if config.SecondaryColor == "" { config.SecondaryColor = arch.SecondaryColor }
+			if len(config.Footprint) == 0 { config.Footprint = arch.Footprint }
 			if config.WeaponName == "" {
 				config.WeaponName = arch.WeaponName
 				config.Weapon = arch.Weapon
 			}
 		}
 
-		staticPath := path.Join(config.AssetDir, "static.png")
-		backPath := path.Join(config.AssetDir, "back.png")
-		corpsePath := path.Join(config.AssetDir, "corpse.png")
-
-		if arch != nil {
-			if _, err := fs.Stat(assets, staticPath); err != nil {
-				config.StaticImage = arch.StaticImage
-			}
-			if _, err := fs.Stat(assets, backPath); err != nil {
-				config.BackImage = arch.BackImage
-			}
-			if _, err := fs.Stat(assets, corpsePath); err != nil {
-				config.CorpseImage = arch.CorpseImage
-			}
-		}
-
+		// Collect jobs
 		if config.AssetDir != "" {
-			if _, err := fs.Stat(assets, staticPath); err == nil {
-				config.StaticImage = graphics.LoadSprite(assets, staticPath, true)
-			} else if config.Unique {
+			addJob := func(filename string, target *interface{}, fallback interface{}) {
+				fpath := path.Join(config.AssetDir, filename)
+				if _, err := fs.Stat(assets, fpath); err == nil {
+					jobs = append(jobs, &SpriteLoadJob{Path: fpath, Dest: target})
+				} else {
+					*target = fallback
+				}
+			}
+			
+			var archStatic, archBack, archCorpse interface{}
+			if arch != nil {
+				archStatic, archBack, archCorpse = arch.StaticImage, arch.BackImage, arch.CorpseImage
+			}
+
+			addJob("static.png", &config.StaticImage, archStatic)
+			// Special case for unique NPCs without their own assets
+			if config.StaticImage == nil && config.Unique {
 				charDir := path.Join("assets/images/characters", config.ID)
-				charStaticPath := path.Join(charDir, "static.png")
-				if _, err := fs.Stat(assets, charStaticPath); err == nil {
+				if _, err := fs.Stat(assets, path.Join(charDir, "static.png")); err == nil {
 					config.AssetDir = charDir
-					config.StaticImage = graphics.LoadSprite(assets, charStaticPath, true)
-					staticPath = charStaticPath
-					backPath = path.Join(charDir, "back.png")
-					corpsePath = path.Join(charDir, "corpse.png")
+					jobs = append(jobs, &SpriteLoadJob{Path: path.Join(charDir, "static.png"), Dest: &config.StaticImage})
+					jobs = append(jobs, &SpriteLoadJob{Path: path.Join(charDir, "back.png"), Dest: &config.BackImage})
+					jobs = append(jobs, &SpriteLoadJob{Path: path.Join(charDir, "corpse.png"), Dest: &config.CorpseImage})
 				}
+			} else {
+				addJob("back.png", &config.BackImage, archBack)
+				addJob("corpse.png", &config.CorpseImage, archCorpse)
 			}
-
-			if config.StaticImage != nil {
-				if _, err := fs.Stat(assets, backPath); err == nil {
-					config.BackImage = graphics.LoadSprite(assets, backPath, true)
-				}
-				if _, err := fs.Stat(assets, corpsePath); err == nil {
-					config.CorpseImage = graphics.LoadSprite(assets, corpsePath, true)
-				}
-				
-				a1p := path.Join(config.AssetDir, "attack.png")
-				if _, err := fs.Stat(assets, a1p); err == nil {
-					config.AttackImage = graphics.LoadSprite(assets, a1p, true)
-				}
-				a1p = path.Join(config.AssetDir, "attack1.png")
-				if _, err := fs.Stat(assets, a1p); err == nil {
-					config.Attack1Image = graphics.LoadSprite(assets, a1p, true)
-				}
-				a2p := path.Join(config.AssetDir, "attack2.png")
-				if _, err := fs.Stat(assets, a2p); err == nil {
-					config.Attack2Image = graphics.LoadSprite(assets, a2p, true)
-				}
-				h1p := path.Join(config.AssetDir, "hit.png")
-				if _, err := fs.Stat(assets, h1p); err == nil {
-					config.HitImage = graphics.LoadSprite(assets, h1p, true)
-				}
-				h1p = path.Join(config.AssetDir, "hit1.png")
-				if _, err := fs.Stat(assets, h1p); err == nil {
-					config.Hit1Image = graphics.LoadSprite(assets, h1p, true)
-				}
-				h2p := path.Join(config.AssetDir, "hit2.png")
-				if _, err := fs.Stat(assets, h2p); err == nil {
-					config.Hit2Image = graphics.LoadSprite(assets, h2p, true)
-				}
+			
+			// Always check for these if dir exists
+			if _, err := fs.Stat(assets, config.AssetDir); err == nil {
+				addJob("attack.png", &config.AttackImage, nil)
+				addJob("attack1.png", &config.Attack1Image, nil)
+				addJob("attack2.png", &config.Attack2Image, nil)
+				addJob("hit.png", &config.HitImage, nil)
+				addJob("hit1.png", &config.Hit1Image, nil)
+				addJob("hit2.png", &config.Hit2Image, nil)
 			}
 		}
-
-		if config.ID == "crimson_guard" {
-			log.Printf("NPC %s: P=%s S=%s staticNil=%v", config.ID, config.PrimaryColor, config.SecondaryColor, config.StaticImage == nil)
-		}
-
 		sanitizeEntityConfig(config, config.ID)
+	}
+	if len(jobs) > 0 {
+		loadSpritesParallel(assets, jobs, graphics, progress)
 	}
 }
 

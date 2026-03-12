@@ -66,7 +66,7 @@ func (r *ObstacleRegistry) LoadAll(assets fs.FS) error {
 	})
 }
 
-func (r *ObstacleRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics) {
+func (r *ObstacleRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, progress *int32) {
 	var jobs []*SpriteLoadJob
 	for _, config := range r.Archetypes {
 		// Derive image path from ID: assets/images/obstacles/<id>.png
@@ -76,5 +76,5 @@ func (r *ObstacleRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics) {
 			Dest: &config.Image,
 		})
 	}
-	loadSpritesParallel(assets, jobs, graphics)
+	loadSpritesParallel(assets, jobs, graphics, progress)
 }

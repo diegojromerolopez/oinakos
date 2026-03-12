@@ -93,7 +93,7 @@ gender: male
 
 	// 4. Run LoadAssets to exercise inheritance logic
 	graphics := &MockGraphicsInheritance{}
-	npcReg.LoadAssets(fsys, graphics, archReg)
+	npcReg.LoadAssets(fsys, graphics, archReg, nil)
 
 	npc := npcReg.NPCs["crimson_guard"]
 
@@ -116,7 +116,7 @@ gender: male
 		AudioDir:    "assets/audio/npcs/golden_guard", // Empty in mock FS
 	}
 	npcReg.NPCs["golden_guard"] = npc2
-	npcReg.LoadAssets(fsys, graphics, archReg)
+	npcReg.LoadAssets(fsys, graphics, archReg, nil)
 
 	if npc2.SoundID != "man_at_arms_male" {
 		t.Errorf("Expected SoundID 'man_at_arms_male' from inheritance, got %q", npc2.SoundID)
@@ -135,7 +135,7 @@ func TestNPC_GenderFallback(t *testing.T) {
 		Gender:      "none",
 	}
 
-	npcReg.LoadAssets(fstest.MapFS{}, &MockGraphicsInheritance{}, archReg)
+	npcReg.LoadAssets(fstest.MapFS{}, &MockGraphicsInheritance{}, archReg, nil)
 
 	if npcReg.NPCs["virculus"].SoundID != "virculus" {
 		t.Errorf("Expected SoundID 'virculus', got %q", npcReg.NPCs["virculus"].SoundID)

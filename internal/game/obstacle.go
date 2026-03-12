@@ -13,6 +13,8 @@ type Obstacle struct {
 	TickCounter   int
 	Alive         bool
 	EffectTimers  map[interface{}]int // Track intervals for hazards/healing per entity
+
+	CachedFootprint *engine.Polygon // Optimization: obstacles don't move, cache world footprint
 }
 
 func NewObstacle(id string, x, y float64, config *ObstacleArchetype) *Obstacle {
@@ -69,15 +71,24 @@ func (o *Obstacle) TakeDamage(amount int) {
 }
 
 func (o *Obstacle) GetFootprint() engine.Polygon {
+	if o.CachedFootprint != nil {
+		return *o.CachedFootprint
+	}
+
+	var poly engine.Polygon
 	if o.Archetype != nil && len(o.Archetype.Footprint) > 0 {
-		poly := engine.Polygon{Points: make([]engine.Point, len(o.Archetype.Footprint))}
+		poly = engine.Polygon{Points: make([]engine.Point, len(o.Archetype.Footprint))}
 		for i, p := range o.Archetype.Footprint {
 			poly.Points[i] = engine.Point{X: p.X, Y: p.Y}
 		}
-		return poly.Transformed(o.X, o.Y)
+	} else {
+		// Absolute fallback for nil archetype or empty footprint.
+		poly = engine.Polygon{Points: []engine.Point{
+			{X: -0.2, Y: -0.2}, {X: 0.2, Y: -0.2}, {X: 0.2, Y: 0.2}, {X: -0.2, Y: 0.2},
+		}}
 	}
-	// Absolute fallback for nil archetype or empty footprint.
-	return engine.Polygon{Points: []engine.Point{
-		{X: -0.2, Y: -0.2}, {X: 0.2, Y: -0.2}, {X: 0.2, Y: 0.2}, {X: -0.2, Y: 0.2},
-	}}.Transformed(o.X, o.Y)
+
+	transformed := poly.Transformed(o.X, o.Y)
+	o.CachedFootprint = &transformed
+	return transformed
 }

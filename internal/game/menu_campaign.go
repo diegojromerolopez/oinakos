@@ -1,7 +1,6 @@
 package game
 
 import (
-	"os"
 	"oinakos/internal/engine"
 )
 
@@ -102,7 +101,7 @@ func (mh *MenuHandler) updateCampaignSelect() error {
 			g.initialMapID = mapID
 			g.worldManager.LoadMapLevel()
 		} else {
-			os.Exit(0)
+			g.CloseWindow()
 		}
 	}
 	if g.input.IsKeyJustPressed(engine.KeyEscape) {

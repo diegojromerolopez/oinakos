@@ -1,7 +1,6 @@
 package game
 
 import (
-	"os"
 	"oinakos/internal/engine"
 )
 
@@ -49,7 +48,7 @@ func (mh *MenuHandler) updateGameWon() error {
 func (mh *MenuHandler) updateGameOver() error {
 	g := mh.game
 	if g.input.IsKeyJustPressed(engine.KeyEscape) {
-		os.Exit(0)
+		g.CloseWindow()
 	}
 	if g.input.IsKeyJustPressed(engine.KeyEnter) || g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft) {
 		*g = *NewGame(g.assets, g.initialMapID, g.initialMapTypeID, g.initialHeroID, g.input, g.audio, g.debug)

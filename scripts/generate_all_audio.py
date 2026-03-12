@@ -108,16 +108,16 @@ def generate_entity_audio(entity_id, category, sub_path, gender="female", force=
     else:
         model = MODEL_PATH_FEMALE
     
-    # hit.wav
-    generate(phrases["hit"], base_audio_dir / "hit.wav", model, force)
+    # hit.mp3
+    generate(phrases["hit"], base_audio_dir / "hit.mp3", model, force)
     
-    # death.wav
-    generate(phrases["death"], base_audio_dir / "death.wav", model, force)
+    # death.mp3
+    generate(phrases["death"], base_audio_dir / "death.mp3", model, force)
     
-    # attack_1..5.wav
+    # attack_1..5.mp3
     for i, line in enumerate(phrases["attack"]):
         if i >= 5: break
-        generate(line, base_audio_dir / f"attack_{i+1}.wav", model, force)
+        generate(line, base_audio_dir / f"attack_{i+1}.mp3", model, force)
 
 def generate(text, output_file, model_path, force=False):
     if output_file.exists() and not force:

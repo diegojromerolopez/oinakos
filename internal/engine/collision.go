@@ -132,15 +132,64 @@ func Transparentize(img image.Image) image.Image {
 	bounds := img.Bounds()
 	newImg := image.NewRGBA(bounds)
 
-	count := 0
+	// Optimization: Direct pixel access if possible
+	if rgba, ok := img.(*image.RGBA); ok {
+		for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+			originalOffset := (y-bounds.Min.Y)*rgba.Stride
+			targetOffset := (y-bounds.Min.Y)*newImg.Stride
+			for x := bounds.Min.X; x < bounds.Max.X; x++ {
+				i := originalOffset + (x-bounds.Min.X)*4
+				ti := targetOffset + (x-bounds.Min.X)*4
+				
+				r, g, b, a := rgba.Pix[i], rgba.Pix[i+1], rgba.Pix[i+2], rgba.Pix[i+3]
+				isLime := false
+				if a > 0 {
+					if g > 160 && float64(g) > float64(r)*1.5 && float64(g) > float64(b)*1.5 {
+						isLime = true
+					}
+				}
+				
+				if isLime {
+					newImg.Pix[ti], newImg.Pix[ti+1], newImg.Pix[ti+2], newImg.Pix[ti+3] = 0, 0, 0, 0
+				} else {
+					newImg.Pix[ti], newImg.Pix[ti+1], newImg.Pix[ti+2], newImg.Pix[ti+3] = r, g, b, a
+				}
+			}
+		}
+		return newImg
+	}
+
+	if nrgba, ok := img.(*image.NRGBA); ok {
+		for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+			originalOffset := (y-bounds.Min.Y)*nrgba.Stride
+			targetOffset := (y-bounds.Min.Y)*newImg.Stride
+			for x := bounds.Min.X; x < bounds.Max.X; x++ {
+				i := originalOffset + (x-bounds.Min.X)*4
+				ti := targetOffset + (x-bounds.Min.X)*4
+				
+				r, g, b, a := nrgba.Pix[i], nrgba.Pix[i+1], nrgba.Pix[i+2], nrgba.Pix[i+3]
+				isLime := false
+				if a > 0 {
+					if g > 160 && float64(g) > float64(r)*1.5 && float64(g) > float64(b)*1.5 {
+						isLime = true
+					}
+				}
+				
+				if isLime {
+					newImg.Pix[ti], newImg.Pix[ti+1], newImg.Pix[ti+2], newImg.Pix[ti+3] = 0, 0, 0, 0
+				} else {
+					newImg.Pix[ti], newImg.Pix[ti+1], newImg.Pix[ti+2], newImg.Pix[ti+3] = r, g, b, a
+				}
+			}
+		}
+		return newImg
+	}
+
+	// Fallback for other image types (slower)
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 			c := img.At(x, y)
 			r, g, b, a := c.RGBA()
-
-			// PROJECT STANDARD: Solid lime green background (#00FF00) removal.
-			// Ebiten/Go use 16-bit RGBA (0-65535).
-			// We use a robust ratio-based approach to catch AI-generated lime.
 			isLime := false
 			if a > 0 {
 				r8, g8, b8 := uint8(r>>8), uint8(g>>8), uint8(b>>8)
@@ -148,10 +197,8 @@ func Transparentize(img image.Image) image.Image {
 					isLime = true
 				}
 			}
-
 			if isLime {
 				newImg.Set(x, y, color.Transparent)
-				count++
 			} else {
 				newImg.Set(x, y, c)
 			}
@@ -161,11 +208,29 @@ func Transparentize(img image.Image) image.Image {
 	return newImg
 }
 
-// CheckCollision returns true if two polygons intersect using SAT.
+// CheckCollision returns true if two polygons intersect.
+// It uses a fast AABB pre-check before falling back to SAT.
 func CheckCollision(p1, p2 Polygon) bool {
+	if len(p1.Points) == 0 || len(p2.Points) == 0 {
+		return false
+	}
+
+	// 1. Fast AABB Check
+	minX1, minY1, maxX1, maxY1 := p1.Bounds()
+	minX2, minY2, maxX2, maxY2 := p2.Bounds()
+
+	if maxX1 < minX2 || maxX2 < minX1 || maxY1 < minY2 || maxY2 < minY1 {
+		return false // No overlap in AABB
+	}
+
+	// 2. SAT Check
 	// Check axes of p1
-	normals1 := p1.GetNormals()
-	for _, axis := range normals1 {
+	for i := 0; i < len(p1.Points); i++ {
+		p1a := p1.Points[i]
+		p1b := p1.Points[(i+1)%len(p1.Points)]
+		// Normal of edge (p1b.X - p1a.X, p1b.Y - p1a.Y) is (-(p1b.Y - p1a.Y), p1b.X - p1a.X)
+		axis := Point{X: -(p1b.Y - p1a.Y), Y: p1b.X - p1a.X}
+		
 		min1, max1 := p1.Project(axis)
 		min2, max2 := p2.Project(axis)
 		if max1 < min2 || max2 < min1 {
@@ -174,8 +239,11 @@ func CheckCollision(p1, p2 Polygon) bool {
 	}
 
 	// Check axes of p2
-	normals2 := p2.GetNormals()
-	for _, axis := range normals2 {
+	for i := 0; i < len(p2.Points); i++ {
+		p2a := p2.Points[i]
+		p2b := p2.Points[(i+1)%len(p2.Points)]
+		axis := Point{X: -(p2b.Y - p2a.Y), Y: p2b.X - p2a.X}
+		
 		min1, max1 := p1.Project(axis)
 		min2, max2 := p2.Project(axis)
 		if max1 < min2 || max2 < min1 {
@@ -183,5 +251,5 @@ func CheckCollision(p1, p2 Polygon) bool {
 		}
 	}
 
-	return true // No gaps found on any axis
+	return true // No gaps found
 }

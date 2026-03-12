@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	_ "image/jpeg"
@@ -99,6 +100,9 @@ type Game struct {
 	menuHandler      *MenuHandler
 	worldManager     *WorldManager
 	mechanicsManager *MechanicsManager
+
+	LoadingProgress int32 // 0 to 1000 representing 0.0 to 1.0
+	LoadingMessage  string
 }
 
 func (g *Game) SetOnFontUpdate(cb func(string)) {
@@ -289,6 +293,9 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID, initialHeroID string,
 
 
 func (g *Game) Update() error {
+	if atomic.LoadInt32(&g.LoadingProgress) < 1000 {
+		return nil
+	}
 	if g.input.IsKeyJustPressed(engine.KeyTab) {
 		g.showBoundaries = !g.showBoundaries
 		g.debug = g.showBoundaries

@@ -129,7 +129,7 @@ func main() {
 
 	obsReg := game.NewObstacleRegistry()
 	if err := obsReg.LoadAll(assets); err == nil {
-		obsReg.LoadAssets(assets, graphics)
+		obsReg.LoadAssets(assets, graphics, nil)
 		for _, id := range obsReg.IDs {
 			arch := obsReg.Archetypes[id]
 			obs := game.NewObstacle("editor_preview", 0, 0, arch)
@@ -145,7 +145,7 @@ func main() {
 
 	npcReg := game.NewArchetypeRegistry()
 	if err := npcReg.LoadAll(assets); err == nil {
-		npcReg.LoadAssets(assets, graphics)
+		npcReg.LoadAssets(assets, graphics, nil)
 		for _, id := range npcReg.IDs {
 			arch := npcReg.Archetypes[id]
 			npc := game.NewNPC(0, 0, arch, 1)

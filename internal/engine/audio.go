@@ -60,14 +60,23 @@ func (m *AudioManager) LoadSound(name, path string) {
 		return
 	}
 
+	m.LoadSoundFromBytes(name, data)
+}
+
+func (m *AudioManager) LoadSoundFromBytes(name string, data []byte) {
 	if m.audioContext == nil {
-		log.Printf("Warning: audio context is nil, skipping player creation for %s", path)
 		return
 	}
 
+	m.mu.RLock()
+	if _, ok := m.sounds[name]; ok {
+		m.mu.RUnlock()
+		return
+	}
+	m.mu.RUnlock()
+
 	p := m.audioContext.NewPlayerFromBytes(data)
 	if p == nil {
-		log.Printf("Warning: failed to create audio player for %s", path)
 		return
 	}
 
@@ -128,6 +137,13 @@ func DecodeAudioRaw(assets fs.FS, path string) ([]byte, error) {
 		return nil, err
 	}
 	return data, nil
+}
+
+func (m *AudioManager) HasSound(name string) bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	_, ok := m.sounds[name]
+	return ok
 }
 
 func (m *AudioManager) Play(name string) {

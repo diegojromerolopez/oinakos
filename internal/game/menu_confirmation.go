@@ -1,7 +1,6 @@
 package game
 
 import (
-	"os"
 	"oinakos/internal/engine"
 )
 
@@ -38,9 +37,7 @@ func (mh *MenuHandler) updateQuitConfirmation() error {
 
 	if handleSelect {
 		if g.quitConfirmationIndex == 0 { // Yes, quit
-			if !g.isWasm() {
-				os.Exit(0)
-			}
+			g.CloseWindow()
 		} else { // No, stay here
 			g.isQuitConfirmationOpen = false
 		}

@@ -22,3 +22,7 @@ func (g *Game) loadFromLocalStorage() ([]byte, error) {
 func (g *Game) isWasm() bool {
 	return true
 }
+
+func (g *Game) CloseWindow() {
+	js.Global().Get("window").Call("close")
+}
