@@ -1,7 +1,7 @@
 id: boris_stronesco
 name: Boris Stronesco
 gender: male
-playable: false
+playable: true
 description: "A mysterious Serbian noble who arrived in the port of Cartagena with a cursed coffin. His voyage across Spain left a trail of unexplained deaths and whispers of the undead."
 stats:
   health_min: 120

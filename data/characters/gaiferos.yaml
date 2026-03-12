@@ -1,7 +1,7 @@
 id: gaiferos
 name: Gaiferos
 gender: male
-playable: false
+playable: true
 description: "The fiercely independent Paladin of Charlemagne's court. Famous for his solo rescue of his wife Melisendra from the Saracen kingdom of Sansueña."
 stats:
   health_min: 105

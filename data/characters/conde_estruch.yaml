@@ -1,7 +1,7 @@
 id: conde_estruch
 name: Conde Estruch
 gender: male
-playable: false
+playable: true
 description: "The 'Dracula of Catalonia'. Wilfred Estruch was a 12th-century knight who returned from death as a vampire to terrorize Llers Castle. A powerful blood-drinking noble."
 stats:
   health_min: 90
