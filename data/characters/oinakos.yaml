@@ -1,6 +1,7 @@
 id: oinakos
 name: Oinakos
 gender: male
+playable: true
 description: "The lead hero. A mysterious knight whose path is forged in iron and ancient duty."
 stats:
   health_min: 100

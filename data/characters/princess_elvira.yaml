@@ -1,6 +1,7 @@
 id: princess_elvira
 name: Princess Elvira
 gender: female
+playable: false
 description: "Daughter of the Queen, she secretly defied her mother to join Conde Olinos in his hunt. Trained in cursed magic and grim swordcraft, she seeks to cleanse her family name."
 stats:
   health_min: 300

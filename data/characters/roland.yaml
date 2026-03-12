@@ -1,6 +1,7 @@
 id: roland
 name: Roland
 gender: male
+playable: false
 description: "The legendary Count of the Breton March and Paladin of Charlemagne. Hero of the Battle of Roncevaux, he wields the unbreakable sword Durandal and embodies chivalric courage."
 stats:
   health_min: 110

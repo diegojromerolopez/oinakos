@@ -500,6 +500,7 @@ type EntityConfig struct {
 	Group          string           `yaml:"group,omitempty"`
 	LeaderID       string           `yaml:"leader,omitempty"`
 	MustSurvive    bool             `yaml:"must_survive,omitempty"`
+	Playable       bool             `yaml:"playable,omitempty"`
 
 	// Run-time loaded assets
 	AssetDir     string      `yaml:"-"`
@@ -688,7 +689,9 @@ func (r *PlayableCharacterRegistry) LoadAll(assets fs.FS) error {
 		config.Weapon = GetWeaponByName(config.WeaponName)
 
 		r.Characters[config.ID] = &config
-		r.IDs = append(r.IDs, config.ID)
+		if config.Playable {
+			r.IDs = append(r.IDs, config.ID)
+		}
 		return nil
 	})
 }

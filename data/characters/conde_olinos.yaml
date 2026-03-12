@@ -1,6 +1,7 @@
 id: conde_olinos
 name: Conde Olinos
 gender: male
+playable: false
 description: "A tragic noble from early Spanish ballads. Known for his enchanting song that moved the sea and the princess alike. Killed by a jealous queen, his spirit is said to live on in nature."
 stats:
   health_min: 100
