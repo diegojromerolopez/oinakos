@@ -1,7 +1,7 @@
 # Dynamic Audio System: Adaptive Music & SFX Polish
 
 ## Overview
-Music is a key component to an atmospheric, immersive experience like *Hades* or *Diablo*. Currently, Oinakos supports basic, localized SFX, but lacks a musical soundscape. The game needs an adaptive soundtrack that matches the escalating tension of infinite exploration.
+Music is a key component to an atmospheric, immersive experience like classical late 90s RPGs. Currently, Oinakos supports basic, localized SFX, but lacks a musical soundscape. The game needs an adaptive soundtrack that matches the escalating tension of infinite exploration.
 
 ## Implementation Steps
 1. **Audio Player Overhaul**:
