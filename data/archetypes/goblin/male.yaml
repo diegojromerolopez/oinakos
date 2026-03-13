@@ -24,3 +24,34 @@ footprint:
   - x: -0.28
     y: 0.53
 xp: 5
+
+dialogues:
+  player_greetings:
+    - "Wait, little one."
+    - "Don't shoot!"
+  combat_barks:
+    - "Hehehe! You look slow!"
+    - "Hold still, tall-thing!"
+    - "More shinies for us!"
+    - "Stab! Stab! Hehe!"
+    - "You run, we shoot!"
+  start_scenarios:
+    - weight: 1.0
+      text: "Shiny! You have many shiny things... maybe you give? Maybe I not shoot?"
+      choices:
+        - text: "I have no gold for you."
+          next: "no_gold"
+        - text: "What do you know about this place?"
+          next: "place_talk"
+
+  no_gold:
+    text: "No shiny? No life! Just kidding... for now. Go away, tall-thing."
+    choices:
+      - text: "Fine."
+        next: "exit"
+
+  place_talk:
+    text: "Place is full of bigger things. Things that eat Goblins. Things that eat tall-things too."
+    choices:
+      - text: "Thanks for the tip."
+        next: "exit"

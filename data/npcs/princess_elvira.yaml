@@ -6,3 +6,28 @@ description: "Daughter of the Queen, she secretly defied her mother to join Cond
 xp: 0
 group: "player_faction"
 must_survive: true
+
+dialogues:
+  player_greetings:
+    - "Your Highness."
+    - "Princess Elvira, shouldn't you be at the palace?"
+  start_scenarios:
+    - weight: 1.0
+      text: "The palace is a gilded cage. Here, with the wind and the fear... I finally feel alive."
+      choices:
+        - text: "Your mother will be furious."
+          next: "queen_talk"
+        - text: "Be careful. This is no game."
+          next: "warning_talk"
+
+  queen_talk:
+    text: "She has her kingdom. I have my life. They are not the same thing."
+    choices:
+      - text: "I understand."
+        next: "exit"
+
+  warning_talk:
+    text: "I know the risks. I've spent years studying the maps. I am not the porcelain doll they think I am."
+    choices:
+      - text: "I believe you."
+        next: "exit"

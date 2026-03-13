@@ -70,7 +70,7 @@ func TestNPCBoundaries(t *testing.T) {
 	n.WanderDirY = 0.0
 	// Force wandering logic
 	n.Tick = 1 // Not a 120 multiple so it doesn't pick new dir
-	n.Update(nil, nil, []*NPC{n}, nil, nil, mapW, mapH, nil)
+	n.Update(nil, nil, []*NPC{n}, nil, nil, mapW, mapH, nil, nil)
 
 	if n.X > 5.0 {
 		t.Errorf("NPC moved beyond +X boundary: got %f, want <= 5.0", n.X)
@@ -80,7 +80,7 @@ func TestNPCBoundaries(t *testing.T) {
 	n.X, n.Y = -4.5, 0
 	n.WanderDirX = -1.0
 	n.WanderDirY = 0.0
-	n.Update(nil, nil, []*NPC{n}, nil, nil, mapW, mapH, nil)
+	n.Update(nil, nil, []*NPC{n}, nil, nil, mapW, mapH, nil, nil)
 
 	if n.X < -5.0 {
 		t.Errorf("NPC moved beyond -X boundary: got %f, want >= -5.0", n.X)
@@ -90,7 +90,7 @@ func TestNPCBoundaries(t *testing.T) {
 	n.X, n.Y = 0, 4.5
 	n.WanderDirX = 0.0
 	n.WanderDirY = 1.0
-	n.Update(nil, nil, []*NPC{n}, nil, nil, mapW, mapH, nil)
+	n.Update(nil, nil, []*NPC{n}, nil, nil, mapW, mapH, nil, nil)
 
 	if n.Y > 5.0 {
 		t.Errorf("NPC moved beyond +Y boundary: got %f, want <= 5.0", n.Y)
@@ -100,7 +100,7 @@ func TestNPCBoundaries(t *testing.T) {
 	n.X, n.Y = 0, -4.5
 	n.WanderDirX = 0.0
 	n.WanderDirY = -1.0
-	n.Update(nil, nil, []*NPC{n}, nil, nil, mapW, mapH, nil)
+	n.Update(nil, nil, []*NPC{n}, nil, nil, mapW, mapH, nil, nil)
 
 	if n.Y < -5.0 {
 		t.Errorf("NPC moved beyond -Y boundary: got %f, want >= -5.0", n.Y)
@@ -108,7 +108,7 @@ func TestNPCBoundaries(t *testing.T) {
 
 	// 5. Teleport outside and check if it clamps anyway
 	n.X, n.Y = 100, 100
-	n.Update(nil, nil, []*NPC{n}, nil, nil, mapW, mapH, nil)
+	n.Update(nil, nil, []*NPC{n}, nil, nil, mapW, mapH, nil, nil)
 	if n.X > 5.0 || n.Y > 5.0 {
 		t.Errorf("Teleported NPC still outside boundaries after Update: got (%f, %f), want (<=5.0, <=5.0)", n.X, n.Y)
 	}

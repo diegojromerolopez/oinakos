@@ -29,3 +29,34 @@ footprint:
   - x: -0.16
     y: 0.78
 xp: 11
+
+dialogues:
+  player_greetings:
+    - "Hold on, Orc."
+    - "I mean no harm."
+  combat_barks:
+    - "Bathe the earth in their blood!"
+    - "No mercy for the soft-ones!"
+    - "Your head will hang from my belt!"
+    - "TASTE MY AXE!"
+    - "The ancestors demand your end!"
+  start_scenarios:
+    - weight: 1.0
+      text: "The bones of my ancestors cry for vengeance. You carry the stench of the civilized world."
+      choices:
+        - text: "I'm not your enemy."
+          next: "not_enemy"
+        - text: "The world is changing."
+          next: "change_talk"
+
+  not_enemy:
+    text: "All who walk are enemies until they prove otherwise. What you bring? Words or blood?"
+    choices:
+      - text: "Words, for now."
+        next: "exit"
+
+  change_talk:
+    text: "Change is a fire. It burns the old to feed the new. We are the fire. You are the wood."
+    choices:
+      - text: "We'll see who burns."
+        next: "exit"

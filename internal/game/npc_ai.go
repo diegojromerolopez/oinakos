@@ -179,8 +179,16 @@ func (n *NPC) findTarget(playableCharacter *PlayableCharacter, allNPCs []*NPC, p
 	return 0, 0, false, false
 }
 
-func (n *NPC) executeAttack(playableCharacter *PlayableCharacter, allNPCs []*NPC, projectiles *[]*Projectile, fts *[]*FloatingText, audio AudioManager, isTargetPlayer bool, dx, dy, dist float64) {
+func (n *NPC) executeAttack(playableCharacter *PlayableCharacter, allNPCs []*NPC, projectiles *[]*Projectile, fts *[]*FloatingText, audio AudioManager, isTargetPlayer bool, dx, dy, dist float64, logFunc func(string, LogCategory)) {
 	if n.State != NPCAttacking && isTargetPlayer {
+		if rand.Float64() < 0.1 { // Reduced probability for barks
+			if n.Archetype != nil && n.Archetype.Dialogues != nil {
+				bark := n.Archetype.Dialogues.PickCombatBark()
+				if bark != "" && logFunc != nil {
+					logFunc(fmt.Sprintf("%s: %s", n.Name, bark), LogNPC)
+				}
+			}
+		}
 		if rand.Float64() < 0.3 {
 			if audio != nil && n.Archetype != nil {
 				audio.PlayRandomSound(n.Archetype.SoundID + "/attack")

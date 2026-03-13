@@ -28,3 +28,35 @@ footprint:
   - x: -0.25
     y: 0.56
 xp: 4
+
+dialogues:
+  player_greetings:
+    - "Excuse me, m'lady."
+    - "Hello there."
+  start_scenarios:
+    - weight: 0.5
+      text: "The wells are turning bitter. I fear for the children."
+      next: "well_talk"
+    - weight: 0.5
+      text: "Another traveler? Be careful, the nights are getting longer."
+      next: "night_talk"
+
+  well_talk:
+    text: "Some say the roots of the Great Oak have reached the abyss. I just think the world is tired."
+    choices:
+      - text: "I'll check the well."
+        next: "exit"
+
+  night_talk:
+    text: "Shadows move even when there's no light. Don't wander too far from the village."
+    choices:
+      - text: "I'm a warrior, I'll be fine."
+        next: "warrior_response"
+      - text: "I'll be careful."
+        next: "exit"
+
+  warrior_response:
+    text: "Steel cannot cut a shadow. Remember that."
+    choices:
+      - text: "I will."
+        next: "exit"

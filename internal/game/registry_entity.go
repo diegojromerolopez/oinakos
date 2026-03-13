@@ -57,6 +57,8 @@ type EntityConfig struct {
 	Weapon       *Weapon     `yaml:"-"`
 
 	CachedBaseFootprint *engine.Polygon `yaml:"-"`
+
+	Dialogues *DialogueRoot `yaml:"dialogues,omitempty"`
 }
 
 func (e *EntityConfig) PickAttackImage(seed int) engine.Image {
@@ -90,6 +92,7 @@ func (e *EntityConfig) PickHitImage(seed int) engine.Image {
 	}
 	return nil
 }
+
 
 func (c *EntityConfig) GetFootprint() engine.Polygon {
 	if c.CachedBaseFootprint != nil {
@@ -331,6 +334,9 @@ func (r *NPCRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *
 			if config.WeaponName == "" {
 				config.WeaponName = arch.WeaponName
 				config.Weapon = arch.Weapon
+			}
+			if config.Dialogues == nil {
+				config.Dialogues = arch.Dialogues
 			}
 		}
 

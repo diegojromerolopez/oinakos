@@ -158,7 +158,7 @@ func TestNPCUpdate_Detailed(t *testing.T) {
 
 	// Test hunter behavior
 	n.Behavior = BehaviorKnightHunter
-	n.Update(mc, nil, nil, &projs, &fts, 100, 100, nil)
+	n.Update(mc, nil, nil, &projs, &fts, 100, 100, nil, nil)
 	// Should move towards mc
 	if n.X == 0 && n.Y == 0 {
 		t.Error("Hunter NPC should move")
@@ -172,7 +172,7 @@ func TestNPCUpdate_Detailed(t *testing.T) {
 	n.X = 0
 	n.Y = 0
 	n.TargetActor = nil
-	n.Update(mc, nil, npcs, &projs, &fts, 100, 100, nil)
+	n.Update(mc, nil, npcs, &projs, &fts, 100, 100, nil, nil)
 	if n.X == 0 && n.Y == 0 {
 		t.Error("Fighter NPC should move towards other NPC")
 	}
@@ -182,7 +182,7 @@ func TestNPCUpdate_Detailed(t *testing.T) {
 	n.Y = otherNpc.Y + 0.1
 	n.TargetActor = &otherNpc.Actor // Ensure it still targets otherNpc
 	n.AttackTimer = 0
-	n.Update(mc, nil, npcs, &projs, &fts, 100, 100, nil)
+	n.Update(mc, nil, npcs, &projs, &fts, 100, 100, nil, nil)
 	if n.State != NPCAttacking {
 		t.Errorf("NPC should be attacking, got state %v", n.State)
 	}
@@ -212,7 +212,7 @@ func TestNPCHitBranch_Detailed(t *testing.T) {
 	n.BaseAttack = 1000
 	mc.BaseDefense = 0
 
-	n.Update(mc, nil, npcs, &projs, &fts, 100, 100, nil)
+	n.Update(mc, nil, npcs, &projs, &fts, 100, 100, nil, nil)
 }
 
 func TestPlayableCharacterTakeDamageDetailed(t *testing.T) {

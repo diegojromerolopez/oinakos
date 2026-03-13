@@ -26,3 +26,11 @@ footprint:
   - x: -0.36
     y: 0.8
 xp: 15
+
+dialogues:
+  combat_barks:
+    - "The void is hungry today!"
+    - "Your screams are music to my ears!"
+    - "Fragile creature... begone!"
+    - "COWER BEFORE ME!"
+    - "I've waited centuries for a soul like yours!"

@@ -24,6 +24,7 @@ type NPC struct {
 	PatrolEndX, PatrolEndY     float64
 	PatrolHeading              bool
 	TargetActor *Actor
+	HasInitiatedDialogue bool
 }
 
 var npcNames = []string{
@@ -111,7 +112,7 @@ func (n *NPC) checkCollisionAt(newX, newY float64, obstacles []*Obstacle) bool {
 	return false
 }
 
-func (n *NPC) Update(playableCharacter *PlayableCharacter, obstacles []*Obstacle, allNPCs []*NPC, projectiles *[]*Projectile, fts *[]*FloatingText, mapW, mapH float64, audio AudioManager) {
+func (n *NPC) Update(playableCharacter *PlayableCharacter, obstacles []*Obstacle, allNPCs []*NPC, projectiles *[]*Projectile, fts *[]*FloatingText, mapW, mapH float64, audio AudioManager, logFunc func(string, LogCategory)) {
 	n.Tick++
 	if n.HitTimer > 0 { n.HitTimer-- }
 	var playerDist float64
@@ -172,7 +173,7 @@ func (n *NPC) Update(playableCharacter *PlayableCharacter, obstacles []*Obstacle
 		if isRanged && dist < attackRange-2.0 {
 			n.executeMovement(dx, dy, obstacles, true)
 		} else {
-			n.executeAttack(playableCharacter, allNPCs, projectiles, fts, audio, isTargetPlayer, dx, dy, dist)
+			n.executeAttack(playableCharacter, allNPCs, projectiles, fts, audio, isTargetPlayer, dx, dy, dist, logFunc)
 		}
 	} else {
 		n.executeMovement(dx, dy, obstacles, false)

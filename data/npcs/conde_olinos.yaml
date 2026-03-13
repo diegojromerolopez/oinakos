@@ -6,3 +6,28 @@ unique: true
 description: "The noble knight and singer. He must survive the hunt."
 xp: 0
 group: "player_faction"
+
+dialogues:
+  player_greetings:
+    - "My Lord."
+    - "Conde Olinos, a song for the road?"
+  start_scenarios:
+    - weight: 1.0
+      text: "Every step is a verse, and the blade is my pen. We march together, but my heart remains with the sea."
+      choices:
+        - text: "Beautifully said."
+          next: "song_talk"
+        - text: "Keep focusing on the path."
+          next: "focus_talk"
+
+  song_talk:
+    text: "Music is the only thing that doesn't bleed in this world. But come, there is work to be done."
+    choices:
+      - text: "Lead the way."
+        next: "exit"
+
+  focus_talk:
+    text: "Steel and strategy... very well. The dreamer in me will sleep for now."
+    choices:
+      - text: "Let's move."
+        next: "exit"

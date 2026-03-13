@@ -255,6 +255,7 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 		} else {
 			gr.drawFog(screen)
 			gr.drawHUD(screen)
+			gr.drawDialogueBox(screen)
 			gr.drawHoverInfo(screen)
 		}
 	}

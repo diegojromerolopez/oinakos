@@ -24,3 +24,33 @@ footprint:
   - x: -0.27
     y: 0.83
 xp: 8
+
+dialogues:
+  player_greetings:
+    - "My respects, Seer."
+    - "The air feels heavy with magic."
+  start_scenarios:
+    - weight: 0.8
+      text: "The stars spoke of a shadow falling upon this land. A shadow that walks on two legs."
+      next: "star_talk"
+    - weight: 0.2
+      text: "Be careful with that weapon. It is but a toy against the real forces at play."
+      next: "weapon_talk"
+
+  star_talk:
+    text: "The alignment of the planes is shifting. It has reached a point of no return."
+    choices:
+      - text: "What can be done?"
+        next: "doom_talk"
+
+  doom_talk:
+    text: "Nothing. We can only witness the end, and perhaps save a few fragments of what we were."
+    choices:
+      - text: "That's a grim view."
+        next: "exit"
+
+  weapon_talk:
+    text: "A sword can cut a throat, but it cannot cut a curse. You will need more than just steel."
+    choices:
+      - text: "I'll find what I need."
+        next: "exit"

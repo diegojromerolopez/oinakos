@@ -104,7 +104,7 @@ func TestNPCAllyFollowing(t *testing.T) {
 	mc := &PlayableCharacter{Actor: Actor{X: 10, Y: 10, State: StateIdle}}
 	
 	// First update should set target to player because they are far away (dist 14.14 > 8.0)
-	n.Update(mc, nil, nil, nil, nil, 100, 100, nil)
+	n.Update(mc, nil, nil, nil, nil, 100, 100, nil, nil)
 	
 	if n.TargetActor != &mc.Actor {
 		t.Errorf("Expected ally NPC to target player for rejoining, got %v", n.TargetActor)
@@ -134,7 +134,7 @@ func TestNPCUpdate_Behaviors(t *testing.T) {
 	// 1. BehaviorKnightHunter (moves towards MC)
 	n.Behavior = BehaviorKnightHunter
 	n.X, n.Y = 0, 0
-	n.Update(mc, nil, allNPCs, &projs, &fts, 100, 100, nil)
+	n.Update(mc, nil, allNPCs, &projs, &fts, 100, 100, nil, nil)
 	if n.X == 0 && n.Y == 0 {
 		t.Error("BehaviorKnightHunter did not move")
 	}
@@ -154,7 +154,7 @@ func TestNPCUpdate_Behaviors(t *testing.T) {
 	n.PatrolHeading = true
 	// Force it to reach the end
 	n.X = 9.9
-	n.Update(mc, nil, allNPCs, &projs, &fts, 100, 100, nil)
+	n.Update(mc, nil, allNPCs, &projs, &fts, 100, 100, nil, nil)
 	if n.PatrolHeading != false {
 		t.Error("BehaviorPatrol should bounce back at end")
 	}
@@ -164,7 +164,7 @@ func TestNPCUpdate_Behaviors(t *testing.T) {
 	n.TargetActor = nil
 	n.X, n.Y = 0, 0
 	n.Tick = 119 // trigger wander pick
-	n.Update(mc, nil, allNPCs, &projs, &fts, 100, 100, nil)
+	n.Update(mc, nil, allNPCs, &projs, &fts, 100, 100, nil, nil)
 	if n.WanderDirX == 0 && n.WanderDirY == 0 {
 		t.Error("BehaviorWander should set new direction")
 	}
@@ -178,7 +178,7 @@ func TestNPCUpdate_Behaviors(t *testing.T) {
 	deadNPC.State = NPCDead
 	allNPCs = []*NPC{n, deadNPC, targetNPC}
 	n.X, n.Y = 0, 0
-	n.Update(mc, nil, allNPCs, &projs, &fts, 100, 100, nil)
+	n.Update(mc, nil, allNPCs, &projs, &fts, 100, 100, nil, nil)
 	if n.TargetActor != &targetNPC.Actor {
 		t.Errorf("BehaviorNpcFighter did not acquire nearest alive NPC. Got %v", n.TargetActor)
 	}
@@ -189,7 +189,7 @@ func TestNPCUpdate_Behaviors(t *testing.T) {
 	mc.X, mc.Y = 20, 20             // Far
 	targetNPC.X, targetNPC.Y = 5, 5 // Near
 	n.X, n.Y = 0, 0
-	n.Update(mc, nil, allNPCs, &projs, &fts, 100, 100, nil)
+	n.Update(mc, nil, allNPCs, &projs, &fts, 100, 100, nil, nil)
 	if n.TargetActor != &targetNPC.Actor {
 		t.Error("BehaviorChaotic should pick the closer NPC over the Player")
 	}
@@ -199,7 +199,7 @@ func TestNPCUpdate_Behaviors(t *testing.T) {
 	mc.X, mc.Y = 5, 5                 // Near
 	targetNPC.X, targetNPC.Y = 20, 20 // Far
 	n.X, n.Y = 0, 0
-	n.Update(mc, nil, allNPCs, &projs, &fts, 100, 100, nil)
+	n.Update(mc, nil, allNPCs, &projs, &fts, 100, 100, nil, nil)
 	if n.TargetActor != &mc.Actor {
 		t.Error("BehaviorChaotic should pick the closer Player over the NPC")
 	}
@@ -238,7 +238,7 @@ func TestNPC_MeleeAttack(t *testing.T) {
 	startHealth := mc.Health
 	for i := 0; i < 100; i++ {
 		n.AttackTimer = 60
-		n.Update(mc, nil, []*NPC{n}, &projs, &fts, 100, 100, nil)
+		n.Update(mc, nil, []*NPC{n}, &projs, &fts, 100, 100, nil, nil)
 		if mc.Health < startHealth {
 			break
 		}
@@ -260,7 +260,7 @@ func TestNPC_MeleeAttack(t *testing.T) {
 	startNpcHealth := targetNPC.Health
 	for i := 0; i < 100; i++ {
 		n.AttackTimer = 60
-		n.Update(mc, nil, []*NPC{n, targetNPC}, &projs, &fts, 100, 100, nil)
+		n.Update(mc, nil, []*NPC{n, targetNPC}, &projs, &fts, 100, 100, nil, nil)
 		if targetNPC.Health < startNpcHealth {
 			break
 		}
@@ -294,7 +294,7 @@ func TestNPC_RangedAttack(t *testing.T) {
 	n.TargetActor = &mc.Actor
 	n.AttackTimer = 60 // Ready to attack
 
-	n.Update(mc, nil, []*NPC{n}, &projs, &fts, 100, 100, nil)
+	n.Update(mc, nil, []*NPC{n}, &projs, &fts, 100, 100, nil, nil)
 
 	if n.State != NPCAttacking {
 		t.Error("Ranged NPC should transition to Attacking state")
@@ -306,7 +306,7 @@ func TestNPC_RangedAttack(t *testing.T) {
 	// Test kiting behavior (too close)
 	mc.X, mc.Y = 1, 0 // Inside minimum range
 	n.X, n.Y = 0, 0
-	n.Update(mc, nil, []*NPC{n}, &projs, &fts, 100, 100, nil)
+	n.Update(mc, nil, []*NPC{n}, &projs, &fts, 100, 100, nil, nil)
 
 	if math.Sqrt(math.Pow(n.X, 2)+math.Pow(n.Y, 2)) == 0 {
 		t.Error("Ranged NPC should kite away when player is too close")

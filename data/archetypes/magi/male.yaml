@@ -24,3 +24,35 @@ footprint:
   - x: -0.16
     y: 0.72
 xp: 8
+
+dialogues:
+  player_greetings:
+    - "Wisdom to you, Magi."
+    - "Can you teach me something?"
+  start_scenarios:
+    - weight: 0.9
+      text: "The flows of magic are chaotic here. I am measuring the ripples."
+      next: "magic_talk"
+    - weight: 0.1
+      text: "Do you seek the truth, or just more steel for your belt?"
+      next: "truth_talk"
+
+  magic_talk:
+    text: "Something is drawing power from the earth. A great void, somewhere to the north."
+    choices:
+      - text: "I'll investigate it."
+        next: "exit"
+
+  truth_talk:
+    text: "The truth is a heavy burden. Most people prefer the comfort of a sharp blade."
+    choices:
+      - text: "I can handle it."
+        next: "exit"
+      - text: "You're right, I just want to survive."
+        next: "survival_talk"
+
+  survival_talk:
+    text: "Survival is the first step toward understanding. Go then, and survive."
+    choices:
+      - text: "Thank you."
+        next: "exit"

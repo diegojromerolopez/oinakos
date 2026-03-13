@@ -24,3 +24,29 @@ footprint:
   - x: -0.25
     y: 0.15
 xp: 160
+
+dialogues:
+  player_greetings:
+    - "Hey, Stultus!"
+    - "What's the word?"
+  start_scenarios:
+    - weight: 1.0
+      text: "You there! Have you seen the red-eyed knight passing through?"
+      auto_initiate: true
+      proximity_range: 3.5
+      choices:
+        - text: "I have. He went toward the cliffs."
+          next: "cliff_warn"
+        - text: "None of your business, old man."
+          next: "insult_path"
+          effects: [{ type: "change_behavior", value: "flee" }]
+  cliff_warn:
+    text: "The cliffs? By the gods... that path is cursed."
+    choices:
+      - text: "Thanks for the warning."
+        next: "exit"
+  insult_path:
+    text: "Fine! I won't waste my breath on you! *runs away*"
+    choices:
+      - text: "Good riddance."
+        next: "exit"

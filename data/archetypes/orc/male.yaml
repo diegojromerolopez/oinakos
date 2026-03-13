@@ -31,3 +31,34 @@ footprint:
   - x: -0.89
     y: -0.05
 xp: 11
+
+dialogues:
+  player_greetings:
+    - "*Grumbles*"
+    - "Stop, Orc."
+  combat_barks:
+    - "Your skin will make a fine banner!"
+    - "Crush the weakling!"
+    - "Die, two-legs!"
+    - "FOR THE HORDE!"
+    - "Fresh meat for the pit!"
+  start_scenarios:
+    - weight: 1.0
+      text: "Human... you smell of weak steel and fear. Why you not running?"
+      choices:
+        - text: "I'm not afraid of you."
+          next: "brave"
+        - text: "I'm just passing through."
+          next: "pass"
+
+  brave:
+    text: "Hah! Many humans say that before they become soup. You different? We see."
+    choices:
+      - text: "We will see."
+        next: "exit"
+
+  pass:
+    text: "Pass? The path belongs to the Strong. You look... medium. Go quickly before I change mind."
+    choices:
+      - text: "Leaving now."
+        next: "exit"

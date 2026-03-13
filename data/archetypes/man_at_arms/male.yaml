@@ -33,3 +33,35 @@ footprint:
   - x: -0.3
     y: 0.3
 xp: 14
+
+dialogues:
+  player_greetings:
+    - "Hail, soldier."
+    - "Ready for a fight?"
+  start_scenarios:
+    - weight: 0.6
+      text: "Keep your blade sharp and your eyes open. The woods are full of things that want to eat you."
+      next: "patrol_talk"
+    - weight: 0.4
+      text: "Another day on the border. Not much coin, but plenty of blood."
+      next: "coin_talk"
+
+  patrol_talk:
+    text: "We're patrolling the perimeter. If you see anything with more than two legs—or less—you let us know."
+    choices:
+      - text: "Understood."
+        next: "exit"
+
+  coin_talk:
+    text: "You look like someone who knows how to handle themselves. If you find any loot, maybe we can strike a deal."
+    choices:
+      - text: "I'll keep that in mind."
+        next: "exit"
+      - text: "I'm not for hire."
+        next: "proud_response"
+
+  proud_response:
+    text: "Hah! Pride doesn't fill a belly. But suit yourself, wanderer."
+    choices:
+      - text: "Stay safe."
+        next: "exit"

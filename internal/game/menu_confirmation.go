@@ -41,12 +41,7 @@ func (mh *MenuHandler) updateQuitConfirmation() error {
 				g.CloseWindow()
 			} else {
 				// Quit to Menu
-				g.isMainMenu = true
-				g.isQuitConfirmationOpen = false
-				g.isMenuOpen = false
-				g.isGameOver = false
-				g.isMapWon = false
-				g.isGameWon = false
+				g.DestroyProgress()
 			}
 		} else { // Option 1: Cancel / Stay
 			g.isQuitConfirmationOpen = false

@@ -26,3 +26,11 @@ footprint:
   - x: -0.36
     y: 0.48
 xp: 15
+
+dialogues:
+  combat_barks:
+    - "Your soul smells of sulfur and fear!"
+    - "Suffer for all eternity!"
+    - "The abyss welcomes you!"
+    - "BURN, MORTAL!"
+    - "I will feast on your despair!"

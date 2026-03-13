@@ -15,6 +15,49 @@ stats:
 weapon: "Wooden Claws"
 alignment: "neutral"
 xp: 50
+dialogues:
+  player_greetings:
+    - "Greetings, traveler!"
+    - "Excuse me, do you have a moment?"
+    - "Hey there!"
+  
+  start_scenarios:
+    - weight: 0.8
+      text: "Ah, a customer! Welcome to my humble patch of dirt. What can I do for you?"
+      next: "main_menu"
+    - weight: 0.2
+      text: "I'm busy... but since you look like you have gold, I'll listen."
+      next: "grumpy_start"
+
+  main_menu:
+    text: "I have the finest trinkets from the eastern wastes."
+    choices:
+      - text: "Show me your wares."
+        next: "trade"
+      - text: "Just passing through."
+        next: "exit"
+
+  trade:
+    text: "My gears are stuck! I cannot open the chest right now. Come back later."
+    choices:
+      - text: "Fine."
+        next: "exit"
+
+  grumpy_start:
+    text: "Well? Speak up. I don't have all day."
+    choices:
+      - text: "Sorry to bother you. I'll leave."
+        next: "exit"
+      - text: "I'm looking for information."
+        next: "intel_path"
+  
+  intel_path:
+    text: "Information? It will cost you. But first, find my missing gear."
+    choices:
+      - text: "I'll look for it."
+        next: "exit"
+      - text: "Forget it."
+        next: "exit"
 footprint:
   - x: -0.3
     y: -0.3
