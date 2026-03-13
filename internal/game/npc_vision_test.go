@@ -29,13 +29,13 @@ func TestNPCAlly_VisionRange(t *testing.T) {
 	var fts []*FloatingText
 
 	// 1. Only far enemy present -> Should follow player (hasTarget=true, target=player)
-	ally.Update(mc, nil, []*NPC{ally, farEnemy}, &projs, &fts, 1000, 1000, audio, nil)
+	ally.Update(mc, nil, []*NPC{ally, farEnemy}, &projs, &fts, 1000, 1000, audio, nil, nil)
 	if ally.TargetActor != nil && ally.TargetActor != &mc.Actor {
 		t.Error("Ally should not target enemy at distance 16 (range is 15)")
 	}
 
 	// 2. Near enemy present -> Should target near enemy
-	ally.Update(mc, nil, []*NPC{ally, farEnemy, nearEnemy}, &projs, &fts, 1000, 1000, audio, nil)
+	ally.Update(mc, nil, []*NPC{ally, farEnemy, nearEnemy}, &projs, &fts, 1000, 1000, audio, nil, nil)
 	if ally.TargetActor != &nearEnemy.Actor {
 		t.Errorf("Ally should have targeted nearEnemy (dist 14), but TargetActor is %v", ally.TargetActor)
 	}
@@ -62,7 +62,7 @@ func TestNPCAlly_TargetPriority(t *testing.T) {
 	var projs []*Projectile
 	var fts []*FloatingText
 
-	ally.Update(mc, nil, []*NPC{ally, enemy1, enemy2}, &projs, &fts, 1000, 1000, audio, nil)
+	ally.Update(mc, nil, []*NPC{ally, enemy1, enemy2}, &projs, &fts, 1000, 1000, audio, nil, nil)
 
 	if ally.TargetActor != &enemy2.Actor {
 		t.Errorf("Ally should target nearest enemy (e2 at dist 5), got %v", ally.TargetActor)
@@ -80,7 +80,7 @@ func TestNPCNeutral_Retaliation(t *testing.T) {
 	audio := NewMockAudioManager()
 
 	// Hit the NPC
-	npc.TakeDamage(10, mc, nil, audio, []*NPC{npc})
+	npc.TakeDamage(10, mc, nil, audio, []*NPC{npc}, nil, nil)
 
 	if npc.Alignment != AlignmentEnemy {
 		t.Error("Neutral NPC should become Enemy after taking damage from player")
@@ -106,7 +106,7 @@ func TestNPCVision_IgnoreDeadTarget(t *testing.T) {
 	var projs []*Projectile
 	var fts []*FloatingText
 
-	npc.Update(mc, nil, []*NPC{npc}, &projs, &fts, 1000, 1000, audio, nil)
+	npc.Update(mc, nil, []*NPC{npc}, &projs, &fts, 1000, 1000, audio, nil, nil)
 
 	if npc.State != NPCIdle {
 		t.Error("Enemy NPC should be Idle if the target (player) is dead")
@@ -158,7 +158,7 @@ func TestNPC_RetaliationNPC(t *testing.T) {
 	}
 
 	// NPC B hits NPC A
-	npcA.TakeDamage(5, nil, npcB, audio, []*NPC{npcA, npcB})
+	npcA.TakeDamage(5, nil, npcB, audio, []*NPC{npcA, npcB}, nil, nil)
 
 	if npcA.TargetActor != &npcB.Actor {
 		t.Errorf("NPC A should target NPC B after taking damage from it, got %v", npcA.TargetActor)
@@ -203,7 +203,7 @@ func TestNPCAlly_RetaliationHostile(t *testing.T) {
 	audio := NewMockAudioManager()
 
 	// Hit the ally
-	ally.TakeDamage(10, mc, nil, audio, []*NPC{ally})
+	ally.TakeDamage(10, mc, nil, audio, []*NPC{ally}, nil, nil)
 
 	if ally.Alignment != AlignmentEnemy {
 		t.Error("Ally NPC should become Enemy after taking damage from player")
@@ -234,7 +234,7 @@ func TestNPC_PathingObstacle(t *testing.T) {
 
 	// NPC at (0,0) wants to go to (10,0). (1,0) is blocked.
 	// It should try to slide or at least NOT move into (1,0).
-	npc.Update(mc, obstacles, []*NPC{npc}, &projs, &fts, 1000, 1000, audio, nil)
+	npc.Update(mc, obstacles, []*NPC{npc}, &projs, &fts, 1000, 1000, audio, nil, nil)
 
 	if npc.X >= 0.6 { // 0.6 would be inside the rock (1.0 - 0.5 = 0.5 is edge)
 		t.Errorf("NPC should be blocked by rock, but reached X=%v", npc.X)

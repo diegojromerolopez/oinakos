@@ -114,7 +114,7 @@ func (mc *PlayableCharacter) TakeDamage(amount int, audio AudioManager) {
 
 // checkCollisionAt is now in Actor.
 
-func (mc *PlayableCharacter) Update(input engine.Input, audio AudioManager, obstacles []*Obstacle, npcs []*NPC, fts *[]*FloatingText, mapW, mapH float64) {
+func (mc *PlayableCharacter) Update(input engine.Input, audio AudioManager, obstacles []*Obstacle, npcs []*NPC, fts *[]*FloatingText, mapW, mapH float64, archs *ArchetypeRegistry, logFunc func(string, LogCategory)) {
 	if mc.State == StateDead {
 		if mc.DeadTimer == 0 {
 			if mc.Config != nil {
@@ -132,7 +132,7 @@ func (mc *PlayableCharacter) Update(input engine.Input, audio AudioManager, obst
 	if mc.State == StateAttacking {
 		mc.Tick++
 		if mc.Tick == 15 {
-			mc.CheckAttackHits(npcs, obstacles, fts, audio)
+			mc.CheckAttackHits(npcs, obstacles, fts, audio, archs, logFunc)
 		}
 		if mc.Tick > 30 {
 			mc.State = StateIdle
@@ -300,7 +300,7 @@ func (mc *PlayableCharacter) Update(input engine.Input, audio AudioManager, obst
 	}
 }
 
-func (mc *PlayableCharacter) CheckAttackHits(npcs []*NPC, obstacles []*Obstacle, fts *[]*FloatingText, audio AudioManager) {
+func (mc *PlayableCharacter) CheckAttackHits(npcs []*NPC, obstacles []*Obstacle, fts *[]*FloatingText, audio AudioManager, archs *ArchetypeRegistry, logFunc func(string, LogCategory)) {
 	attackDist := 0.9
 	atX, atY := mc.X, mc.Y
 
@@ -352,7 +352,7 @@ func (mc *PlayableCharacter) CheckAttackHits(npcs []*NPC, obstacles []*Obstacle,
 				protection := n.GetTotalProtection()
 				finalDmg := int(math.Max(1, float64(rawDmg-protection)))
 				DebugLog("Player attacks NPC %s: HIT for %d damage (roll: %d/%d)", n.Name, finalDmg, roll, hitChance)
-				n.TakeDamage(finalDmg, mc, nil, audio, npcs)
+				n.TakeDamage(finalDmg, mc, nil, audio, npcs, archs, logFunc)
 
 				*fts = append(*fts, &FloatingText{
 					Text:  fmt.Sprintf("-%d", finalDmg),

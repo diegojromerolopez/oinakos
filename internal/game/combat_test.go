@@ -32,7 +32,7 @@ func TestCombatMechanics(t *testing.T) {
 	protection := npc.GetTotalProtection()
 	damage := int(math.Max(1, float64(rawDmg-protection)))
 	_ = hitChance // used in real logic but not here
-	npc.TakeDamage(damage, mc, nil, audio, []*NPC{npc})
+	npc.TakeDamage(damage, mc, nil, audio, []*NPC{npc}, nil, nil)
 
 	// Ensure the expected damage is correct: weapon maxDamage=25, npc protection=0, so 25 dmg
 	if npc.Health != initialNpcHealth-damage {
@@ -56,7 +56,7 @@ func TestCombatMechanics(t *testing.T) {
 	npc2.Health = 1
 	mc.XP = 0
 	mc.Kills = 0
-	npc2.TakeDamage(10, mc, nil, audio, []*NPC{npc2})
+	npc2.TakeDamage(10, mc, nil, audio, []*NPC{npc2}, nil, nil)
 	if npc2.State != NPCDead {
 		t.Fatalf("NPC should be dead")
 	}

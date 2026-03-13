@@ -10,6 +10,7 @@ stats:
   base_defense: 5
   speed: 0.08
   attack_cooldown: 25
+  infecting_probability: 0.9
 weapon: Claws
 footprint:
   - x: -0.2

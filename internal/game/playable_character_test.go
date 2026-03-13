@@ -88,7 +88,7 @@ func TestPlayableCharacterCheckAttackHits(t *testing.T) {
 	npc := &NPC{Actor: Actor{X: 1, Y: 0.5, State: NPCIdle}}
 	npcs := []*NPC{npc}
 	fts := &[]*FloatingText{}
-	mc.CheckAttackHits(npcs, nil, fts, nil)
+	mc.CheckAttackHits(npcs, nil, fts, nil, nil, nil)
 }
 
 func TestPlayableCharacterFootprint(t *testing.T) {
@@ -137,7 +137,7 @@ func TestPlayableCharacterUpdate_Full(t *testing.T) {
 
 	// Update when dead
 	mc.State = StateDead
-	mc.Update(mockInput, nil, nil, nil, fts, 100, 100)
+	mc.Update(mockInput, nil, nil, nil, fts, 100, 100, nil, nil)
 	if mc.State != StateDead {
 		t.Error("Dead mc should stay dead")
 	}
@@ -145,12 +145,12 @@ func TestPlayableCharacterUpdate_Full(t *testing.T) {
 	// Update drinking
 	mc.State = StateDrinking
 	mc.Tick = 0
-	mc.Update(mockInput, nil, nil, nil, fts, 100, 100)
+	mc.Update(mockInput, nil, nil, nil, fts, 100, 100, nil, nil)
 	if mc.State != StateDrinking {
 		t.Error("Should stay drinking")
 	}
 	mc.Tick = 60
-	mc.Update(mockInput, nil, nil, nil, fts, 100, 100)
+	mc.Update(mockInput, nil, nil, nil, fts, 100, 100, nil, nil)
 	if mc.State != StateIdle {
 		t.Error("Should be idle after drink timer")
 	}
@@ -158,12 +158,12 @@ func TestPlayableCharacterUpdate_Full(t *testing.T) {
 	// Update attacking
 	mc.State = StateAttacking
 	mc.Tick = 14
-	mc.Update(mockInput, nil, nil, nil, fts, 100, 100)
+	mc.Update(mockInput, nil, nil, nil, fts, 100, 100, nil, nil)
 	if mc.Tick != 15 {
 		t.Error("Tick should advance")
 	}
 	mc.Tick = 30
-	mc.Update(mockInput, nil, nil, nil, fts, 100, 100)
+	mc.Update(mockInput, nil, nil, nil, fts, 100, 100, nil, nil)
 	if mc.State != StateIdle {
 		t.Error("Should be idle after attack anim")
 	}
@@ -172,7 +172,7 @@ func TestPlayableCharacterUpdate_Full(t *testing.T) {
 	mc.State = StateIdle
 	mockInput.PressedKeys[engine.KeyW] = true
 	mockInput.PressedKeys[engine.KeyD] = true
-	mc.Update(mockInput, nil, nil, nil, fts, 100, 100)
+	mc.Update(mockInput, nil, nil, nil, fts, 100, 100, nil, nil)
 	if mc.State != StateWalking {
 		t.Error("Should be walking on input")
 	}
@@ -184,7 +184,7 @@ func TestPlayableCharacterUpdate_Full(t *testing.T) {
 	mc.Y = 0
 	delete(mockInput.PressedKeys, engine.KeyW)
 	mockInput.PressedKeys[engine.KeyS] = true
-	mc.Update(mockInput, nil, nil, nil, fts, 100, 100)
+	mc.Update(mockInput, nil, nil, nil, fts, 100, 100, nil, nil)
 	if mc.Facing != DirSE {
 		t.Errorf("Expected Facing DirSE, got %v", mc.Facing)
 	}
@@ -193,7 +193,7 @@ func TestPlayableCharacterUpdate_Full(t *testing.T) {
 	mc.X = 1000
 	mc.Y = 1000
 	mockInput.PressedKeys[engine.KeyD] = true // Move right edge
-	mc.Update(mockInput, nil, nil, nil, fts, 100, 100)
+	mc.Update(mockInput, nil, nil, nil, fts, 100, 100, nil, nil)
 	if mc.X > 50 || mc.Y > 50 {
 		t.Error("Position not clamped correctly")
 	}

@@ -32,8 +32,9 @@ func TestSanitizeEntityConfig(t *testing.T) {
 					BaseAttack      int     `yaml:"base_attack"`
 					BaseDefense     int     `yaml:"base_defense"`
 					AttackCooldown  int     `yaml:"attack_cooldown"`
-					AttackRange     float64 `yaml:"attack_range"`
-					ProjectileSpeed float64 `yaml:"projectile_speed"`
+					AttackRange          float64 `yaml:"attack_range"`
+					ProjectileSpeed      float64 `yaml:"projectile_speed"`
+					InfectingProbability float64 `yaml:"infecting_probability"`
 				}{
 					HealthMin: -5,
 					HealthMax: -10,
@@ -56,8 +57,9 @@ func TestSanitizeEntityConfig(t *testing.T) {
 					BaseAttack      int     `yaml:"base_attack"`
 					BaseDefense     int     `yaml:"base_defense"`
 					AttackCooldown  int     `yaml:"attack_cooldown"`
-					AttackRange     float64 `yaml:"attack_range"`
-					ProjectileSpeed float64 `yaml:"projectile_speed"`
+					AttackRange          float64 `yaml:"attack_range"`
+					ProjectileSpeed      float64 `yaml:"projectile_speed"`
+					InfectingProbability float64 `yaml:"infecting_probability"`
 				}{
 					HealthMin: 100,
 					HealthMax: 100,

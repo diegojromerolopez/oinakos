@@ -1,0 +1,29 @@
+id: vampire_female
+name: Vampire (Female)
+gender: female
+names:
+  - Carmilla
+  - Akasha
+  - Selene
+  - Elizabeth
+  - Serana
+  - Rayne
+behavior: hunter
+stats:
+  health_min: 55
+  health_max: 85
+  speed: 0.06
+  base_attack: 14
+  base_defense: 7
+  attack_cooldown: 35
+  infecting_probability: 0.1
+weapon: Claws
+xp: 25
+dialogues:
+  player_greetings:
+    - "So young... so full of life."
+    - "I have not tasted such vitality in centuries."
+  combat_barks:
+    - "Your heart beats so loudly..."
+    - "Joining the eternal night soon?"
+    - "Don't resist... it only hurts more."

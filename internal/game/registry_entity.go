@@ -22,9 +22,10 @@ type EntityConfig struct {
 		Speed           float64 `yaml:"speed"`
 		BaseAttack      int     `yaml:"base_attack"`
 		BaseDefense     int     `yaml:"base_defense"`
-		AttackCooldown  int     `yaml:"attack_cooldown"`
-		AttackRange     float64 `yaml:"attack_range"`
-		ProjectileSpeed float64 `yaml:"projectile_speed"`
+		AttackCooldown      int     `yaml:"attack_cooldown"`
+		AttackRange         float64 `yaml:"attack_range"`
+		ProjectileSpeed     float64 `yaml:"projectile_speed"`
+		InfectingProbability float64 `yaml:"infecting_probability"`
 	} `yaml:"stats"`
 	WeaponName string `yaml:"weapon"`
 
@@ -59,6 +60,22 @@ type EntityConfig struct {
 	CachedBaseFootprint *engine.Polygon `yaml:"-"`
 
 	Dialogues *DialogueRoot `yaml:"dialogues,omitempty"`
+}
+
+func (e *EntityConfig) IsVampire() bool {
+	return e.Stats.InfectingProbability > 0 || strings.Contains(strings.ToLower(e.ID), "vampire")
+}
+
+func (e *EntityConfig) IsConvertibleHuman() bool {
+	id := strings.ToLower(e.ID)
+	if strings.Contains(id, "peasant") || strings.Contains(id, "slave") || id == "male" || id == "female" || id == "man_at_arms_male" {
+		return true
+	}
+	group := strings.ToLower(e.Group)
+	if group == "peasants" || group == "slaves" {
+		return true
+	}
+	return false
 }
 
 func (e *EntityConfig) PickAttackImage(seed int) engine.Image {

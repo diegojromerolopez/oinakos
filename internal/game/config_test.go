@@ -68,6 +68,7 @@ func TestEntityConfig_Inheritance(t *testing.T) {
 			AttackCooldown  int     `yaml:"attack_cooldown"`
 			AttackRange     float64 `yaml:"attack_range"`
 			ProjectileSpeed float64 `yaml:"projectile_speed"`
+			InfectingProbability float64 `yaml:"infecting_probability"`
 		}{HealthMin: 30, HealthMax: 50, BaseAttack: 8, BaseDefense: 4, Speed: 0.03},
 		XP: 11,
 	}

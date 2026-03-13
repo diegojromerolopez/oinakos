@@ -15,7 +15,7 @@ func TestPlayableCharacterBoundaries(t *testing.T) {
 	// 1. Try to move beyond positive X boundary
 	mc.X, mc.Y = 4.5, 0
 	input := &MockInput{PressedKeys: []engine.Key{engine.KeyD}} // Move Right (+X)
-	mc.Update(input, nil, nil, nil, nil, mapW, mapH)
+	mc.Update(input, nil, nil, nil, nil, mapW, mapH, nil, nil)
 
 	if mc.X > 5.0 {
 		t.Errorf("PlayableCharacter moved beyond +X boundary: got %f, want <= 5.0", mc.X)
@@ -24,7 +24,7 @@ func TestPlayableCharacterBoundaries(t *testing.T) {
 	// 2. Try to move beyond negative X boundary
 	mc.X, mc.Y = -4.5, 0
 	input = &MockInput{PressedKeys: []engine.Key{engine.KeyA}} // Move Left (-X)
-	mc.Update(input, nil, nil, nil, nil, mapW, mapH)
+	mc.Update(input, nil, nil, nil, nil, mapW, mapH, nil, nil)
 
 	if mc.X < -5.0 {
 		t.Errorf("PlayableCharacter moved beyond -X boundary: got %f, want >= -5.0", mc.X)
@@ -33,7 +33,7 @@ func TestPlayableCharacterBoundaries(t *testing.T) {
 	// 3. Try to move beyond positive Y boundary
 	mc.X, mc.Y = 0, 4.5
 	input = &MockInput{PressedKeys: []engine.Key{engine.KeyS}} // Move Down (+Y)
-	mc.Update(input, nil, nil, nil, nil, mapW, mapH)
+	mc.Update(input, nil, nil, nil, nil, mapW, mapH, nil, nil)
 
 	if mc.Y > 5.0 {
 		t.Errorf("PlayableCharacter moved beyond +Y boundary: got %f, want <= 5.0", mc.Y)
@@ -42,7 +42,7 @@ func TestPlayableCharacterBoundaries(t *testing.T) {
 	// 4. Try to move beyond negative Y boundary
 	mc.X, mc.Y = 0, -4.5
 	input = &MockInput{PressedKeys: []engine.Key{engine.KeyW}} // Move Up (-Y)
-	mc.Update(input, nil, nil, nil, nil, mapW, mapH)
+	mc.Update(input, nil, nil, nil, nil, mapW, mapH, nil, nil)
 
 	if mc.Y < -5.0 {
 		t.Errorf("PlayableCharacter moved beyond -Y boundary: got %f, want >= -5.0", mc.Y)
@@ -50,7 +50,7 @@ func TestPlayableCharacterBoundaries(t *testing.T) {
 
 	// 5. Teleport outside and check if it clamps anyway
 	mc.X, mc.Y = 100, 100
-	mc.Update(nil, nil, nil, nil, nil, mapW, mapH)
+	mc.Update(nil, nil, nil, nil, nil, mapW, mapH, nil, nil)
 	if mc.X > 5.0 || mc.Y > 5.0 {
 		t.Errorf("Teleported PlayableCharacter still outside boundaries after Update: got (%f, %f), want (<=5.0, <=5.0)", mc.X, mc.Y)
 	}
@@ -70,7 +70,7 @@ func TestNPCBoundaries(t *testing.T) {
 	n.WanderDirY = 0.0
 	// Force wandering logic
 	n.Tick = 1 // Not a 120 multiple so it doesn't pick new dir
-	n.Update(nil, nil, []*NPC{n}, nil, nil, mapW, mapH, nil, nil)
+	n.Update(nil, nil, []*NPC{n}, nil, nil, mapW, mapH, nil, nil, nil)
 
 	if n.X > 5.0 {
 		t.Errorf("NPC moved beyond +X boundary: got %f, want <= 5.0", n.X)
@@ -80,7 +80,7 @@ func TestNPCBoundaries(t *testing.T) {
 	n.X, n.Y = -4.5, 0
 	n.WanderDirX = -1.0
 	n.WanderDirY = 0.0
-	n.Update(nil, nil, []*NPC{n}, nil, nil, mapW, mapH, nil, nil)
+	n.Update(nil, nil, []*NPC{n}, nil, nil, mapW, mapH, nil, nil, nil)
 
 	if n.X < -5.0 {
 		t.Errorf("NPC moved beyond -X boundary: got %f, want >= -5.0", n.X)
@@ -90,7 +90,7 @@ func TestNPCBoundaries(t *testing.T) {
 	n.X, n.Y = 0, 4.5
 	n.WanderDirX = 0.0
 	n.WanderDirY = 1.0
-	n.Update(nil, nil, []*NPC{n}, nil, nil, mapW, mapH, nil, nil)
+	n.Update(nil, nil, []*NPC{n}, nil, nil, mapW, mapH, nil, nil, nil)
 
 	if n.Y > 5.0 {
 		t.Errorf("NPC moved beyond +Y boundary: got %f, want <= 5.0", n.Y)
@@ -100,7 +100,7 @@ func TestNPCBoundaries(t *testing.T) {
 	n.X, n.Y = 0, -4.5
 	n.WanderDirX = 0.0
 	n.WanderDirY = -1.0
-	n.Update(nil, nil, []*NPC{n}, nil, nil, mapW, mapH, nil, nil)
+	n.Update(nil, nil, []*NPC{n}, nil, nil, mapW, mapH, nil, nil, nil)
 
 	if n.Y < -5.0 {
 		t.Errorf("NPC moved beyond -Y boundary: got %f, want >= -5.0", n.Y)

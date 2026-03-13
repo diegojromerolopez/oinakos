@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 	"oinakos/internal/engine"
@@ -112,7 +113,99 @@ func (n *NPC) checkCollisionAt(newX, newY float64, obstacles []*Obstacle) bool {
 	return false
 }
 
-func (n *NPC) Update(playableCharacter *PlayableCharacter, obstacles []*Obstacle, allNPCs []*NPC, projectiles *[]*Projectile, fts *[]*FloatingText, mapW, mapH float64, audio AudioManager, logFunc func(string, LogCategory)) {
+func (n *NPC) executeAttack(playableCharacter *PlayableCharacter, allNPCs []*NPC, projectiles *[]*Projectile, fts *[]*FloatingText, audio AudioManager, isTargetPlayer bool, dx, dy, dist float64, logFunc func(string, LogCategory), archs *ArchetypeRegistry) {
+	if n.State != NPCAttacking && isTargetPlayer {
+		if rand.Float64() < 0.1 {
+			if n.Archetype != nil && n.Archetype.Dialogues != nil {
+				bark := n.Archetype.Dialogues.PickCombatBark()
+				if bark != "" && logFunc != nil {
+					logFunc(fmt.Sprintf("%s: %s", n.Name, bark), LogNPC)
+				}
+			}
+		}
+		if rand.Float64() < 0.3 {
+			if audio != nil && n.Archetype != nil {
+				audio.PlayRandomSound(n.Archetype.SoundID + "/attack")
+			}
+		}
+	}
+	n.State = NPCAttacking
+
+	if n.AttackTimer >= n.AttackCooldown {
+		n.AttackTimer = 0
+		attackRange := 1.0
+		if n.Archetype != nil && n.Archetype.Stats.AttackRange > 1.0 {
+			attackRange = n.Archetype.Stats.AttackRange
+		}
+		isRanged := attackRange > 1.0
+
+		if isRanged {
+			mag := math.Sqrt(dx*dx + dy*dy)
+			if mag > 0 {
+				pSpd := n.Archetype.Stats.ProjectileSpeed
+				if pSpd <= 0 { pSpd = 0.15 }
+				proj := NewProjectile(n.X, n.Y, dx/mag, dy/mag, pSpd, n.GetTotalAttack(), false, 100.0)
+				*projectiles = append(*projectiles, proj)
+			}
+		} else {
+			if isTargetPlayer {
+				targetProtection := playableCharacter.GetTotalProtection()
+				attk := float64(n.GetTotalAttack())
+				def := float64(playableCharacter.GetTotalDefense())
+				if def <= 0 { def = 1 }
+				hitChance := int(attk / (attk + def) * 100)
+				if hitChance < 5 { hitChance = 5 }
+				if hitChance > 95 { hitChance = 95 }
+
+				if rand.Intn(100)+1 <= hitChance {
+					rawDmg := n.Weapon.RollDamage()
+					finalDmg := int(math.Max(1, float64(rawDmg-targetProtection)))
+					playableCharacter.TakeDamage(finalDmg, audio)
+					*fts = append(*fts, &FloatingText{
+						Text: fmt.Sprintf("-%d", finalDmg), X: playableCharacter.X, Y: playableCharacter.Y, Life: 45, Color: ColorHarm,
+					})
+				} else {
+					*fts = append(*fts, &FloatingText{
+						Text: "MISS", X: playableCharacter.X, Y: playableCharacter.Y, Life: 45, Color: ColorMiss,
+					})
+				}
+			} else if n.TargetActor != nil && n.TargetActor.IsAlive() {
+				targetActor := n.TargetActor
+				targetProtection := targetActor.GetTotalProtection()
+				attk := float64(n.GetTotalAttack())
+				def := float64(targetActor.GetTotalDefense())
+				if def <= 0 { def = 1 }
+				hitChance := int(attk / (attk + def) * 100)
+				if hitChance < 5 { hitChance = 5 }
+				if hitChance > 95 { hitChance = 95 }
+
+				if rand.Intn(100)+1 <= hitChance {
+					rawDmg := n.Weapon.RollDamage()
+					finalDmg := int(math.Max(1, float64(rawDmg-targetProtection)))
+					var targetNPC *NPC
+					for _, other := range allNPCs {
+						if &other.Actor == targetActor {
+							targetNPC = other
+							break
+						}
+					}
+					if targetNPC != nil {
+						targetNPC.TakeDamage(finalDmg, nil, n, audio, allNPCs, archs, logFunc)
+					}
+					*fts = append(*fts, &FloatingText{
+						Text: fmt.Sprintf("-%d", finalDmg), X: targetActor.X, Y: targetActor.Y, Life: 45, Color: ColorHarm,
+					})
+				} else {
+					*fts = append(*fts, &FloatingText{
+						Text: "MISS", X: targetActor.X, Y: targetActor.Y, Life: 45, Color: ColorMiss,
+					})
+				}
+			}
+		}
+	}
+}
+
+func (n *NPC) Update(playableCharacter *PlayableCharacter, obstacles []*Obstacle, allNPCs []*NPC, projectiles *[]*Projectile, fts *[]*FloatingText, mapW, mapH float64, audio AudioManager, logFunc func(string, LogCategory), archs *ArchetypeRegistry) {
 	n.Tick++
 	if n.HitTimer > 0 { n.HitTimer-- }
 	var playerDist float64
@@ -173,7 +266,7 @@ func (n *NPC) Update(playableCharacter *PlayableCharacter, obstacles []*Obstacle
 		if isRanged && dist < attackRange-2.0 {
 			n.executeMovement(dx, dy, obstacles, true)
 		} else {
-			n.executeAttack(playableCharacter, allNPCs, projectiles, fts, audio, isTargetPlayer, dx, dy, dist, logFunc)
+			n.executeAttack(playableCharacter, allNPCs, projectiles, fts, audio, isTargetPlayer, dx, dy, dist, logFunc, archs)
 		}
 	} else {
 		n.executeMovement(dx, dy, obstacles, false)
@@ -187,7 +280,7 @@ func (n *NPC) Update(playableCharacter *PlayableCharacter, obstacles []*Obstacle
 	if n.Y > halfH { n.Y = halfH }
 }
 
-func (n *NPC) TakeDamage(amount int, attackerPlayer *PlayableCharacter, attackerNPC *NPC, audio AudioManager, allNPCs []*NPC) {
+func (n *NPC) TakeDamage(amount int, attackerPlayer *PlayableCharacter, attackerNPC *NPC, audio AudioManager, allNPCs []*NPC, archs *ArchetypeRegistry, logFunc func(string, LogCategory)) {
 	if n.State == NPCDead { return }
 	n.Health -= amount
 	n.HitTimer = 30
@@ -225,6 +318,49 @@ func (n *NPC) TakeDamage(amount int, attackerPlayer *PlayableCharacter, attacker
 	}
 
 	if n.Health <= 0 {
+		// Vampire Conversion Logic
+		var infectorConfig *EntityConfig
+		if attackerPlayer != nil && attackerPlayer.Config != nil && attackerPlayer.Config.IsVampire() {
+			infectorConfig = attackerPlayer.Config
+		} else if attackerNPC != nil && attackerNPC.Archetype != nil && attackerNPC.Archetype.IsVampire() {
+			infectorConfig = attackerNPC.Archetype
+		}
+
+		if infectorConfig != nil && n.Archetype != nil && n.Archetype.IsConvertibleHuman() {
+			if rand.Float64() < infectorConfig.Stats.InfectingProbability {
+				vampID := "vampire_male"
+				if infectorConfig.Gender == "female" {
+					vampID = "vampire_female"
+				}
+
+				if archs != nil {
+					if newArch, ok := archs.Archetypes[vampID]; ok {
+						n.Archetype = newArch
+						n.Actor.Config = newArch
+						n.Health = newArch.Stats.HealthMin
+						n.MaxHealth = n.Health
+						n.State = NPCIdle
+						n.HitTimer = 0
+						n.TargetActor = nil
+
+						if attackerPlayer != nil {
+							n.Alignment = AlignmentAlly
+						} else if attackerNPC != nil {
+							n.Alignment = attackerNPC.Alignment
+						}
+
+						if logFunc != nil {
+							logFunc(fmt.Sprintf("%s was converted into a vampire by %s!", n.Name, infectorConfig.Name), LogCombatRecovery)
+						}
+						if audio != nil {
+							audio.PlayRandomSound("vampire/convert") // Generic name for now
+						}
+						return
+					}
+				}
+			}
+		}
+
 		n.State = NPCDead
 		if attackerPlayer != nil {
 			attackerPlayer.Kills++

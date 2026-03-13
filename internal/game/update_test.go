@@ -76,12 +76,12 @@ func TestPlayableCharacterUpdate_Detailed(t *testing.T) {
 	mc.State = StateDrinking
 	mc.Tick = 0
 	fts := []*FloatingText{}
-	mc.Update(NewMockInputManager(), nil, nil, nil, &fts, 100, 100)
+	mc.Update(NewMockInputManager(), nil, nil, nil, &fts, 100, 100, nil, nil)
 	if mc.State != StateDrinking {
 		t.Error("Should stay in drinking state")
 	}
 	mc.Tick = 60
-	mc.Update(NewMockInputManager(), nil, nil, nil, &fts, 100, 100)
+	mc.Update(NewMockInputManager(), nil, nil, nil, &fts, 100, 100, nil, nil)
 	if mc.State != StateIdle {
 		t.Error("Should transition to idle after drinking")
 	}
@@ -158,7 +158,7 @@ func TestNPCUpdate_Detailed(t *testing.T) {
 
 	// Test hunter behavior
 	n.Behavior = BehaviorKnightHunter
-	n.Update(mc, nil, nil, &projs, &fts, 100, 100, nil, nil)
+	n.Update(mc, nil, nil, &projs, &fts, 100, 100, nil, nil, nil)
 	// Should move towards mc
 	if n.X == 0 && n.Y == 0 {
 		t.Error("Hunter NPC should move")
@@ -172,7 +172,7 @@ func TestNPCUpdate_Detailed(t *testing.T) {
 	n.X = 0
 	n.Y = 0
 	n.TargetActor = nil
-	n.Update(mc, nil, npcs, &projs, &fts, 100, 100, nil, nil)
+	n.Update(mc, nil, npcs, &projs, &fts, 100, 100, nil, nil, nil)
 	if n.X == 0 && n.Y == 0 {
 		t.Error("Fighter NPC should move towards other NPC")
 	}
@@ -182,7 +182,7 @@ func TestNPCUpdate_Detailed(t *testing.T) {
 	n.Y = otherNpc.Y + 0.1
 	n.TargetActor = &otherNpc.Actor // Ensure it still targets otherNpc
 	n.AttackTimer = 0
-	n.Update(mc, nil, npcs, &projs, &fts, 100, 100, nil, nil)
+	n.Update(mc, nil, npcs, &projs, &fts, 100, 100, nil, nil, nil)
 	if n.State != NPCAttacking {
 		t.Errorf("NPC should be attacking, got state %v", n.State)
 	}
@@ -212,7 +212,7 @@ func TestNPCHitBranch_Detailed(t *testing.T) {
 	n.BaseAttack = 1000
 	mc.BaseDefense = 0
 
-	n.Update(mc, nil, npcs, &projs, &fts, 100, 100, nil, nil)
+	n.Update(mc, nil, npcs, &projs, &fts, 100, 100, nil, nil, nil)
 }
 
 func TestPlayableCharacterTakeDamageDetailed(t *testing.T) {
@@ -345,6 +345,7 @@ difficulty: 1
 			AttackCooldown  int     `yaml:"attack_cooldown"`
 			AttackRange     float64 `yaml:"attack_range"`
 			ProjectileSpeed float64 `yaml:"projectile_speed"`
+			InfectingProbability float64 `yaml:"infecting_probability"`
 		}{HealthMin: 5, HealthMax: 5, BaseDefense: 0},
 	}, 1)
 
@@ -352,7 +353,7 @@ difficulty: 1
 	g.npcs = []*NPC{npc}
 
 	// Deal fatal damage
-	npc.TakeDamage(100, mc, nil, NewMockAudioManager(), []*NPC{npc})
+	npc.TakeDamage(100, mc, nil, NewMockAudioManager(), []*NPC{npc}, nil, nil)
 
 	if npc.State != NPCDead {
 		t.Fatalf("NPC should be dead")

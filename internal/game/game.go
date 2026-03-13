@@ -450,7 +450,7 @@ func (g *Game) Update() error {
 	}
 
 	g.playableCharacter.CurrentTile = g.currentMapType.GetTileAt(g.playableCharacter.X, g.playableCharacter.Y)
-	g.playableCharacter.Update(g.input, g.audio, g.obstacles, g.npcs, &g.floatingTexts, g.currentMapType.MapWidth, g.currentMapType.MapHeight)
+	g.playableCharacter.Update(g.input, g.audio, g.obstacles, g.npcs, &g.floatingTexts, g.currentMapType.MapWidth, g.currentMapType.MapHeight, g.archetypeRegistry, g.LogEvent)
 
 	// Position tracking and logging
 	if g.playableCharacter.Tick%30 == 0 {
@@ -490,7 +490,7 @@ func (g *Game) Update() error {
 	// Update all NPCs
 	for _, n := range g.npcs {
 		n.CurrentTile = g.currentMapType.GetTileAt(n.X, n.Y)
-		n.Update(g.playableCharacter, g.obstacles, g.npcs, &g.projectiles, &g.floatingTexts, g.currentMapType.MapWidth, g.currentMapType.MapHeight, g.audio, g.LogEvent)
+			n.Update(g.playableCharacter, g.obstacles, g.npcs, &g.projectiles, &g.floatingTexts, g.currentMapType.MapWidth, g.currentMapType.MapHeight, g.audio, g.LogEvent, g.archetypeRegistry)
 		if n.MustSurvive && !n.IsAlive() {
 			if !g.isGameOver {
 				DebugLog("CRITICAL FAILURE: [%s] was killed! Quest Failed.", n.Name)
