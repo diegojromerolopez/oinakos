@@ -51,10 +51,23 @@ All game content is defined in YAML under `data/` and loaded at startup:
 - **Naming**: Use `CamelCase` for all names. Short names for local scope (e.g., `err`, `i`), descriptive for package/struct level.
 - **Composition**: Use struct embedding over complex heirarchies.
 
-### Dependency Injection
-- `internal/game` must **never** import `ebiten` directly. Only `internal/engine` and `main.go` may.
-- All Ebiten types are behind interfaces (`engine.Graphics`, `engine.Input`, `engine.Image`).
-- This enables **100% headless unit testing** of all game logic. Run `make test`.
+### SOLID Principles & Dependency Injection
+- **S.O.L.I.D.**: All new features and refactors must adhere to SOLID principles:
+  - **Single Responsibility**: Each struct/package should have one clear purpose.
+  - **Open/Closed**: Code should be open for extension but closed for modification (e.g., registries, interfaces).
+  - **Liskov Substitution**: Interfaces (like `engine.Graphics`) must be fully replaceable by mocks in tests.
+  - **Interface Segregation**: Prefer small, focused interfaces over large "God" interfaces.
+  - **Dependency Inversion**: High-level game logic must depend on abstractions, not Ebiten directly.
+- **Dependency Injection**: 
+  - Never use global state for game logic. 
+  - Pass dependencies through constructors or context structs (e.g., `SystemContext`). 
+  - This is non-negotiable for testability.
+  - **`internal/game` must never import `ebiten` directly**. Only `internal/engine` and `main.go` may.
+  - All Ebiten types are behind interfaces (`engine.Graphics`, `engine.Input`, `engine.Image`). This enables **100% headless unit testing** of game logic.
+- **Headless Testing**: 
+  - All unit tests must be run with `-tags test` (e.g., `go test -tags test ./internal/...`). 
+  - This build tag swaps Ebiten-dependent code in `internal/engine` for headless stubs in `internal/engine/test_stubs.go`.
+  - Use `make test` as the canonical way to run tests.
 
 ### File Hygiene
 - **Max File Length**: No file should exceed **500 lines**. If a file grows beyond this, refactor and split it by responsibility.

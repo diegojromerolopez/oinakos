@@ -40,7 +40,7 @@ func NewProjectile(x, y, dx, dy, speed float64, damage int, isPlayer bool, maxRa
 	}
 }
 
-func (p *Projectile) Update(mc *PlayableCharacter, obstacles []*Obstacle, fts *[]*FloatingText, audio AudioManager) {
+func (p *Projectile) Update(ctx *SystemContext) {
 	if !p.Alive {
 		return
 	}
@@ -58,7 +58,7 @@ func (p *Projectile) Update(mc *PlayableCharacter, obstacles []*Obstacle, fts *[
 		{X: -0.1, Y: -0.1}, {X: 0.1, Y: -0.1}, {X: 0.1, Y: 0.1}, {X: -0.1, Y: 0.1},
 	}}.Transformed(p.X, p.Y)
 
-	for _, o := range obstacles {
+	for _, o := range ctx.World.Obstacles {
 		if !o.Alive {
 			continue
 		}
@@ -69,6 +69,7 @@ func (p *Projectile) Update(mc *PlayableCharacter, obstacles []*Obstacle, fts *[
 	}
 
 	// For now, projectiles are enemy arrows aiming at player
+	mc := ctx.World.PlayableCharacter
 	if !p.IsPlayer && mc.IsAlive() {
 		dist := math.Sqrt(math.Pow(mc.X-p.X, 2) + math.Pow(mc.Y-p.Y, 2))
 		if dist < 0.6 {
@@ -76,9 +77,9 @@ func (p *Projectile) Update(mc *PlayableCharacter, obstacles []*Obstacle, fts *[
 			protection := mc.GetTotalProtection()
 			finalDmg := int(math.Max(1, float64(p.Damage-protection)))
 			DebugLog("Projectile HIT Player for %d damage", finalDmg)
-			mc.TakeDamage(finalDmg, audio)
+			mc.TakeDamage(finalDmg, ctx)
 
-			*fts = append(*fts, &FloatingText{
+			ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{
 				Text:  fmt.Sprintf("-%d", finalDmg),
 				X:     mc.X,
 				Y:     mc.Y,

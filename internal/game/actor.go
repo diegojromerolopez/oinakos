@@ -2,6 +2,7 @@ package game
 
 import (
 	"math"
+	"strings"
 
 	"oinakos/internal/engine"
 )
@@ -227,4 +228,11 @@ func (a *Actor) AddXP(amount int) {
 		a.Level = newLevel
 		a.Health = a.MaxHealth
 	}
+}
+
+func (a *Actor) IsGiant() bool {
+	if a.Config == nil {
+		return false
+	}
+	return a.Config.Group == "giant" || (len(a.Config.ID) >= 5 && strings.ToLower(a.Config.ID[:5]) == "giant")
 }

@@ -69,19 +69,20 @@ height_px: 1000
 }
 
 func TestPlayableCharacterUpdate_Detailed(t *testing.T) {
+	ctx := NewTestContext()
 	mc := NewPlayableCharacter(0, 0, nil)
 	mc.Weapon = WeaponTizon
+	ctx.World.PlayableCharacter = mc
 
 	// Test drinking state
 	mc.State = StateDrinking
 	mc.Tick = 0
-	fts := []*FloatingText{}
-	mc.Update(NewMockInputManager(), nil, nil, nil, nil, &fts, 100, 100, nil, nil)
+	mc.Update(ctx)
 	if mc.State != StateDrinking {
 		t.Error("Should stay in drinking state")
 	}
 	mc.Tick = 60
-	mc.Update(NewMockInputManager(), nil, nil, nil, nil, &fts, 100, 100, nil, nil)
+	mc.Update(ctx)
 	if mc.State != StateIdle {
 		t.Error("Should transition to idle after drinking")
 	}
@@ -149,16 +150,17 @@ height_px: 1000
 }
 
 func TestNPCUpdate_Detailed(t *testing.T) {
+	ctx := NewTestContext()
 	n := NewNPC(0, 0, nil, 1)
 	n.Weapon = WeaponTizon
 	n.Speed = 1.0 // Manually set speed since Archetype is nil
 	mc := NewPlayableCharacter(10, 10, nil)
-	fts := []*FloatingText{}
-	projs := []*Projectile{}
+	ctx.World.PlayableCharacter = mc
+	ctx.World.NPCs = []*NPC{n}
 
 	// Test hunter behavior
 	n.Behavior = BehaviorKnightHunter
-	n.Update(mc, nil, nil, nil, &projs, &fts, 100, 100, nil, nil, nil)
+	n.Update(ctx)
 	// Should move towards mc
 	if n.X == 0 && n.Y == 0 {
 		t.Error("Hunter NPC should move")
@@ -167,12 +169,12 @@ func TestNPCUpdate_Detailed(t *testing.T) {
 	// Test fighter behavior with other NPCs
 	otherNpc := NewNPC(5, 5, nil, 1)
 	otherNpc.Alignment = AlignmentAlly // Different alignment from n (Enemy)
-	npcs := []*NPC{otherNpc, n}        // allNPCs includes self
+	ctx.World.NPCs = []*NPC{otherNpc, n}        // allNPCs includes self
 	n.Behavior = BehaviorNpcFighter
 	n.X = 0
 	n.Y = 0
 	n.TargetActor = nil
-	n.Update(mc, nil, nil, npcs, &projs, &fts, 100, 100, nil, nil, nil)
+	n.Update(ctx)
 	if n.X == 0 && n.Y == 0 {
 		t.Error("Fighter NPC should move towards other NPC")
 	}
@@ -182,7 +184,7 @@ func TestNPCUpdate_Detailed(t *testing.T) {
 	n.Y = otherNpc.Y + 0.1
 	n.TargetActor = &otherNpc.Actor // Ensure it still targets otherNpc
 	n.AttackTimer = 0
-	n.Update(mc, nil, nil, npcs, &projs, &fts, 100, 100, nil, nil, nil)
+	n.Update(ctx)
 	if n.State != NPCAttacking {
 		t.Errorf("NPC should be attacking, got state %v", n.State)
 	}
@@ -199,12 +201,12 @@ func TestCollisionDetailed(t *testing.T) {
 }
 
 func TestNPCHitBranch_Detailed(t *testing.T) {
+	ctx := NewTestContext()
 	n := NewNPC(0, 0, nil, 1)
 	n.Weapon = WeaponTizon
 	mc := NewPlayableCharacter(1, 0, nil)
-	projs := []*Projectile{}
-	fts := []*FloatingText{}
-	npcs := []*NPC{n}
+	ctx.World.PlayableCharacter = mc
+	ctx.World.NPCs = []*NPC{n}
 
 	// Force a hit
 	n.AttackTimer = 0
@@ -212,19 +214,20 @@ func TestNPCHitBranch_Detailed(t *testing.T) {
 	n.BaseAttack = 1000
 	mc.BaseDefense = 0
 
-	n.Update(mc, nil, nil, npcs, &projs, &fts, 100, 100, nil, nil, nil)
+	n.Update(ctx)
 }
 
 func TestPlayableCharacterTakeDamageDetailed(t *testing.T) {
+	ctx := NewTestContext()
 	mc := NewPlayableCharacter(0, 0, nil)
 	mc.Health = 100
-	mc.TakeDamage(150, nil)
+	mc.TakeDamage(150, ctx)
 	if mc.Health != 0 || mc.State != StateDead {
 		t.Errorf("Should be dead, health=%d, state=%v", mc.Health, mc.State)
 	}
 
 	// Take damage while dead
-	mc.TakeDamage(10, nil)
+	mc.TakeDamage(10, ctx)
 	if mc.Health != 0 {
 		t.Error("Health should stay 0")
 	}
@@ -242,28 +245,31 @@ func TestObstacleUpdate_Detailed(t *testing.T) {
 }
 
 func TestProjectileUpdate_Detailed(t *testing.T) {
+	ctx := NewTestContext()
 	p := NewProjectile(0, 0, 1, 0, 1.0, 10, true, 100.0)
 	mc := NewPlayableCharacter(0, 0, nil)
-	fts := []*FloatingText{}
+	ctx.World.PlayableCharacter = mc
 
 	// Update until it hits nothing or expires
-	p.Update(mc, nil, &fts, nil)
+	p.Update(ctx)
 
 	// Update with entities
 	targetMc := NewPlayableCharacter(2, 0, nil)
+	ctx.World.PlayableCharacter = targetMc
 	obstacles := []*Obstacle{NewObstacle("test_obs_3", 5, 0, &ObstacleArchetype{ID: "test", Footprint: []FootprintPoint{{-0.5, -0.5}, {0.5, -0.5}, {0.5, 0.5}, {-0.5, 0.5}}})}
+	ctx.World.Obstacles = obstacles
 
 	// Manually move projectile to hit targetMc
 	p.X = 2
 	p.Y = 0
 	p.Alive = true
-	p.Update(targetMc, obstacles, &fts, nil)
+	p.Update(ctx)
 
 	// Manually move projectile to hit obstacle
 	p.Alive = true
 	p.X = 5
 	p.Y = 0
-	p.Update(targetMc, obstacles, &fts, nil)
+	p.Update(ctx)
 }
 
 func TestFloatingTextUpdate_Detailed(t *testing.T) {
@@ -352,7 +358,11 @@ difficulty: 1
 	g.npcs = []*NPC{npc}
 
 	// Deal fatal damage
-	npc.TakeDamage(100, mc, NewMockAudioManager(), []*NPC{npc}, nil, nil, nil, nil)
+	ctx := &SystemContext{
+		World: &World{PlayableCharacter: mc, NPCs: []*NPC{npc}},
+		Audio: NewMockAudioManager(),
+	}
+	npc.TakeDamage(100, mc, ctx)
 
 	if npc.State != NPCDead {
 		t.Fatalf("NPC should be dead")

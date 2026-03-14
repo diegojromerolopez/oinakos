@@ -97,6 +97,9 @@ type Game struct {
 	isQuitConfirmationOpen bool
 	quitConfirmationIndex  int // 0: Yes, 1: No
 
+	World      *World
+	Registries *RegistryContainer
+
 	menuHandler      *MenuHandler
 	worldManager     *WorldManager
 	mechanicsManager *MechanicsManager
@@ -160,30 +163,51 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID, initialHeroID string,
 	}
 
 	g := &Game{
-		width:                     1280,
-		height:                    720,
-		playableCharacter:             playableCharacter,
-		camera:                    engine.NewCamera(pIsoX, pIsoY),
-		assets:                    assets,
-		generatedChunks:           make(map[image.Point]bool),
-		npcSpawnTimer:             0,
-		archetypeRegistry:         archetypeRegistry,
-		mapTypeRegistry:           mapTypeRegistry,
-		campaignRegistry:          campaignRegistry,
-		obstacleRegistry:          obstacleRegistry,
-		npcRegistry:               npcRegistry,
-		playableCharacterRegistry: playableCharacterRegistry,
-		currentMapType:            selectedMapType,
-		mapLevel:                  1,
-		initialMapID:              initialMapID,
-		initialMapTypeID:          initialMapTypeID,
-		initialHeroID:             initialHeroID,
-		input:                     input,
-		audio:                     audio,
-		debug:                     debug,
-		ExploredTiles:             make(map[image.Point]bool),
-		LoadingProgress:           1000,
+		width:             1280,
+		height:            720,
+		camera:            engine.NewCamera(pIsoX, pIsoY),
+		assets:            assets,
+		input:             input,
+		audio:             audio,
+		debug:             debug,
+		initialMapID:     initialMapID,
+		initialMapTypeID: initialMapTypeID,
+		initialHeroID:    initialHeroID,
+		mapLevel:         1,
+		LoadingProgress:  1000,
 	}
+
+	g.Registries = &RegistryContainer{
+		Archetypes:         archetypeRegistry,
+		PlayableCharacters: playableCharacterRegistry,
+		Maps:               mapTypeRegistry,
+		Campaigns:          campaignRegistry,
+		Obstacles:          obstacleRegistry,
+		NPCs:               npcRegistry,
+	}
+
+	g.World = &World{
+		PlayableCharacter: playableCharacter,
+		NPCs:              nil,
+		Obstacles:         nil,
+		Projectiles:       nil,
+		FloatingTexts:     nil,
+		CurrentMapType:    &selectedMapType,
+		ExploredTiles:     make(map[image.Point]bool),
+	}
+
+	// For backward compatibility during migration, we also keep the top-level fields
+	// pointing to the same data where possible, or just keep them synced.
+	g.playableCharacter = playableCharacter
+	g.archetypeRegistry = archetypeRegistry
+	g.mapTypeRegistry = mapTypeRegistry
+	g.campaignRegistry = campaignRegistry
+	g.obstacleRegistry = obstacleRegistry
+	g.npcRegistry = npcRegistry
+	g.playableCharacterRegistry = playableCharacterRegistry
+	g.currentMapType = selectedMapType
+	g.ExploredTiles = g.World.ExploredTiles
+	g.generatedChunks = make(map[image.Point]bool)
 
 	g.settings = LoadSettings()
 	if audio != nil {
@@ -428,29 +452,40 @@ func (g *Game) Update() error {
 	}
 
 	// 3. World and Game Logic
-	g.mechanicsManager.UpdateFogOfWar()
+	ctx := &SystemContext{
+		World:      g.World,
+		Input:      g.input,
+		Audio:      g.audio,
+		Registries: g.Registries,
+		Log:        g.LogEvent,
+	}
+
+	g.mechanicsManager.UpdateFogOfWar(ctx)
 	g.worldManager.UpdateChunks()
 	g.worldManager.UpdateNPCSpawning()
 
 	// Update projectiles
 	activeProjectiles := []*Projectile{}
-	for _, p := range g.projectiles {
-		p.Update(g.playableCharacter, g.obstacles, &g.floatingTexts, g.audio)
+	for _, p := range g.World.Projectiles {
+		p.Update(ctx)
 		if p.Alive {
 			activeProjectiles = append(activeProjectiles, p)
 		}
 	}
-	g.projectiles = activeProjectiles
+	g.World.Projectiles = activeProjectiles
+	g.projectiles = g.World.Projectiles
 
 	if !g.isPaused && !g.isGameOver {
 		g.playTime += 1.0 / 60.0
+		g.World.PlayTime = g.playTime
 		if g.saveMessageTimer > 0 {
 			g.saveMessageTimer--
 		}
 	}
 
-	g.playableCharacter.CurrentTile = g.currentMapType.GetTileAt(g.playableCharacter.X, g.playableCharacter.Y)
-	g.playableCharacter.Update(g.input, g.audio, &g.obstacles, g.obstacleRegistry, g.npcs, &g.floatingTexts, g.currentMapType.MapWidth, g.currentMapType.MapHeight, g.archetypeRegistry, g.LogEvent)
+	g.World.CurrentMapType = &g.currentMapType
+	g.World.PlayableCharacter.CurrentTile = g.currentMapType.GetTileAt(g.World.PlayableCharacter.X, g.World.PlayableCharacter.Y)
+	g.World.PlayableCharacter.Update(ctx)
 
 	// Position tracking and logging
 	if g.playableCharacter.Tick%30 == 0 {
@@ -462,10 +497,10 @@ func (g *Game) Update() error {
 		o.Update()
 	}
 
-	g.mechanicsManager.UpdateProximityEffects()
+	g.mechanicsManager.UpdateProximityEffects(ctx)
 
 	// Check Win/Loss Conditions
-	if g.mechanicsManager.CheckWinConditions() {
+	if g.mechanicsManager.CheckWinConditions(ctx) {
 		if !g.isMapWon {
 			DebugLog("Objective Completed! Level %d cleared. Objective: %v", g.mapLevel, g.currentMapType.Type)
 		}
@@ -488,9 +523,10 @@ func (g *Game) Update() error {
 	g.obstacles = aliveObstacles
 
 	// Update all NPCs
-	for _, n := range g.npcs {
+	ctx.World.NPCs = g.npcs
+	for _, n := range ctx.World.NPCs {
 		n.CurrentTile = g.currentMapType.GetTileAt(n.X, n.Y)
-		n.Update(g.playableCharacter, &g.obstacles, g.obstacleRegistry, g.npcs, &g.projectiles, &g.floatingTexts, g.currentMapType.MapWidth, g.currentMapType.MapHeight, g.audio, g.LogEvent, g.archetypeRegistry)
+		n.Update(ctx)
 		if n.MustSurvive && !n.IsAlive() {
 			if !g.isGameOver {
 				DebugLog("CRITICAL FAILURE: [%s] was killed! Quest Failed.", n.Name)

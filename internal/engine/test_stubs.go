@@ -24,6 +24,8 @@ func InitAudio(assets fs.FS) {
 type AudioManager struct{}
 
 func (m *AudioManager) LoadSound(name, path string) {}
+func (m *AudioManager) LoadSoundFromBytes(name string, data []byte) {}
+func (m *AudioManager) HasSound(name string) bool { return false }
 func (m *AudioManager) PlayRandom(prefix string)    {}
 func (m *AudioManager) Play(name string)            {}
 

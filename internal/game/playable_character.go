@@ -84,7 +84,7 @@ func NewPlayableCharacter(x, y float64, config *EntityConfig) *PlayableCharacter
 
 // GetTotalAttack, GetTotalDefense, GetTotalProtection, calculateStat, AddXP are now in Actor.
 
-func (mc *PlayableCharacter) TakeDamage(amount int, audio AudioManager) {
+func (mc *PlayableCharacter) TakeDamage(amount int, ctx *SystemContext) {
 	if mc.State == StateDead {
 		return
 	}
@@ -96,12 +96,12 @@ func (mc *PlayableCharacter) TakeDamage(amount int, audio AudioManager) {
 		mc.Health = 0
 		mc.State = StateDead
 		DebugLog("Player DIED at (%.2f, %.2f)", mc.X, mc.Y)
-		if audio != nil && mc.Config != nil && mc.Config.PlayableCharacter != "" {
-			audio.PlayRandomSound(mc.Config.PlayableCharacter + "/death")
+		if ctx.Audio != nil && mc.Config != nil && mc.Config.PlayableCharacter != "" {
+			ctx.Audio.PlayRandomSound(mc.Config.PlayableCharacter + "/death")
 		}
 	} else {
-		if audio != nil && mc.Config != nil && mc.Config.PlayableCharacter != "" {
-			audio.PlayRandomSound(mc.Config.PlayableCharacter + "/hit")
+		if ctx.Audio != nil && mc.Config != nil && mc.Config.PlayableCharacter != "" {
+			ctx.Audio.PlayRandomSound(mc.Config.PlayableCharacter + "/hit")
 		}
 	}
 }
@@ -114,11 +114,9 @@ func (mc *PlayableCharacter) TakeDamage(amount int, audio AudioManager) {
 
 // checkCollisionAt is now in Actor.
 
-func (mc *PlayableCharacter) Update(input engine.Input, audio AudioManager, obstacles *[]*Obstacle, obsRegistry *ObstacleRegistry, npcs []*NPC, fts *[]*FloatingText, mapW, mapH float64, archs *ArchetypeRegistry, logFunc func(string, LogCategory)) {
-	var worldObstacles []*Obstacle
-	if obstacles != nil {
-		worldObstacles = *obstacles
-	}
+func (mc *PlayableCharacter) Update(ctx *SystemContext) {
+	worldObstacles := ctx.World.Obstacles
+	mapW, mapH := ctx.World.CurrentMapType.MapWidth, ctx.World.CurrentMapType.MapHeight
 
 	if mc.State == StateDead {
 		if mc.DeadTimer == 0 {
@@ -138,7 +136,7 @@ func (mc *PlayableCharacter) Update(input engine.Input, audio AudioManager, obst
 	if mc.State == StateAttacking {
 		mc.Tick++
 		if mc.Tick == 15 {
-			mc.CheckAttackHits(npcs, obstacles, obsRegistry, fts, audio, archs, logFunc)
+			mc.CheckAttackHits(ctx)
 		}
 		if mc.Tick > 30 {
 			mc.State = StateIdle
@@ -157,23 +155,23 @@ func (mc *PlayableCharacter) Update(input engine.Input, audio AudioManager, obst
 	}
 
 	var dx, dy float64
-	if input != nil {
-		if input.IsKeyPressed(engine.KeyW) || input.IsKeyPressed(engine.KeyUp) {
+	if ctx.Input != nil {
+		if ctx.Input.IsKeyPressed(engine.KeyW) || ctx.Input.IsKeyPressed(engine.KeyUp) {
 			dy -= 1
 		}
-		if input.IsKeyPressed(engine.KeyS) || input.IsKeyPressed(engine.KeyDown) {
+		if ctx.Input.IsKeyPressed(engine.KeyS) || ctx.Input.IsKeyPressed(engine.KeyDown) {
 			dy += 1
 		}
-		if input.IsKeyPressed(engine.KeyA) || input.IsKeyPressed(engine.KeyLeft) {
+		if ctx.Input.IsKeyPressed(engine.KeyA) || ctx.Input.IsKeyPressed(engine.KeyLeft) {
 			dx -= 1
 		}
-		if input.IsKeyPressed(engine.KeyD) || input.IsKeyPressed(engine.KeyRight) {
+		if ctx.Input.IsKeyPressed(engine.KeyD) || ctx.Input.IsKeyPressed(engine.KeyRight) {
 			dx += 1
 		}
 
-		if input.IsKeyPressed(engine.KeySpace) {
+		if ctx.Input.IsKeyPressed(engine.KeySpace) {
 			// Check for interactive obstacles (like wells)
-			for _, o := range *obstacles {
+			for _, o := range worldObstacles {
 				if o.Alive && o.Archetype != nil && o.CooldownTicks <= 0 {
 					for _, action := range o.Archetype.Actions {
 						if action.Type == ActionHeal && action.RequiresInteraction {
@@ -194,15 +192,13 @@ func (mc *PlayableCharacter) Update(input engine.Input, audio AudioManager, obst
 								if healVal > 1000 {
 									healVal = mc.MaxHealth // Just a representative number for the text if it was a "Full Heal"
 								}
-								if fts != nil {
-									*fts = append(*fts, &FloatingText{
-										Text:  fmt.Sprintf("+%d", healVal),
-										X:     mc.X,
-										Y:     mc.Y,
-										Life:  45,
-										Color: ColorHeal,
-									})
-								}
+								ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{
+									Text:  fmt.Sprintf("+%d", healVal),
+									X:     mc.X,
+									Y:     mc.Y,
+									Life:  45,
+									Color: ColorHeal,
+								})
 
 								// Change state to drinking
 								mc.State = StateDrinking
@@ -217,12 +213,12 @@ func (mc *PlayableCharacter) Update(input engine.Input, audio AudioManager, obst
 			mc.State = StateAttacking
 			mc.Tick = 0
 			DebugLog("Player is Attacking! Pos: (%.2f, %.2f) | Facing: %v", mc.X, mc.Y, mc.Facing)
-			if audio != nil && mc.Config != nil && mc.Config.PlayableCharacter != "" {
-				audio.PlayRandomSound(mc.Config.PlayableCharacter + "/attack")
+			if ctx.Audio != nil && mc.Config != nil && mc.Config.PlayableCharacter != "" {
+				ctx.Audio.PlayRandomSound(mc.Config.PlayableCharacter + "/attack")
 			}
 			return
 		}
-	} // Close if input != nil
+	}
 
 	if dx != 0 || dy != 0 {
 		mc.State = StateWalking
@@ -249,13 +245,13 @@ func (mc *PlayableCharacter) Update(input engine.Input, audio AudioManager, obst
 
 		if mc.Tick%30 == 0 {
 			DebugLog("Player Moved to (%.2f, %.2f)", mc.X, mc.Y)
-			if audio != nil {
+			if ctx.Audio != nil {
 				if mc.CurrentTile == "water.png" || mc.CurrentTile == "dark_water.png" {
-					audio.PlayRandomSound("footstep_water")
+					ctx.Audio.PlayRandomSound("footstep_water")
 				} else if mc.CurrentTile == "paved_ground.png" || mc.CurrentTile == "big_stones.png" {
-					audio.PlayRandomSound("footstep_stone")
+					ctx.Audio.PlayRandomSound("footstep_stone")
 				} else {
-					audio.PlayRandomSound("footstep_grass")
+					ctx.Audio.PlayRandomSound("footstep_grass")
 				}
 			}
 		}
@@ -306,18 +302,11 @@ func (mc *PlayableCharacter) Update(input engine.Input, audio AudioManager, obst
 	}
 }
 
-func (mc *PlayableCharacter) CheckAttackHits(npcs []*NPC, obstacles *[]*Obstacle, obsRegistry *ObstacleRegistry, fts *[]*FloatingText, audio AudioManager, archs *ArchetypeRegistry, logFunc func(string, LogCategory)) {
-	var worldObstacles []*Obstacle
-	if obstacles != nil {
-		worldObstacles = *obstacles
-	}
+func (mc *PlayableCharacter) CheckAttackHits(ctx *SystemContext) {
+	worldObstacles := ctx.World.Obstacles
 	attackDist := 0.9
 	atX, atY := mc.X, mc.Y
 
-	// Fix: Normalize attack center based on facing.
-	// SE is "right" in isometric view generally (X increases, Y increases)
-	// NE is X increases, Y decreases.
-	// We want the attack to land in front of the playableCharacter.
 	switch mc.Facing {
 	case DirSE:
 		atX += attackDist
@@ -333,15 +322,12 @@ func (mc *PlayableCharacter) CheckAttackHits(npcs []*NPC, obstacles *[]*Obstacle
 		atY -= attackDist
 	}
 
-	for _, n := range npcs {
+	for _, n := range ctx.World.NPCs {
 		if !n.IsAlive() {
 			continue
 		}
-		// Generous circle check around the attack center
 		dist := math.Sqrt(math.Pow(atX-n.X, 2) + math.Pow(atY-n.Y, 2))
-		if dist < 1.6 { // Increased range for better feel
-			// HIT ROLL — ratio-based so scaling doesn't break it
-			// hitChance in [5, 95] based on relative attack vs defense
+		if dist < 1.6 {
 			attk := float64(mc.GetTotalAttack())
 			def := float64(n.GetTotalDefense())
 			if def <= 0 {
@@ -357,14 +343,13 @@ func (mc *PlayableCharacter) CheckAttackHits(npcs []*NPC, obstacles *[]*Obstacle
 
 			roll := rand.Intn(100) + 1
 			if roll <= hitChance {
-				// SUCCESSFUL HIT
 				rawDmg := mc.Weapon.RollDamage()
 				protection := n.GetTotalProtection()
 				finalDmg := int(math.Max(1, float64(rawDmg-protection)))
 				DebugLog("Player attacks NPC %s: HIT for %d damage (roll: %d/%d)", n.Name, finalDmg, roll, hitChance)
-				n.TakeDamage(finalDmg, mc, audio, npcs, archs, obstacles, obsRegistry, logFunc)
+				n.TakeDamage(finalDmg, mc, ctx)
 
-				*fts = append(*fts, &FloatingText{
+				ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{
 					Text:  fmt.Sprintf("-%d", finalDmg),
 					X:     n.X,
 					Y:     n.Y,
@@ -372,9 +357,8 @@ func (mc *PlayableCharacter) CheckAttackHits(npcs []*NPC, obstacles *[]*Obstacle
 					Color: ColorHarm,
 				})
 			} else {
-				// MISS
 				DebugLog("Player attacks NPC %s: MISS (roll: %d/%d)", n.Name, roll, hitChance)
-				*fts = append(*fts, &FloatingText{
+				ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{
 					Text:  "MISS",
 					X:     n.X,
 					Y:     n.Y,
@@ -385,19 +369,17 @@ func (mc *PlayableCharacter) CheckAttackHits(npcs []*NPC, obstacles *[]*Obstacle
 		}
 	}
 
-	// OBSTACLE Damage
 	for _, o := range worldObstacles {
 		if !o.Alive {
 			continue
 		}
-		// Circle check for obstacles
 		dist := math.Sqrt(math.Pow(atX-o.X, 2) + math.Pow(atY-o.Y, 2))
-		if dist < 1.8 { // Slightly larger radius for obstacles (easier to hit)
+		if dist < 1.8 {
 			if o.Archetype != nil && o.Archetype.Destructible {
 				rawDmg := mc.Weapon.RollDamage()
 				o.TakeDamage(rawDmg)
 
-				*fts = append(*fts, &FloatingText{
+				ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{
 					Text:  fmt.Sprintf("-%d", rawDmg),
 					X:     o.X,
 					Y:     o.Y,

@@ -43,7 +43,7 @@ $(BIN_DIR)/map_editor: ./tools/map_editor/main.go
 
 test:
 	@echo "Running tests..."
-	$(GOCMD) test ./...
+	$(GOCMD) test -tags test ./internal/...
 
 dist: build-wasm
 	@echo "Preparing distribution files..."

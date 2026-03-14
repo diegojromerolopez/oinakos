@@ -6,12 +6,12 @@ import (
 )
 
 func TestProximityHazards(t *testing.T) {
-	g := &Game{}
+	ctx := NewTestContext()
 	mc := NewPlayableCharacter(0, 0, nil)
 	mc.Health = 100
 	mc.MaxHealth = 100
-	g.playableCharacter = mc
-	g.mechanicsManager = NewMechanicsManager(g)
+	ctx.World.PlayableCharacter = mc
+	mm := NewMechanicsManager(&Game{}) // We still need a Game for mm, but we pass ctx to its methods
 
 	// 1. Test Aura Hazard
 	campfireArchetype := &ObstacleArchetype{
@@ -26,18 +26,18 @@ func TestProximityHazards(t *testing.T) {
 		},
 	}
 	campfire := NewObstacle("fire1", 1.0, 1.0, campfireArchetype)
-	g.obstacles = []*Obstacle{campfire}
+	ctx.World.Obstacles = []*Obstacle{campfire}
 
 	// Player is at (0,0), Fire is at (1,1). Distance is sqrt(2) approx 1.41. Radius is 2.0.
 	// Should take damage.
-	g.mechanicsManager.UpdateProximityEffects()
+	mm.UpdateProximityEffects(ctx)
 
 	if mc.Health != 90 {
 		t.Errorf("Expected health 90, got %d", mc.Health)
 	}
 
 	// 2. Test Interval Timer (should not take damage again immediately)
-	g.mechanicsManager.UpdateProximityEffects()
+	mm.UpdateProximityEffects(ctx)
 	if mc.Health != 90 {
 		t.Errorf("Expected health to remain 90 due to interval, got %d", mc.Health)
 	}
@@ -50,7 +50,7 @@ func TestProximityHazards(t *testing.T) {
 
 	// Manually force timer to 0 to test re-application
 	campfire.EffectTimers[mc] = 0
-	g.mechanicsManager.UpdateProximityEffects()
+	mm.UpdateProximityEffects(ctx)
 	if mc.Health != 80 {
 		t.Errorf("Expected health 80 after timer reset, got %d", mc.Health)
 	}
@@ -72,10 +72,10 @@ func TestProximityHazards(t *testing.T) {
 	}
 	// Player footprint is small at center.
 	spikes := NewObstacle("spikes1", 0, 0, spikeArchetype)
-	g.obstacles = []*Obstacle{spikes}
+	ctx.World.Obstacles = []*Obstacle{spikes}
 
 	mc.Health = 100
-	g.mechanicsManager.UpdateProximityEffects()
+	mm.UpdateProximityEffects(ctx)
 	if mc.Health != 95 {
 		t.Errorf("Expected health 95 from contact hazard, got %d", mc.Health)
 	}
@@ -84,19 +84,19 @@ func TestProximityHazards(t *testing.T) {
 	mc.X = 10.0
 	mc.Y = 10.0
 	spikes.EffectTimers[mc] = 0
-	g.mechanicsManager.UpdateProximityEffects()
+	mm.UpdateProximityEffects(ctx)
 	if mc.Health != 95 {
 		t.Errorf("Expected health 95 (no damage when away), got %d", mc.Health)
 	}
 }
 
 func TestProximityHealing(t *testing.T) {
-	g := &Game{}
+	ctx := NewTestContext()
 	mc := NewPlayableCharacter(0, 0, nil)
 	mc.Health = 50
 	mc.MaxHealth = 100
-	g.playableCharacter = mc
-	g.mechanicsManager = NewMechanicsManager(g)
+	ctx.World.PlayableCharacter = mc
+	mm := NewMechanicsManager(&Game{})
 
 	// 1. Test Aura Healing
 	shrineArchetype := &ObstacleArchetype{
@@ -111,9 +111,9 @@ func TestProximityHealing(t *testing.T) {
 		},
 	}
 	shrine := NewObstacle("shrine1", 1.0, 1.0, shrineArchetype)
-	g.obstacles = []*Obstacle{shrine}
+	ctx.World.Obstacles = []*Obstacle{shrine}
 
-	g.mechanicsManager.UpdateProximityEffects()
+	mm.UpdateProximityEffects(ctx)
 	if mc.Health != 60 {
 		t.Errorf("Expected health 60, got %d", mc.Health)
 	}
@@ -132,10 +132,10 @@ func TestProximityHealing(t *testing.T) {
 		},
 	}
 	altar := NewObstacle("altar1", 0, 0, unholyAltarArch)
-	g.obstacles = []*Obstacle{altar}
+	ctx.World.Obstacles = []*Obstacle{altar}
 	mc.Health = 50
 
-	g.mechanicsManager.UpdateProximityEffects()
+	mm.UpdateProximityEffects(ctx)
 	if mc.Health != 50 {
 		t.Errorf("Expected health 50 (player is not an enemy), got %d", mc.Health)
 	}
@@ -154,17 +154,19 @@ func TestProximityHealing(t *testing.T) {
 		},
 	}
 	statue := NewObstacle("statue1", 0, 0, holyStatueArch)
-	g.obstacles = []*Obstacle{statue}
-	g.mechanicsManager.UpdateProximityEffects()
+	ctx.World.Obstacles = []*Obstacle{statue}
+	mm.UpdateProximityEffects(ctx)
 	if mc.Health != 70 {
 		t.Errorf("Expected health 70, got %d", mc.Health)
 	}
 }
 
 func TestInteractiveHealing(t *testing.T) {
+	ctx := NewTestContext()
 	mc := NewPlayableCharacter(0, 0, nil)
 	mc.Health = 10
 	mc.MaxHealth = 100
+	ctx.World.PlayableCharacter = mc
 
 	wellArchetype := &ObstacleArchetype{
 		ID:   "well",
@@ -179,18 +181,18 @@ func TestInteractiveHealing(t *testing.T) {
 		CooldownTime: 1.0 / 60.0, // 1 second cooldown
 	}
 	well := NewObstacle("well1", 1.0, 0, wellArchetype)
-	obstacles := []*Obstacle{well}
+	ctx.World.Obstacles = []*Obstacle{well}
 
-	mockInput := NewMockInputManager()
+	mockInput := ctx.Input.(*MockInputManager)
 	// No key pressed -> no heal
-	mc.Update(mockInput, nil, &obstacles, nil, nil, nil, 100, 100, nil, nil)
+	mc.Update(ctx)
 	if mc.Health != 10 {
 		t.Errorf("Expected health 10, got %d", mc.Health)
 	}
 
 	// Press Space -> Heal
 	mockInput.PressedKeys[engine.KeySpace] = true
-	mc.Update(mockInput, nil, &obstacles, nil, nil, nil, 100, 100, nil, nil)
+	mc.Update(ctx)
 	if mc.Health != 100 {
 		t.Errorf("Expected health 100 after using well, got %d", mc.Health)
 	}
@@ -200,7 +202,7 @@ func TestInteractiveHealing(t *testing.T) {
 }
 
 func TestNPCProximityEffects(t *testing.T) {
-	g := &Game{}
+	ctx := NewTestContext()
 	arch := &Archetype{
 		ID:   "peasant",
 		Name: "Peasant",
@@ -215,9 +217,9 @@ func TestNPCProximityEffects(t *testing.T) {
 		},
 		Archetype: arch,
 	}
-	g.npcs = []*NPC{n}
-	g.playableCharacter = NewPlayableCharacter(100, 100, nil) // Keep MC away
-	g.mechanicsManager = NewMechanicsManager(g)
+	ctx.World.NPCs = []*NPC{n}
+	ctx.World.PlayableCharacter = NewPlayableCharacter(100, 100, nil) // Keep MC away
+	mm := NewMechanicsManager(&Game{})
 
 	// 1. Hazard Effect on NPC
 	campfireArch := &ObstacleArchetype{
@@ -230,9 +232,9 @@ func TestNPCProximityEffects(t *testing.T) {
 		},
 	}
 	fire := NewObstacle("f1", 0.5, 0.5, campfireArch)
-	g.obstacles = []*Obstacle{fire}
+	ctx.World.Obstacles = []*Obstacle{fire}
 
-	g.mechanicsManager.UpdateProximityEffects()
+	mm.UpdateProximityEffects(ctx)
 	if n.Health != 40 {
 		t.Errorf("NPC should have 40 HP, got %d", n.Health)
 	}
@@ -248,8 +250,8 @@ func TestNPCProximityEffects(t *testing.T) {
 		},
 	}
 	well := NewObstacle("w1", 0, 0, wellArch)
-	g.obstacles = []*Obstacle{well}
-	g.mechanicsManager.UpdateProximityEffects()
+	ctx.World.Obstacles = []*Obstacle{well}
+	mm.UpdateProximityEffects(ctx)
 	if n.Health != 45 {
 		t.Errorf("NPC should have 45 HP, got %d", n.Health)
 	}

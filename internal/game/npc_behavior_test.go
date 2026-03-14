@@ -7,7 +7,10 @@ import (
 // Tests for NPC behavior branches (wander, fighter, chaotic, neutral, ally)
 
 func TestNPCBehavior_Wander_SetsDirection(t *testing.T) {
+	ctx := NewTestContext()
 	mc := NewPlayableCharacter(100, 100, nil)
+	ctx.World.PlayableCharacter = mc
+
 	npc := NewNPC(0, 0, &Archetype{ID: "test"}, 1)
 	npc.Behavior = BehaviorWander
 	npc.Alignment = AlignmentEnemy
@@ -15,13 +18,10 @@ func TestNPCBehavior_Wander_SetsDirection(t *testing.T) {
 	// Pre-set direction so movement is predictable
 	npc.WanderDirX = 1.0
 	npc.WanderDirY = 0.0
-
-	audio := NewMockAudioManager()
-	var projs []*Projectile
-	var fts []*FloatingText
+	ctx.World.NPCs = []*NPC{npc}
 
 	for i := 0; i < 5; i++ {
-		npc.Update(mc, nil, nil, nil, &projs, &fts, 1000, 1000, audio, nil, nil)
+		npc.Update(ctx)
 	}
 
 	if npc.X <= 0 {
@@ -30,21 +30,20 @@ func TestNPCBehavior_Wander_SetsDirection(t *testing.T) {
 }
 
 func TestNPCBehavior_Fighter_TargetsNearestNPC(t *testing.T) {
+	ctx := NewTestContext()
 	mc := NewPlayableCharacter(100, 100, nil) // Far away
+	ctx.World.PlayableCharacter = mc
+
 	fighter := NewNPC(0, 0, &Archetype{ID: "fighter"}, 1)
 	fighter.Behavior = BehaviorNpcFighter
 	fighter.Alignment = AlignmentEnemy
 
 	target := NewNPC(2, 0, &Archetype{ID: "target"}, 1)
 	target.Alignment = AlignmentAlly
-
-	audio := NewMockAudioManager()
-	var projs []*Projectile
-	var fts []*FloatingText
-	allNPCs := []*NPC{fighter, target}
+	ctx.World.NPCs = []*NPC{fighter, target}
 
 	for i := 0; i < 10; i++ {
-		fighter.Update(mc, nil, nil, allNPCs, &projs, &fts, 1000, 1000, audio, nil, nil)
+		fighter.Update(ctx)
 	}
 
 	if fighter.TargetActor == nil {
@@ -53,19 +52,19 @@ func TestNPCBehavior_Fighter_TargetsNearestNPC(t *testing.T) {
 }
 
 func TestNPCBehavior_Chaotic_TargetsNearestActor(t *testing.T) {
+	ctx := NewTestContext()
 	mc := NewPlayableCharacter(3, 0, nil) // Closer than farNPC
+	ctx.World.PlayableCharacter = mc
+
 	chaotic := NewNPC(0, 0, &Archetype{ID: "chaotic"}, 1)
 	chaotic.Behavior = BehaviorChaotic
 	chaotic.Alignment = AlignmentEnemy
 
 	farNPC := NewNPC(20, 0, &Archetype{ID: "far"}, 1)
 	farNPC.Alignment = AlignmentEnemy
+	ctx.World.NPCs = []*NPC{chaotic, farNPC}
 
-	audio := NewMockAudioManager()
-	var projs []*Projectile
-	var fts []*FloatingText
-
-	chaotic.Update(mc, nil, nil, []*NPC{chaotic, farNPC}, &projs, &fts, 1000, 1000, audio, nil, nil)
+	chaotic.Update(ctx)
 
 	// Player at dist 3, farNPC at dist 20 → chaotic should target player
 	if chaotic.TargetActor != &mc.Actor {
@@ -74,16 +73,16 @@ func TestNPCBehavior_Chaotic_TargetsNearestActor(t *testing.T) {
 }
 
 func TestNPCBehavior_Neutral_DoesNotTargetActor(t *testing.T) {
+	ctx := NewTestContext()
 	mc := NewPlayableCharacter(0, 0, nil)
+	ctx.World.PlayableCharacter = mc
+
 	npc := NewNPC(1, 0, nil, 1)
 	npc.Alignment = AlignmentNeutral
-
-	audio := NewMockAudioManager()
-	var projs []*Projectile
-	var fts []*FloatingText
+	ctx.World.NPCs = []*NPC{npc}
 
 	for i := 0; i < 5; i++ {
-		npc.Update(mc, nil, nil, nil, &projs, &fts, 1000, 1000, audio, nil, nil)
+		npc.Update(ctx)
 	}
 
 	if npc.TargetActor != nil && npc.TargetActor == &mc.Actor {
@@ -92,17 +91,17 @@ func TestNPCBehavior_Neutral_DoesNotTargetActor(t *testing.T) {
 }
 
 func TestNPCBehavior_Ally_FollowsPlayerWhenNoEnemies(t *testing.T) {
+	ctx := NewTestContext()
 	mc := NewPlayableCharacter(10, 10, nil)
+	ctx.World.PlayableCharacter = mc
+
 	ally := NewNPC(0, 0, &Archetype{ID: "ally"}, 1)
 	ally.Alignment = AlignmentAlly
 	ally.Speed = 0.2 // must be non-zero
-
-	audio := NewMockAudioManager()
-	var projs []*Projectile
-	var fts []*FloatingText
+	ctx.World.NPCs = []*NPC{ally}
 
 	for i := 0; i < 20; i++ {
-		ally.Update(mc, nil, nil, []*NPC{ally}, &projs, &fts, 1000, 1000, audio, nil, nil)
+		ally.Update(ctx)
 	}
 
 	// Ally should have moved toward the player (closer than initial dist ~14)

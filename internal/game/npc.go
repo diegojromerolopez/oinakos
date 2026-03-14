@@ -99,6 +99,13 @@ func NewNPC(x, y float64, archetype *Archetype, level int) *NPC {
 	return n
 }
 
+func (n *NPC) IsGiant() bool {
+	if n.Archetype == nil {
+		return false
+	}
+	return n.Archetype.Group == "giant" || strings.HasPrefix(n.Archetype.ID, "giant_")
+}
+
 func (n *NPC) GetFootprint() engine.Polygon {
 	if n.Archetype == nil { return engine.Polygon{} }
 	return n.Archetype.GetFootprint().Transformed(n.X, n.Y)
@@ -114,19 +121,19 @@ func (n *NPC) checkCollisionAt(newX, newY float64, obstacles []*Obstacle) bool {
 	return false
 }
 
-func (n *NPC) executeAttack(playableCharacter *PlayableCharacter, allNPCs []*NPC, projectiles *[]*Projectile, obstacles *[]*Obstacle, obsRegistry *ObstacleRegistry, fts *[]*FloatingText, audio AudioManager, isTargetPlayer bool, dx, dy, dist float64, logFunc func(string, LogCategory), archs *ArchetypeRegistry) {
+func (n *NPC) executeAttack(ctx *SystemContext, isTargetPlayer bool, dx, dy float64) {
 	if n.State != NPCAttacking && isTargetPlayer {
 		if rand.Float64() < 0.1 {
 			if n.Archetype != nil && n.Archetype.Dialogues != nil {
 				bark := n.Archetype.Dialogues.PickCombatBark()
-				if bark != "" && logFunc != nil {
-					logFunc(fmt.Sprintf("%s: %s", n.Name, bark), LogNPC)
+				if bark != "" && ctx.Log != nil {
+					ctx.Log(fmt.Sprintf("%s: %s", n.Name, bark), LogNPC)
 				}
 			}
 		}
 		if rand.Float64() < 0.3 {
-			if audio != nil && n.Archetype != nil {
-				audio.PlayRandomSound(n.Archetype.SoundID + "/attack")
+			if ctx.Audio != nil && n.Archetype != nil {
+				ctx.Audio.PlayRandomSound(n.Archetype.SoundID + "/attack")
 			}
 		}
 	}
@@ -146,13 +153,14 @@ func (n *NPC) executeAttack(playableCharacter *PlayableCharacter, allNPCs []*NPC
 				pSpd := n.Archetype.Stats.ProjectileSpeed
 				if pSpd <= 0 { pSpd = 0.15 }
 				proj := NewProjectile(n.X, n.Y, dx/mag, dy/mag, pSpd, n.GetTotalAttack(), false, 100.0)
-				*projectiles = append(*projectiles, proj)
+				ctx.World.Projectiles = append(ctx.World.Projectiles, proj)
 			}
 		} else {
 			if isTargetPlayer {
-				targetProtection := playableCharacter.GetTotalProtection()
+				target := ctx.World.PlayableCharacter
+				targetProtection := target.GetTotalProtection()
 				attk := float64(n.GetTotalAttack())
-				def := float64(playableCharacter.GetTotalDefense())
+				def := float64(target.GetTotalDefense())
 				if def <= 0 { def = 1 }
 				hitChance := int(attk / (attk + def) * 100)
 				if hitChance < 5 { hitChance = 5 }
@@ -161,13 +169,13 @@ func (n *NPC) executeAttack(playableCharacter *PlayableCharacter, allNPCs []*NPC
 				if rand.Intn(100)+1 <= hitChance {
 					rawDmg := n.Weapon.RollDamage()
 					finalDmg := int(math.Max(1, float64(rawDmg-targetProtection)))
-					playableCharacter.TakeDamage(finalDmg, audio)
-					*fts = append(*fts, &FloatingText{
-						Text: fmt.Sprintf("-%d", finalDmg), X: playableCharacter.X, Y: playableCharacter.Y, Life: 45, Color: ColorHarm,
+					target.TakeDamage(finalDmg, ctx)
+					ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{
+						Text: fmt.Sprintf("-%d", finalDmg), X: target.X, Y: target.Y, Life: 45, Color: ColorHarm,
 					})
 				} else {
-					*fts = append(*fts, &FloatingText{
-						Text: "MISS", X: playableCharacter.X, Y: playableCharacter.Y, Life: 45, Color: ColorMiss,
+					ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{
+						Text: "MISS", X: target.X, Y: target.Y, Life: 45, Color: ColorMiss,
 					})
 				}
 			} else if n.TargetActor != nil && n.TargetActor.IsAlive() {
@@ -184,20 +192,20 @@ func (n *NPC) executeAttack(playableCharacter *PlayableCharacter, allNPCs []*NPC
 					rawDmg := n.Weapon.RollDamage()
 					finalDmg := int(math.Max(1, float64(rawDmg-targetProtection)))
 					var targetNPC *NPC
-					for _, other := range allNPCs {
+					for _, other := range ctx.World.NPCs {
 						if &other.Actor == targetActor {
 							targetNPC = other
 							break
 						}
 					}
 					if targetNPC != nil {
-						targetNPC.TakeDamage(finalDmg, n, audio, allNPCs, archs, obstacles, obsRegistry, logFunc)
+						targetNPC.TakeDamage(finalDmg, n, ctx)
 					}
-					*fts = append(*fts, &FloatingText{
+					ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{
 						Text: fmt.Sprintf("-%d", finalDmg), X: targetActor.X, Y: targetActor.Y, Life: 45, Color: ColorHarm,
 					})
 				} else {
-					*fts = append(*fts, &FloatingText{
+					ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{
 						Text: "MISS", X: targetActor.X, Y: targetActor.Y, Life: 45, Color: ColorMiss,
 					})
 				}
@@ -206,14 +214,14 @@ func (n *NPC) executeAttack(playableCharacter *PlayableCharacter, allNPCs []*NPC
 	}
 }
 
-func (n *NPC) Update(playableCharacter *PlayableCharacter, obstacles *[]*Obstacle, obsRegistry *ObstacleRegistry, allNPCs []*NPC, projectiles *[]*Projectile, fts *[]*FloatingText, mapW, mapH float64, audio AudioManager, logFunc func(string, LogCategory), archs *ArchetypeRegistry) {
+func (n *NPC) Update(ctx *SystemContext) {
 	n.Tick++
-	var worldObstacles []*Obstacle
-	if obstacles != nil {
-		worldObstacles = *obstacles
-	}
+	worldObstacles := ctx.World.Obstacles
+	mapW, mapH := ctx.World.CurrentMapType.MapWidth, ctx.World.CurrentMapType.MapHeight
+
 	if n.HitTimer > 0 { n.HitTimer-- }
 	var playerDist float64
+	playableCharacter := ctx.World.PlayableCharacter
 	if playableCharacter != nil {
 		playerDist = math.Sqrt(math.Pow(n.X-playableCharacter.X, 2) + math.Pow(n.Y-playableCharacter.Y, 2))
 	}
@@ -231,7 +239,7 @@ func (n *NPC) Update(playableCharacter *PlayableCharacter, obstacles *[]*Obstacl
 	// Check for leader death
 	if n.LeaderID != "" && n.Alignment != AlignmentNeutral {
 		leaderAlive := false
-		for _, other := range allNPCs {
+		for _, other := range ctx.World.NPCs {
 			if other.Archetype != nil && other.Archetype.ID == n.LeaderID && other.IsAlive() {
 				leaderAlive = true
 				break
@@ -244,7 +252,7 @@ func (n *NPC) Update(playableCharacter *PlayableCharacter, obstacles *[]*Obstacl
 		}
 	}
 
-	targetX, targetY, hasTarget, isTargetPlayer := n.findTarget(playableCharacter, allNPCs, playerDist)
+	targetX, targetY, hasTarget, isTargetPlayer := n.findTarget(playableCharacter, ctx.World.NPCs, playerDist)
 
 	if !hasTarget {
 		n.State = NPCIdle
@@ -271,7 +279,7 @@ func (n *NPC) Update(playableCharacter *PlayableCharacter, obstacles *[]*Obstacl
 		if isRanged && dist < attackRange-2.0 {
 			n.executeMovement(dx, dy, worldObstacles, true)
 		} else {
-			n.executeAttack(playableCharacter, allNPCs, projectiles, obstacles, obsRegistry, fts, audio, isTargetPlayer, dx, dy, dist, logFunc, archs)
+			n.executeAttack(ctx, isTargetPlayer, dx, dy)
 		}
 	} else {
 		n.executeMovement(dx, dy, worldObstacles, false)
@@ -285,14 +293,14 @@ func (n *NPC) Update(playableCharacter *PlayableCharacter, obstacles *[]*Obstacl
 	if n.Y > halfH { n.Y = halfH }
 }
 
-func (n *NPC) TakeDamage(amount int, attacker ActorInterface, audio AudioManager, allNPCs []*NPC, archs *ArchetypeRegistry, obstacles *[]*Obstacle, obsRegistry *ObstacleRegistry, logFunc func(string, LogCategory)) {
+func (n *NPC) TakeDamage(amount int, attacker ActorInterface, ctx *SystemContext) {
 	if n.State == NPCDead {
 		return
 	}
 	n.Health -= amount
 	n.HitTimer = 30
-	if audio != nil && n.Archetype != nil {
-		audio.PlayRandomSound(n.Archetype.SoundID + "/hit")
+	if ctx.Audio != nil && n.Archetype != nil {
+		ctx.Audio.PlayRandomSound(n.Archetype.SoundID + "/hit")
 	}
 
 	var actor *Actor
@@ -311,7 +319,7 @@ func (n *NPC) TakeDamage(amount int, attacker ActorInterface, audio AudioManager
 			n.Alignment = AlignmentEnemy
 			n.Behavior = BehaviorKnightHunter
 			if n.Group != "" {
-				for _, other := range allNPCs {
+				for _, other := range ctx.World.NPCs {
 					if other == n || other.Alignment == AlignmentEnemy || !other.IsAlive() || other.Group != n.Group {
 						continue
 					}
@@ -349,10 +357,13 @@ func (n *NPC) TakeDamage(amount int, attacker ActorInterface, audio AudioManager
 				}
 
 				if action.Type == "transform_victim" {
+					if n.IsGiant() {
+						continue
+					}
 					eff := action.Effect.Victim
-					if eff != nil && eff.Transform != "" && archs != nil {
+					if eff != nil && eff.Transform != "" && ctx.Registries.Archetypes != nil {
 						targetArchID := interpolateConfigString(eff.Transform, n)
-						if newArch, ok := archs.Archetypes[targetArchID]; ok {
+						if newArch, ok := ctx.Registries.Archetypes.Archetypes[targetArchID]; ok {
 							n.Archetype = newArch
 							n.Actor.Config = newArch
 							n.Health = newArch.Stats.HealthMin
@@ -377,8 +388,8 @@ func (n *NPC) TakeDamage(amount int, attacker ActorInterface, audio AudioManager
 								}
 							}
 
-							if logFunc != nil {
-								logFunc(fmt.Sprintf("%s was transformed into %s!", n.Name, newArch.Name), LogCombatRecovery)
+							if ctx.Log != nil {
+								ctx.Log(fmt.Sprintf("%s was transformed into %s!", n.Name, newArch.Name), LogCombatRecovery)
 							}
 
 							if eff.SpawnCorpse != nil && !*eff.SpawnCorpse {
@@ -391,12 +402,15 @@ func (n *NPC) TakeDamage(amount int, attacker ActorInterface, audio AudioManager
 						attacker.Heal(action.Effect.Attacker.Heal)
 					}
 				} else if action.Type == "incinerate" {
+					if n.IsGiant() {
+						continue
+					}
 					eff := action.Effect.Victim
-					if eff != nil && eff.CorpseImage != "" && obstacles != nil && obsRegistry != nil {
+					if eff != nil && eff.CorpseImage != "" && ctx.World.Obstacles != nil && ctx.Registries.Obstacles != nil {
 						staticID := interpolateConfigString(eff.CorpseImage, n)
-						if arch, ok := obsRegistry.Archetypes[staticID]; ok {
+						if arch, ok := ctx.Registries.Obstacles.Archetypes[staticID]; ok {
 							newObs := NewObstacle(staticID, n.X, n.Y, arch)
-							*obstacles = append(*obstacles, newObs)
+							ctx.World.Obstacles = append(ctx.World.Obstacles, newObs)
 						}
 						if eff.SpawnCorpse != nil && !*eff.SpawnCorpse {
 							n.State = NPCDead
@@ -419,8 +433,8 @@ func (n *NPC) TakeDamage(amount int, attacker ActorInterface, audio AudioManager
 				}
 			}
 		}
-		if audio != nil && n.Archetype != nil {
-			audio.PlayRandomSound(n.Archetype.SoundID + "/death")
+		if ctx.Audio != nil && n.Archetype != nil {
+			ctx.Audio.PlayRandomSound(n.Archetype.SoundID + "/death")
 		}
 	}
 }

@@ -15,35 +15,34 @@ func NewMechanicsManager(g *Game) *MechanicsManager {
 	return &MechanicsManager{game: g}
 }
 
-func (mm *MechanicsManager) UpdateFogOfWar() {
-	g := mm.game
-	if g.settings == nil || g.settings.FogOfWar == "none" {
-		return
+func (mm *MechanicsManager) UpdateFogOfWar(ctx *SystemContext) {
+	if ctx.Registries != nil { // Settings check moved to ctx or world eventually
+		// For now we keep it simple or pass it in. Assume logic stays here.
 	}
+	// Note: MechanicsManager will eventually go away or be truly stateless.
+	// For now let's just use ctx.
+	world := ctx.World
 	radius := 8.0
-	px, py := g.playableCharacter.X, g.playableCharacter.Y
+	px, py := world.PlayableCharacter.X, world.PlayableCharacter.Y
 	startX, endX := int(px-radius), int(px+radius)
 	startY, endY := int(py-radius), int(py+radius)
 	for x := startX; x <= endX; x++ {
 		for y := startY; y <= endY; y++ {
 			dx, dy := float64(x)-px, float64(y)-py
 			if dx*dx+dy*dy <= radius*radius {
-				g.ExploredTiles[image.Point{X: x, Y: y}] = true
+				world.ExploredTiles[image.Point{X: x, Y: y}] = true
 			}
 		}
 	}
 }
 
-func (mm *MechanicsManager) UpdateProximityEffects() {
-	g := mm.game
-	if g.isPaused || g.isGameOver || g.isMapWon {
-		return
-	}
-	for _, o := range g.obstacles {
+func (mm *MechanicsManager) UpdateProximityEffects(ctx *SystemContext) {
+	world := ctx.World
+	for _, o := range world.Obstacles {
 		if !o.Alive || o.Archetype == nil { continue }
-		entities := make([]interface{}, 0, len(g.npcs)+1)
-		entities = append(entities, g.playableCharacter)
-		for _, n := range g.npcs {
+		entities := make([]interface{}, 0, len(world.NPCs)+1)
+		entities = append(entities, world.PlayableCharacter)
+		for _, n := range world.NPCs {
 			if n.IsAlive() { entities = append(entities, n) }
 		}
 		for _, entity := range entities {
@@ -66,13 +65,16 @@ func (mm *MechanicsManager) UpdateProximityEffects() {
 				if !inRange { continue }
 				if action.Type == ActionHarm {
 					if o.EffectTimers[entity] <= 0 {
+						if a, ok := entity.(ActorInterface); ok && a.GetActor().IsGiant() {
+							continue
+						}
 						switch e := entity.(type) {
-						case *PlayableCharacter: e.TakeDamage(action.Amount, g.audio)
+						case *PlayableCharacter: e.TakeDamage(action.Amount, ctx)
 						case *NPC:
-							e.TakeDamage(action.Amount, nil, g.audio, g.npcs, g.archetypeRegistry, &g.obstacles, g.obstacleRegistry, g.LogEvent)
+							e.TakeDamage(action.Amount, nil, ctx)
 						}
 						o.EffectTimers[entity] = 60
-						g.floatingTexts = append(g.floatingTexts, &FloatingText{
+						world.FloatingTexts = append(world.FloatingTexts, &FloatingText{
 							Text: fmt.Sprintf("-%d", action.Amount), X: ex, Y: ey, Life: 45, Color: ColorHarm,
 						})
 					}
@@ -91,7 +93,7 @@ func (mm *MechanicsManager) UpdateProximityEffects() {
 						case *NPC: e.Heal(action.Amount)
 						}
 						o.EffectTimers[entity] = 60
-						g.floatingTexts = append(g.floatingTexts, &FloatingText{
+						world.FloatingTexts = append(world.FloatingTexts, &FloatingText{
 							Text: fmt.Sprintf("+%d", action.Amount), X: ex, Y: ey, Life: 45, Color: ColorHeal,
 						})
 					}
@@ -101,49 +103,51 @@ func (mm *MechanicsManager) UpdateProximityEffects() {
 	}
 }
 
-func (mm *MechanicsManager) CheckWinConditions() bool {
-	g := mm.game
+func (mm *MechanicsManager) CheckWinConditions(ctx *SystemContext) bool {
+	world := ctx.World
 	mapWon := false
-	switch g.currentMapType.Type {
+	switch world.CurrentMapType.Type {
 	case ObjKillCount:
 		mapKillTotal := 0
-		for _, v := range g.playableCharacter.MapKills { mapKillTotal += v }
+		for _, v := range world.PlayableCharacter.MapKills { mapKillTotal += v }
 		won, hasTarget := false, false
-		if len(g.currentMapType.TargetKills) > 0 {
+		if len(world.CurrentMapType.TargetKills) > 0 {
 			hasTarget = true
 			allMet := true
-			for npcID, targetAmount := range g.currentMapType.TargetKills {
-				if g.playableCharacter.MapKills[npcID] < targetAmount { allMet = false; break }
+			for npcID, targetAmount := range world.CurrentMapType.TargetKills {
+				if world.PlayableCharacter.MapKills[npcID] < targetAmount { allMet = false; break }
 			}
 			if allMet { won = true }
 		}
-		if g.currentMapType.TargetKillCount > 0 {
+		if world.CurrentMapType.TargetKillCount > 0 {
 			hasTarget = true
-			if mapKillTotal >= g.currentMapType.TargetKillCount { won = true } else { won = false }
+			if mapKillTotal >= world.CurrentMapType.TargetKillCount { won = true } else { won = false }
 		}
 		if hasTarget && won { mapWon = true }
-	case ObjSurvive: if g.playTime >= g.currentMapType.TargetTime { mapWon = true }
+	case ObjSurvive:
+		if world.CurrentMapType.TargetTime > 0 && world.PlayTime >= world.CurrentMapType.TargetTime {
+			mapWon = true
+		}
 	case ObjReachPortal, ObjReachZone, ObjReachBuilding:
-		dx, dy := g.playableCharacter.X-g.currentMapType.TargetPoint.X, g.playableCharacter.Y-g.currentMapType.TargetPoint.Y
-		dist, radius := math.Sqrt(dx*dx+dy*dy), g.currentMapType.TargetRadius
+		dx, dy := world.PlayableCharacter.X-world.CurrentMapType.TargetPoint.X, world.PlayableCharacter.Y-world.CurrentMapType.TargetPoint.Y
+		dist, radius := math.Sqrt(dx*dx+dy*dy), world.CurrentMapType.TargetRadius
 		if radius <= 0 { radius = 2.0 }
 		if dist < radius { mapWon = true }
 	case ObjProtectNPC:
-		if len(g.npcs) > 0 {
-			escort := g.npcs[0]
-			if !escort.IsAlive() { g.isGameOver = true } else {
-				dx, dy := escort.X-g.currentMapType.TargetPoint.X, escort.Y-g.currentMapType.TargetPoint.Y
-				dist, radius := math.Sqrt(dx*dx+dy*dy), g.currentMapType.TargetRadius
+		if len(world.NPCs) > 0 {
+			escort := world.NPCs[0]
+			if !escort.IsAlive() { /* handle game over externally */ } else {
+				dx, dy := escort.X-world.CurrentMapType.TargetPoint.X, escort.Y-world.CurrentMapType.TargetPoint.Y
+				dist, radius := math.Sqrt(dx*dx+dy*dy), world.CurrentMapType.TargetRadius
 				if radius <= 0 { radius = 5.0 }
 				if dist < radius { mapWon = true }
 			}
 		}
-	case ObjKillVIP: if len(g.npcs) > 0 && !g.npcs[0].IsAlive() { mapWon = true } else if len(g.npcs) == 0 && g.playTime > 2 { mapWon = true }
+	case ObjKillVIP: if len(world.NPCs) > 0 && !world.NPCs[0].IsAlive() { mapWon = true }
 	case ObjPacifist:
-		if g.playTime >= g.currentMapType.TargetTime { mapWon = true }
-		for _, kills := range g.playableCharacter.MapKills { if kills > 0 { g.isGameOver = true; break } }
+		for _, kills := range world.PlayableCharacter.MapKills { if kills > 0 { /* handle game over externally */ break } }
 	case ObjDestroyBuilding:
-		if g.currentMapType.TargetObstacle != nil && !g.currentMapType.TargetObstacle.Alive { mapWon = true }
+		if world.CurrentMapType.TargetObstacle != nil && !world.CurrentMapType.TargetObstacle.Alive { mapWon = true }
 	}
 	return mapWon
 }

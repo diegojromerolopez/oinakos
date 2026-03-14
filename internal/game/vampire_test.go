@@ -7,6 +7,7 @@ import (
 func newBool(b bool) *bool { return &b }
 
 func TestVampireConversion(t *testing.T) {
+	ctx := NewTestContext()
 	// Setup
 	vampArch := &Archetype{
 		ID: "vampire_male",
@@ -38,9 +39,8 @@ func TestVampireConversion(t *testing.T) {
 	humanArch.Stats.HealthMin = 10
 	humanArch.Stats.HealthMax = 10
 
-	archs := NewArchetypeRegistry()
-	archs.Archetypes["vampire_male"] = vampArch
-	archs.Archetypes["peasant_male"] = humanArch
+	ctx.Registries.Archetypes.Archetypes["vampire_male"] = vampArch
+	ctx.Registries.Archetypes.Archetypes["peasant_male"] = humanArch
 
 	vampire := NewNPC(0, 0, vampArch, 1)
 	vampire.Alignment = AlignmentEnemy
@@ -49,8 +49,10 @@ func TestVampireConversion(t *testing.T) {
 	victim.Alignment = AlignmentNeutral
 	victim.Health = 1
 
+	ctx.World.NPCs = []*NPC{vampire, victim}
+
 	// Act: Victim takes lethal damage from vampire
-	victim.TakeDamage(10, vampire, nil, []*NPC{vampire, victim}, archs, nil, nil, nil)
+	victim.TakeDamage(10, vampire, ctx)
 
 	// Assert
 	if victim.Archetype.ID != "vampire_male" {
