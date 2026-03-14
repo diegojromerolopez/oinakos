@@ -78,7 +78,6 @@ gender: male
 			AttackCooldown  int     `yaml:"attack_cooldown"`
 			AttackRange     float64 `yaml:"attack_range"`
 			ProjectileSpeed float64 `yaml:"projectile_speed"`
-			InfectingProbability float64 `yaml:"infecting_probability"`
 		}{HealthMin: 100},
 	}
 

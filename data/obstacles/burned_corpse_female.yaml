@@ -1,0 +1,5 @@
+id: burned_corpse_female
+name: Burned Remains
+stats:
+  health: -1
+footprint: []

@@ -25,6 +25,14 @@ footprint:
     y: 0.83
 xp: 8
 
+actions:
+  on_kill:
+    - action: "incinerate"
+      probability: 1.0
+      effect:
+        victim:
+          corpse_image: "burned_corpse_{gender}"
+
 dialogues:
   player_greetings:
     - "My respects, Seer."

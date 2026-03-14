@@ -32,7 +32,7 @@ func TestNPCGetters(t *testing.T) {
 
 func TestNPCTakeDamage(t *testing.T) {
 	n := &NPC{Actor: Actor{Health: 100, MaxHealth: 100}}
-	n.TakeDamage(10, nil, nil, nil, nil, nil, nil)
+	n.TakeDamage(10, nil, nil, nil, nil, nil, nil, nil)
 	if n.Health != 90 {
 		t.Errorf("Health after damage: got %d, want 90", n.Health)
 	}
@@ -40,7 +40,7 @@ func TestNPCTakeDamage(t *testing.T) {
 		t.Error("NPC should still be alive")
 	}
 
-	n.TakeDamage(100, nil, nil, nil, nil, nil, nil)
+	n.TakeDamage(100, nil, nil, nil, nil, nil, nil, nil)
 	if n.Health != -10 {
 		t.Errorf("Health after lethal damage: got %d, want -10", n.Health)
 	}
@@ -73,7 +73,6 @@ func TestNewNPC(t *testing.T) {
 			AttackCooldown  int     `yaml:"attack_cooldown"`
 			AttackRange          float64 `yaml:"attack_range"`
 			ProjectileSpeed      float64 `yaml:"projectile_speed"`
-			InfectingProbability float64 `yaml:"infecting_probability"`
 		}{
 			HealthMin:   50,
 			HealthMax:   50,
@@ -103,10 +102,10 @@ func TestNPCAllyFollowing(t *testing.T) {
 	n.Alignment = AlignmentAlly
 	n.Behavior = BehaviorWander // Fix flakiness: avoid default random behavior clearing TargetActor
 	mc := &PlayableCharacter{Actor: Actor{X: 10, Y: 10, State: StateIdle}}
-	
+
 	// First update should set target to player because they are far away (dist 14.14 > 8.0)
-	n.Update(mc, nil, nil, nil, nil, 100, 100, nil, nil, nil)
-	
+	n.Update(mc, nil, nil, nil, nil, nil, 100, 100, nil, nil, nil)
+
 	if n.TargetActor != &mc.Actor {
 		t.Errorf("Expected ally NPC to target player for rejoining, got %v", n.TargetActor)
 	}
@@ -135,7 +134,7 @@ func TestNPCUpdate_Behaviors(t *testing.T) {
 	// 1. BehaviorKnightHunter (moves towards MC)
 	n.Behavior = BehaviorKnightHunter
 	n.X, n.Y = 0, 0
-	n.Update(mc, nil, allNPCs, &projs, &fts, 100, 100, nil, nil, nil)
+	n.Update(mc, nil, nil, allNPCs, &projs, &fts, 100, 100, nil, nil, nil)
 	if n.X == 0 && n.Y == 0 {
 		t.Error("BehaviorKnightHunter did not move")
 	}
@@ -155,7 +154,7 @@ func TestNPCUpdate_Behaviors(t *testing.T) {
 	n.PatrolHeading = true
 	// Force it to reach the end
 	n.X = 9.9
-	n.Update(mc, nil, allNPCs, &projs, &fts, 100, 100, nil, nil, nil)
+	n.Update(mc, nil, nil, allNPCs, &projs, &fts, 100, 100, nil, nil, nil)
 	if n.PatrolHeading != false {
 		t.Error("BehaviorPatrol should bounce back at end")
 	}
@@ -165,7 +164,7 @@ func TestNPCUpdate_Behaviors(t *testing.T) {
 	n.TargetActor = nil
 	n.X, n.Y = 0, 0
 	n.Tick = 119 // trigger wander pick
-	n.Update(mc, nil, allNPCs, &projs, &fts, 100, 100, nil, nil, nil)
+	n.Update(mc, nil, nil, allNPCs, &projs, &fts, 100, 100, nil, nil, nil)
 	if n.WanderDirX == 0 && n.WanderDirY == 0 {
 		t.Error("BehaviorWander should set new direction")
 	}
@@ -179,7 +178,7 @@ func TestNPCUpdate_Behaviors(t *testing.T) {
 	deadNPC.State = NPCDead
 	allNPCs = []*NPC{n, deadNPC, targetNPC}
 	n.X, n.Y = 0, 0
-	n.Update(mc, nil, allNPCs, &projs, &fts, 100, 100, nil, nil, nil)
+	n.Update(mc, nil, nil, allNPCs, &projs, &fts, 100, 100, nil, nil, nil)
 	if n.TargetActor != &targetNPC.Actor {
 		t.Errorf("BehaviorNpcFighter did not acquire nearest alive NPC. Got %v", n.TargetActor)
 	}
@@ -190,7 +189,7 @@ func TestNPCUpdate_Behaviors(t *testing.T) {
 	mc.X, mc.Y = 20, 20             // Far
 	targetNPC.X, targetNPC.Y = 5, 5 // Near
 	n.X, n.Y = 0, 0
-	n.Update(mc, nil, allNPCs, &projs, &fts, 100, 100, nil, nil, nil)
+	n.Update(mc, nil, nil, allNPCs, &projs, &fts, 100, 100, nil, nil, nil)
 	if n.TargetActor != &targetNPC.Actor {
 		t.Error("BehaviorChaotic should pick the closer NPC over the Player")
 	}
@@ -200,28 +199,27 @@ func TestNPCUpdate_Behaviors(t *testing.T) {
 	mc.X, mc.Y = 5, 5                 // Near
 	targetNPC.X, targetNPC.Y = 20, 20 // Far
 	n.X, n.Y = 0, 0
-	n.Update(mc, nil, allNPCs, &projs, &fts, 100, 100, nil, nil, nil)
+	n.Update(mc, nil, nil, allNPCs, &projs, &fts, 100, 100, nil, nil, nil)
 	if n.TargetActor != &mc.Actor {
 		t.Error("BehaviorChaotic should pick the closer Player over the NPC")
 	}
 }
 
 func TestNPC_MeleeAttack(t *testing.T) {
-	rand.Seed(1)                                     // Ensure deterministic attack rolls so hit guarantees do not flip on the 5% margin within CI
+	rand.Seed(1) // Ensure deterministic attack rolls so hit guarantees do not flip on the 5% margin within CI
 	mc := NewPlayableCharacter(0.5, 0, nil) // Very close
 	fts := []*FloatingText{}
 	projs := []*Projectile{}
 
 	arch := &Archetype{Stats: struct {
-		HealthMin       int     `yaml:"health_min"`
-		HealthMax       int     `yaml:"health_max"`
-		Speed           float64 `yaml:"speed"`
-		BaseAttack      int     `yaml:"base_attack"`
-		BaseDefense     int     `yaml:"base_defense"`
-		AttackCooldown  int     `yaml:"attack_cooldown"`
+		HealthMin            int     `yaml:"health_min"`
+		HealthMax            int     `yaml:"health_max"`
+		Speed                float64 `yaml:"speed"`
+		BaseAttack           int     `yaml:"base_attack"`
+		BaseDefense          int     `yaml:"base_defense"`
+		AttackCooldown       int     `yaml:"attack_cooldown"`
 		AttackRange          float64 `yaml:"attack_range"`
 		ProjectileSpeed      float64 `yaml:"projectile_speed"`
-		InfectingProbability float64 `yaml:"infecting_probability"`
 	}{
 		HealthMin:      50,
 		HealthMax:      50,
@@ -240,7 +238,7 @@ func TestNPC_MeleeAttack(t *testing.T) {
 	startHealth := mc.Health
 	for i := 0; i < 100; i++ {
 		n.AttackTimer = 60
-		n.Update(mc, nil, []*NPC{n}, &projs, &fts, 100, 100, nil, nil, nil)
+		n.Update(mc, nil, nil, []*NPC{n}, &projs, &fts, 100, 100, nil, nil, nil)
 		if mc.Health < startHealth {
 			break
 		}
@@ -262,7 +260,7 @@ func TestNPC_MeleeAttack(t *testing.T) {
 	startNpcHealth := targetNPC.Health
 	for i := 0; i < 100; i++ {
 		n.AttackTimer = 60
-		n.Update(mc, nil, []*NPC{n, targetNPC}, &projs, &fts, 100, 100, nil, nil, nil)
+		n.Update(mc, nil, nil, []*NPC{n, targetNPC}, &projs, &fts, 100, 100, nil, nil, nil)
 		if targetNPC.Health < startNpcHealth {
 			break
 		}
@@ -287,7 +285,6 @@ func TestNPC_RangedAttack(t *testing.T) {
 		AttackCooldown  int     `yaml:"attack_cooldown"`
 		AttackRange          float64 `yaml:"attack_range"`
 		ProjectileSpeed      float64 `yaml:"projectile_speed"`
-		InfectingProbability float64 `yaml:"infecting_probability"`
 	}{
 		AttackRange:    5.0, // Ranged!
 		AttackCooldown: 60,
@@ -297,7 +294,7 @@ func TestNPC_RangedAttack(t *testing.T) {
 	n.TargetActor = &mc.Actor
 	n.AttackTimer = 60 // Ready to attack
 
-	n.Update(mc, nil, []*NPC{n}, &projs, &fts, 100, 100, nil, nil, nil)
+	n.Update(mc, nil, nil, []*NPC{n}, &projs, &fts, 100, 100, nil, nil, nil)
 
 	if n.State != NPCAttacking {
 		t.Error("Ranged NPC should transition to Attacking state")
@@ -309,7 +306,7 @@ func TestNPC_RangedAttack(t *testing.T) {
 	// Test kiting behavior (too close)
 	mc.X, mc.Y = 1, 0 // Inside minimum range
 	n.X, n.Y = 0, 0
-	n.Update(mc, nil, []*NPC{n}, &projs, &fts, 100, 100, nil, nil)
+	n.Update(mc, nil, nil, []*NPC{n}, &projs, &fts, 100, 100, nil, nil, nil)
 
 	if math.Sqrt(math.Pow(n.X, 2)+math.Pow(n.Y, 2)) == 0 {
 		t.Error("Ranged NPC should kite away when player is too close")

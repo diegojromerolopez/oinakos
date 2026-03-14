@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"strings"
 	"oinakos/internal/engine"
 )
 
@@ -113,7 +114,7 @@ func (n *NPC) checkCollisionAt(newX, newY float64, obstacles []*Obstacle) bool {
 	return false
 }
 
-func (n *NPC) executeAttack(playableCharacter *PlayableCharacter, allNPCs []*NPC, projectiles *[]*Projectile, fts *[]*FloatingText, audio AudioManager, isTargetPlayer bool, dx, dy, dist float64, logFunc func(string, LogCategory), archs *ArchetypeRegistry) {
+func (n *NPC) executeAttack(playableCharacter *PlayableCharacter, allNPCs []*NPC, projectiles *[]*Projectile, obstacles *[]*Obstacle, obsRegistry *ObstacleRegistry, fts *[]*FloatingText, audio AudioManager, isTargetPlayer bool, dx, dy, dist float64, logFunc func(string, LogCategory), archs *ArchetypeRegistry) {
 	if n.State != NPCAttacking && isTargetPlayer {
 		if rand.Float64() < 0.1 {
 			if n.Archetype != nil && n.Archetype.Dialogues != nil {
@@ -190,7 +191,7 @@ func (n *NPC) executeAttack(playableCharacter *PlayableCharacter, allNPCs []*NPC
 						}
 					}
 					if targetNPC != nil {
-						targetNPC.TakeDamage(finalDmg, nil, n, audio, allNPCs, archs, logFunc)
+						targetNPC.TakeDamage(finalDmg, n, audio, allNPCs, archs, obstacles, obsRegistry, logFunc)
 					}
 					*fts = append(*fts, &FloatingText{
 						Text: fmt.Sprintf("-%d", finalDmg), X: targetActor.X, Y: targetActor.Y, Life: 45, Color: ColorHarm,
@@ -205,8 +206,12 @@ func (n *NPC) executeAttack(playableCharacter *PlayableCharacter, allNPCs []*NPC
 	}
 }
 
-func (n *NPC) Update(playableCharacter *PlayableCharacter, obstacles []*Obstacle, allNPCs []*NPC, projectiles *[]*Projectile, fts *[]*FloatingText, mapW, mapH float64, audio AudioManager, logFunc func(string, LogCategory), archs *ArchetypeRegistry) {
+func (n *NPC) Update(playableCharacter *PlayableCharacter, obstacles *[]*Obstacle, obsRegistry *ObstacleRegistry, allNPCs []*NPC, projectiles *[]*Projectile, fts *[]*FloatingText, mapW, mapH float64, audio AudioManager, logFunc func(string, LogCategory), archs *ArchetypeRegistry) {
 	n.Tick++
+	var worldObstacles []*Obstacle
+	if obstacles != nil {
+		worldObstacles = *obstacles
+	}
 	if n.HitTimer > 0 { n.HitTimer-- }
 	var playerDist float64
 	if playableCharacter != nil {
@@ -215,7 +220,7 @@ func (n *NPC) Update(playableCharacter *PlayableCharacter, obstacles []*Obstacle
 
 	if n.State == NPCDead {
 		if n.DeadTimer == 0 && n.Archetype != nil {
-			n.X, n.Y = findSafePosition(n.X, n.Y, n.Archetype.GetFootprint(), obstacles)
+			n.X, n.Y = findSafePosition(n.X, n.Y, n.Archetype.GetFootprint(), worldObstacles)
 		}
 		n.DeadTimer++
 		return
@@ -264,12 +269,12 @@ func (n *NPC) Update(playableCharacter *PlayableCharacter, obstacles []*Obstacle
 
 	if dist < attackRange && canAttack {
 		if isRanged && dist < attackRange-2.0 {
-			n.executeMovement(dx, dy, obstacles, true)
+			n.executeMovement(dx, dy, worldObstacles, true)
 		} else {
-			n.executeAttack(playableCharacter, allNPCs, projectiles, fts, audio, isTargetPlayer, dx, dy, dist, logFunc, archs)
+			n.executeAttack(playableCharacter, allNPCs, projectiles, obstacles, obsRegistry, fts, audio, isTargetPlayer, dx, dy, dist, logFunc, archs)
 		}
 	} else {
-		n.executeMovement(dx, dy, obstacles, false)
+		n.executeMovement(dx, dy, worldObstacles, false)
 	}
 
 	// ALWAYS clamp to map boundaries
@@ -280,24 +285,25 @@ func (n *NPC) Update(playableCharacter *PlayableCharacter, obstacles []*Obstacle
 	if n.Y > halfH { n.Y = halfH }
 }
 
-func (n *NPC) TakeDamage(amount int, attackerPlayer *PlayableCharacter, attackerNPC *NPC, audio AudioManager, allNPCs []*NPC, archs *ArchetypeRegistry, logFunc func(string, LogCategory)) {
-	if n.State == NPCDead { return }
+func (n *NPC) TakeDamage(amount int, attacker ActorInterface, audio AudioManager, allNPCs []*NPC, archs *ArchetypeRegistry, obstacles *[]*Obstacle, obsRegistry *ObstacleRegistry, logFunc func(string, LogCategory)) {
+	if n.State == NPCDead {
+		return
+	}
 	n.Health -= amount
 	n.HitTimer = 30
-	if audio != nil && n.Archetype != nil { audio.PlayRandomSound(n.Archetype.SoundID + "/hit") }
-
-	var attacker *Actor
-	attackerHealth := 0
-	if attackerPlayer != nil {
-		attacker = &attackerPlayer.Actor
-		attackerHealth = attackerPlayer.Health
-	} else if attackerNPC != nil {
-		attacker = &attackerNPC.Actor
-		attackerHealth = attackerNPC.Health
+	if audio != nil && n.Archetype != nil {
+		audio.PlayRandomSound(n.Archetype.SoundID + "/hit")
 	}
 
+	var actor *Actor
+	attackerHealth := 0
 	if attacker != nil {
-		n.TargetActor = attacker
+		actor = attacker.GetActor()
+		attackerHealth = actor.Health
+	}
+
+	if actor != nil {
+		n.TargetActor = actor
 		if float64(n.Health) < float64(attackerHealth)*0.2 {
 			n.Alignment = AlignmentNeutral
 			n.Behavior = BehaviorFlee
@@ -306,11 +312,13 @@ func (n *NPC) TakeDamage(amount int, attackerPlayer *PlayableCharacter, attacker
 			n.Behavior = BehaviorKnightHunter
 			if n.Group != "" {
 				for _, other := range allNPCs {
-					if other == n || other.Alignment == AlignmentEnemy || !other.IsAlive() || other.Group != n.Group { continue }
-					if math.Sqrt(math.Pow(n.X-other.X, 2) + math.Pow(n.Y-other.Y, 2)) < 20.0 {
+					if other == n || other.Alignment == AlignmentEnemy || !other.IsAlive() || other.Group != n.Group {
+						continue
+					}
+					if math.Sqrt(math.Pow(n.X-other.X, 2)+math.Pow(n.Y-other.Y, 2)) < 20.0 {
 						other.Alignment = AlignmentEnemy
 						other.Behavior = BehaviorKnightHunter
-						other.TargetActor = attacker
+						other.TargetActor = actor
 					}
 				}
 			}
@@ -318,44 +326,82 @@ func (n *NPC) TakeDamage(amount int, attackerPlayer *PlayableCharacter, attacker
 	}
 
 	if n.Health <= 0 {
-		// Vampire Conversion Logic
-		var infectorConfig *EntityConfig
-		if attackerPlayer != nil && attackerPlayer.Config != nil && attackerPlayer.Config.IsVampire() {
-			infectorConfig = attackerPlayer.Config
-		} else if attackerNPC != nil && attackerNPC.Archetype != nil && attackerNPC.Archetype.IsVampire() {
-			infectorConfig = attackerNPC.Archetype
+		// Generic Kill Actions System
+		var attackerConfig *EntityConfig
+		var attackerNPC *NPC
+		var attackerPlayer *PlayableCharacter
+
+		if attacker != nil {
+			if npc, ok := attacker.(*NPC); ok {
+				attackerNPC = npc
+				attackerConfig = npc.Archetype
+			} else if pc, ok := attacker.(*PlayableCharacter); ok {
+				attackerPlayer = pc
+				attackerConfig = pc.Config
+			}
 		}
 
-		if infectorConfig != nil && n.Archetype != nil && n.Archetype.IsConvertibleHuman() {
-			if rand.Float64() < infectorConfig.Stats.InfectingProbability {
-				vampID := "vampire_male"
-				if infectorConfig.Gender == "female" {
-					vampID = "vampire_female"
+		if attackerConfig != nil && attackerConfig.Actions != nil && len(attackerConfig.Actions.OnKill) > 0 {
+			for _, action := range attackerConfig.Actions.OnKill {
+				// Probability check
+				if rand.Float64() >= action.Probability {
+					continue
 				}
 
-				if archs != nil {
-					if newArch, ok := archs.Archetypes[vampID]; ok {
-						n.Archetype = newArch
-						n.Actor.Config = newArch
-						n.Health = newArch.Stats.HealthMin
-						n.MaxHealth = n.Health
-						n.State = NPCIdle
-						n.HitTimer = 0
-						n.TargetActor = nil
+				if action.Type == "transform_victim" {
+					eff := action.Effect.Victim
+					if eff != nil && eff.Transform != "" && archs != nil {
+						targetArchID := interpolateConfigString(eff.Transform, n)
+						if newArch, ok := archs.Archetypes[targetArchID]; ok {
+							n.Archetype = newArch
+							n.Actor.Config = newArch
+							n.Health = newArch.Stats.HealthMin
+							n.MaxHealth = n.Health
+							n.State = NPCIdle
+							n.HitTimer = 0
+							n.TargetActor = nil
 
-						if attackerPlayer != nil {
-							n.Alignment = AlignmentAlly
-						} else if attackerNPC != nil {
-							n.Alignment = attackerNPC.Alignment
-						}
+							// Default alignment logic
+							if attackerPlayer != nil {
+								n.Alignment = AlignmentAlly
+							} else if attackerNPC != nil {
+								n.Alignment = attackerNPC.Alignment
+							}
 
-						if logFunc != nil {
-							logFunc(fmt.Sprintf("%s was converted into a vampire by %s!", n.Name, infectorConfig.Name), LogCombatRecovery)
+							// Manual override if set
+							if eff.Alignment == "inherit" {
+								if attackerNPC != nil {
+									n.Alignment = attackerNPC.Alignment
+								} else if attackerPlayer != nil {
+									n.Alignment = AlignmentAlly
+								}
+							}
+
+							if logFunc != nil {
+								logFunc(fmt.Sprintf("%s was transformed into %s!", n.Name, newArch.Name), LogCombatRecovery)
+							}
+
+							if eff.SpawnCorpse != nil && !*eff.SpawnCorpse {
+								return // Suppress death processing
+							}
 						}
-						if audio != nil {
-							audio.PlayRandomSound("vampire/convert") // Generic name for now
+					}
+				} else if action.Type == "heal_attacker" {
+					if action.Effect.Attacker != nil && action.Effect.Attacker.Heal > 0 {
+						attacker.Heal(action.Effect.Attacker.Heal)
+					}
+				} else if action.Type == "incinerate" {
+					eff := action.Effect.Victim
+					if eff != nil && eff.CorpseImage != "" && obstacles != nil && obsRegistry != nil {
+						staticID := interpolateConfigString(eff.CorpseImage, n)
+						if arch, ok := obsRegistry.Archetypes[staticID]; ok {
+							newObs := NewObstacle(staticID, n.X, n.Y, arch)
+							*obstacles = append(*obstacles, newObs)
 						}
-						return
+						if eff.SpawnCorpse != nil && !*eff.SpawnCorpse {
+							n.State = NPCDead
+							return // Suppress standard death
+						}
 					}
 				}
 			}
@@ -366,9 +412,27 @@ func (n *NPC) TakeDamage(amount int, attackerPlayer *PlayableCharacter, attacker
 			attackerPlayer.Kills++
 			if n.Archetype != nil {
 				attackerPlayer.MapKills[n.Archetype.ID]++
-				if n.Archetype.XP > 0 { attackerPlayer.AddXP(n.Archetype.XP) } else { attackerPlayer.AddXP(1) }
+				if n.Archetype.XP > 0 {
+					attackerPlayer.AddXP(n.Archetype.XP)
+				} else {
+					attackerPlayer.AddXP(1)
+				}
 			}
 		}
-		if audio != nil && n.Archetype != nil { audio.PlayRandomSound(n.Archetype.SoundID + "/death") }
+		if audio != nil && n.Archetype != nil {
+			audio.PlayRandomSound(n.Archetype.SoundID + "/death")
+		}
 	}
+}
+
+func interpolateConfigString(s string, victim *NPC) string {
+	res := s
+	if victim != nil {
+		res = strings.ReplaceAll(res, "{gender}", victim.Archetype.Gender)
+		// Default to "male" if gender is missing
+		if victim.Archetype.Gender == "" {
+			res = strings.ReplaceAll(res, "{gender}", "male")
+		}
+	}
+	return res
 }

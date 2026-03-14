@@ -21,7 +21,7 @@ func TestNPCBehavior_Wander_SetsDirection(t *testing.T) {
 	var fts []*FloatingText
 
 	for i := 0; i < 5; i++ {
-		npc.Update(mc, nil, nil, &projs, &fts, 1000, 1000, audio, nil)
+		npc.Update(mc, nil, nil, nil, &projs, &fts, 1000, 1000, audio, nil, nil)
 	}
 
 	if npc.X <= 0 {
@@ -44,7 +44,7 @@ func TestNPCBehavior_Fighter_TargetsNearestNPC(t *testing.T) {
 	allNPCs := []*NPC{fighter, target}
 
 	for i := 0; i < 10; i++ {
-		fighter.Update(mc, nil, allNPCs, &projs, &fts, 1000, 1000, audio, nil, nil)
+		fighter.Update(mc, nil, nil, allNPCs, &projs, &fts, 1000, 1000, audio, nil, nil)
 	}
 
 	if fighter.TargetActor == nil {
@@ -65,7 +65,7 @@ func TestNPCBehavior_Chaotic_TargetsNearestActor(t *testing.T) {
 	var projs []*Projectile
 	var fts []*FloatingText
 
-	chaotic.Update(mc, nil, []*NPC{chaotic, farNPC}, &projs, &fts, 1000, 1000, audio, nil, nil)
+	chaotic.Update(mc, nil, nil, []*NPC{chaotic, farNPC}, &projs, &fts, 1000, 1000, audio, nil, nil)
 
 	// Player at dist 3, farNPC at dist 20 → chaotic should target player
 	if chaotic.TargetActor != &mc.Actor {
@@ -83,7 +83,7 @@ func TestNPCBehavior_Neutral_DoesNotTargetActor(t *testing.T) {
 	var fts []*FloatingText
 
 	for i := 0; i < 5; i++ {
-		npc.Update(mc, nil, nil, &projs, &fts, 1000, 1000, audio, nil)
+		npc.Update(mc, nil, nil, nil, &projs, &fts, 1000, 1000, audio, nil, nil)
 	}
 
 	if npc.TargetActor != nil && npc.TargetActor == &mc.Actor {
@@ -102,7 +102,7 @@ func TestNPCBehavior_Ally_FollowsPlayerWhenNoEnemies(t *testing.T) {
 	var fts []*FloatingText
 
 	for i := 0; i < 20; i++ {
-		ally.Update(mc, nil, []*NPC{ally}, &projs, &fts, 1000, 1000, audio, nil, nil)
+		ally.Update(mc, nil, nil, []*NPC{ally}, &projs, &fts, 1000, 1000, audio, nil, nil)
 	}
 
 	// Ally should have moved toward the player (closer than initial dist ~14)

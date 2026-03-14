@@ -21,7 +21,7 @@ func TestLeaderDeathConsequence(t *testing.T) {
 	}
 	
 	// Update follower while leader is alive
-	follower.Update(mc, nil, npcs, nil, nil, 100, 100, nil, nil, nil)
+	follower.Update(mc, nil, nil, npcs, nil, nil, 100, 100, nil, nil, nil)
 	if follower.Alignment != AlignmentEnemy {
 		t.Errorf("Follower should stay Enemy while leader is alive, got %v", follower.Alignment)
 	}
@@ -31,7 +31,7 @@ func TestLeaderDeathConsequence(t *testing.T) {
 	leader.State = NPCDead
 	
 	// Update follower after leader death
-	follower.Update(mc, nil, npcs, nil, nil, 100, 100, nil, nil, nil)
+	follower.Update(mc, nil, nil, npcs, nil, nil, 100, 100, nil, nil, nil)
 	
 	if follower.Alignment != AlignmentNeutral {
 		t.Errorf("Follower should become Neutral after leader death, got %v", follower.Alignment)
@@ -63,7 +63,7 @@ func TestTraitorTargeting(t *testing.T) {
 	// Peer should normally ignore Neutral NPCs if they weren't traitors,
 	// but because traitor has leader "queen" (Enemy), and Peer is Enemy,
 	// Peer should target the traitor.
-	peer.Update(mc, nil, npcs, nil, nil, 100, 100, nil, nil, nil)
+	peer.Update(mc, nil, nil, npcs, nil, nil, 100, 100, nil, nil, nil)
 
 	if peer.TargetActor != &traitor.Actor {
 		t.Errorf("Peer should have targeted the traitor, got %v", peer.TargetActor)

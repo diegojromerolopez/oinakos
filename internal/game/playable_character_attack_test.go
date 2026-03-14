@@ -14,7 +14,7 @@ func TestCheckAttackHits_HitOrMiss(t *testing.T) {
 	npc.Alignment = AlignmentEnemy
 
 	var fts []*FloatingText
-	mc.CheckAttackHits([]*NPC{npc}, nil, &fts, NewMockAudioManager(), nil, nil)
+	mc.CheckAttackHits([]*NPC{npc}, nil, nil, &fts, NewMockAudioManager(), nil, nil)
 
 	// Either health dropped (hit) or a floating text was produced (MISS) — both valid
 	if npc.Health == 100 && len(fts) == 0 {
@@ -31,7 +31,7 @@ func TestCheckAttackHits_DeadNPCSkipped(t *testing.T) {
 	npc.Health = 50
 
 	var fts []*FloatingText
-	mc.CheckAttackHits([]*NPC{npc}, nil, &fts, NewMockAudioManager(), nil, nil)
+	mc.CheckAttackHits([]*NPC{npc}, nil, nil, &fts, NewMockAudioManager(), nil, nil)
 
 	if npc.Health != 50 {
 		t.Error("Dead NPC should never take damage")
@@ -49,7 +49,7 @@ func TestCheckAttackHits_OutOfRange(t *testing.T) {
 	npc.Health = 100
 
 	var fts []*FloatingText
-	mc.CheckAttackHits([]*NPC{npc}, nil, &fts, NewMockAudioManager(), nil, nil)
+	mc.CheckAttackHits([]*NPC{npc}, nil, nil, &fts, NewMockAudioManager(), nil, nil)
 
 	if npc.Health != 100 {
 		t.Error("Out-of-range NPC should not take damage")
@@ -79,7 +79,7 @@ func TestCheckAttackHits_AllDirections(t *testing.T) {
 		// We loop up to 100 times to virtually guarantee a hit happens.
 		hitDetected := false
 		for attempt := 0; attempt < 100; attempt++ {
-			mc.CheckAttackHits([]*NPC{npc}, nil, &fts, NewMockAudioManager(), nil, nil)
+			mc.CheckAttackHits([]*NPC{npc}, nil, nil, &fts, NewMockAudioManager(), nil, nil)
 			if npc.Health < 100 {
 				hitDetected = true
 				break
@@ -108,7 +108,7 @@ func TestCheckAttackHits_KillUpdatesMapKills(t *testing.T) {
 	// We loop up to 100 times to virtually guarantee a hit happens.
 	hitDetected := false
 	for attempt := 0; attempt < 100; attempt++ {
-		mc.CheckAttackHits([]*NPC{npc}, nil, &fts, NewMockAudioManager())
+		mc.CheckAttackHits([]*NPC{npc}, nil, nil, &fts, NewMockAudioManager(), nil, nil)
 		if npc.State == NPCDead {
 			hitDetected = true
 			break

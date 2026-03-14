@@ -133,6 +133,15 @@ func (a *Actor) Heal(amount int) {
 	}
 }
 
+type ActorInterface interface {
+	GetActor() *Actor
+	Heal(amount int)
+}
+
+func (a *Actor) GetActor() *Actor {
+	return a
+}
+
 // calculateStat applies logarithmic level scaling.
 func (a *Actor) calculateStat(base, level int) int {
 	if level <= 1 {

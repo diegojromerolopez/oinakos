@@ -114,11 +114,17 @@ func (mc *PlayableCharacter) TakeDamage(amount int, audio AudioManager) {
 
 // checkCollisionAt is now in Actor.
 
-func (mc *PlayableCharacter) Update(input engine.Input, audio AudioManager, obstacles []*Obstacle, npcs []*NPC, fts *[]*FloatingText, mapW, mapH float64, archs *ArchetypeRegistry, logFunc func(string, LogCategory)) {
+func (mc *PlayableCharacter) Update(input engine.Input, audio AudioManager, obstacles *[]*Obstacle, obsRegistry *ObstacleRegistry, npcs []*NPC, fts *[]*FloatingText, mapW, mapH float64, archs *ArchetypeRegistry, logFunc func(string, LogCategory)) {
+	var worldObstacles []*Obstacle
+	if obstacles != nil {
+		worldObstacles = *obstacles
+	}
+
 	if mc.State == StateDead {
 		if mc.DeadTimer == 0 {
 			if mc.Config != nil {
-				mc.X, mc.Y = findSafePosition(mc.X, mc.Y, mc.Config.GetFootprint(), obstacles)
+				newX, newY := findSafePosition(mc.X, mc.Y, mc.Config.GetFootprint(), worldObstacles)
+				mc.X, mc.Y = newX, newY
 			}
 		}
 		mc.DeadTimer++
@@ -132,7 +138,7 @@ func (mc *PlayableCharacter) Update(input engine.Input, audio AudioManager, obst
 	if mc.State == StateAttacking {
 		mc.Tick++
 		if mc.Tick == 15 {
-			mc.CheckAttackHits(npcs, obstacles, fts, audio, archs, logFunc)
+			mc.CheckAttackHits(npcs, obstacles, obsRegistry, fts, audio, archs, logFunc)
 		}
 		if mc.Tick > 30 {
 			mc.State = StateIdle
@@ -167,7 +173,7 @@ func (mc *PlayableCharacter) Update(input engine.Input, audio AudioManager, obst
 
 		if input.IsKeyPressed(engine.KeySpace) {
 			// Check for interactive obstacles (like wells)
-			for _, o := range obstacles {
+			for _, o := range *obstacles {
 				if o.Alive && o.Archetype != nil && o.CooldownTicks <= 0 {
 					for _, action := range o.Archetype.Actions {
 						if action.Type == ActionHeal && action.RequiresInteraction {
@@ -229,14 +235,14 @@ func (mc *PlayableCharacter) Update(input engine.Input, audio AudioManager, obst
 		moveX := dx * mc.Speed * mc.GetSpeedModifier()
 		moveY := dy * mc.Speed * mc.GetSpeedModifier()
 
-		if !mc.checkCollisionAt(mc.X+moveX, mc.Y+moveY, obstacles) {
+		if !mc.checkCollisionAt(mc.X+moveX, mc.Y+moveY, worldObstacles) {
 			mc.X += moveX
 			mc.Y += moveY
 		} else {
-			if !mc.checkCollisionAt(mc.X+moveX, mc.Y, obstacles) {
+			if !mc.checkCollisionAt(mc.X+moveX, mc.Y, worldObstacles) {
 				mc.X += moveX
 			}
-			if !mc.checkCollisionAt(mc.X, mc.Y+moveY, obstacles) {
+			if !mc.checkCollisionAt(mc.X, mc.Y+moveY, worldObstacles) {
 				mc.Y += moveY
 			}
 		}
@@ -300,7 +306,11 @@ func (mc *PlayableCharacter) Update(input engine.Input, audio AudioManager, obst
 	}
 }
 
-func (mc *PlayableCharacter) CheckAttackHits(npcs []*NPC, obstacles []*Obstacle, fts *[]*FloatingText, audio AudioManager, archs *ArchetypeRegistry, logFunc func(string, LogCategory)) {
+func (mc *PlayableCharacter) CheckAttackHits(npcs []*NPC, obstacles *[]*Obstacle, obsRegistry *ObstacleRegistry, fts *[]*FloatingText, audio AudioManager, archs *ArchetypeRegistry, logFunc func(string, LogCategory)) {
+	var worldObstacles []*Obstacle
+	if obstacles != nil {
+		worldObstacles = *obstacles
+	}
 	attackDist := 0.9
 	atX, atY := mc.X, mc.Y
 
@@ -352,7 +362,7 @@ func (mc *PlayableCharacter) CheckAttackHits(npcs []*NPC, obstacles []*Obstacle,
 				protection := n.GetTotalProtection()
 				finalDmg := int(math.Max(1, float64(rawDmg-protection)))
 				DebugLog("Player attacks NPC %s: HIT for %d damage (roll: %d/%d)", n.Name, finalDmg, roll, hitChance)
-				n.TakeDamage(finalDmg, mc, nil, audio, npcs, archs, logFunc)
+				n.TakeDamage(finalDmg, mc, audio, npcs, archs, obstacles, obsRegistry, logFunc)
 
 				*fts = append(*fts, &FloatingText{
 					Text:  fmt.Sprintf("-%d", finalDmg),
@@ -376,7 +386,7 @@ func (mc *PlayableCharacter) CheckAttackHits(npcs []*NPC, obstacles []*Obstacle,
 	}
 
 	// OBSTACLE Damage
-	for _, o := range obstacles {
+	for _, o := range worldObstacles {
 		if !o.Alive {
 			continue
 		}

@@ -15,13 +15,6 @@ Oinakos is a performance-optimized, infinite isometric action RPG built in Go. T
 
 ---
 
-## 🚀 Architectural Pillars
-
-### Strict Dependency Injection
-- `internal/game` must **never** import `ebiten` directly. Only `internal/engine` and `main.go` may.
-- All Ebiten types are behind interfaces (`engine.Graphics`, `engine.Input`, `engine.Image`).
-- This enables **100% headless unit testing** of all game logic. Run `make test`.
-
 ### Data-Driven Registries
 All game content is defined in YAML under `data/` and loaded at startup:
 - **`ArchetypeRegistry`** — shared stats, sprites, audio dir, and AI profile for a category of NPC (e.g. `orc/male`).
@@ -47,6 +40,25 @@ All game content is defined in YAML under `data/` and loaded at startup:
 1. Check `assets/audio/npcs/<npc_id>/` for WAV files → use NPC-specific audio.
 2. Else fall back to `assets/audio/archetypes/<archetype_id>/` (the archetype's voice).
 3. Player character audio always uses `PlayableCharacter` as the key prefix.
+
+---
+
+## 📜 Coding Standards
+
+### Go Best Practices
+- **`gofmt`**: All code must be formatted with the standard Go formatter.
+- **Explicit Error Handling**: Check every error immediately. Keep the "happy path" on the left.
+- **Naming**: Use `CamelCase` for all names. Short names for local scope (e.g., `err`, `i`), descriptive for package/struct level.
+- **Composition**: Use struct embedding over complex heirarchies.
+
+### Dependency Injection
+- `internal/game` must **never** import `ebiten` directly. Only `internal/engine` and `main.go` may.
+- All Ebiten types are behind interfaces (`engine.Graphics`, `engine.Input`, `engine.Image`).
+- This enables **100% headless unit testing** of all game logic. Run `make test`.
+
+### File Hygiene
+- **Max File Length**: No file should exceed **500 lines**. If a file grows beyond this, refactor and split it by responsibility.
+- **Package Names**: Name folders after the service they provide (e.g., `internal/game`, not `internal/utils`).
 
 ---
 

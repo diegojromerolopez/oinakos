@@ -183,14 +183,14 @@ func TestInteractiveHealing(t *testing.T) {
 
 	mockInput := NewMockInputManager()
 	// No key pressed -> no heal
-	mc.Update(mockInput, nil, obstacles, nil, nil, 100, 100)
+	mc.Update(mockInput, nil, &obstacles, nil, nil, nil, 100, 100, nil, nil)
 	if mc.Health != 10 {
 		t.Errorf("Expected health 10, got %d", mc.Health)
 	}
 
 	// Press Space -> Heal
 	mockInput.PressedKeys[engine.KeySpace] = true
-	mc.Update(mockInput, nil, obstacles, nil, nil, 100, 100)
+	mc.Update(mockInput, nil, &obstacles, nil, nil, nil, 100, 100, nil, nil)
 	if mc.Health != 100 {
 		t.Errorf("Expected health 100 after using well, got %d", mc.Health)
 	}

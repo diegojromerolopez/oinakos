@@ -68,7 +68,8 @@ func (mm *MechanicsManager) UpdateProximityEffects() {
 					if o.EffectTimers[entity] <= 0 {
 						switch e := entity.(type) {
 						case *PlayableCharacter: e.TakeDamage(action.Amount, g.audio)
-						case *NPC: e.TakeDamage(action.Amount, nil, nil, g.audio, g.npcs, g.archetypeRegistry, g.LogEvent)
+						case *NPC:
+							e.TakeDamage(action.Amount, nil, g.audio, g.npcs, g.archetypeRegistry, &g.obstacles, g.obstacleRegistry, g.LogEvent)
 						}
 						o.EffectTimers[entity] = 60
 						g.floatingTexts = append(g.floatingTexts, &FloatingText{

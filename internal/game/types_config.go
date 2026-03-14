@@ -256,3 +256,29 @@ func (fz *FloorZone) Contains(x, y float64) bool {
 	}
 	return poly.Contains(x, y)
 }
+
+type ActionConfig struct {
+	OnKill []KillAction `yaml:"on_kill"`
+}
+
+type KillAction struct {
+	Type        string       `yaml:"type"`
+	Probability float64      `yaml:"probability"`
+	Effect      ActionEffect `yaml:"effect"`
+}
+
+type ActionEffect struct {
+	Victim   *VictimEffect   `yaml:"victim,omitempty"`
+	Attacker *AttackerEffect `yaml:"attacker,omitempty"`
+}
+
+type VictimEffect struct {
+	Transform   string `yaml:"transform,omitempty"`
+	Alignment   string `yaml:"alignment,omitempty"`
+	SpawnCorpse *bool  `yaml:"spawn_corpse,omitempty"` // Pointer to distinguish between false and omission
+	CorpseImage string `yaml:"corpse_image,omitempty"`
+}
+
+type AttackerEffect struct {
+	Heal int `yaml:"heal,omitempty"`
+}

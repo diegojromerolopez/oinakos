@@ -7,6 +7,14 @@ xp: 0
 group: "player_faction"
 must_survive: true
 
+actions:
+  on_kill:
+    - action: "incinerate"
+      probability: 1.0
+      effect:
+        victim:
+          corpse_image: "burned_corpse_{gender}"
+
 dialogues:
   player_greetings:
     - "Your Highness."
