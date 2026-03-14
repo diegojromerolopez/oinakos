@@ -15,16 +15,20 @@ DIST_DIR=dist
 
 all: build build-wasm build-tools dist
 
+# Versioning
+VERSION=0.1
+LDFLAGS=-ldflags "-X main.Version=$(VERSION)"
+
 build:
-	@echo "Building native binary..."
+	@echo "Building native binary $(VERSION)..."
 	@mkdir -p $(BIN_DIR)
-	$(GOBUILD) -o $(BIN_DIR)/$(APP_NAME) main.go
+	$(GOBUILD) $(LDFLAGS) -o $(BIN_DIR)/$(APP_NAME) main.go
 	@echo "Built: $(BIN_DIR)/$(APP_NAME)"
 
 build-wasm:
-	@echo "Building WebAssembly binary..."
+	@echo "Building WebAssembly binary $(VERSION)..."
 	@mkdir -p $(DIST_DIR)
-	GOOS=js GOARCH=wasm $(GOBUILD) -o $(DIST_DIR)/$(APP_NAME).wasm main.go
+	GOOS=js GOARCH=wasm $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/$(APP_NAME).wasm main.go
 	@echo "Built: $(DIST_DIR)/$(APP_NAME).wasm"
 
 build-tools: $(BIN_DIR)/boundaries_editor $(BIN_DIR)/map_editor
@@ -79,19 +83,19 @@ serve-wasm: dist
 	@cd $(DIST_DIR) && python3 -m http.server 8000
 
 bundle-mac:
-	@echo "Bundling for macOS..."
+	@echo "Bundling for macOS $(VERSION)..."
 	@chmod +x scripts/bundle_mac.sh
-	@./scripts/bundle_mac.sh
+	@VERSION=$(VERSION) ./scripts/bundle_mac.sh
 
 bundle-windows:
-	@echo "Bundling for Windows..."
+	@echo "Bundling for Windows $(VERSION)..."
 	@chmod +x scripts/bundle_windows.sh
-	@./scripts/bundle_windows.sh
+	@VERSION=$(VERSION) ./scripts/bundle_windows.sh
 
 bundle-linux:
-	@echo "Bundling for Linux..."
+	@echo "Bundling for Linux $(VERSION)..."
 	@chmod +x scripts/bundle_linux.sh
-	@./scripts/bundle_linux.sh
+	@VERSION=$(VERSION) ./scripts/bundle_linux.sh
 
 bundle-all: bundle-mac bundle-windows bundle-linux
 	@echo "All platforms bundled successfully."

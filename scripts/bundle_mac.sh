@@ -12,9 +12,8 @@ mkdir -p "${MAC_DIR}"
 mkdir -p "${RES_DIR}"
 
 echo "Building native binary for macOS..."
-# Use -ldflags="-s -w" to reduce size and possibly hide terminal if needed, 
-# although on macOS the .app structure handles this.
-go build -o "${MAC_DIR}/oinakos" main.go
+# Use -ldflags="-s -w" to reduce size and -X main.Version to inject version.
+go build -ldflags "-s -w -X main.Version=${VERSION:-1.0}" -o "${MAC_DIR}/oinakos" main.go
 
 echo "Generating Info.plist..."
 cat > "${CONTENTS_DIR}/Info.plist" <<EOF
@@ -33,7 +32,7 @@ cat > "${CONTENTS_DIR}/Info.plist" <<EOF
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0</string>
+	<string>${VERSION:-1.0}</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>LSMinimumSystemVersion</key>

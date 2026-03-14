@@ -12,7 +12,7 @@ mkdir -p "${DIST_DIR}"
 echo "Building Windows binary..."
 # -H=windowsgui hides the console window when the app runs
 # CGO_ENABLED=0 ensures a portable binary without C dependencies
-GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-H=windowsgui" -o "${DIST_DIR}/${APP_NAME}.exe" main.go
+GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-H=windowsgui -X main.Version=${VERSION:-0.1}" -o "${DIST_DIR}/${APP_NAME}.exe" main.go
 
 echo "Generating Windows icon (ICO)..."
 ICON_SRC="assets/images/characters/oinakos/static.png"

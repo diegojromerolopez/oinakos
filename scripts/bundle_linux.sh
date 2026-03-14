@@ -20,7 +20,9 @@ docker run --rm \
     -v "$(pwd)":/src \
     -w /src \
     -e CGO_ENABLED=1 \
-    oinakos-builder
+    -e VERSION="${VERSION:-0.1}" \
+    oinakos-builder \
+    go build -ldflags "-X main.Version=${VERSION:-0.1}" -o "dist/Oinakos_Linux/oinakos" main.go
 
 if [ ! -f "${DIST_DIR}/${APP_NAME}" ]; then
     echo "ERROR: Linux build failed within Docker container."

@@ -16,6 +16,9 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+// Version is the current build version, injected at compile time via -ldflags
+var Version = "0.1-dev"
+
 //go:embed assets data
 var assets embed.FS
 
@@ -48,6 +51,8 @@ func main() {
 	flag.BoolVar(&debug, "debug", false, "Show collision perimeters (red borders)")
 	flag.StringVar(&configDir, "config", "", "Config directory to use for settings and saves")
 	flag.Parse()
+
+	log.Printf("Oinakos Engine %s starting...", Version)
 
 	if configDir != "" {
 		game.SetOinakosDir(configDir)

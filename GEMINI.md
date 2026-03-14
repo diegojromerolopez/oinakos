@@ -12,6 +12,7 @@ Oinakos is a performance-optimized, infinite isometric action RPG built in Go. T
   - **Isometric**: Used **only** for rendering. Transform: `isoX = (x - y)`, `isoY = (x + y) * 0.5`.
 - **Simulation Rate**: Locked at **60 TPS** (`ebiten.SetTPS(60)`). All timers/cooldowns are in ticks.
 - **TileSize**: `engine.TileWidth = 64px`, `engine.TileHeight = 32px`. Map dimensions in pixels are divided by these to get Cartesian units.
+- **Versioning**: Initial version is **0.1**. Version is injected via `-ldflags "-X main.Version=$(VERSION)"`.
 
 ---
 
