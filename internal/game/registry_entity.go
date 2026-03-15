@@ -46,15 +46,15 @@ type EntityConfig struct {
 	// Run-time loaded assets
 	AssetDir     string      `yaml:"-"`
 	AudioDir     string      `yaml:"-"` // e.g. assets/audio/archetypes/orc/male
-	StaticImage  interface{} `yaml:"-"`
-	BackImage    interface{} `yaml:"-"` // back.png (instead of static.png when facing UP)
-	CorpseImage  interface{} `yaml:"-"`
-	AttackImage  interface{} `yaml:"-"` // attack.png (default)
-	Attack1Image interface{} `yaml:"-"` // attack1.png
-	Attack2Image interface{} `yaml:"-"` // attack2.png
-	HitImage     interface{} `yaml:"-"` // hit.png  (legacy / single hit frame)
-	Hit1Image    interface{} `yaml:"-"` // hit1.png (first variant)
-	Hit2Image    interface{} `yaml:"-"` // hit2.png (second variant, requires hit1.png)
+	StaticImage  engine.Image `yaml:"-"`
+	BackImage    engine.Image `yaml:"-"` // back.png (instead of static.png when facing UP)
+	CorpseImage  engine.Image `yaml:"-"`
+	AttackImage  engine.Image `yaml:"-"` // attack.png (default)
+	Attack1Image engine.Image `yaml:"-"` // attack1.png
+	Attack2Image engine.Image `yaml:"-"` // attack2.png
+	HitImage     engine.Image `yaml:"-"` // hit.png  (legacy / single hit frame)
+	Hit1Image    engine.Image `yaml:"-"` // hit1.png (first variant)
+	Hit2Image    engine.Image `yaml:"-"` // hit2.png (second variant, requires hit1.png)
 	Weapon       *Weapon     `yaml:"-"`
 
 	CachedBaseFootprint *engine.Polygon `yaml:"-"`
@@ -64,33 +64,33 @@ type EntityConfig struct {
 
 
 func (e *EntityConfig) PickAttackImage(seed int) engine.Image {
-	if a1, ok := e.Attack1Image.(engine.Image); ok {
-		if a2, ok2 := e.Attack2Image.(engine.Image); ok2 {
+	if e.Attack1Image != nil {
+		if e.Attack2Image != nil {
 			if seed%2 == 0 {
-				return a1
+				return e.Attack1Image
 			}
-			return a2
+			return e.Attack2Image
 		}
-		return a1
+		return e.Attack1Image
 	}
-	if a, ok := e.AttackImage.(engine.Image); ok {
-		return a
+	if e.AttackImage != nil {
+		return e.AttackImage
 	}
 	return nil
 }
 
 func (e *EntityConfig) PickHitImage(seed int) engine.Image {
-	if h1, ok := e.Hit1Image.(engine.Image); ok {
-		if h2, ok2 := e.Hit2Image.(engine.Image); ok2 {
+	if e.Hit1Image != nil {
+		if e.Hit2Image != nil {
 			if seed%2 == 0 {
-				return h1
+				return e.Hit1Image
 			}
-			return h2
+			return e.Hit2Image
 		}
-		return h1
+		return e.Hit1Image
 	}
-	if h, ok := e.HitImage.(engine.Image); ok {
-		return h
+	if e.HitImage != nil {
+		return e.HitImage
 	}
 	return nil
 }
@@ -138,7 +138,7 @@ func (r *ArchetypeRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, p
 			continue
 		}
 		
-		addJob := func(filename string, target *interface{}) {
+		addJob := func(filename string, target *engine.Image) {
 			jobs = append(jobs, &SpriteLoadJob{
 				Path: path.Join(config.AssetDir, filename),
 				Dest: target,
@@ -262,7 +262,7 @@ func (r *PlayableCharacterRegistry) LoadAssets(assets fs.FS, graphics engine.Gra
 			continue
 		}
 		
-		addJob := func(filename string, target *interface{}) {
+		addJob := func(filename string, target *engine.Image) {
 			jobs = append(jobs, &SpriteLoadJob{
 				Path: path.Join(config.AssetDir, filename),
 				Dest: target,
@@ -353,7 +353,7 @@ func (r *NPCRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *
 
 		// Collect jobs
 		if config.AssetDir != "" {
-			addJob := func(filename string, target *interface{}, fallback interface{}) {
+			addJob := func(filename string, target *engine.Image, fallback engine.Image) {
 				fpath := path.Join(config.AssetDir, filename)
 				if _, err := fs.Stat(assets, fpath); err == nil {
 					jobs = append(jobs, &SpriteLoadJob{Path: fpath, Dest: target})
@@ -362,7 +362,7 @@ func (r *NPCRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *
 				}
 			}
 			
-			var archStatic, archBack, archCorpse interface{}
+			var archStatic, archBack, archCorpse engine.Image
 			if arch != nil {
 				archStatic, archBack, archCorpse = arch.StaticImage, arch.BackImage, arch.CorpseImage
 			}

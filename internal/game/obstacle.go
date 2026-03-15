@@ -12,7 +12,7 @@ type Obstacle struct {
 	CooldownTicks int
 	TickCounter   int
 	Alive         bool
-	EffectTimers  map[interface{}]int // Track intervals for hazards/healing per entity
+	EffectTimers  map[ActorInterface]int // Track intervals for hazards/healing per entity
 
 	CachedFootprint *engine.Polygon // Optimization: obstacles don't move, cache world footprint
 }
@@ -31,7 +31,7 @@ func NewObstacle(id string, x, y float64, config *ObstacleArchetype) *Obstacle {
 		Health:        hp,
 		CooldownTicks: 0,
 		Alive:         true,
-		EffectTimers:  make(map[interface{}]int),
+		EffectTimers:  make(map[ActorInterface]int),
 	}
 }
 

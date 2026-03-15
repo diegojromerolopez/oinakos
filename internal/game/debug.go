@@ -47,7 +47,7 @@ func initDebugFile() {
 }
 
 // DebugLog prints a formatted message to the standard logger and the debug file if debug mode is enabled.
-func DebugLog(format string, v ...interface{}) {
+func DebugLog(format string, v ...any) {
 	if debugEnabled {
 		msg := fmt.Sprintf(format, v...)
 		// Also print to standard log for convenience in dev console

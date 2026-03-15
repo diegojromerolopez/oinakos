@@ -82,7 +82,7 @@ func (gr *GameRenderer) drawHeroPreview(screen engine.Image, char *EntityConfig,
 	gr.graphics.DrawTextAt(screen, "--- HERO PROFILE ---", x, y, color.RGBA{218, 165, 32, 255}, 20)
 
 	if char.StaticImage != nil {
-		img := char.StaticImage.(engine.Image)
+		img := char.StaticImage
 		op := engine.NewDrawImageOptions()
 		op.Scale(1.5, 1.5)
 		op.Translate(float64(x), float64(y+30))

@@ -113,10 +113,9 @@ func (w *EbitenImageWrapper) Clear() {
 	}
 }
 
-func (w *EbitenImageWrapper) Fill(clr interface{}) {
-	c, ok := clr.(color.Color)
-	if ok && w.img != nil {
-		w.img.Fill(c)
+func (w *EbitenImageWrapper) Fill(clr color.Color) {
+	if w.img != nil {
+		w.img.Fill(clr)
 	}
 }
 

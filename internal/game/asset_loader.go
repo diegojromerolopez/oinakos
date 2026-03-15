@@ -13,7 +13,7 @@ import (
 
 type SpriteLoadJob struct {
 	Path    string
-	Dest    *interface{}
+	Dest    *engine.Image
 	Decoded image.Image
 }
 

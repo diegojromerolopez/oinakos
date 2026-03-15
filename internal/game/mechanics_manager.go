@@ -40,7 +40,7 @@ func (mm *MechanicsManager) UpdateProximityEffects(ctx *SystemContext) {
 	world := ctx.World
 	for _, o := range world.Obstacles {
 		if !o.Alive || o.Archetype == nil { continue }
-		entities := make([]interface{}, 0, len(world.NPCs)+1)
+		entities := make([]ActorInterface, 0, len(world.NPCs)+1)
 		entities = append(entities, world.PlayableCharacter)
 		for _, n := range world.NPCs {
 			if n.IsAlive() { entities = append(entities, n) }
@@ -65,7 +65,7 @@ func (mm *MechanicsManager) UpdateProximityEffects(ctx *SystemContext) {
 				if !inRange { continue }
 				if action.Type == ActionHarm {
 					if o.EffectTimers[entity] <= 0 {
-						if a, ok := entity.(ActorInterface); ok && a.GetActor().IsGiant() {
+						if entity.GetActor().IsGiant() {
 							continue
 						}
 						switch e := entity.(type) {

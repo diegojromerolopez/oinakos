@@ -180,7 +180,7 @@ type FootprintPoint struct {
 }
 
 // MarshalYAML emits the point as a plain YAML mapping without quoting the 'y'
-func (p FootprintPoint) MarshalYAML() (interface{}, error) {
+func (p FootprintPoint) MarshalYAML() (any, error) {
 	format := func(f float64) string {
 		s := fmt.Sprintf("%g", f)
 		if !stringsContains(s, ".") && !stringsContains(s, "e") {

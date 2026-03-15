@@ -333,9 +333,9 @@ func (t *trackingImage) DrawImage(img engine.Image, options *engine.DrawImageOpt
 }
 
 func TestNPCDraw_AttackAndDeadBehavior(t *testing.T) {
-	staticImg := engine.NewMockImage(10, 10)
-	attackImg := engine.NewMockImage(10, 10)
-	corpseImg := engine.NewMockImage(10, 10)
+	var staticImg engine.Image = engine.NewMockImage(10, 10)
+	var attackImg engine.Image = engine.NewMockImage(10, 10)
+	var corpseImg engine.Image = engine.NewMockImage(10, 10)
 
 	n := NewNPC(0, 0, &Archetype{
 		StaticImage: staticImg,

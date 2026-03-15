@@ -24,7 +24,7 @@ func (m *MapEditor) loadLibrary() {
 			arch := obsReg.Archetypes[id]
 			var img engine.Image
 			if arch.Image != nil {
-				img = arch.Image.(engine.Image)
+				img = arch.Image
 			}
 			m.Library = append(m.Library, &EditorItem{
 				ID:        id,
@@ -42,7 +42,7 @@ func (m *MapEditor) loadLibrary() {
 			arch := npcReg.Archetypes[id]
 			var img engine.Image
 			if arch.StaticImage != nil {
-				img = arch.StaticImage.(engine.Image)
+				img = arch.StaticImage
 			}
 			m.Library = append(m.Library, &EditorItem{
 				ID:        id,

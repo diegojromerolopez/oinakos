@@ -81,7 +81,7 @@ func (gr *GameRenderer) LoadAssets(assets fs.FS) {
 		}
 		imgDir := mc.Config.AssetDir
 		var jobs []*SpriteLoadJob
-		addJob := func(filename string, target *interface{}) {
+		addJob := func(filename string, target *engine.Image) {
 			if *target == nil {
 				jobs = append(jobs, &SpriteLoadJob{
 					Path: path.Join(imgDir, filename),
@@ -144,7 +144,7 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 		tasks := make([]drawTask, 0, len(g.obstacles)+len(g.npcs)+1)
 
 		for _, o := range g.obstacles {
-			img, _ := o.Archetype.Image.(engine.Image)
+			img := o.Archetype.Image
 			if img == nil {
 				continue
 			}

@@ -49,7 +49,7 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 		return fmt.Errorf("failed to unmarshal save data: %w", err)
 	}
 
-	var raw map[string]interface{}
+	var raw map[string]any
 	yaml.Unmarshal(bytes, &raw)
 	if _, isTemplate := raw["width_px"]; isTemplate {
 		return fmt.Errorf("file appears to be a map template (width_px at top level), not a save file")

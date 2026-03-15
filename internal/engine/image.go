@@ -1,6 +1,9 @@
 package engine
 
-import "image"
+import (
+	"image"
+	"image/color"
+)
 
 // DrawImageOptions abstracts ebiten.DrawImageOptions
 type DrawImageOptions struct {
@@ -95,7 +98,7 @@ type Image interface {
 	DrawTriangles(vertices []Vertex, indices []uint16, src Image, options *DrawTrianglesOptions)
 	SubImage(r image.Rectangle) Image
 	Clear()
-	Fill(clr interface{}) // color.Color
+	Fill(clr color.Color)
 }
 
 // Vertex matches ebiten.Vertex

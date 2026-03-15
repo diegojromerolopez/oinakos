@@ -187,6 +187,8 @@ type EbitenShaderWrapper struct {
 	shader *ebiten.Shader
 }
 
+func (e *EbitenShaderWrapper) IsShader() {}
+
 func (e *EbitenGraphics) NewShader(src []byte) (Shader, error) {
 	s, err := ebiten.NewShader(src)
 	if err != nil { return nil, err }
@@ -219,7 +221,7 @@ func (e *EbitenGraphics) DrawFilledPolygon(screen Image, points []Point, clr col
 	wrapper.img.DrawTriangles(vertices, indices, e.whiteImage, &op)
 }
 
-func (e *EbitenGraphics) DrawImageWithShader(screen Image, img Image, shader Shader, uniforms map[string]interface{}, options *DrawImageOptions) {
+func (e *EbitenGraphics) DrawImageWithShader(screen Image, img Image, shader Shader, uniforms map[string]any, options *DrawImageOptions) {
 	screenWrapper, ok := screen.(*EbitenImageWrapper)
 	if !ok || screenWrapper == nil || screenWrapper.img == nil { return }
 	imgWrapper, ok := img.(*EbitenImageWrapper)

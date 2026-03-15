@@ -23,7 +23,7 @@ type ObstacleArchetype struct {
 	FramesPerRow   int                    `yaml:"frames_per_row"`  // For grid-based spritesheets (default 0 = single row)
 	AnimationSpeed int                    `yaml:"animation_speed"` // Ticks per frame
 	Actions        []ObstacleActionConfig `yaml:"actions,omitempty"`
-	Image          interface{}            `yaml:"-"`
+	Image          engine.Image           `yaml:"-"`
 }
 
 func (a *ObstacleArchetype) IsWell() bool {

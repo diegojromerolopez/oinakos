@@ -17,21 +17,21 @@ func DrawActor(a *Actor, screen engine.Image, textRenderer engine.TextRenderer, 
 	var drawSprite engine.Image
 	// Facing back (North)
 	if a.Facing == DirNE || a.Facing == DirNW {
-		if img, ok := a.Config.BackImage.(engine.Image); ok {
+		if img := a.Config.BackImage; img != nil {
 			drawSprite = img
-		} else if img, ok := a.Config.StaticImage.(engine.Image); ok {
+		} else if img := a.Config.StaticImage; img != nil {
 			drawSprite = img
 		}
 	} else {
 		// Facing front (South)
-		if img, ok := a.Config.StaticImage.(engine.Image); ok {
+		if img := a.Config.StaticImage; img != nil {
 			drawSprite = img
 		}
 	}
 
 	// State-based overrides
 	if a.State == ActorDead {
-		if img, ok := a.Config.CorpseImage.(engine.Image); ok {
+		if img := a.Config.CorpseImage; img != nil {
 			drawSprite = img
 		} else {
 			// If no corpse image and dead, we might draw nothing
@@ -39,7 +39,7 @@ func DrawActor(a *Actor, screen engine.Image, textRenderer engine.TextRenderer, 
 				return
 			}
 			// Fallback for MC if corpse is missing (should not happen with standard assets)
-			if img, ok := a.Config.StaticImage.(engine.Image); ok {
+			if img := a.Config.StaticImage; img != nil {
 				drawSprite = img
 			}
 		}
@@ -136,7 +136,7 @@ func DrawActor(a *Actor, screen engine.Image, textRenderer engine.TextRenderer, 
 	// Palette Swapping (Shader)
 	hasPalette := a.Config.PrimaryColor != "" || a.Config.SecondaryColor != ""
 	if hasPalette && paletteShader != nil {
-		uniforms := make(map[string]interface{})
+		uniforms := make(map[string]any)
 		pArr := HexToRGBA(a.Config.PrimaryColor)
 		sArr := HexToRGBA(a.Config.SecondaryColor)
 		uniforms["PrimaryColor"] = pArr[:]

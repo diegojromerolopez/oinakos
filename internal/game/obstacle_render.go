@@ -16,8 +16,8 @@ func (o *Obstacle) Draw(screen engine.Image, vectorRenderer engine.VectorRendere
 	op := engine.NewDrawImageOptions()
 	scale := 1.0
 
-	img, ok := o.Archetype.Image.(engine.Image)
-	if !ok || img == nil {
+	img := o.Archetype.Image
+	if img == nil {
 		return
 	}
 	sw, sh := img.Size()

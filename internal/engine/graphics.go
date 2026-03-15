@@ -15,10 +15,12 @@ type Graphics interface {
 	LoadSprite(assets fs.FS, path string, removeBg bool) Image
 	DrawPolygon(screen Image, points []Point, clr color.Color, width float32)
 	NewShader(src []byte) (Shader, error)
-	DrawImageWithShader(screen Image, img Image, shader Shader, uniforms map[string]interface{}, options *DrawImageOptions)
+	DrawImageWithShader(screen Image, img Image, shader Shader, uniforms map[string]any, options *DrawImageOptions)
 }
 
-type Shader interface{}
+type Shader interface {
+	IsShader()
+}
 
 // VectorRenderer defines basic primitive drawing operations.
 type VectorRenderer interface {

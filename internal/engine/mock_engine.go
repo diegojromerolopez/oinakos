@@ -25,7 +25,7 @@ func (m *MockImage) SubImage(r image.Rectangle) Image {
 	return &MockImage{W: r.Dx(), H: r.Dy()}
 }
 func (m *MockImage) Clear()               {}
-func (m *MockImage) Fill(clr interface{}) {}
+func (m *MockImage) Fill(clr color.Color) {}
 
 // MockInput is a mock for engine.Input.
 type MockInput struct {
@@ -77,6 +77,10 @@ func (m *MockInput) Wheel() (x, y float64) {
 	return 0, 0
 }
 
+type MockShader struct{}
+
+func (m *MockShader) IsShader() {}
+
 // MockGraphics is a mock for engine.Graphics.
 type MockGraphics struct{}
 
@@ -112,10 +116,10 @@ func (m *MockGraphics) DrawTriangles(screen Image, vertices []Vertex, indices []
 }
 
 func (m *MockGraphics) NewShader(src []byte) (Shader, error) {
-	return nil, nil
+	return &MockShader{}, nil
 }
 
-func (m *MockGraphics) DrawImageWithShader(screen Image, img Image, shader Shader, uniforms map[string]interface{}, options *DrawImageOptions) {
+func (m *MockGraphics) DrawImageWithShader(screen Image, img Image, shader Shader, uniforms map[string]any, options *DrawImageOptions) {
 }
 
 func (m *MockGraphics) LoadSprite(assets fs.FS, path string, removeBg bool) Image {

@@ -51,6 +51,8 @@ All game content is defined in YAML under `data/` and loaded at startup:
 - **Explicit Error Handling**: Check every error immediately. Keep the "happy path" on the left.
 - **Naming**: Use `CamelCase` for all names. Short names for local scope (e.g., `err`, `i`), descriptive for package/struct level.
 - **Composition**: Use struct embedding over complex heirarchies.
+- **`interface{}` vs `any`**: Do not use `interface{}`, use `any` instead.
+- **Minimize `any`**: Do not use `any` unless absolutely necessary (e.g. library requirements, generic loading). Prefer specific interfaces.
 
 ### SOLID Principles & Dependency Injection
 - **S.O.L.I.D.**: All new features and refactors must adhere to SOLID principles:

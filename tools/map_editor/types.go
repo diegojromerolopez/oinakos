@@ -27,7 +27,7 @@ type EditorItem struct {
 	ID        string
 	Type      string // "obstacle", "npc"
 	Image     engine.Image
-	Archetype interface{}
+	Archetype any
 }
 
 type MapElement struct {
