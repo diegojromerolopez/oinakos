@@ -236,6 +236,18 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 			t.draw()
 		}
 
+		// UI Pass: Draw character and NPC UI on top (always visible)
+		for _, n := range g.npcs {
+			isoX, isoY := engine.CartesianToIso(n.X, n.Y)
+			drawX := isoX + offsetX
+			drawY := isoY + offsetY
+			if drawX < -256 || drawX > float64(g.width)+256 || drawY < -256 || drawY > float64(g.height)+256 {
+				continue
+			}
+			n.DrawUI(screen, gr.graphics, gr.graphics, offsetX, offsetY)
+		}
+		g.playableCharacter.DrawUI(screen, gr.graphics, gr.graphics, offsetX, offsetY)
+
 		if g.debug || g.showBoundaries {
 			gr.drawDebug(screen, offsetX, offsetY)
 		}

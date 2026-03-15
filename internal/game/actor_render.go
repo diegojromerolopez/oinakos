@@ -130,8 +130,8 @@ func DrawActor(a *Actor, screen engine.Image, textRenderer engine.TextRenderer, 
 
 	op.Translate(tx, ty)
 
-	// Draw Alignment Ellipse
-	DrawAlignmentIndicator(screen, vectorRenderer, a.X, a.Y, offsetX, offsetY, a.Alignment, a.IsAlive())
+	// Draw Alignment Indicator - MOVED TO UI PASS
+	// DrawActorUI(a, screen, textRenderer, vectorRenderer, offsetX, offsetY, isPlayableCharacter)
 
 	// Palette Swapping (Shader)
 	hasPalette := a.Config.PrimaryColor != "" || a.Config.SecondaryColor != ""
@@ -151,42 +151,60 @@ func DrawActor(a *Actor, screen engine.Image, textRenderer engine.TextRenderer, 
 		screen.DrawImage(drawSprite, op)
 	}
 
-	// UI Elements (Health bar for NPCs, Names)
-	if a.IsAlive() {
-		if !isPlayableCharacter {
-			// Health Bar for NPCs
-			barWidth := 40.0
-			barHeight := 4.0
-			bx := isoX + offsetX - barWidth/2
-			by := isoY + offsetY - float64(h)*scale*0.9
+}
 
-			if vectorRenderer != nil {
-				vectorRenderer.DrawFilledRect(screen, float32(bx), float32(by), float32(barWidth), float32(barHeight), color.RGBA{100, 0, 0, 255}, false)
-				hpFrac := float32(a.Health) / float32(a.MaxHealth)
-				if hpFrac > 0 {
-					vectorRenderer.DrawFilledRect(screen, float32(bx), float32(by), float32(barWidth)*hpFrac, float32(barHeight), color.RGBA{0, 255, 0, 255}, false)
-				}
+// DrawActorUI draws the UI elements for an actor (alignment indicator, health bar, name tag).
+func DrawActorUI(a *Actor, screen engine.Image, textRenderer engine.TextRenderer, vectorRenderer engine.VectorRenderer, offsetX, offsetY float64, isPlayableCharacter bool) {
+	if screen == nil || a.Config == nil || !a.IsAlive() {
+		return
+	}
+
+	isoX, isoY := engine.CartesianToIso(a.X, a.Y)
+
+	// Draw Alignment Indicator
+	DrawAlignmentIndicator(screen, vectorRenderer, a.X, a.Y, offsetX, offsetY, a.Alignment, a.IsAlive())
+
+	// UI Elements (Health bar for NPCs, Names)
+	if !isPlayableCharacter {
+		// Health Bar for NPCs
+		barWidth := 40.0
+		barHeight := 4.0
+		bx := isoX + offsetX - barWidth/2
+		
+		// Use sprite height if available for positioning
+		h := 160.0 // Default 160x160
+		if img := a.Config.StaticImage; img != nil {
+			_, ih := img.Size()
+			h = float64(ih)
+		}
+		by := isoY + offsetY - h*0.9
+
+		if vectorRenderer != nil {
+			vectorRenderer.DrawFilledRect(screen, float32(bx), float32(by), float32(barWidth), float32(barHeight), color.RGBA{100, 0, 0, 255}, false)
+			hpFrac := float32(a.Health) / float32(a.MaxHealth)
+			if hpFrac > 0 {
+				vectorRenderer.DrawFilledRect(screen, float32(bx), float32(by), float32(barWidth)*hpFrac, float32(barHeight), color.RGBA{0, 255, 0, 255}, false)
 			}
 		}
+	}
 
-		// Name Tag
-		if textRenderer != nil {
-			name := a.Name
-			if name == "" && a.Config != nil {
-				name = a.Config.Name
+	// Name Tag
+	if textRenderer != nil {
+		name := a.Name
+		if name == "" && a.Config != nil {
+			name = a.Config.Name
+		}
+		if isPlayableCharacter && name == "" {
+			name = "Player"
+		}
+		if name != "" {
+			nameX := int(isoX + offsetX - float64(len(name))*3.5)
+			nameY := int(isoY + offsetY + 5)
+			var textColor color.Color = color.White
+			if !isPlayableCharacter && a.Config.Unique {
+				textColor = color.RGBA{218, 165, 32, 255} // Golden
 			}
-			if isPlayableCharacter && name == "" {
-				name = "Player"
-			}
-			if name != "" {
-				nameX := int(isoX + offsetX - float64(len(name))*3.5)
-				nameY := int(isoY + offsetY + 5)
-				var textColor color.Color = color.White
-				if !isPlayableCharacter && a.Config.Unique {
-					textColor = color.RGBA{218, 165, 32, 255} // Golden
-				}
-				textRenderer.DrawTextAt(screen, name, nameX, nameY, textColor, 12)
-			}
+			textRenderer.DrawTextAt(screen, name, nameX, nameY, textColor, 12)
 		}
 	}
 }
