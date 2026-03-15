@@ -11,6 +11,9 @@ type AIProvider interface {
 	
 	// Decide asks the AI to pick an action from a list of options.
 	Decide(ctx context.Context, situation string, options []string) <-chan AIDecision
+
+	// ListModels returns a list of available model IDs.
+	ListModels(ctx context.Context) ([]string, error)
 }
 
 type ChatMessage struct {

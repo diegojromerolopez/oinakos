@@ -52,6 +52,9 @@ func main() {
 	flag.StringVar(&configDir, "config", "", "Config directory to use for settings and saves")
 	flag.Parse()
 
+	if debug {
+		game.SetDebugMode(true)
+	}
 	log.Printf("Oinakos Engine %s starting...", Version)
 
 	if configDir != "" {

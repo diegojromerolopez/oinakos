@@ -6,7 +6,7 @@ import (
 
 func (mh *MenuHandler) updateSettingsScreen() error {
 	g := mh.game
-	nRows := 6 // 0: Font, 1: Audio, 2: Fog of War, 3: AI Provider, 4: AI Sim, 5: Save & Back
+	nRows := 7 // 0: Font, 1: Audio, 2: Fog of War, 3: AI Provider, 4: AI Sim, 5: Talking Freq, 6: Save & Back
 	if g.input.IsKeyJustPressed(engine.KeyUp) || g.input.IsKeyJustPressed(engine.KeyW) {
 		g.settingsMenuIndex--
 		if g.settingsMenuIndex < 0 {
@@ -105,6 +105,33 @@ func (mh *MenuHandler) updateSettingsScreen() error {
 			g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) {
 			g.settings.AISimulationMode = !g.settings.AISimulationMode
 		}
+	} else if g.settingsMenuIndex == 5 { // Talking Frequency
+		if g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) {
+			found := -1
+			for i, opt := range FrequencyOptions {
+				if opt == g.settings.TalkingFrequency {
+					found = i
+					break
+				}
+			}
+			if found == -1 { found = 0 }
+			found--
+			if found < 0 { found = len(FrequencyOptions) - 1 }
+			g.settings.TalkingFrequency = FrequencyOptions[found]
+		}
+		if g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) {
+			found := -1
+			for i, opt := range FrequencyOptions {
+				if opt == g.settings.TalkingFrequency {
+					found = i
+					break
+				}
+			}
+			if found == -1 { found = 0 }
+			found++
+			if found >= len(FrequencyOptions) { found = 0 }
+			g.settings.TalkingFrequency = FrequencyOptions[found]
+		}
 	}
 
 	mx, my := g.input.MousePosition()
@@ -123,7 +150,7 @@ func (mh *MenuHandler) updateSettingsScreen() error {
 		g.settingsMenuIndex = hoverIdx
 	}
 
-	if g.input.IsKeyJustPressed(engine.KeyEnter) || (hoverIdx == 5 && g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft)) {
+	if g.input.IsKeyJustPressed(engine.KeyEnter) || (hoverIdx == 6 && g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft)) {
 		g.settings.Save()
 		g.UpdateFont()
 		if g.audio != nil {

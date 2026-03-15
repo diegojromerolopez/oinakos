@@ -185,7 +185,7 @@ func (gr *GameRenderer) drawSettingsScreen(screen engine.Image) {
 	tw, _ := gr.graphics.MeasureText(title, 40)
 	gr.graphics.DrawTextAt(screen, title, (g.width-int(tw))/2, 100, color.RGBA{218, 165, 32, 255}, 40)
 
-	rows := []string{"Font Style", "Sound Effects", "Fog of War", "AI Provider", "Simulation Mode", "Save and Back"}
+	rows := []string{"Font Style", "Sound Effects", "Fog of War", "AI Provider", "Simulation Mode", "Talking Frequency", "Save and Back"}
 	for i, row := range rows {
 		var clr color.Color = color.White
 		prefix := "  "
@@ -207,6 +207,8 @@ func (gr *GameRenderer) drawSettingsScreen(screen engine.Image) {
 			val := "OFF"
 			if g.settings.AISimulationMode { val = "ON" }
 			label += fmt.Sprintf(": [%s]", val)
+		} else if i == 5 {
+			label += fmt.Sprintf(": [%s]", strings.ToUpper(g.settings.TalkingFrequency))
 		}
 
 		lw, _ := gr.graphics.MeasureText(label, 24)

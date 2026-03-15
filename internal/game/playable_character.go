@@ -22,6 +22,11 @@ type PlayableCharacter struct {
 	Kills         int
 	MapKills      map[string]int
 	AIDecisionPending bool
+	LastAIChoice      string
+	LastAIReasoning   string
+	TargetActor       *Actor
+	WanderDirX        float64
+	WanderDirY        float64
 }
 
 func loadPlayerImage(assets fs.FS, path string) (image.Image, error) {
@@ -154,7 +159,47 @@ func (mc *PlayableCharacter) Update(ctx *SystemContext) {
 	}
 
 	var dx, dy float64
-	if ctx.Input != nil {
+	simMode := false
+	if ctx.World != nil && ctx.World.Game != nil && ctx.World.Game.settings != nil {
+		simMode = ctx.World.Game.settings.AISimulationMode
+	}
+
+	if simMode {
+		targetX, targetY := mc.X, mc.Y
+		hasTarget := false
+		if mc.TargetActor != nil && mc.TargetActor.IsAlive() {
+			targetX, targetY = mc.TargetActor.X, mc.TargetActor.Y
+			hasTarget = true
+		} else if mc.WanderDirX != 0 || mc.WanderDirY != 0 {
+			targetX = mc.X + mc.WanderDirX
+			targetY = mc.Y + mc.WanderDirY
+			hasTarget = true
+		}
+
+		if hasTarget {
+			vdx := targetX - mc.X
+			vdy := targetY - mc.Y
+			dist := math.Sqrt(vdx*vdx + vdy*vdy)
+
+			if mc.TargetActor != nil && dist < 1.2 {
+				mc.State = StateAttacking
+				mc.Tick = 0
+				if ctx.Audio != nil && mc.Config != nil && mc.Config.PlayableCharacter != "" {
+					ctx.Audio.PlayRandomSound(mc.Config.PlayableCharacter + "/attack")
+				}
+				return
+			} else if dist > 0.1 {
+				dx, dy = vdx, vdy
+			}
+		} else {
+			// FALLBACK: If idle in sim mode, pick a wander direction
+			if mc.WanderDirX == 0 && mc.WanderDirY == 0 {
+				mc.WanderDirX = rand.Float64()*2 - 1
+				mc.WanderDirY = rand.Float64()*2 - 1
+			}
+			dx, dy = mc.WanderDirX, mc.WanderDirY
+		}
+	} else if ctx.Input != nil {
 		if ctx.Input.IsKeyPressed(engine.KeyW) || ctx.Input.IsKeyPressed(engine.KeyUp) {
 			dy -= 1
 		}

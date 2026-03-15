@@ -31,12 +31,18 @@ func (m *MockImage) Fill(clr color.Color) {}
 type MockInput struct {
 	PressedKeys     map[Key]bool
 	JustPressedKeys map[Key]bool
+	MouseX, MouseY  int
+	PressedButtons  map[MouseButton]bool
+	JustPressedButtons map[MouseButton]bool
+	WheelX, WheelY  float64
 }
 
 func NewMockInput() *MockInput {
 	return &MockInput{
-		PressedKeys:     make(map[Key]bool),
-		JustPressedKeys: make(map[Key]bool),
+		PressedKeys:        make(map[Key]bool),
+		JustPressedKeys:    make(map[Key]bool),
+		PressedButtons:     make(map[MouseButton]bool),
+		JustPressedButtons: make(map[MouseButton]bool),
 	}
 }
 
@@ -58,7 +64,7 @@ func (m *MockInput) AppendJustPressedKeys(keys []Key) []Key {
 }
 
 func (m *MockInput) MousePosition() (x, y int) {
-	return 0, 0
+	return m.MouseX, m.MouseY
 }
 
 func (m *MockInput) AppendInputChars(chars []rune) []rune {
@@ -66,15 +72,15 @@ func (m *MockInput) AppendInputChars(chars []rune) []rune {
 }
 
 func (m *MockInput) IsMouseButtonPressed(button MouseButton) bool {
-	return false
+	return m.PressedButtons[button]
 }
 
 func (m *MockInput) IsMouseButtonJustPressed(button MouseButton) bool {
-	return false
+	return m.JustPressedButtons[button]
 }
 
 func (m *MockInput) Wheel() (x, y float64) {
-	return 0, 0
+	return m.WheelX, m.WheelY
 }
 
 type MockShader struct{}

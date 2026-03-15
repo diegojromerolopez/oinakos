@@ -158,3 +158,29 @@ func TestHeroFlagInitialization(t *testing.T) {
 		t.Errorf("Expected initialHeroID %s, got %s", heroID, g.initialHeroID)
 	}
 }
+
+func TestMenuButtonClick(t *testing.T) {
+	input := NewMockInputManager()
+	audio := &DefaultAudioManager{}
+	var assets fs.FS
+
+	g := NewGame(assets, "", "", "", input, audio, false, "0.1-test")
+	g.isMenuOpen = false
+	g.isMainMenu = false // Ensure we are in a state where handleDialogueInput is called
+	
+	// Coordinates for the Menu button: (g.width-110, 20) to (g.width-10, 50)
+	// Default width is 1280. Button is at (1170, 20) to (1270, 50)
+	input.MouseX = 1200
+	input.MouseY = 30
+	input.PressedButtons[engine.MouseButtonLeft] = true
+	input.JustPressedButtons[engine.MouseButtonLeft] = true
+
+	err := g.Update()
+	if err != nil {
+		t.Fatalf("Update returned error: %v", err)
+	}
+
+	if !g.isMenuOpen {
+		t.Error("Expected game menu to be open after clicking the Menu button")
+	}
+}

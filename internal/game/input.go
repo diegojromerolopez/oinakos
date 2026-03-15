@@ -13,12 +13,18 @@ type InputManager interface {
 type MockInputManager struct {
 	PressedKeys     map[engine.Key]bool
 	JustPressedKeys map[engine.Key]bool
+	MouseX, MouseY  int
+	PressedButtons  map[engine.MouseButton]bool
+	JustPressedButtons map[engine.MouseButton]bool
+	WheelX, WheelY  float64
 }
 
 func NewMockInputManager() *MockInputManager {
 	return &MockInputManager{
-		PressedKeys:     make(map[engine.Key]bool),
-		JustPressedKeys: make(map[engine.Key]bool),
+		PressedKeys:        make(map[engine.Key]bool),
+		JustPressedKeys:    make(map[engine.Key]bool),
+		PressedButtons:     make(map[engine.MouseButton]bool),
+		JustPressedButtons: make(map[engine.MouseButton]bool),
 	}
 }
 
@@ -40,7 +46,7 @@ func (m *MockInputManager) AppendJustPressedKeys(keys []engine.Key) []engine.Key
 }
 
 func (m *MockInputManager) MousePosition() (x, y int) {
-	return 0, 0
+	return m.MouseX, m.MouseY
 }
 
 func (m *MockInputManager) AppendInputChars(chars []rune) []rune {
@@ -48,13 +54,13 @@ func (m *MockInputManager) AppendInputChars(chars []rune) []rune {
 }
 
 func (m *MockInputManager) IsMouseButtonPressed(button engine.MouseButton) bool {
-	return false
+	return m.PressedButtons[button]
 }
 
 func (m *MockInputManager) IsMouseButtonJustPressed(button engine.MouseButton) bool {
-	return false
+	return m.JustPressedButtons[button]
 }
 
 func (m *MockInputManager) Wheel() (x, y float64) {
-	return 0, 0
+	return m.WheelX, m.WheelY
 }

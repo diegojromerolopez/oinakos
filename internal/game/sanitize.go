@@ -36,7 +36,6 @@ func sanitizeEntityConfig(c *EntityConfig, source string) {
 	changed := false
 
 	if c.ID == "" {
-		log.Printf("Warning [%s]: archetype has empty id, using 'unknown'", source)
 		c.ID = "unknown"
 		changed = true
 	}
@@ -91,16 +90,12 @@ func sanitizeEntityConfig(c *EntityConfig, source string) {
 		c.Stats.ProjectileSpeed = 0
 		changed = true
 	}
-	if len(c.Footprint) == 0 {
-		log.Printf("Warning [%s]: archetype %q has no custom footprint", source, c.ID)
-	}
 	_ = changed
 }
 
 // sanitizeObstacleArchetype validates and clamps all fields loaded from an obstacle YAML.
 func sanitizeObstacleArchetype(c *ObstacleArchetype, source string) {
 	if c.ID == "" {
-		log.Printf("Warning [%s]: obstacle has empty id, using 'unknown'", source)
 		c.ID = "unknown"
 	}
 	if c.Name == "" {
@@ -111,9 +106,6 @@ func sanitizeObstacleArchetype(c *ObstacleArchetype, source string) {
 		log.Printf("Warning [%s]: obstacle %q has negative health (%d), clamping to 0", source, c.ID, c.Health)
 		c.Health = 0
 	}
-	if len(c.Footprint) == 0 {
-		log.Printf("Warning [%s]: obstacle %q has no custom footprint", source, c.ID)
-	}
 	if c.CooldownTime < 0 {
 		log.Printf("Warning [%s]: obstacle %q has cooldown_time=%v, clamping to 0", source, c.ID, c.CooldownTime)
 		c.CooldownTime = 0
@@ -123,7 +115,6 @@ func sanitizeObstacleArchetype(c *ObstacleArchetype, source string) {
 // sanitizeMapType validates and clamps all fields loaded from a map_type YAML.
 func sanitizeMapType(m *MapType, source string) {
 	if m.ID == "" {
-		log.Printf("Warning [%s]: map_type has empty id, using 'unknown'", source)
 		m.ID = "unknown"
 	}
 	if m.Name == "" {

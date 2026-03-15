@@ -23,3 +23,7 @@ func (n *NoopAIProvider) Decide(ctx context.Context, situation string, options [
 	ch <- AIDecision{ChosenOption: choice}
 	return ch
 }
+
+func (n *NoopAIProvider) ListModels(ctx context.Context) ([]string, error) {
+	return []string{"noop"}, nil
+}

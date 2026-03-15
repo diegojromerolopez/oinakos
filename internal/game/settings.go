@@ -29,7 +29,8 @@ func DiscoverFonts(assets fs.FS) []string {
 }
 
 type Settings struct {
-	SoundFrequency string `yaml:"sound_frequency"`
+	SoundFrequency    string `yaml:"sound_frequency"`
+	TalkingFrequency  string `yaml:"talking_frequency"`
 	Font           string `yaml:"font"`
 	FogOfWar       string `yaml:"fog_of_war"` // none | vision | exploration
 
@@ -59,23 +60,33 @@ func SetFontOptions(fonts []string) {
 
 func DefaultSettings() *Settings {
 	return &Settings{
-		SoundFrequency: "rare",
-		Font:           "medieval",
-		FogOfWar:       "none",
-		AIProvider:     "none",
+		SoundFrequency:   "rare",
+		TalkingFrequency: "infrequent",
+		Font:             "medieval",
+		FogOfWar:         "none",
+		AIProvider:       "none",
+		AISimulationMode: false,
 	}
 }
 
 func (s *Settings) GetSoundProbability() float64 {
-	switch s.SoundFrequency {
+	return s.getFrequencyProb(s.SoundFrequency)
+}
+
+func (s *Settings) GetTalkingProbability() float64 {
+	return s.getFrequencyProb(s.TalkingFrequency)
+}
+
+func (s *Settings) getFrequencyProb(freq string) float64 {
+	switch freq {
 	case "never":
 		return 0.0
 	case "rare":
-		return 0.1
+		return 0.05
 	case "infrequent":
-		return 0.2
+		return 0.15
 	case "half the time":
-		return 0.5
+		return 0.4
 	case "frequent":
 		return 0.7
 	case "always":

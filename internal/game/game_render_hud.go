@@ -268,6 +268,11 @@ func (gr *GameRenderer) drawDialogueBox(screen engine.Image) {
 		
 		gr.graphics.DrawTextAt(screen, "[ESC/BACKSPACE] Close", bx+boxW-195, by+boxH-60, color.RGBA{136, 136, 136, 255}, 11)
 		
+		if g.debug {
+			debugInfo := fmt.Sprintf("AI DECISION: %s (%s)", g.ActiveDialogue.SpeakerNPC.LastAIChoice, g.ActiveDialogue.SpeakerNPC.LastAIReasoning)
+			gr.graphics.DrawTextAt(screen, debugInfo, bx+10, by+boxH-25, color.RGBA{0, 255, 0, 255}, 10)
+		}
+		
 		// Draw maximize/minimize button hint
 		btnTxt := "[+]"
 		if g.ActiveDialogue.UIState == DialogueMaximized {

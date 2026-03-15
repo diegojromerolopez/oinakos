@@ -54,6 +54,7 @@ type Game struct {
 	generatedChunks map[image.Point]bool
 	npcSpawnTimer   int
 	playTime        float64
+	Tick            int
 
 	camera *engine.Camera
 	assets fs.FS
@@ -321,26 +322,107 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID, initialHeroID string,
 	// Initialize AI Manager
 	if g.settings.AIProvider != "none" {
 		var provider AIProvider
+		model := g.settings.AIModelOverride
+		
 		switch g.settings.AIProvider {
 		case "openai":
-			provider = NewOpenAIProvider(g.settings.OpenAIApiKey, g.settings.AIBaseURL, g.settings.AIModelOverride)
+			if model == "" { model = "gpt-4o-mini" }
+			provider = NewOpenAIProvider(g.settings.OpenAIApiKey, g.settings.AIBaseURL, model)
 		case "claude":
-			// For now, Claude can often use the same provider structure if proxied or using an OpenAI-compatible shim
-			// In a real scenario, we'd add ai_claude.go
-			provider = NewOpenAIProvider(g.settings.ClaudeApiKey, g.settings.AIBaseURL, g.settings.AIModelOverride)
+			if model == "" { model = "claude-3-5-sonnet-20240620" }
+			url := g.settings.AIBaseURL
+			if url == "" {
+				// No official OpenAI compatible endpoint for Claude, but users often use proxies.
+				// We'll leave it empty to force NewOpenAIProvider's logic unless we implement ai_claude.
+			}
+			provider = NewOpenAIProvider(g.settings.ClaudeApiKey, url, model)
 		case "gemini":
-			// Gemini also has an OpenAI-compatible endpoint now
-			provider = NewOpenAIProvider(g.settings.GeminiApiKey, g.settings.AIBaseURL, g.settings.AIModelOverride)
+			if model == "" { model = "gemini-1.5-flash" }
+			url := g.settings.AIBaseURL
+			if url == "" {
+				url = "https://generativelanguage.googleapis.com/v1beta/openai/"
+			}
+			provider = NewOpenAIProvider(g.settings.GeminiApiKey, url, model)
 		case "ollama":
+			if model == "" { model = "llama3" }
 			url := g.settings.AIBaseURL
 			if url == "" {
 				url = "http://localhost:11434/v1"
 			}
-			provider = NewOpenAIProvider("ollama", url, g.settings.AIModelOverride)
+			provider = NewOpenAIProvider("ollama", url, model)
+		case "mistral":
+			if model == "" { model = "mistral-small-latest" }
+			url := g.settings.AIBaseURL
+			if url == "" {
+				url = "https://api.mistral.ai/v1"
+			}
+			provider = NewOpenAIProvider(g.settings.MistralApiKey, url, model)
+		case "huggingface":
+			if model == "" { model = "meta-llama/Llama-3.1-8B-Instruct" }
+			url := g.settings.AIBaseURL
+			if url == "" {
+				url = "https://api-inference.huggingface.co/v1"
+			}
+			provider = NewOpenAIProvider(g.settings.HuggingFaceApiKey, url, model)
 		default:
 			provider = &NoopAIProvider{}
 		}
 		g.aiManager = NewAIManager(provider)
+		// Fetch the actual URL used (since NewOpenAIProvider handles defaults)
+		actualURL := ""
+		if op, ok := provider.(*OpenAIProvider); ok {
+			actualURL = op.BaseURL
+		}
+
+		// Model discovery and validation
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			availableModels, err := provider.ListModels(ctx)
+			if err == nil {
+				DebugLog("Available models for %s: %v", g.settings.AIProvider, availableModels)
+				// Try to find the best match for the requested model
+				resolvedModel := model
+				found := false
+				for _, m := range availableModels {
+					if m == model {
+						found = true
+						break
+					}
+					// Special case for Gemini: try prepending "models/"
+					if g.settings.AIProvider == "gemini" && m == "models/"+model {
+						resolvedModel = m
+						found = true
+						break
+					}
+				}
+				if found && resolvedModel != model {
+					DebugLog("Resolved model ID for %s: %s -> %s", g.settings.AIProvider, model, resolvedModel)
+					if op, ok := provider.(*OpenAIProvider); ok {
+						op.Model = resolvedModel
+					}
+				} else if !found && len(availableModels) > 0 {
+					// Auto-pick the first available model (preferring ones with 'flash' if it's Gemini/etc)
+					fallback := availableModels[0]
+					for _, m := range availableModels {
+						if strings.Contains(strings.ToLower(m), "flash") {
+							fallback = m
+							break
+						}
+					}
+					DebugLog("Warning: configured model %s not found. Auto-selecting best fallback: %s", model, fallback)
+					if op, ok := provider.(*OpenAIProvider); ok {
+						op.Model = fallback
+					}
+				}
+			} else {
+				DebugLog("Error listing models for %s: %v", g.settings.AIProvider, err)
+			}
+		}()
+
+		DebugLog("AI Manager initialized with provider: %s (model: %s, url: %s)", g.settings.AIProvider, model, actualURL)
+	} else {
+		DebugLog("AI Manager NOT initialized (provider set to 'none')")
 	}
 
 	// Initial generation around playableCharacter
@@ -556,17 +638,53 @@ func (g *Game) Update() error {
 	}
 
 	// Update AI
+	g.Tick++
+	if g.aiManager == nil && IsDebugEnabled() && g.Tick%60 == 0 {
+		DebugLog("aiManager is NIL (Provider: %s)", g.settings.AIProvider)
+	}
+
 	if g.aiManager != nil {
 		applied := g.aiManager.Poll()
 		for _, a := range applied {
 			// Find the NPC/Player and apply the decision
 			if a.Decision.Err == nil {
+				log.Printf("[AI-VERBOSE] Decision for %s: %s (%s)", a.NPCID, a.Decision.ChosenOption, a.Decision.Reasoning)
+				if g.debug {
+					g.LogEvent(fmt.Sprintf("AI [%s]: %s (%s)", a.NPCID, a.Decision.ChosenOption, a.Decision.Reasoning), LogInfo)
+				}
 				if a.NPCID == "PLAYER" {
 					g.applyPlayerAIDecision(a.Decision)
+					g.playableCharacter.LastAIDecisionTick = g.Tick
+				} else {
+					for _, n := range g.npcs {
+						if n.Name == a.NPCID || (n.Archetype != nil && n.Archetype.ID == a.NPCID) {
+							// Check if decision is to talk/say something
+							choice := strings.ToLower(a.Decision.ChosenOption)
+							if strings.Contains(choice, "talk") || strings.Contains(choice, "say") || strings.Contains(choice, "mutter") {
+								msg := a.Decision.Reasoning
+								if msg != "" {
+									g.LogEvent(fmt.Sprintf("%s: %s", n.Name, msg), LogNPC)
+								}
+							}
+							n.ApplyAIDecision(a.Decision)
+							n.LastAIDecisionTick = g.Tick
+							break
+						}
+					}
+				}
+			} else {
+				DebugLog("AI Decision Error for %s: %v", a.NPCID, a.Decision.Err)
+				if a.NPCID == "PLAYER" {
+					g.playableCharacter.AIDecisionPending = false
+					// FALLBACK: If no goal, set random wander
+					if g.playableCharacter.TargetActor == nil && g.playableCharacter.WanderDirX == 0 && g.playableCharacter.WanderDirY == 0 {
+						g.playableCharacter.WanderDirX = rand.Float64()*2 - 1
+						g.playableCharacter.WanderDirY = rand.Float64()*2 - 1
+					}
 				} else {
 					for _, n := range g.npcs {
 						if n.Archetype.ID == a.NPCID || n.Name == a.NPCID {
-							n.ApplyAIDecision(a.Decision)
+							n.AIDecisionPending = false
 							break
 						}
 					}
@@ -575,11 +693,52 @@ func (g *Game) Update() error {
 		}
 
 		// AI Player Simulation
-		if g.settings.AISimulationMode && !g.playableCharacter.AIDecisionPending {
+		interval := 300 // 5 seconds
+		if IsDebugEnabled() {
+			interval = 60 // 1 second
+		}
+
+		if g.Tick%120 == 0 {
+			DebugLog("[AI-DIAG] Tick: %d, SimMode: %v, Pending: %v, Manager: %v", g.Tick, g.settings.AISimulationMode, g.playableCharacter.AIDecisionPending, g.aiManager != nil)
+		}
+
+		if g.settings.AISimulationMode && !g.playableCharacter.AIDecisionPending && (g.Tick-g.playableCharacter.LastAIDecisionTick) >= interval {
 			worldCtx := BuildWorldContext(g, nil)
-			options := []string{"wander", "attack_nearest", "defend"}
+			options := []string{"wander", "attack_nearest", "defend", "flee", "move_to_objective"}
+			DebugLog("Simulation Mode: Requesting AI decision for PLAYER with options: %v", options)
 			g.aiManager.RequestDecision(context.Background(), "PLAYER", worldCtx, options)
 			g.playableCharacter.AIDecisionPending = true
+			g.playableCharacter.LastAIDecisionTick = g.Tick
+		}
+
+		// NPC Random Bark Logic
+		prob := g.settings.GetTalkingProbability()
+		if prob > 0 && g.Tick%600 == 0 { // Check every 10 seconds
+			for _, n := range g.npcs {
+				if !n.IsAlive() || n.AIDecisionPending {
+					continue
+				}
+				dist := math.Sqrt(math.Pow(n.X-g.playableCharacter.X, 2) + math.Pow(n.Y-g.playableCharacter.Y, 2))
+				if dist < 12.0 && rand.Float64() < prob {
+					// Use AI for bark if available
+					if g.aiManager != nil && g.settings.AIProvider != "none" {
+						worldCtx := BuildWorldContext(g, n)
+						options := []string{"wander", "talk_to_player", "mutter_to_self"}
+						g.aiManager.RequestDecision(context.Background(), n.Name, worldCtx, options)
+						n.AIDecisionPending = true
+						n.LastAIDecisionTick = g.Tick
+					} else {
+						// Fallback to static barks
+						if n.Archetype != nil && n.Archetype.Dialogues != nil {
+							bark := n.Archetype.Dialogues.PickIdleBark()
+							if bark != "" {
+								g.LogEvent(fmt.Sprintf("%s: %s", n.Name, bark), LogNPC)
+							}
+						}
+					}
+					break // Only one NPC barks at a time
+				}
+			}
 		}
 	}
 
@@ -801,6 +960,12 @@ func (g *Game) handleDialogueInput() {
 	if g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft) {
 		mx, my := g.input.MousePosition()
 		
+		// Check for Menu button click (Top right HUD)
+		if mx >= g.width-110 && mx <= g.width-10 && my >= 20 && my <= 50 {
+			g.isMenuOpen = true
+			return
+		}
+
 		// Check for maximize/minimize by clicking anywhere in the box
 		isDialogue := g.ActiveDialogue != nil
 		boxH := 300

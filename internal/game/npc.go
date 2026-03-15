@@ -29,6 +29,8 @@ type NPC struct {
 	TargetActor *Actor
 	HasInitiatedDialogue bool
 	AIDecisionPending    bool
+	LastAIChoice         string
+	LastAIReasoning      string
 }
 
 var npcNames = []string{
@@ -448,26 +450,30 @@ func (n *NPC) TakeDamage(amount int, attacker ActorInterface, ctx *SystemContext
 }
 
 func (n *NPC) needsAIDecision(playerDist float64) bool {
-	// Trigger on detection
-	if playerDist < 10.0 && n.Behavior == BehaviorWander {
-		return true
-	}
-	// Trigger on low health
-	if n.Health < n.MaxHealth/4 {
-		return true
+	// Only trigger if player is nearby or NPC is critical
+	if playerDist < 10.0 || (n.Health < n.MaxHealth/2 && playerDist < 20.0) {
+		// Only trigger every ~5 seconds (300 ticks) to avoid flooding
+		// But every ~1 second (60 ticks) in debug mode for faster feedback
+		interval := 300
+		if IsDebugEnabled() {
+			interval = 60
+		}
+		return (n.Tick - n.LastAIDecisionTick) >= interval
 	}
 	return false
 }
 
 func (n *NPC) ApplyAIDecision(dec AIDecision) {
 	n.AIDecisionPending = false
+	n.LastAIChoice = dec.ChosenOption
+	n.LastAIReasoning = dec.Reasoning
 	choice := strings.ToLower(dec.ChosenOption)
 
 	if strings.Contains(choice, "attack") {
-		n.Behavior = BehaviorKnightHunter
+		n.Behavior = BehaviorNpcFighter
 	} else if strings.Contains(choice, "flee") {
 		n.Behavior = BehaviorFlee
-	} else if strings.Contains(choice, "wander") {
+	} else if strings.Contains(choice, "wander") || strings.Contains(choice, "talk") || strings.Contains(choice, "say") || strings.Contains(choice, "mutter") {
 		n.Behavior = BehaviorWander
 	} else if strings.Contains(choice, "patrol") {
 		n.Behavior = BehaviorPatrol

@@ -98,6 +98,7 @@ type Actor struct {
 	Speed       float64
 	Weapon      *Weapon
 	Alignment   Alignment
+	LastAIDecisionTick int
 	Group       string
 	LeaderID    string
 	MustSurvive bool

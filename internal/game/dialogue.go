@@ -49,6 +49,7 @@ type StartScenario struct {
 type DialogueRoot struct {
 	PlayerGreetings []string                 `yaml:"player_greetings,omitempty"`
 	CombatBarks     []string                 `yaml:"combat_barks,omitempty"`
+	IdleBarks       []string                 `yaml:"idle_barks,omitempty"`
 	StartScenarios  []StartScenario         `yaml:"start_scenarios"`
 	Nodes           map[string]*DialogueNode `yaml:",inline"`
 }
@@ -104,6 +105,13 @@ func (dr *DialogueRoot) PickCombatBark() string {
 		return ""
 	}
 	return dr.CombatBarks[rand.Intn(len(dr.CombatBarks))]
+}
+
+func (dr *DialogueRoot) PickIdleBark() string {
+	if len(dr.IdleBarks) == 0 {
+		return ""
+	}
+	return dr.IdleBarks[rand.Intn(len(dr.IdleBarks))]
 }
 
 func init() {
