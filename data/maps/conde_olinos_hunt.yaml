@@ -120,18 +120,18 @@ npcs:
 
 obstacles:
   - id: "escape_portal"
-    archetype_id: "portal1"
+    archetype_id: "portal_1"
     x: 45.0
     y: 0.0
   
   # Town Buildings
-  - archetype_id: "house1"
+  - archetype_id: "house_1"
     x: -10.0
     y: 9.0
-  - archetype_id: "house2"
+  - archetype_id: "house_2"
     x: -5.0
     y: 9.0
-  - archetype_id: "house3"
+  - archetype_id: "house_3"
     x: 0.0
     y: 9.0
   - archetype_id: "tavern"
@@ -143,69 +143,75 @@ obstacles:
   - archetype_id: "well"
     x: -2.0
     y: -9.0
-  - archetype_id: "house1"
+  - archetype_id: "house_1"
     x: 4.0
     y: -9.0
   - archetype_id: "farm"
     x: 4.0
     y: 9.0
+  - archetype_id: "rock_4"
+    x: -12.0
+    y: -2.0
+  - archetype_id: "rock_5"
+    x: -8.0
+    y: 2.0
 
   # Thick forest bottlenecking the escape
-  - archetype_id: "tree5"
+  - archetype_id: "tree_1"
     x: 15.0
     y: 10.0
-  - archetype_id: "tree6"
+  - archetype_id: "tree_2"
     x: 18.0
     y: 12.0
-  - archetype_id: "tree5"
+  - archetype_id: "tree_3"
     x: 20.0
     y: 8.0
-  - archetype_id: "tree6"
+  - archetype_id: "tree_4"
     x: 22.0
     y: 14.0
-  - archetype_id: "tree5"
+  - archetype_id: "tree_1"
     x: 25.0
     y: 9.0
   
-  - archetype_id: "tree5"
+  - archetype_id: "tree_2"
     x: 15.0
     y: -10.0
-  - archetype_id: "tree6"
+  - archetype_id: "tree_3"
     x: 18.0
     y: -12.0
-  - archetype_id: "tree5"
+  - archetype_id: "tree_4"
     x: 20.0
     y: -8.0
-  - archetype_id: "tree6"
+  - archetype_id: "tree_1"
     x: 22.0
     y: -14.0
-  - archetype_id: "tree5"
+  - archetype_id: "tree_2"
     x: 25.0
     y: -9.0
   
-  - archetype_id: "tree6"
+  - archetype_id: "tree_3"
     x: 30.0
     y: -12.0
-  - archetype_id: "tree5"
+  - archetype_id: "tree_4"
     x: 35.0
     y: -8.0
-  - archetype_id: "tree5"
+  - archetype_id: "tree_1"
     x: 30.0
     y: 10.0
-  - archetype_id: "tree6"
+  - archetype_id: "tree_2"
     x: 35.0
     y: 12.0
   
   # Rocks near portal
-  - archetype_id: "rock1"
+  - archetype_id: "rock_1"
     x: 42.0
     y: 5.0
-  - archetype_id: "rock2"
+  - archetype_id: "rock_2"
     x: 44.0
     y: 6.0
-  - archetype_id: "rock3"
+  - archetype_id: "rock_3"
     x: 42.0
     y: -5.0
-  - archetype_id: "rock1"
+  - archetype_id: "rock_1"
     x: 46.0
     y: -6.0

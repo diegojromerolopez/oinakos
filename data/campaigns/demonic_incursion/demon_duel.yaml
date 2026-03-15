@@ -22,4 +22,37 @@ npcs:
     level: 10
     behavior: hunter
     name: "Demon Lord"
-obstacles: []
+floor_zones:
+  - name: "Duel Arena"
+    tile: "big_stones.png"
+    priority: 10
+    perimeter:
+      - {x: -2, y: -2}
+      - {x: 12, y: -2}
+      - {x: 12, y: 12}
+      - {x: -2, y: 12}
+obstacles:
+  - archetype: temple
+    x: 5
+    y: 15
+  - archetype: rock_1
+    x: -5
+    y: 5
+  - archetype: rock_2
+    x: 15
+    y: 5
+  - archetype: burned_corpse_male
+    x: 5
+    y: -5
+  - archetype: campfire
+    x: 2
+    y: 2
+  - archetype: campfire
+    x: 8
+    y: 8
+  - archetype: campfire
+    x: 2
+    y: 8
+  - archetype: campfire
+    x: 8
+    y: 2

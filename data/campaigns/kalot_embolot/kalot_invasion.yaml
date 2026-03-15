@@ -5,6 +5,9 @@ difficulty: 4
 target_time: 300.0
 description: Survive the demonic onslaught for 5 minutes!
 floor_tile: grass.png
+player:
+  x: 2.0
+  y: 2.0
 floor_zones:
 - name: central_road
   tile: paved_ground.png
@@ -459,22 +462,22 @@ obstacles:
 - archetype: campfire
   x: 0.0
   y: 0.0
-- archetype: house2
+- archetype: house_2
   x: 4.0
   y: 4.0
-- archetype: house2
+- archetype: house_2
   x: -4.0
   y: 4.0
-- archetype: house2
+- archetype: house_2
   x: 4.0
   y: -4.0
-- archetype: house2
+- archetype: house_2
   x: -4.0
   y: -4.0
-- archetype: house2
+- archetype: house_2
   x: 8.0
   y: 0.0
-- archetype: house2
+- archetype: house_2
   x: -8.0
   y: 0.0
 - archetype: temple
@@ -486,48 +489,48 @@ obstacles:
 - archetype: well
   x: 0.0
   y: 6.0
-- archetype: tree5
+- archetype: tree_5
   x: 7.4
   y: -23.5
-- archetype: tree5
+- archetype: tree_5
   x: 22.2
   y: 10.2
-- archetype: tree5
+- archetype: tree_5
   x: -22.3
   y: -14.0
-- archetype: tree5
+- archetype: tree_5
   x: 20.0
   y: 14.6
-- archetype: tree5
+- archetype: tree_5
   x: 26.9
   y: -1.3
-- archetype: tree5
+- archetype: tree_5
   x: -16.9
   y: 23.1
-- archetype: tree5
+- archetype: tree_5
   x: -15.8
   y: -21.8
-- archetype: tree5
+- archetype: tree_5
   x: 22.3
   y: -16.0
-- archetype: tree5
+- archetype: tree_5
   x: 21.7
   y: 18.3
-- archetype: tree5
+- archetype: tree_5
   x: -21.9
   y: -28.6
-- archetype: tree5
+- archetype: tree_5
   x: 14.7
   y: -20.2
-- archetype: tree5
+- archetype: tree_5
   x: -23.2
   y: -7.8
-- archetype: tree5
+- archetype: tree_5
   x: 21.0
   y: -16.0
-- archetype: tree5
+- archetype: tree_5
   x: -13.6
   y: -28.8
-- archetype: tree5
+- archetype: tree_5
   x: -17.6
   y: -22.6

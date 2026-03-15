@@ -8,10 +8,10 @@ obstacles:
   - archetype: smithery
     x: 15.0
     y: 15.0
-  - archetype: house2
+  - archetype: house_2
     x: 13.0
     y: 17.0
-  - archetype: house3
+  - archetype: house_3
     x: 17.0
     y: 13.0
   - archetype: warehouse

@@ -1,4 +1,3 @@
-id: food_market
 name: "Food Market Stall"
 type: stall
 destructible: true

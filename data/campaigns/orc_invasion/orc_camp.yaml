@@ -6,11 +6,57 @@ difficulty: 3
 width_px: 3000
 height_px: 3000
 floor_tile: grass.png
+player:
+  x: -15
+  y: -15
+floor_zones:
+  - name: "Orc Camp Grounds"
+    tile: "dirt.png"
+    priority: 5
+    perimeter:
+      - {x: 5, y: 5}
+      - {x: 15, y: 5}
+      - {x: 15, y: 15}
+      - {x: 5, y: 15}
+inhabitants:
+  - archetype: peasant_male
+    name: "Captive Peasant"
+    x: 12
+    y: 8
+    alignment: ally
+    behavior: flee
+  - archetype: peasant_female
+    name: "Captive Villager"
+    x: 8
+    y: 12
+    alignment: ally
+    behavior: flee
 obstacles:
   - id: command_tent
     archetype: warehouse
     x: 10
     y: 10
+  - id: supply_tent
+    archetype: warehouse
+    x: 12
+    y: 12
+  - id: camp_fire
+    archetype: campfire
+    x: 10
+    y: 8
+  - id: stolen_granary
+    archetype: granary
+    x: 14
+    y: 10
+  - archetype: tree_5
+    x: -5
+    y: -5
+  - archetype: tree_6
+    x: -8
+    y: -10
+  - archetype: bush_1
+    x: -12
+    y: -8
 spawns:
   - archetype: orc_male
     alignment: enemy

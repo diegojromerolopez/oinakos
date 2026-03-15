@@ -1,15 +1,14 @@
-id: bush4
-name: Bush 4
+name: Bush 2
 type: bush
 destructible: true
 description: A small bush. Can be easily cut through.
 health: 10
 footprint:
-  - x: -0.98
-    y: -1.02
+  - x: -0.88
+    y: -1.0
   - x: 0.47
-    y: -1.03
-  - x: 0.52
-    y: 0.42
-  - x: -1.06
-    y: 0.56
+    y: -1.59
+  - x: 0.73
+    y: 0.58
+  - x: -1.55
+    y: 0.48

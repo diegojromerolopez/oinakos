@@ -7,6 +7,9 @@ target_time: 120
 width_px: 6000
 height_px: 6000
 floor_tile: dry_ground.png
+player:
+  x: 5.0
+  y: 5.0
 
 floor_zones:
   - name: "Scorched Road"
@@ -67,52 +70,70 @@ inhabitants:
 
 obstacles:
   # Ruins of a small field village
-  - archetype: house1
+  - archetype: house_1
     x: -8
     y: -8
-  - archetype: house2
+  - archetype_id: house_2
     x: 0
     y: -9
-  - archetype: house3
+  - archetype: house_3
     x: 8
     y: -8
-  - archetype: warehouse
+  - archetype_id: warehouse
     x: -12
     y: 8
-  - archetype: house1
+  - archetype_id: house_1
     x: 12
     y: 8
+  - archetype: burned_corpse_male
+    x: -5
+    y: -5
+  - archetype: burned_corpse_female
+    x: 5
+    y: -5
+  - archetype: burned_corpse_male
+    x: 0
+    y: 5
+  - archetype: well
+    x: -3
+    y: -2
   
   # Dead trees marking the corrupted fields
-  - archetype: tree5
+  - archetype: tree_7
     x: -25
     y: -6
-  - archetype: tree5
+  - archetype: tree_5
     x: -27
     y: 0
-  - archetype: tree6
+  - archetype: tree_6
     x: -25
     y: 6
-  - archetype: tree5
+  - archetype: tree_7
     x: 25
     y: -6
-  - archetype: tree6
+  - archetype: tree_6
     x: 27
     y: 0
-  - archetype: tree5
+  - archetype: tree_5
     x: 25
     y: 6
   
   # Scattered rocks along the corrupted shorelines
-  - archetype: rock4
+  - archetype: rock_4
     x: -10
     y: -12
-  - archetype: rock5
+  - archetype: rock_5
     x: 10
     y: -12
-  - archetype: rock4
+  - archetype: rock_1
+    x: -15
+    y: 15
+  - archetype: rock_2
+    x: 15
+    y: 15
+  - archetype: rock_4
     x: -10
     y: 12
-  - archetype: rock5
+  - archetype: rock_5
     x: 10
     y: 12

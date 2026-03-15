@@ -33,16 +33,16 @@ build-wasm:
 
 build-tools: $(BIN_DIR)/boundaries_editor $(BIN_DIR)/map_editor
 
-$(BIN_DIR)/boundaries_editor: ./tools/boundaries_editor/main.go
+$(BIN_DIR)/boundaries_editor: ./tools/boundaries_editor/*.go
 	@echo "Building boundaries_editor..."
 	@mkdir -p $(BIN_DIR)
-	$(GOBUILD) -o $(BIN_DIR)/boundaries_editor ./tools/boundaries_editor/main.go
+	$(GOBUILD) -o $(BIN_DIR)/boundaries_editor ./tools/boundaries_editor/
 	@echo "Tool built: $(BIN_DIR)/boundaries_editor"
 
-$(BIN_DIR)/map_editor: ./tools/map_editor/main.go
+$(BIN_DIR)/map_editor: ./tools/map_editor/*.go
 	@echo "Building map_editor..."
 	@mkdir -p $(BIN_DIR)
-	$(GOBUILD) -o $(BIN_DIR)/map_editor ./tools/map_editor/main.go
+	$(GOBUILD) -o $(BIN_DIR)/map_editor ./tools/map_editor/
 	@echo "Tool built: $(BIN_DIR)/map_editor"
 
 test:

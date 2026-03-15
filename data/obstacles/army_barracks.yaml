@@ -1,0 +1,14 @@
+name: "Army Barracks"
+type: building
+destructible: true
+description: "A solid building where soldiers sleep and train."
+health: 10000
+footprint:
+  - x: 4.0
+    y: 4.0
+  - x: 4.0
+    y: -4.0
+  - x: -4.0
+    y: -4.0
+  - x: -4.0
+    y: 4.0

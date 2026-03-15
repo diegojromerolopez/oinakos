@@ -10,33 +10,33 @@ inhabitants:
     y: 15.0
     alignment: enemy # The champion is our enemy
 obstacles:
-  - archetype: rock1
+  - archetype: rock_1
     x: 5.0
     y: 5.0
-  - archetype: rock2
+  - archetype: rock_2
     x: -5.0
     y: 5.0
-  - archetype: rock3
+  - archetype: rock_3
     x: 5.0
     y: -5.0
-  - archetype: rock4
+  - archetype: rock_4
     x: -5.0
     y: -5.0
   - archetype: temple
     x: 0.0
     y: 25.0
-  - archetype: bush1
+  - archetype: bush_1
     x: 8.0
     y: 0.0
-  - archetype: bush2
+  - archetype: bush_2
     x: 0.0
     y: 8.0
-  - archetype: bush3
+  - archetype: bush_3
     x: -8.0
     y: 0.0
-  - archetype: bush4
+  - archetype: bush_4
     x: 0.0
     y: -8.0
-  - archetype: bush5
+  - archetype: bush_5
     x: 10.0
     y: 10.0

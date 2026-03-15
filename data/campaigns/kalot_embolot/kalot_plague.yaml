@@ -8,6 +8,9 @@ target_point:
 target_radius: 5.0
 description: Escape the madness! Reach the eastern limit.
 floor_tile: dirt.png
+player:
+  x: 0.0
+  y: -10.0
 floor_zones:
 - name: escape_road
   tile: paved_ground.png
@@ -847,123 +850,123 @@ inhabitants:
   y: -25.8
   alignment: enemy
 obstacles:
-- archetype: tree6
+- archetype: tree_6
   x: 33.6
   y: -21.3
-- archetype: tree5
+- archetype: tree_5
   x: 3.5
   y: 13.5
-- archetype: tree5
+- archetype: tree_5
   x: 35.7
   y: 11.5
-- archetype: tree5
+- archetype: tree_5
   x: 12.1
   y: 10.1
-- archetype: tree5
+- archetype: tree_5
   x: 49.6
   y: -33.0
-- archetype: tree6
+- archetype: tree_6
   x: 18.8
   y: -19.3
-- archetype: tree6
+- archetype: tree_6
   x: 23.1
   y: 30.7
-- archetype: tree5
+- archetype: tree_5
   x: 28.1
   y: -12.8
-- archetype: tree6
+- archetype: tree_6
   x: 40.1
   y: 35.3
-- archetype: tree5
+- archetype: tree_5
   x: 7.9
   y: -15.7
-- archetype: tree5
+- archetype: tree_5
   x: 10.5
   y: -9.8
-- archetype: tree6
+- archetype: tree_6
   x: 15.1
   y: 17.8
-- archetype: tree6
+- archetype: tree_6
   x: 21.5
   y: 5.6
-- archetype: tree6
+- archetype: tree_6
   x: 45.1
   y: -8.0
-- archetype: tree6
+- archetype: tree_6
   x: 3.5
   y: -3.3
-- archetype: tree6
+- archetype: tree_6
   x: 13.9
   y: 31.2
-- archetype: tree5
+- archetype: tree_5
   x: 39.1
   y: 8.6
-- archetype: tree6
+- archetype: tree_6
   x: 28.1
   y: 15.1
-- archetype: tree6
+- archetype: tree_6
   x: 17.5
   y: -32.8
-- archetype: tree6
+- archetype: tree_6
   x: 25.5
   y: 21.5
-- archetype: tree6
+- archetype: tree_6
   x: 20.0
   y: 26.9
-- archetype: tree6
+- archetype: tree_6
   x: 33.2
   y: 6.1
-- archetype: tree6
+- archetype: tree_6
   x: 22.5
   y: -21.8
-- archetype: tree5
+- archetype: tree_5
   x: 5.4
   y: -31.2
-- archetype: tree5
+- archetype: tree_5
   x: 36.2
   y: 35.7
-- archetype: tree6
+- archetype: tree_6
   x: 30.3
   y: 29.0
-- archetype: tree6
+- archetype: tree_6
   x: 39.1
   y: 17.5
-- archetype: tree5
+- archetype: tree_5
   x: 49.3
   y: 31.1
-- archetype: tree6
+- archetype: tree_6
   x: 36.5
   y: -20.4
-- archetype: tree5
+- archetype: tree_5
   x: 27.6
   y: -13.4
-- archetype: house2
+- archetype: house_2
   x: 40.4
   y: -27.7
-- archetype: house2
+- archetype: house_2
   x: 16.8
   y: 16.4
-- archetype: house2
+- archetype: house_2
   x: 10.2
   y: -5.6
-- archetype: house2
+- archetype: house_2
   x: 0.5
   y: 25.8
-- archetype: house2
+- archetype: house_2
   x: 19.9
   y: -20.7
-- archetype: house2
+- archetype: house_2
   x: 9.6
   y: 11.4
-- archetype: house2
+- archetype: house_2
   x: 19.3
   y: 21.2
-- archetype: house2
+- archetype: house_2
   x: 39.5
   y: 7.6
-- archetype: house2
+- archetype: house_2
   x: 45.4
   y: -13.5
-- archetype: house2
+- archetype: house_2
   x: 48.3
   y: -14.1

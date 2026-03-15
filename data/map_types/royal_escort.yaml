@@ -5,13 +5,13 @@ difficulty: 2
 description: "Protect the Mage and reach the destination"
 floor_tile: "grass.png"
 obstacles:
-  - archetype: house1
+  - archetype: house_1
     x: -15.0
     y: 10.0
-  - archetype: house2
+  - archetype: house_2
     x: -15.0
     y: 20.0
-  - archetype: house3
+  - archetype: house_3
     x: -15.0
     y: 30.0
   - archetype: warehouse

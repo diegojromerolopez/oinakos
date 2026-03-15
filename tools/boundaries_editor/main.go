@@ -11,6 +11,7 @@ import (
 	"oinakos/internal/engine"
 	"oinakos/internal/game"
 
+	"flag"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -179,7 +180,37 @@ func main() {
 		return entities[i].ID < entities[j].ID
 	})
 
+	var targetID string
+	var targetType string
+	flag.StringVar(&targetID, "obstacle", "", "ID of the obstacle to select")
+	var npcID string
+	flag.StringVar(&npcID, "npc", "", "ID of the NPC to select")
+	var charID string
+	flag.StringVar(&charID, "character", "", "ID of the character to select")
+	flag.Parse()
+
+	if targetID != "" {
+		targetType = "Obstacle"
+	} else if npcID != "" {
+		targetID = npcID
+		targetType = "NPC"
+	} else if charID != "" {
+		targetID = charID
+		targetType = "Character"
+	}
+
+	selectedIndex := 0
+	if targetID != "" {
+		for i, e := range entities {
+			if e.ID == targetID && (targetType == "" || e.Type == targetType) {
+				selectedIndex = i
+				break
+			}
+		}
+	}
+
 	viewer := NewViewer(entities, graphics, engine.NewEbitenInput(), defaultScreenWidth, defaultScreenHeight)
+	viewer.selectedIndex = selectedIndex
 	ebiten.SetWindowTitle("Oinakos Boundary Editor")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	if err := ebiten.RunGame(viewer); err != nil { log.Fatal(err) }

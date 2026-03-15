@@ -35,10 +35,9 @@ func HexToRGBA(hex string) [4]float32 {
 func sanitizeEntityConfig(c *EntityConfig, source string) {
 	changed := false
 
+	// ID fallback logic moved to registry loaders (ID from filename)
 	if c.ID == "" {
-		log.Printf("Warning [%s]: archetype has empty id, using 'unknown'", source)
-		c.ID = "unknown"
-		changed = true
+		// No-op here, let loader handle it
 	}
 	if c.Name == "" {
 		log.Printf("Warning [%s]: archetype %q has empty name, using id", source, c.ID)
@@ -99,9 +98,9 @@ func sanitizeEntityConfig(c *EntityConfig, source string) {
 
 // sanitizeObstacleArchetype validates and clamps all fields loaded from an obstacle YAML.
 func sanitizeObstacleArchetype(c *ObstacleArchetype, source string) {
+	// ID fallback logic moved to registry loaders (ID from filename)
 	if c.ID == "" {
-		log.Printf("Warning [%s]: obstacle has empty id, using 'unknown'", source)
-		c.ID = "unknown"
+		// No-op here, let loader handle it
 	}
 	if c.Name == "" {
 		log.Printf("Warning [%s]: obstacle %q has empty name, using id", source, c.ID)

@@ -7,6 +7,9 @@ description: "Survive the demonic onslaught! Use the muddy terrain and ruins to 
 width_px: 6000
 height_px: 6000
 floor_tile: "dry_ground.png"
+player:
+  x: -2.0
+  y: -2.0
 
 floor_zones:
   - name: "Ruined Town Square"
@@ -77,10 +80,10 @@ inhabitants:
 
 obstacles:
   # Town Ruins
-  - archetype: house3
+  - archetype: house_3
     x: 0.0
     y: 10.0
-  - archetype: house2
+  - archetype: house_2
     x: 10.0
     y: 0.0
   - archetype: warehouse
@@ -94,35 +97,35 @@ obstacles:
     y: 0.0
   
   # Destroyed barricades/Trees
-  - archetype: tree5
+  - archetype: tree_5
     x: -20
     y: -5
-  - archetype: tree5
+  - archetype: tree_5
     x: -22
     y: 0
-  - archetype: tree5
+  - archetype: tree_5
     x: -20
     y: 5
-  - archetype: rock1
+  - archetype: rock_1
     x: 20
     y: -5
-  - archetype: rock2
+  - archetype: rock_2
     x: 22
     y: 0
-  - archetype: rock3
+  - archetype: rock_3
     x: 20
     y: 5
 
   # Perimeter
-  - archetype: tree6
+  - archetype: tree_6
     x: -35
     y: 35
-  - archetype: tree6
+  - archetype: tree_6
     x: 35
     y: 35
-  - archetype: bush1
+  - archetype: bush_1
     x: 5.0
     y: 5.0
-  - archetype: bush2
+  - archetype: bush_2
     x: -5.0
     y: -5.0

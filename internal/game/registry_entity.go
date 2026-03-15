@@ -184,9 +184,13 @@ func (r *ArchetypeRegistry) LoadAll(assets fs.FS) error {
 			return nil
 		}
 
-		sanitizeEntityConfig(&config, fpath)
-
 		variantName := filepath.Base(fpath[:len(fpath)-len(filepath.Ext(fpath))])
+		if config.ID == "" {
+			config.ID = variantName
+			log.Printf("Warning [%s]: archetype has empty id, using file name '%s'", fpath, config.ID)
+		}
+
+		sanitizeEntityConfig(&config, fpath)
 		config.AssetDir = path.Join("assets/images/archetypes", subDir, variantName)
 		config.AudioDir = path.Join("assets/audio/archetypes", subDir, variantName)
 
@@ -226,6 +230,11 @@ func (r *PlayableCharacterRegistry) LoadAll(assets fs.FS) error {
 		if err := yaml.Unmarshal(data, &config); err != nil {
 			log.Printf("Warning: failed to unmarshal %s: %v", fpath, err)
 			return nil
+		}
+
+		if config.ID == "" {
+			config.ID = strings.TrimSuffix(filepath.Base(fpath), filepath.Ext(fpath))
+			log.Printf("Warning [%s]: character has empty id, using file name '%s'", fpath, config.ID)
 		}
 
 		sanitizeEntityConfig(&config, fpath)
@@ -400,6 +409,10 @@ func (r *NPCRegistry) LoadAll(assets fs.FS) error {
 		if err := yaml.Unmarshal(data, &config); err != nil {
 			log.Printf("Warning: failed to unmarshal %s: %v", fpath, err)
 			return nil
+		}
+		if config.ID == "" {
+			config.ID = strings.TrimSuffix(filepath.Base(fpath), filepath.Ext(fpath))
+			log.Printf("Warning [%s]: npc has empty id, using file name '%s'", fpath, config.ID)
 		}
 
 		config.AssetDir = path.Join("assets/images/npcs", config.ID)

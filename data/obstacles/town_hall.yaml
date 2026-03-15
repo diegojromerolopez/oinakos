@@ -1,0 +1,14 @@
+name: "Town Hall"
+type: building
+destructible: true
+description: "The administrative center of the town. Imposing and sturdy."
+health: 20000
+footprint:
+  - x: 6.0
+    y: 6.0
+  - x: 6.0
+    y: -6.0
+  - x: -6.0
+    y: -6.0
+  - x: -6.0
+    y: 6.0

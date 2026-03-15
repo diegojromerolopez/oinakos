@@ -54,11 +54,12 @@ func (r *ObstacleRegistry) LoadAll(assets fs.FS) error {
 			return nil
 		}
 
-		sanitizeObstacleArchetype(&config, fpath)
-
 		if config.ID == "" {
 			config.ID = strings.TrimSuffix(filepath.Base(fpath), filepath.Ext(fpath))
+			log.Printf("Warning [%s]: obstacle has empty id, using file name '%s'", fpath, config.ID)
 		}
+
+		sanitizeObstacleArchetype(&config, fpath)
 
 		r.Archetypes[config.ID] = &config
 		r.IDs = append(r.IDs, config.ID)

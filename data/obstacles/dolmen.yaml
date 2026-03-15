@@ -1,0 +1,14 @@
+name: "Ancient Dolmen"
+type: static
+destructible: false
+description: "A mysterious prehistoric stone structure."
+health: 0
+footprint:
+  - x: 2.5
+    y: 2.5
+  - x: 2.5
+    y: -2.5
+  - x: -2.5
+    y: -2.5
+  - x: -2.5
+    y: 2.5

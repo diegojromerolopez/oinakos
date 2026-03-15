@@ -5,8 +5,8 @@ difficulty: 1
 description: Reach the village center
 floor_tile: grass.png
 player:
-  x: 0.0
-  y: 0.0
+  x: 2.0
+  y: 2.0
 obstacles:
 - archetype: campfire
   x: 0.0
@@ -14,13 +14,13 @@ obstacles:
 - archetype: well
   x: 5.0
   y: 25.0
-- archetype: house1
+- archetype: house_1
   x: -8.0
   y: 25.0
-- archetype: house2
+- archetype: house_2
   x: 8.0
   y: 25.0
-- archetype: house3
+- archetype: house_3
   x: -8.0
   y: 15.0
 - archetype: farm

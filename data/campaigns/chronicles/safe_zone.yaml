@@ -5,6 +5,9 @@ difficulty: 1
 target_time: 60.0
 description: Walk in peace, do not spill blood
 floor_tile: grass.png
+player:
+  x: 5.0
+  y: 5.0
 floor_zones:
   - name: central_road
     tile: paved_ground.png
@@ -142,10 +145,10 @@ obstacles:
     y: -2.0
   
   # Asymmetrical Town Layout
-  - archetype: house1
+  - archetype: house_1
     x: -4.0
     y: -16.0
-  - archetype: house2
+  - archetype: house_2
     x: 4.0
     y: -15.0
   - archetype: smithery
@@ -154,7 +157,7 @@ obstacles:
   - archetype: tavern
     x: 6.0
     y: 12.0
-  - archetype: house3
+  - archetype: house_3
     x: -12.0
     y: 0.0
   - archetype: temple
@@ -162,60 +165,60 @@ obstacles:
     y: -3.0
 
   # Organic Nature Clusters
-  - archetype: tree5
+  - archetype: tree_5
     x: 12.3
     y: 35.1
-  - archetype: tree5
+  - archetype: tree_5
     x: 9.8
     y: 37.0
-  - archetype: tree6
+  - archetype: tree_6
     x: -10.8
     y: -35.0
-  - archetype: tree6
+  - archetype: tree_6
     x: -14.2
     y: -38.5
-  - archetype: tree5
+  - archetype: tree_5
     x: -17.9
     y: 11.6
-  - archetype: tree5
+  - archetype: tree_5
     x: 36.7
     y: -25.9
-  - archetype: tree6
+  - archetype: tree_6
     x: 40.2
     y: -22.5
-  - archetype: tree5
+  - archetype: tree_5
     x: -22.2
     y: 29.5
-  - archetype: tree5
+  - archetype: tree_5
     x: 2.8
     y: 35.9
-  - archetype: tree6
+  - archetype: tree_6
     x: 32.5
     y: 8.3
-  - archetype: tree6
+  - archetype: tree_6
     x: -12.9
     y: -41.5
-  - archetype: tree5
+  - archetype: tree_5
     x: 34.7
     y: -32.3
-  - archetype: tree6
+  - archetype: tree_6
     x: 38.8
     y: -34.8
-  - archetype: tree6
+  - archetype: tree_6
     x: -24.4
     y: -28.0
-  - archetype: bush1
+  - archetype: bush_1
     x: -26.4
     y: -20.6
-  - archetype: bush2
+  - archetype: bush_2
     x: 32.7
     y: 14.7
-  - archetype: tree6
+  - archetype: tree_6
     x: -28.4
     y: 27.3
-  - archetype: tree6
+  - archetype: tree_6
     x: 38.8
     y: -2.0
-  - archetype: bush3
+  - archetype: bush_3
     x: -38.5
     y: -2.1

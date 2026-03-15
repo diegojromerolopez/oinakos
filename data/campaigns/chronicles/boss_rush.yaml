@@ -37,4 +37,25 @@ npcs:
     name: "Malphas the Deceiver"
     base_attack: 70
     base_defense: 50
-obstacles: []
+obstacles:
+  - archetype: temple
+    x: 0
+    y: 15
+  - archetype: rock_1
+    x: -10
+    y: 10
+  - archetype: rock_2
+    x: 10
+    y: 10
+  - archetype: campfire
+    x: 5
+    y: 0
+  - archetype: campfire
+    x: -5
+    y: 0
+  - archetype: rock_3
+    x: -12
+    y: -12
+  - archetype: rock_4
+    x: 12
+    y: -12

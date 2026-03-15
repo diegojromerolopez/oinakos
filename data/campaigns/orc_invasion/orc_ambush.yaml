@@ -42,11 +42,30 @@ npcs:
     behavior: patrol
     name: "Snagga"
 obstacles:
-  - archetype_id: tree1
+  - archetype_id: tree_1
     x: 5
     y: 5
-    health: 50
-  - archetype_id: rock1
+  - archetype_id: tree_2
+    x: -5
+    y: 5
+  - archetype_id: tree_3
+    x: 5
+    y: -5
+  - archetype_id: tree_4
+    x: -5
+    y: -5
+  - archetype_id: rock_1
     x: 7
     y: 6
-    health: 100
+  - archetype_id: rock_2
+    x: -7
+    y: -6
+  - archetype_id: well
+    x: 0
+    y: 10
+  - archetype_id: bush_1
+    x: 2
+    y: 2
+  - archetype_id: bush_2
+    x: -2
+    y: -2

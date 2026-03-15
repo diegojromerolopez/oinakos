@@ -1,0 +1,32 @@
+name: "Bull of Guisando (variant)"
+type: static
+destructible: false
+description: "An ancient Vettonian granite statue of a bull, front view."
+health: 0
+footprint:
+  - x: -3.0
+    y: -10.13
+  - x: -4.22
+    y: -10.03
+  - x: -5.88
+    y: -8.81
+  - x: -7.55
+    y: -1.02
+  - x: -6.95
+    y: 1.39
+  - x: -5.38
+    y: 3.06
+  - x: -3.13
+    y: 3.25
+  - x: -0.67
+    y: 3.55
+  - x: 1.22
+    y: 2.97
+  - x: 1.2
+    y: 0.86
+  - x: 0.91
+    y: -4.34
+  - x: 0.7
+    y: -6.02
+  - x: -0.09
+    y: -9.41

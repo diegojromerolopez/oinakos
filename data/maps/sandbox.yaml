@@ -11,48 +11,100 @@ player:
   x: 0
   y: 0
 floor_zones:
+  - name: "Town Square"
+    tile: "big_stones.png"
+    priority: 15
+    perimeter:
+      - {x: -8, y: -8}
+      - {x: 8, y: -8}
+      - {x: 8, y: 8}
+      - {x: -8, y: 8}
   - name: "Water Pit"
     tile: "water.png"
     priority: 10
     perimeter:
+      - {x: -15, y: -15}
+      - {x: -10, y: -15}
       - {x: -10, y: -10}
-      - {x: -2, y: -10}
-      - {x: -2, y: -2}
-      - {x: -10, y: -2}
+      - {x: -15, y: -10}
   - name: "Paved Road"
     tile: "paved_ground.png"
     priority: 10
     perimeter:
-      - {x: 2, y: -15}
-      - {x: 8, y: -15}
-      - {x: 8, y: 15}
-      - {x: 2, y: 15}
+      - {x: -2, y: -25}
+      - {x: 2, y: -25}
+      - {x: 2, y: 25}
+      - {x: -2, y: 25}
   - name: "Muddy Swamp"
     tile: "mud.png"
     priority: 10
     perimeter:
-      - {x: -15, y: 2}
-      - {x: -5, y: 2}
-      - {x: -5, y: 12}
-      - {x: -15, y: 12}
+      - {x: -25, y: 10}
+      - {x: -15, y: 10}
+      - {x: -15, y: 20}
+      - {x: -25, y: 20}
   - name: "Dark Water Pit"
     tile: "dark_water.png"
     priority: 10
     perimeter:
-      - {x: 10, y: -10}
-      - {x: 18, y: -10}
-      - {x: 18, y: -2}
-      - {x: 10, y: -2}
+      - {x: 10, y: 10}
+      - {x: 18, y: 10}
+      - {x: 18, y: 18}
+      - {x: 10, y: 18}
 inhabitants:
   - archetype: "peasant_male"
-    x: 5
-    y: 5
+    name: "Mayor Sandbox"
+    x: 3
+    y: 3
     alignment: neutral
+    behavior: wander
   - archetype: "peasant_female"
-    x: 7
+    x: -3
+    y: -3
+    alignment: neutral
+    behavior: wander
+  - archetype: "peasant_male"
+    x: 5
+    y: -5
+    alignment: neutral
+    behavior: wander
+  - archetype: "peasant_female"
+    x: -5
     y: 5
     alignment: neutral
+    behavior: wander
   - archetype: "orc_male"
     x: 20
     y: 20
     alignment: enemy
+obstacles:
+  - archetype: well
+    x: 0
+    y: -4
+  - archetype: house_1
+    x: -6
+    y: -6
+  - archetype: house_2
+    x: 6
+    y: -6
+  - archetype: smithery
+    x: -6
+    y: 6
+  - archetype: tavern
+    x: 6
+    y: 6
+  - archetype: tree_1
+    x: -10
+    y: 0
+  - archetype: tree_2
+    x: 10
+    y: 0
+  - archetype: bush_1
+    x: -4
+    y: -2
+  - archetype: bush_2
+    x: 4
+    y: -2
+  - archetype: rock_1
+    x: 0
+    y: 10

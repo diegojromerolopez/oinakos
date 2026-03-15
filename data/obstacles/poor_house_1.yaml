@@ -1,0 +1,14 @@
+name: "Shabby House"
+type: building
+destructible: true
+description: "A decaying hut made of mud and straw."
+health: 1500
+footprint:
+  - x: 1.13
+    y: 0.75
+  - x: 0.81
+    y: -7.06
+  - x: -7.67
+    y: -7.77
+  - x: -6.61
+    y: 0.73

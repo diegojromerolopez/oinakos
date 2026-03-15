@@ -43,10 +43,10 @@ obstacles:
   - archetype: temple
     x: 10.0
     y: 10.0
-  - archetype: house3
+  - archetype: house_3
     x: 12.0
     y: 6.0
-  - archetype: house1
+  - archetype: house_1
     x: 6.0
     y: 12.0
   - archetype: well
@@ -55,18 +55,18 @@ obstacles:
   - archetype: campfire
     x: 14.0
     y: 12.0
-  - archetype: tree5
+  - archetype: tree_5
     x: -5.0
     y: 0.0
-  - archetype: bush2
+  - archetype: bush_2
     x: 0.0
     y: -10.0
-  - archetype: bush3
+  - archetype: bush_3
     x: 15.0
     y: -5.0
-  - archetype: bush4
+  - archetype: bush_4
     x: -10.0
     y: 15.0
-  - archetype: tree6
+  - archetype: tree_6
     x: 20.0
     y: 25.0

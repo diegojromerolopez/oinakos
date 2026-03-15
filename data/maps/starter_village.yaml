@@ -7,8 +7,8 @@ map:
   play_time: 0
   floor_tile: "grass.png"
 player:
-  x: 0
-  y: 0
+  x: 3
+  y: 3
   health: 100
   max_health: 100
   xp: 0
@@ -173,16 +173,16 @@ obstacles:
     x: 0
     y: 0
   # Northern Block (Left & Right of Main North Road)
-  - archetype_id: house1
+  - archetype_id: house_1
     x: -6
     y: -10
-  - archetype_id: house2
+  - archetype_id: house_2
     x: -6
     y: -15
-  - archetype_id: house3
+  - archetype_id: house_3
     x: 6
     y: -10
-  - archetype_id: house1
+  - archetype_id: house_1
     x: 6
     y: -15
   - archetype_id: tavern
@@ -192,16 +192,16 @@ obstacles:
     x: 6
     y: -22
   # Southern Block
-  - archetype_id: house2
+  - archetype_id: house_2
     x: -6
     y: 10
-  - archetype_id: house3
+  - archetype_id: house_3
     x: -6
     y: 15
-  - archetype_id: house1
+  - archetype_id: house_1
     x: 6
     y: 10
-  - archetype_id: house2
+  - archetype_id: house_2
     x: 6
     y: 15
   - archetype_id: temple
@@ -211,47 +211,47 @@ obstacles:
   - archetype_id: farm
     x: 12
     y: 6
-  - archetype_id: house3
+  - archetype_id: house_3
     x: 15
     y: -4
   # Western Houses (along dirt path)
-  - archetype_id: house1
+  - archetype_id: house_1
     x: -15
     y: 6
-  - archetype_id: house2
+  - archetype_id: house_2
     x: -15
     y: -4
   # Trees and borders (Natural enclosure)
-  - archetype_id: tree6
+  - archetype_id: tree_6
     x: -12
     y: -12
-  - archetype_id: tree5
+  - archetype_id: tree_5
     x: -16
     y: -10
-  - archetype_id: tree6
+  - archetype_id: tree_6
     x: 12
     y: -12
-  - archetype_id: tree5
+  - archetype_id: tree_5
     x: 16
     y: -10
-  - archetype_id: tree6
+  - archetype_id: tree_6
     x: -12
     y: 12
-  - archetype_id: tree5
+  - archetype_id: tree_5
     x: -16
     y: 10
-  - archetype_id: tree6
+  - archetype_id: tree_6
     x: 20
     y: 10
-  - archetype_id: bush1
+  - archetype_id: bush_1
     x: -8
     y: -6
-  - archetype_id: bush2
+  - archetype_id: bush_2
     x: 8
     y: -6
-  - archetype_id: bush3
+  - archetype_id: bush_3
     x: -8
     y: 6
-  - archetype_id: bush4
+  - archetype_id: bush_4
     x: 8
     y: 6

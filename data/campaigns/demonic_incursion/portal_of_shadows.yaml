@@ -7,6 +7,50 @@ target_radius: 3.0
 width_px: 5000
 height_px: 5000
 floor_tile: grass.png
+target_point:
+  x: 40
+  y: 0
+player:
+  x: -20
+  y: 0
+floor_zones:
+  - name: "Shattered Square"
+    tile: "big_stones.png"
+    priority: 5
+    perimeter:
+      - {x: -25, y: -5}
+      - {x: -15, y: -5}
+      - {x: -15, y: 5}
+      - {x: -25, y: 5}
+obstacles:
+  - id: portal_core
+    archetype: portal_1
+    x: 40
+    y: 0
+  - archetype: house_1
+    x: -22
+    y: 8
+  - archetype: house_2
+    x: -22
+    y: -8
+  - archetype: well
+    x: -20
+    y: 5
+  - archetype: tree_7
+    x: 0
+    y: 10
+  - archetype: tree_5
+    x: 10
+    y: -15
+  - archetype: tree_6
+    x: 20
+    y: 12
+  - archetype: rock_1
+    x: 35
+    y: 5
+  - archetype: rock_2
+    x: 35
+    y: -5
 spawns:
   - archetype: demon_male
     alignment: enemy

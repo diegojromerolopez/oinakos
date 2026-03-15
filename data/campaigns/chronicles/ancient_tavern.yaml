@@ -38,6 +38,19 @@ inhabitants:
   x: 12.0
   y: 11.0
   alignment: neutral
+  behavior: wander
+- name: Tavern Regular
+  archetype: peasant_female
+  x: 8.0
+  y: 15.0
+  alignment: neutral
+  behavior: wander
+- name: Drunk Peasant
+  archetype: peasant_male
+  x: 15.0
+  y: 8.0
+  alignment: neutral
+  behavior: wander
 - name: Brave Elara
   archetype: magi_female
   x: 8.0
@@ -65,9 +78,17 @@ spawns:
   alignment: ally
 obstacles:
 - id: tavern_main
-  archetype: house1
+  archetype: house_1
   x: 10.0
   y: 10.0
+- id: tavern_stables
+  archetype: stables
+  x: 18.0
+  y: 12.0
+- id: tavern_granary
+  archetype: granary
+  x: 6.0
+  y: 18.0
 - id: community_well
   archetype: well
   x: -5.0
@@ -80,19 +101,28 @@ obstacles:
   archetype: smithery
   x: 0.0
   y: -25.0
-- archetype: bush1
+- archetype: tree_1
+  x: -12.0
+  y: -12.0
+- archetype: tree_2
+  x: 15.0
+  y: -15.0
+- archetype: tree_3
+  x: -20.0
+  y: 10.0
+- archetype: bush_1
   x: -10.0
   y: -10.0
-- archetype: bush2
+- archetype: bush_2
   x: 5.0
   y: -15.0
-- archetype: bush3
+- archetype: bush_3
   x: 20.0
   y: 0.0
-- archetype: bush4
+- archetype: bush_4
   x: -5.0
   y: 5.0
-- archetype: bush5
+- archetype: bush_5
   x: 15.0
   y: 15.0
 floor_zones:

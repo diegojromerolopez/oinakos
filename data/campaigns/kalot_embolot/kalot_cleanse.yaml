@@ -6,6 +6,9 @@ description: "Execute the corrupted magi Staro Rovinec. Beware the cursed dark w
 width_px: 6000
 height_px: 6000
 floor_tile: black_dirt.png
+player:
+  x: 0.0
+  y: -20.0
 
 floor_zones:
   - name: boss_arena_paved
@@ -155,35 +158,35 @@ obstacles:
     y: 4.0
 
   # Rocky cover around the arena
-  - archetype: rock1
+  - archetype: rock_1
     x: -12.0
     y: 12.0
-  - archetype: rock2
+  - archetype: rock_2
     x: 12.0
     y: 12.0
-  - archetype: rock3
+  - archetype: rock_3
     x: -14.0
     y: 0.0
-  - archetype: rock4
+  - archetype: rock_4
     x: 14.0
     y: 0.0
   
   # Dead forest perimeter
-  - archetype: tree5
+  - archetype: tree_5
     x: -18.0
     y: -18.0
-  - archetype: tree5
+  - archetype: tree_5
     x: 18.0
     y: -18.0
-  - archetype: tree6
+  - archetype: tree_6
     x: -18.0
     y: 18.0
-  - archetype: tree6
+  - archetype: tree_6
     x: 18.0
     y: 18.0
-  - archetype: tree5
+  - archetype: tree_5
     x: -22.0
     y: 0.0
-  - archetype: tree6
+  - archetype: tree_6
     x: 22.0
     y: 0.0
