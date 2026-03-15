@@ -26,6 +26,8 @@ Choose your knight before entering battle. Each character has unique stats, weap
 | **Conde Estruch** | Catalan | Sword | A noble entangled in the mysteries of the old Catalan lands. |
 
 ### ⚔️ Key Gameplay Features
+- **AI-Driven Simulation Mode**: Toggle `ai_simulation_mode` in settings to watch the player character make tactical decisions (attack, flee, move to objective) using local or cloud AI.
+- **Dynamic NPC Intelligence**: NPCs possess personality! They receive their own descriptions and world context to generate character-accurate barks and tactical decisions.
 - **Campaigns & Maps**: Structured multi-map campaigns (*The Chronicles*, *Orc Invasion*, *Demonic Incursion*, *Kalot Embolot*) or freeform sandbox maps.
 - **Infinite Procedural World**: Chunk-based generation creates an endless world of forests, ruins, and villages.
 - **Dynamic Ambush System**: NPCs spawn from the edges of your view with distinct AI profiles (wander, hunter, patrol, chaotic, fighter, escort).
@@ -34,6 +36,20 @@ Choose your knight before entering battle. Each character has unique stats, weap
 - **NPC Faction System**: NPCs grouped by faction (e.g., *Peasants*, *Crimson Arm*) share hive-mind alert responses within a 20-unit radius.
 - **Dynamic Palette Swapping**: GPU shaders recolor NPC unit armbands/capes at runtime using Magenta/Yellow color masks defined in YAML.
 - **Interactive Environments**: Obstacles have an `actions` system — healing wells, damaging campfires — each with optional interaction gates.
+
+### 🧠 AI & NPC Intelligence
+
+Oinakos features a robust AI integration layer that brings life to both NPCs and the player's counterpart.
+
+#### NPC Barks & Personality
+NPCs are no longer static! Based on their `description` in YAML, they generate dynamic dialogue (barks) relevant to their current situation.
+- **Talking Frequency**: Adjustable in the Settings menu (Never, Rare, Infrequent, Common, Constant).
+- **Context Awareness**: NPCs "know" about the player's presence, their own health, and the current mission objective.
+
+#### Player Simulation Mode
+By enabling `ai_simulation_mode` in your `settings.yml`, you handover control to the AI.
+- **Tactical Awareness**: The AI evaluates its surroundings, deciding when to engage, when to focus on the map objective (e.g., reaching a portal), and when to flee to safety.
+- **Transparent Reasoning**: All AI decisions and the "thought process" behind them are logged to the console in real-time.
 
 ### ⚔️ Combat & RPG Mechanics
 
@@ -60,8 +76,23 @@ Eleven archetypes form the spine of the enemy roster, most with distinct male an
 - **Go 1.21+**
 - A system with GPU support (required by Ebiten for native desktop builds)
 - **Python 3.14** (for asset and audio tools, managed via `uv`)
+- **Ollama** (optional, for local high-performance AI)
 
-### 1. Play Natively (Desktop)
+### 1. Configure your AI Provider
+The game supports multiple AI backends. Edit `~/.oinakos/settings.yml` (or create it next to the binary) to set your preferred provider:
+
+```yaml
+ai_provider: "ollama"           # ollama (local), gemini, openai, claude, mistral, huggingface
+ai_model_override: "gemma3:1b" # Optional: Force a specific model ID
+ai_base_url: ""                 # Optional: Override the default API endpoint
+gemini_api_key: "YOUR_KEY"     # Required for Gemini
+openai_api_key: "YOUR_KEY"     # Required for OpenAI
+```
+
+- **Ollama (Local)**: Highly recommended for privacy and performance. Defaults to `http://localhost:11434/v1`.
+- **Dynamic Discovery**: On startup, the game scans your provider for available models and automatically resolves the best fit (prioritizing "flash" models for fast RPG responses).
+
+### 2. Play Natively (Desktop)
 ```bash
 make run
 ```
