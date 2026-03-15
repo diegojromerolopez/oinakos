@@ -23,15 +23,6 @@ stats:
 primary_color: "#0000FF" # Default Blue band
 secondary_color: "#303030" # Default Dark metal/leather
 weapon: Sword
-footprint:
-  - x: -0.3
-    y: -0.3
-  - x: 0.3
-    y: -0.3
-  - x: 0.3
-    y: 0.3
-  - x: -0.3
-    y: 0.3
 xp: 14
 
 dialogues:

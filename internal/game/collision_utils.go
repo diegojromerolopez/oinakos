@@ -5,13 +5,13 @@ import (
 	"oinakos/internal/engine"
 )
 
-// findSafePosition searches for a non-colliding position near (x, y) given a footprint.
-func findSafePosition(x, y float64, footprint engine.Polygon, obstacles []*Obstacle) (float64, float64) {
-	if len(footprint.Points) == 0 {
+// findSafePosition searches for a non-colliding position near (x, y) given a collision circle.
+func findSafePosition(x, y float64, circle engine.Circle, obstacles []*Obstacle) (float64, float64) {
+	if circle.Radius <= 0 {
 		return x, y
 	}
 	// 1. Check if the current position is already safe.
-	if !isPositionColliding(x, y, footprint, obstacles) {
+	if !isPositionColliding(x, y, circle, obstacles) {
 		return x, y
 	}
 
@@ -25,7 +25,7 @@ func findSafePosition(x, y float64, footprint engine.Polygon, obstacles []*Obsta
 			testX := x + math.Cos(angle)*dist
 			testY := y + math.Sin(angle)*dist
 
-			if !isPositionColliding(testX, testY, footprint, obstacles) {
+			if !isPositionColliding(testX, testY, circle, obstacles) {
 				return testX, testY
 			}
 		}
@@ -35,14 +35,15 @@ func findSafePosition(x, y float64, footprint engine.Polygon, obstacles []*Obsta
 	return x, y
 }
 
-// isPositionColliding checks if a footprint at a specific (x, y) overlaps any obstacle.
-func isPositionColliding(x, y float64, footprint engine.Polygon, obstacles []*Obstacle) bool {
-	tfp := footprint.Transformed(x, y)
+// isPositionColliding checks if a collision circle at a specific (x, y) overlaps any obstacle.
+func isPositionColliding(x, y float64, circle engine.Circle, obstacles []*Obstacle) bool {
+	circle.X = x
+	circle.Y = y
 	for _, o := range obstacles {
 		if !o.Alive {
 			continue
 		}
-		if engine.CheckCollision(tfp, o.GetFootprint()) {
+		if engine.CheckCirclePolygonCollision(circle, o.GetFootprint()) {
 			return true
 		}
 	}

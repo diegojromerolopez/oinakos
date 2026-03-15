@@ -16,15 +16,6 @@ stats:
   base_defense: 5
   attack_cooldown: 40
 weapon: Whip
-footprint:
-  - x: -0.52
-    y: -0.42
-  - x: 0.48
-    y: -0.8
-  - x: 0.64
-    y: 0.67
-  - x: -0.36
-    y: 0.8
 xp: 15
 
 dialogues:

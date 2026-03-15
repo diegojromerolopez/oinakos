@@ -15,14 +15,5 @@ stats:
   projectile_speed: 0.15
 weapon: "Magic Bolt"
 xp: 200
-footprint:
-  - x: -0.2
-    y: -0.2
-  - x: 0.2
-    y: -0.2
-  - x: 0.2
-    y: 0.2
-  - x: -0.2
-    y: 0.2
 primary_color: "#200020"
 secondary_color: "#CC0000"

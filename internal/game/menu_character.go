@@ -28,7 +28,7 @@ func (mh *MenuHandler) updateCharacterSelect() error {
 	hoverIndex := -1
 	for i := 0; i < nChars; i++ {
 		itemY := 130 + i*35
-		if mx >= 100 && mx <= 600 && my >= itemY-15 && my <= itemY+15 {
+		if mx >= 100 && mx <= 600 && my >= itemY-17 && my <= itemY+17 {
 			hoverIndex = i
 		}
 	}

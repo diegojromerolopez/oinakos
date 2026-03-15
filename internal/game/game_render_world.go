@@ -174,8 +174,6 @@ func (gr *GameRenderer) drawObjectiveArrow(screen engine.Image) {
 }
 
 func (gr *GameRenderer) drawDebug(screen engine.Image, offsetX, offsetY float64) {
-	red := color.RGBA{255, 0, 0, 255}
-	green := color.RGBA{0, 255, 0, 255}
 	cyan := color.RGBA{0, 255, 255, 255}
 
 	drawPolygon := func(poly engine.Polygon, clr color.Color) {
@@ -187,19 +185,8 @@ func (gr *GameRenderer) drawDebug(screen engine.Image, offsetX, offsetY float64)
 		gr.graphics.DrawPolygon(screen, isoPoints, clr, 1.0)
 	}
 
+
 	for _, o := range gr.game.obstacles {
 		drawPolygon(o.GetFootprint(), cyan)
 	}
-
-	for _, n := range gr.game.npcs {
-		clr := red
-		if n.Alignment == AlignmentAlly {
-			clr = green
-		} else if n.Alignment == AlignmentNeutral {
-			clr = cyan
-		}
-		drawPolygon(n.GetFootprint(), clr)
-	}
-
-	drawPolygon(gr.game.playableCharacter.GetFootprint(), green)
 }

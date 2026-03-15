@@ -185,35 +185,26 @@ func (a *Actor) GetTotalProtection() int {
 	return total
 }
 
-// GetFootprint returns the collision polygon for this actor.
-// If Config has a custom footprint, use it; otherwise fall back to a default hexagon.
-func (a *Actor) GetFootprint() engine.Polygon {
-	if a.Config != nil && len(a.Config.Footprint) > 0 {
-		return a.Config.GetFootprint().Transformed(a.X, a.Y)
+// GetCollisionCircle returns the collision circle for this actor.
+func (a *Actor) GetCollisionCircle() engine.Circle {
+	radius := 0.9375 // Default radius (30 world units is too large, but 30px is 0.9375 world units)
+	if a.Config != nil && a.Config.CollisionRadius > 0 {
+		radius = a.Config.CollisionRadius
 	}
-	// Default fallback hexagon
-	return engine.Polygon{Points: []engine.Point{
-		{X: -0.2, Y: -0.1}, {X: 0.2, Y: -0.1}, {X: 0.3, Y: 0},
-		{X: 0.2, Y: 0.1}, {X: -0.2, Y: 0.1}, {X: -0.3, Y: 0},
-	}}.Transformed(a.X, a.Y)
+	return engine.Circle{X: a.X, Y: a.Y, Radius: radius}
 }
 
 // checkCollisionAt tests whether moving this actor to (newX, newY) would collide with any obstacle.
 func (a *Actor) checkCollisionAt(newX, newY float64, obstacles []*Obstacle) bool {
-	var fp engine.Polygon
-	if a.Config != nil && len(a.Config.Footprint) > 0 {
-		fp = a.Config.GetFootprint().Transformed(newX, newY)
-	} else {
-		fp = engine.Polygon{Points: []engine.Point{
-			{X: -0.2, Y: -0.1}, {X: 0.2, Y: -0.1}, {X: 0.3, Y: 0},
-			{X: 0.2, Y: 0.1}, {X: -0.2, Y: 0.1}, {X: -0.3, Y: 0},
-		}}.Transformed(newX, newY)
-	}
+	circle := a.GetCollisionCircle()
+	circle.X = newX
+	circle.Y = newY
+
 	for _, o := range obstacles {
 		if !o.Alive {
 			continue
 		}
-		if engine.CheckCollision(fp, o.GetFootprint()) {
+		if engine.CheckCirclePolygonCollision(circle, o.GetFootprint()) {
 			return true
 		}
 	}

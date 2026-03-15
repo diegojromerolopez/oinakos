@@ -13,12 +13,3 @@ stats:
   attack_range: 5.0
   projectile_speed: 0.12
 weapon: "Black Flame"
-footprint:
-  - x: -0.3
-    y: -0.3
-  - x: 0.3
-    y: -0.3
-  - x: 0.3
-    y: 0.3
-  - x: -0.3
-    y: 0.3

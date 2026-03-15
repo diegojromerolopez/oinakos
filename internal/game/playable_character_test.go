@@ -93,11 +93,11 @@ func TestPlayableCharacterCheckAttackHits(t *testing.T) {
 	mc.CheckAttackHits(ctx)
 }
 
-func TestPlayableCharacterFootprint(t *testing.T) {
+func TestPlayableCharacterCollisionCircle(t *testing.T) {
 	mc := NewPlayableCharacter(10, 10, nil)
-	fp := mc.GetFootprint()
-	if len(fp.Points) == 0 {
-		t.Error("Footprint should have points")
+	c := mc.GetCollisionCircle()
+	if c.Radius <= 0 {
+		t.Error("Collision circle should have radius > 0")
 	}
 }
 

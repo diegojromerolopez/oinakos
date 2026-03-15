@@ -770,7 +770,7 @@ func (g *Game) handleDialogueInput() {
 			if !n.IsAlive() || n.Alignment == AlignmentEnemy {
 				continue
 			}
-			if n.GetFootprint().Contains(cartX, cartY) {
+			if n.GetCollisionCircle().Contains(cartX, cartY) {
 				g.InitiateDialogue(n)
 				break
 			}

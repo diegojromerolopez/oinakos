@@ -14,13 +14,4 @@ stats:
   attack_cooldown: 50
   attack_range: 1.2
 weapon: "Gilded Pitchfork"
-footprint:
-  - x: -0.2
-    y: -0.1
-  - x: 0.2
-    y: -0.1
-  - x: 0.2
-    y: 0.1
-  - x: -0.2
-    y: 0.1
 xp: 250

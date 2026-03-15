@@ -16,6 +16,19 @@ type Polygon struct {
 	Points []Point
 }
 
+// Circle represents a circular collision shape.
+type Circle struct {
+	X, Y   float64
+	Radius float64
+}
+
+// Contains returns true if the point (x, y) is inside the circle.
+func (c Circle) Contains(x, y float64) bool {
+	dx := x - c.X
+	dy := y - c.Y
+	return dx*dx+dy*dy <= c.Radius*c.Radius
+}
+
 // Transformed returns a new polygon with all points translated by (dx, dy).
 func (p Polygon) Transformed(dx, dy float64) Polygon {
 	newPoints := make([]Point, len(p.Points))
@@ -252,4 +265,70 @@ func CheckCollision(p1, p2 Polygon) bool {
 	}
 
 	return true // No gaps found
+}
+
+// CheckCircleCircleCollision returns true if two circles intersect.
+func CheckCircleCircleCollision(c1, c2 Circle) bool {
+	dx := c1.X - c2.X
+	dy := c1.Y - c2.Y
+	distSq := dx*dx + dy*dy
+	radSum := c1.Radius + c2.Radius
+	return distSq <= radSum*radSum
+}
+
+// CheckCirclePolygonCollision returns true if a circle and a polygon intersect.
+func CheckCirclePolygonCollision(c Circle, p Polygon) bool {
+	if len(p.Points) == 0 {
+		return false
+	}
+
+	// 1. Fast AABB Check
+	minX, minY, maxX, maxY := p.Bounds()
+	if c.X+c.Radius < minX || c.X-c.Radius > maxX || c.Y+c.Radius < minY || c.Y-c.Radius > maxY {
+		return false
+	}
+
+	// 2. Check if circle center is inside polygon
+	if p.Contains(c.X, c.Y) {
+		return true
+	}
+
+	// 3. Check distance from circle center to each edge
+	radSq := c.Radius * c.Radius
+	for i := 0; i < len(p.Points); i++ {
+		p1 := p.Points[i]
+		p2 := p.Points[(i+1)%len(p.Points)]
+
+		if lineSegmentCircleIntersection(p1, p2, c, radSq) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// lineSegmentCircleIntersection checks if a line segment (p1, p2) intersects a circle.
+func lineSegmentCircleIntersection(p1, p2 Point, c Circle, radSq float64) bool {
+	dx := p2.X - p1.X
+	dy := p2.Y - p1.Y
+	if dx == 0 && dy == 0 {
+		distSq := (p1.X-c.X)*(p1.X-c.X) + (p1.Y-c.Y)*(p1.Y-c.Y)
+		return distSq <= radSq
+	}
+
+	// Calculate projection of circle center onto the line
+	t := ((c.X-p1.X)*dx + (c.Y-p1.Y)*dy) / (dx*dx + dy*dy)
+
+	// Clamp t to the range [0, 1] to stay on the segment
+	if t < 0 {
+		t = 0
+	} else if t > 1 {
+		t = 1
+	}
+
+	closestX := p1.X + t*dx
+	closestY := p1.Y + t*dy
+
+	distSq := (closestX-c.X)*(closestX-c.X) + (closestY-c.Y)*(closestY-c.Y)
+	return distSq <= radSq
 }

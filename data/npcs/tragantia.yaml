@@ -14,12 +14,3 @@ stats:
   attack_range: 1.5
 weapon: "Reptilian Whip"
 xp: 150
-footprint:
-  - x: -0.4
-    y: -0.25
-  - x: 0.4
-    y: -0.25
-  - x: 0.4
-    y: 0.25
-  - x: -0.4
-    y: 0.25

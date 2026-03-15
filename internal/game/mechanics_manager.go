@@ -47,11 +47,11 @@ func (mm *MechanicsManager) UpdateProximityEffects(ctx *SystemContext) {
 		}
 		for _, entity := range entities {
 			var ex, ey float64
-			var eFootprint engine.Polygon
+			var eCircle engine.Circle
 			var isMC bool
 			switch e := entity.(type) {
-			case *PlayableCharacter: ex, ey, eFootprint, isMC = e.X, e.Y, e.GetFootprint(), true
-			case *NPC: ex, ey, eFootprint = e.X, e.Y, e.GetFootprint()
+			case *PlayableCharacter: ex, ey, eCircle, isMC = e.X, e.Y, e.GetCollisionCircle(), true
+			case *NPC: ex, ey, eCircle = e.X, e.Y, e.GetCollisionCircle()
 			default: continue
 			}
 			for _, action := range o.Archetype.Actions {
@@ -60,7 +60,7 @@ func (mm *MechanicsManager) UpdateProximityEffects(ctx *SystemContext) {
 					dist := math.Sqrt(math.Pow(ex-o.X, 2) + math.Pow(ey-o.Y, 2))
 					if dist <= action.Aura { inRange = true }
 				} else {
-					if engine.CheckCollision(eFootprint, o.GetFootprint()) { inRange = true }
+					if engine.CheckCirclePolygonCollision(eCircle, o.GetFootprint()) { inRange = true }
 				}
 				if !inRange { continue }
 				if action.Type == ActionHarm {

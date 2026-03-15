@@ -391,7 +391,7 @@ func (wm *WorldManager) spawnNPCNearPosition(x, y float64, sc *SpawnConfig) {
 	for i := 0; i < 10; i++ {
 		collides := false
 		for _, o := range g.obstacles {
-			if o.Alive && engine.CheckCollision(npc.GetFootprint(), o.GetFootprint()) { collides = true; break }
+			if o.Alive && engine.CheckCirclePolygonCollision(npc.GetCollisionCircle(), o.GetFootprint()) { collides = true; break }
 		}
 		if !collides { break }
 		angle := rand.Float64() * 2 * math.Pi
@@ -418,7 +418,7 @@ func (wm *WorldManager) spawnNPCAtMapEdges(sc *SpawnConfig) {
 	for i := 0; i < 10; i++ {
 		collides := false
 		for _, o := range g.obstacles {
-			if o.Alive && engine.CheckCollision(npc.GetFootprint(), o.GetFootprint()) { collides = true; break }
+			if o.Alive && engine.CheckCirclePolygonCollision(npc.GetCollisionCircle(), o.GetFootprint()) { collides = true; break }
 		}
 		if !collides { break }
 		angle := rand.Float64() * 2 * math.Pi

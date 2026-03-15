@@ -43,84 +43,63 @@ func TestYSortingOrder(t *testing.T) {
 	}
 }
 
-// TestPointInFootprintCollision verifies that point-in-polygon collision works via SAT.
-// This is critical for movement blocking and interaction.
-func TestFootprintCollision(t *testing.T) {
-	// Simple square footprint
-	squareArch := &Archetype{
-		Footprint: []FootprintPoint{
-			{X: -1, Y: -1},
-			{X: 1, Y: -1},
-			{X: 1, Y: 1},
-			{X: -1, Y: 1},
-		},
-	}
-	npc := NewNPC(10, 10, squareArch, 1) // Footprint centered at (10,10), bounds [9,11]
-
-	fp := npc.GetFootprint()
+// TestCircleCollision verifies that circle-polygon collision works.
+func TestCircleCollision(t *testing.T) {
+	// Simple square footprint for obstacle
+	squarePoly := engine.Polygon{Points: []engine.Point{
+		{X: 9, Y: 9},
+		{X: 11, Y: 9},
+		{X: 11, Y: 11},
+		{X: 9, Y: 11},
+	}}
 
 	tests := []struct {
-		x, y float64
-		want bool
+		x, y   float64
+		radius float64
+		want   bool
 	}{
-		{10, 10, true},    // Center
-		{9.5, 9.5, true},  // Near corner
-		{11, 11, true},    // Corner
-		{11.1, 11, false}, // Just outside X
-		{11, 11.1, false}, // Just outside Y
-		{5, 5, false},     // Far away
+		{10, 10, 0.5, true},   // Inside
+		{8.6, 10, 0.5, true},  // Overlap edge
+		{8.4, 10, 0.5, false}, // No overlap
+		{11.5, 11.5, 0.73, true}, // Overlap corner (dist to (11,11) is sqrt(0.5^2+0.5^2) = 0.707)
+		{11.5, 11.5, 0.5, false}, // No overlap corner
 	}
 
-	for _, tt := range tests {
-		// Use a tiny 0.01x0.01 polygon to simulate a point for CheckCollision
-		pointPoly := engine.Polygon{Points: []engine.Point{
-			{X: tt.x - 0.005, Y: tt.y - 0.005},
-			{X: tt.x + 0.005, Y: tt.y - 0.005},
-			{X: tt.x + 0.005, Y: tt.y + 0.005},
-			{X: tt.x - 0.005, Y: tt.y + 0.005},
-		}}
-		got := engine.CheckCollision(fp, pointPoly)
+	for i, tt := range tests {
+		c := engine.Circle{X: tt.x, Y: tt.y, Radius: tt.radius}
+		got := engine.CheckCirclePolygonCollision(c, squarePoly)
 		if got != tt.want {
-			t.Errorf("Point (%v, %v) collision: got %v, want %v", tt.x, tt.y, got, tt.want)
+			t.Errorf("Test %d (%v, %v, r=%v) collision: got %v, want %v", i, tt.x, tt.y, tt.radius, got, tt.want)
 		}
 	}
 }
 
-// TestFootprintCollision_Complex verify collision with non-square polygons.
-func TestFootprintCollision_Triangle(t *testing.T) {
-	// Right triangle: vertices at (0,0), (2,0), (0,2) relative to NPC
-	triArch := &Archetype{
-		Footprint: []FootprintPoint{
-			{X: 0, Y: 0},
-			{X: 2, Y: 0},
-			{X: 0, Y: 2},
-		},
-	}
-	npc := NewNPC(10, 10, triArch, 1) // World vertices: (10,10), (12,10), (10,12)
-	fp := npc.GetFootprint()
+// TestCircleCollision_Triangle verifies collision with non-square polygons.
+func TestCircleCollision_Triangle(t *testing.T) {
+	// Right triangle: vertices at (10,10), (12,10), (10,12)
+	triPoly := engine.Polygon{Points: []engine.Point{
+		{X: 10, Y: 10},
+		{X: 12, Y: 10},
+		{X: 10, Y: 12},
+	}}
 
 	tests := []struct {
-		x, y float64
-		want bool
+		x, y   float64
+		radius float64
+		want   bool
 	}{
-		{10.1, 10.1, true},  // Inside
-		{11.5, 10.1, true},  // Inside near hyp
-		{10.1, 11.5, true},  // Inside near hyp
-		{11.5, 11.5, false}, // Outside hyp
-		{9.9, 10.1, false},  // Outside west
-		{10.1, 9.9, false},  // Outside south
+		{10.5, 10.5, 0.1, true},  // Inside
+		{9.5, 10.5, 0.6, true},   // Overlap vertical edge
+		{9.5, 10.5, 0.4, false},  // No overlap
+		{11.5, 11.5, 0.8, true},   // Overlap hypotenuse (dist to line x+y=22 is 0.707)
+		{11.5, 11.5, 0.2, false}, // No overlap hypotenuse
 	}
 
-	for _, tt := range tests {
-		pointPoly := engine.Polygon{Points: []engine.Point{
-			{X: tt.x - 0.005, Y: tt.y - 0.005},
-			{X: tt.x + 0.005, Y: tt.y - 0.005},
-			{X: tt.x + 0.005, Y: tt.y + 0.005},
-			{X: tt.x - 0.005, Y: tt.y + 0.005},
-		}}
-		got := engine.CheckCollision(fp, pointPoly)
+	for i, tt := range tests {
+		c := engine.Circle{X: tt.x, Y: tt.y, Radius: tt.radius}
+		got := engine.CheckCirclePolygonCollision(c, triPoly)
 		if got != tt.want {
-			t.Errorf("Triangle Collision at (%v, %v): got %v, want %v", tt.x, tt.y, got, tt.want)
+			t.Errorf("Triangle Test %d (%v, %v, r=%v) collision: got %v, want %v", i, tt.x, tt.y, tt.radius, got, tt.want)
 		}
 	}
 }

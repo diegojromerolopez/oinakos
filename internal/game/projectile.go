@@ -54,15 +54,13 @@ func (p *Projectile) Update(ctx *SystemContext) {
 	}
 
 	// Check environment collision
-	pFootprint := engine.Polygon{Points: []engine.Point{
-		{X: -0.1, Y: -0.1}, {X: 0.1, Y: -0.1}, {X: 0.1, Y: 0.1}, {X: -0.1, Y: 0.1},
-	}}.Transformed(p.X, p.Y)
+	pCircle := engine.Circle{X: p.X, Y: p.Y, Radius: 0.1}
 
 	for _, o := range ctx.World.Obstacles {
 		if !o.Alive {
 			continue
 		}
-		if engine.CheckCollision(pFootprint, o.GetFootprint()) {
+		if engine.CheckCirclePolygonCollision(pCircle, o.GetFootprint()) {
 			p.Alive = false // Hits a wall/tree
 			return
 		}

@@ -135,7 +135,7 @@ func main() {
 			arch := obsReg.Archetypes[id]
 			obs := game.NewObstacle("editor_preview", 0, 0, arch)
 			var img engine.Image
-			if arch.Image != nil { img = arch.Image.(engine.Image) }
+			if arch.Image != nil { img = arch.Image }
 			entities = append(entities, &EditorEntity{
 				ID: id, Type: "Obstacle", Image: img, Footprint: &arch.Footprint,
 				YamlPath: filepath.Join("data/obstacles", id+".yaml"),
@@ -144,65 +144,18 @@ func main() {
 		}
 	}
 
-	npcReg := game.NewArchetypeRegistry()
-	if err := npcReg.LoadAll(assets); err == nil {
-		npcReg.LoadAssets(assets, graphics, nil)
-		for _, id := range npcReg.IDs {
-			arch := npcReg.Archetypes[id]
-			npc := game.NewNPC(0, 0, arch, 1)
-			var img engine.Image
-			if arch.StaticImage != nil { img = arch.StaticImage.(engine.Image) }
-			entities = append(entities, &EditorEntity{
-				ID: id, Type: "NPC", Image: img, Footprint: &arch.Footprint, YamlPath: findArchetypeYAML(id),
-				DrawMain: func(screen engine.Image, g engine.Graphics, ox, oy float64) { npc.Draw(screen, g, g, nil, ox, oy) },
-			})
-		}
-	}
-
-	mcConfig, err := game.LoadPlayableCharacterConfig(assets)
-	if err == nil {
-		mcConfig.AssetDir = "assets/images/characters/oinakos"
-		mcConfig.StaticImage = graphics.LoadSprite(assets, filepath.Join(mcConfig.AssetDir, "static.png"), true)
-		mcConfig.CorpseImage = graphics.LoadSprite(assets, filepath.Join(mcConfig.AssetDir, "corpse.png"), true)
-		mcConfig.AttackImage = graphics.LoadSprite(assets, filepath.Join(mcConfig.AssetDir, "attack.png"), true)
-		mc := game.NewPlayableCharacter(0, 0, mcConfig)
-		var img engine.Image
-		if mcConfig.StaticImage != nil { img = mcConfig.StaticImage.(engine.Image) }
-		entities = append(entities, &EditorEntity{
-			ID: "playable_character", Type: "Character", Image: img, Footprint: &mcConfig.Footprint,
-			YamlPath: "data/characters/oinakos.yaml",
-			DrawMain: func(screen engine.Image, g engine.Graphics, ox, oy float64) { mc.Draw(screen, g, g, ox, oy) },
-		})
-	}
-
 	sort.Slice(entities, func(i, j int) bool {
-		if entities[i].Type != entities[j].Type { return entities[i].Type < entities[j].Type }
 		return entities[i].ID < entities[j].ID
 	})
-
+ 
 	var targetID string
-	var targetType string
 	flag.StringVar(&targetID, "obstacle", "", "ID of the obstacle to select")
-	var npcID string
-	flag.StringVar(&npcID, "npc", "", "ID of the NPC to select")
-	var charID string
-	flag.StringVar(&charID, "character", "", "ID of the character to select")
 	flag.Parse()
-
-	if targetID != "" {
-		targetType = "Obstacle"
-	} else if npcID != "" {
-		targetID = npcID
-		targetType = "NPC"
-	} else if charID != "" {
-		targetID = charID
-		targetType = "Character"
-	}
-
+ 
 	selectedIndex := 0
 	if targetID != "" {
 		for i, e := range entities {
-			if e.ID == targetID && (targetType == "" || e.Type == targetType) {
+			if e.ID == targetID {
 				selectedIndex = i
 				break
 			}

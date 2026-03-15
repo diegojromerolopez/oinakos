@@ -90,11 +90,11 @@ func TestNewNPC(t *testing.T) {
 	}
 }
 
-func TestNPCFootprint(t *testing.T) {
+func TestNPCCollisionCircle(t *testing.T) {
 	n := NewNPC(10, 10, nil, 1)
-	fp := n.GetFootprint()
-	if len(fp.Points) == 0 {
-		t.Error("NPC Footprint should have points")
+	c := n.GetCollisionCircle()
+	if c.Radius <= 0 {
+		t.Error("NPC Collision circle should have radius > 0")
 	}
 }
 

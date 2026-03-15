@@ -14,15 +14,6 @@ stats:
   attack_range: 4.0 # Ranged shouting attack
   projectile_speed: 0.25
 weapon: Shouts
-footprint:
-  - x: -0.25
-    y: -0.15
-  - x: 0.25
-    y: -0.15
-  - x: 0.25
-    y: 0.15
-  - x: -0.25
-    y: 0.15
 xp: 160
 
 dialogues:

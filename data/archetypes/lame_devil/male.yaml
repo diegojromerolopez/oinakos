@@ -10,13 +10,4 @@ stats:
   base_defense: 1
   attack_cooldown: 30
 weapon: Dagger
-footprint:
-  - x: -0.11
-    y: 0.8
-  - x: 1.05
-    y: 0.33
-  - x: 0.52
-    y: -0.7
-  - x: -0.78
-    y: 0.09
 xp: 6

@@ -166,16 +166,8 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 				sortY += 2.0
 			} else {
 				p := obj.GetFootprint()
-				if len(p.Points) > 0 {
-					var minX, maxX, minY, maxY float64
-					for i, pt := range p.Points {
-						if i == 0 || pt.X < minX { minX = pt.X }
-						if i == 0 || pt.X > maxX { maxX = pt.X }
-						if i == 0 || pt.Y < minY { minY = pt.Y }
-						if i == 0 || pt.Y > maxY { maxY = pt.Y }
-					}
-					sortY = (minX + maxX + minY + maxY) / 2
-				}
+				minX, minY, maxX, maxY := p.Bounds()
+				sortY = (minX + maxX + minY + maxY) / 2
 			}
 
 			tasks = append(tasks, drawTask{
@@ -244,9 +236,9 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 			if drawX < -256 || drawX > float64(g.width)+256 || drawY < -256 || drawY > float64(g.height)+256 {
 				continue
 			}
-			n.DrawUI(screen, gr.graphics, gr.graphics, offsetX, offsetY)
+			n.DrawUI(screen, gr.graphics, gr.graphics, offsetX, offsetY, g.debug)
 		}
-		g.playableCharacter.DrawUI(screen, gr.graphics, gr.graphics, offsetX, offsetY)
+		g.playableCharacter.DrawUI(screen, gr.graphics, gr.graphics, offsetX, offsetY, g.debug)
 
 		if g.debug || g.showBoundaries {
 			gr.drawDebug(screen, offsetX, offsetY)

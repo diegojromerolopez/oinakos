@@ -154,15 +154,17 @@ func DrawActor(a *Actor, screen engine.Image, textRenderer engine.TextRenderer, 
 }
 
 // DrawActorUI draws the UI elements for an actor (alignment indicator, health bar, name tag).
-func DrawActorUI(a *Actor, screen engine.Image, textRenderer engine.TextRenderer, vectorRenderer engine.VectorRenderer, offsetX, offsetY float64, isPlayableCharacter bool) {
+func DrawActorUI(a *Actor, screen engine.Image, textRenderer engine.TextRenderer, vectorRenderer engine.VectorRenderer, offsetX, offsetY float64, isPlayableCharacter bool, debug bool) {
 	if screen == nil || a.Config == nil || !a.IsAlive() {
 		return
 	}
-
+ 
 	isoX, isoY := engine.CartesianToIso(a.X, a.Y)
-
-	// Draw Alignment Indicator
-	DrawAlignmentIndicator(screen, vectorRenderer, a.X, a.Y, offsetX, offsetY, a.Alignment, a.IsAlive())
+ 
+	// Draw Alignment Indicator (Ellipsis) - Only in debug mode
+	if debug {
+		DrawAlignmentIndicator(screen, vectorRenderer, a.X, a.Y, offsetX, offsetY, a.Alignment, a.IsAlive())
+	}
 
 	// UI Elements (Health bar for NPCs, Names)
 	if !isPlayableCharacter {

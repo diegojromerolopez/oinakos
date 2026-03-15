@@ -9,6 +9,6 @@ func (pc *PlayableCharacter) Draw(screen engine.Image, textRenderer engine.TextR
 	DrawActor(&pc.Actor, screen, textRenderer, vectorRenderer, nil, offsetX, offsetY, true)
 }
 
-func (pc *PlayableCharacter) DrawUI(screen engine.Image, textRenderer engine.TextRenderer, vectorRenderer engine.VectorRenderer, offsetX, offsetY float64) {
-	DrawActorUI(&pc.Actor, screen, textRenderer, vectorRenderer, offsetX, offsetY, true)
+func (pc *PlayableCharacter) DrawUI(screen engine.Image, textRenderer engine.TextRenderer, vectorRenderer engine.VectorRenderer, offsetX, offsetY float64, debug bool) {
+	DrawActorUI(&pc.Actor, screen, textRenderer, vectorRenderer, offsetX, offsetY, true, debug)
 }

@@ -120,10 +120,8 @@ func (mc *PlayableCharacter) Update(ctx *SystemContext) {
 
 	if mc.State == StateDead {
 		if mc.DeadTimer == 0 {
-			if mc.Config != nil {
-				newX, newY := findSafePosition(mc.X, mc.Y, mc.Config.GetFootprint(), worldObstacles)
-				mc.X, mc.Y = newX, newY
-			}
+			newX, newY := findSafePosition(mc.X, mc.Y, mc.GetCollisionCircle(), worldObstacles)
+			mc.X, mc.Y = newX, newY
 		}
 		mc.DeadTimer++
 		return

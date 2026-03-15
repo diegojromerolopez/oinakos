@@ -106,17 +106,15 @@ func (n *NPC) IsGiant() bool {
 	return n.Archetype.Group == "giant" || strings.HasPrefix(n.Archetype.ID, "giant_")
 }
 
-func (n *NPC) GetFootprint() engine.Polygon {
-	if n.Archetype == nil { return engine.Polygon{} }
-	return n.Archetype.GetFootprint().Transformed(n.X, n.Y)
-}
+// Actor.GetCollisionCircle is used instead of GetFootprint.
 
 func (n *NPC) checkCollisionAt(newX, newY float64, obstacles []*Obstacle) bool {
-	if n.Archetype == nil { return false }
-	nFootprint := n.Archetype.GetFootprint().Transformed(newX, newY)
+	circle := n.GetCollisionCircle()
+	circle.X = newX
+	circle.Y = newY
 	for _, o := range obstacles {
 		if !o.Alive { continue }
-		if engine.CheckCollision(nFootprint, o.GetFootprint()) { return true }
+		if engine.CheckCirclePolygonCollision(circle, o.GetFootprint()) { return true }
 	}
 	return false
 }
@@ -227,8 +225,8 @@ func (n *NPC) Update(ctx *SystemContext) {
 	}
 
 	if n.State == NPCDead {
-		if n.DeadTimer == 0 && n.Archetype != nil {
-			n.X, n.Y = findSafePosition(n.X, n.Y, n.Archetype.GetFootprint(), worldObstacles)
+		if n.DeadTimer == 0 {
+			n.X, n.Y = findSafePosition(n.X, n.Y, n.GetCollisionCircle(), worldObstacles)
 		}
 		n.DeadTimer++
 		return

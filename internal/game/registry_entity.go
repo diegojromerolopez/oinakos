@@ -28,6 +28,7 @@ type EntityConfig struct {
 	} `yaml:"stats"`
 	Actions    *ActionConfig `yaml:"actions,omitempty"`
 	WeaponName string        `yaml:"weapon"`
+	CollisionRadius float64      `yaml:"collision_radius,omitempty"`
 
 	Footprint      []FootprintPoint `yaml:"footprint"`
 	Description    string           `yaml:"description,omitempty"`
@@ -221,11 +222,6 @@ func (r *PlayableCharacterRegistry) LoadAll(assets fs.FS) error {
 	}
 	const baseDir = "data/characters"
 	return forEachYAML(assets, baseDir, func(fpath string, data []byte) error {
-		normalizedPath := filepath.ToSlash(fpath)
-		dir := filepath.Dir(normalizedPath)
-		if dir != "data/characters" && dir != "oinakos/data/characters" {
-			return nil
-		}
 		var config EntityConfig
 		if err := yaml.Unmarshal(data, &config); err != nil {
 			log.Printf("Warning: failed to unmarshal %s: %v", fpath, err)
