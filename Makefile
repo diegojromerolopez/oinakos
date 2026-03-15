@@ -16,7 +16,7 @@ DIST_DIR=dist
 all: build build-wasm build-tools dist
 
 # Versioning
-VERSION=0.1
+VERSION=0.1-alpha
 LDFLAGS=-ldflags "-X main.Version=$(VERSION)"
 
 build:

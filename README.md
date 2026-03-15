@@ -3,6 +3,7 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Go Version](https://img.shields.io/badge/Go-1.21%2B-blue)
 ![Ebiten v2](https://img.shields.io/badge/Engine-Ebiten%20v2-orange)
+![Version](https://img.shields.io/badge/Version-0.1--alpha-green)
 
 An infinite, isometric action combat game built with **Go** and the **Ebiten v2** 2D game library.
 

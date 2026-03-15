@@ -34,7 +34,7 @@ func (gr *GameRenderer) drawMainMenu(screen engine.Image) {
 		gr.graphics.DrawTextAt(screen, label, (g.width-int(lw))/2, 350+i*60, clr, 32)
 	}
 
-	gr.graphics.DrawTextAt(screen, "v0.9.0-alpha", 20, g.height-30, color.RGBA{80, 80, 80, 255}, 14)
+	gr.graphics.DrawTextAt(screen, fmt.Sprintf("v%s", g.Version), 20, g.height-30, color.RGBA{80, 80, 80, 255}, 14)
 }
 
 func (gr *GameRenderer) drawCharacterSelect(screen engine.Image) {

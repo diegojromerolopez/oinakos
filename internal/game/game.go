@@ -106,6 +106,7 @@ type Game struct {
 
 	LoadingProgress int32 // 0 to 1000 representing 0.0 to 1.0
 	LoadingMessage  string
+	Version         string
 
 	ActiveDialogue *DialogueState
 	EventLog       []LogEntry
@@ -124,7 +125,7 @@ func (g *Game) UpdateFont() {
 	}
 }
 
-func NewGame(assets fs.FS, initialMapID, initialMapTypeID, initialHeroID string, input engine.Input, audio AudioManager, debug bool) *Game {
+func NewGame(assets fs.FS, initialMapID, initialMapTypeID, initialHeroID string, input engine.Input, audio AudioManager, debug bool, version string) *Game {
 	rand.Seed(time.Now().UnixNano())
 
 	// Load playableCharacter config
@@ -175,6 +176,7 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID, initialHeroID string,
 		initialHeroID:    initialHeroID,
 		mapLevel:         1,
 		LoadingProgress:  1000,
+		Version:          version,
 	}
 
 	g.Registries = &RegistryContainer{

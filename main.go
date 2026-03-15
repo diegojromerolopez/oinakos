@@ -17,7 +17,7 @@ import (
 )
 
 // Version is the current build version, injected at compile time via -ldflags
-var Version = "0.1-dev"
+var Version = "0.1-alpha"
 
 //go:embed assets data
 var assets embed.FS
@@ -92,7 +92,7 @@ func main() {
 	// Load initial font (default to first available or first from settings)
 	ei := engine.NewEbitenInput()
 
-	g := game.NewGame(finalAssets, initialMap, initialMapType, heroID, ei, &game.DefaultAudioManager{}, debug)
+	g := game.NewGame(finalAssets, initialMap, initialMapType, heroID, ei, &game.DefaultAudioManager{}, debug, Version)
 	
 	// Hook font update
 	g.SetOnFontUpdate(func(fontName string) {
