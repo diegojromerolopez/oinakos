@@ -32,11 +32,26 @@ type Settings struct {
 	SoundFrequency string `yaml:"sound_frequency"`
 	Font           string `yaml:"font"`
 	FogOfWar       string `yaml:"fog_of_war"` // none | vision | exploration
+
+	AIProvider        string `yaml:"ai_provider"`        // none | openai | claude | gemini | mistral | huggingface | ollama
+	AISimulationMode  bool   `yaml:"ai_simulation_mode"`  // If true, the player character is also AI-controlled
+
+	// API Keys
+	OpenAIApiKey     string `yaml:"openai_api_key"`
+	ClaudeApiKey     string `yaml:"claude_api_key"`
+	GeminiApiKey     string `yaml:"gemini_api_key"`
+	MistralApiKey    string `yaml:"mistral_api_key"`
+	HuggingFaceApiKey string `yaml:"huggingface_api_key"`
+
+	// Advanced
+	AIModelOverride string `yaml:"ai_model_override"`
+	AIBaseURL       string `yaml:"ai_base_url"`
 }
 
 var FrequencyOptions = []string{"never", "rare", "infrequent", "half the time", "frequent", "always"}
 var FontOptions = []string{"medieval", "modern_antiqua", "uncial_antiqua", "glass_antiqua", "kings", "eagle_lake", "default"}
 var FogOfWarOptions = []string{"none", "vision", "exploration"}
+var AIProviderOptions = []string{"none", "openai", "claude", "gemini", "mistral", "huggingface", "ollama"}
 
 func SetFontOptions(fonts []string) {
 	FontOptions = fonts
@@ -47,6 +62,7 @@ func DefaultSettings() *Settings {
 		SoundFrequency: "rare",
 		Font:           "medieval",
 		FogOfWar:       "none",
+		AIProvider:     "none",
 	}
 }
 

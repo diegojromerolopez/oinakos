@@ -185,7 +185,7 @@ func (gr *GameRenderer) drawSettingsScreen(screen engine.Image) {
 	tw, _ := gr.graphics.MeasureText(title, 40)
 	gr.graphics.DrawTextAt(screen, title, (g.width-int(tw))/2, 100, color.RGBA{218, 165, 32, 255}, 40)
 
-	rows := []string{"Font Style", "Sound Effects", "Fog of War", "Save and Back"}
+	rows := []string{"Font Style", "Sound Effects", "Fog of War", "AI Provider", "Simulation Mode", "Save and Back"}
 	for i, row := range rows {
 		var clr color.Color = color.White
 		prefix := "  "
@@ -201,6 +201,12 @@ func (gr *GameRenderer) drawSettingsScreen(screen engine.Image) {
 			label += fmt.Sprintf(": [%s]", strings.ToUpper(FrequencyOptions[g.settingsAudioIndex]))
 		} else if i == 2 {
 			label += fmt.Sprintf(": [%s]", strings.ToUpper(FogOfWarOptions[g.settingsFogIndex]))
+		} else if i == 3 {
+			label += fmt.Sprintf(": [%s]", strings.ToUpper(g.settings.AIProvider))
+		} else if i == 4 {
+			val := "OFF"
+			if g.settings.AISimulationMode { val = "ON" }
+			label += fmt.Sprintf(": [%s]", val)
 		}
 
 		lw, _ := gr.graphics.MeasureText(label, 24)
@@ -209,7 +215,11 @@ func (gr *GameRenderer) drawSettingsScreen(screen engine.Image) {
 
 	hint := "UP/DOWN to navigate, LEFT/RIGHT to change value, ENTER to confirm."
 	hw, _ := gr.graphics.MeasureText(hint, 14)
-	gr.graphics.DrawTextAt(screen, hint, (g.width-int(hw))/2, g.height-100, color.RGBA{136, 136, 136, 255}, 14)
+	gr.graphics.DrawTextAt(screen, hint, (g.width-int(hw))/2, g.height-120, color.RGBA{136, 136, 136, 255}, 14)
+
+	yamlHint := "Edit API keys in ~/.oinakos/settings.yml"
+	yhw, _ := gr.graphics.MeasureText(yamlHint, 12)
+	gr.graphics.DrawTextAt(screen, yamlHint, (g.width-int(yhw))/2, g.height-90, color.RGBA{150, 150, 150, 255}, 12)
 }
 
 func (gr *GameRenderer) drawPauseMenu(screen engine.Image) {

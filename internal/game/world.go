@@ -15,6 +15,7 @@ type World struct {
 	CurrentMapType    *MapType
 	ExploredTiles     map[image.Point]bool
 	PlayTime          float64
+	Game              *Game
 }
 
 func NewWorld() *World {

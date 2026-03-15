@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"oinakos/internal/engine"
+
 	"gopkg.in/yaml.v3"
 )
 

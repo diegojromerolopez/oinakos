@@ -11,4 +11,5 @@ type SystemContext struct {
 	Audio      AudioManager
 	Registries *RegistryContainer
 	Log        func(string, LogCategory)
+	AIManager  *AIManager
 }

@@ -6,7 +6,7 @@ import (
 
 func (mh *MenuHandler) updateSettingsScreen() error {
 	g := mh.game
-	nRows := 4 // 0: Font, 1: Audio, 2: Fog of War, 3: Save & Back
+	nRows := 6 // 0: Font, 1: Audio, 2: Fog of War, 3: AI Provider, 4: AI Sim, 5: Save & Back
 	if g.input.IsKeyJustPressed(engine.KeyUp) || g.input.IsKeyJustPressed(engine.KeyW) {
 		g.settingsMenuIndex--
 		if g.settingsMenuIndex < 0 {
@@ -73,6 +73,38 @@ func (mh *MenuHandler) updateSettingsScreen() error {
 			}
 			g.settings.FogOfWar = FogOfWarOptions[g.settingsFogIndex]
 		}
+	} else if g.settingsMenuIndex == 3 { // AI Provider
+		if g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) {
+			found := -1
+			for i, opt := range AIProviderOptions {
+				if opt == g.settings.AIProvider {
+					found = i
+					break
+				}
+			}
+			if found == -1 { found = 0 }
+			found--
+			if found < 0 { found = len(AIProviderOptions) - 1 }
+			g.settings.AIProvider = AIProviderOptions[found]
+		}
+		if g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) {
+			found := -1
+			for i, opt := range AIProviderOptions {
+				if opt == g.settings.AIProvider {
+					found = i
+					break
+				}
+			}
+			if found == -1 { found = 0 }
+			found++
+			if found >= len(AIProviderOptions) { found = 0 }
+			g.settings.AIProvider = AIProviderOptions[found]
+		}
+	} else if g.settingsMenuIndex == 4 { // AI Simulation Mode
+		if g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) ||
+			g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) {
+			g.settings.AISimulationMode = !g.settings.AISimulationMode
+		}
 	}
 
 	mx, my := g.input.MousePosition()
@@ -91,7 +123,7 @@ func (mh *MenuHandler) updateSettingsScreen() error {
 		g.settingsMenuIndex = hoverIdx
 	}
 
-	if g.input.IsKeyJustPressed(engine.KeyEnter) || (hoverIdx == 3 && g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft)) {
+	if g.input.IsKeyJustPressed(engine.KeyEnter) || (hoverIdx == 5 && g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft)) {
 		g.settings.Save()
 		g.UpdateFont()
 		if g.audio != nil {

@@ -21,6 +21,7 @@ type PlayableCharacter struct {
 	Actor         // Embedded shared state
 	Kills         int
 	MapKills      map[string]int
+	AIDecisionPending bool
 }
 
 func loadPlayerImage(assets fs.FS, path string) (image.Image, error) {

@@ -14,6 +14,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"context"
 	_ "image/jpeg"
 	_ "image/png"
 
@@ -113,6 +114,8 @@ type Game struct {
 	LogScrollOffset int
 	IsDraggingLog   bool
 	LogUIState      DialogueUIState
+
+	aiManager *AIManager
 }
 
 func (g *Game) SetOnFontUpdate(cb func(string)) {
@@ -210,6 +213,7 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID, initialHeroID string,
 	g.currentMapType = selectedMapType
 	g.ExploredTiles = g.World.ExploredTiles
 	g.generatedChunks = make(map[image.Point]bool)
+	g.World.Game = g
 
 	g.settings = LoadSettings()
 	if audio != nil {
@@ -313,6 +317,31 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID, initialHeroID string,
 	
 	g.worldManager = NewWorldManager(g)
 	g.mechanicsManager = NewMechanicsManager(g)
+
+	// Initialize AI Manager
+	if g.settings.AIProvider != "none" {
+		var provider AIProvider
+		switch g.settings.AIProvider {
+		case "openai":
+			provider = NewOpenAIProvider(g.settings.OpenAIApiKey, g.settings.AIBaseURL, g.settings.AIModelOverride)
+		case "claude":
+			// For now, Claude can often use the same provider structure if proxied or using an OpenAI-compatible shim
+			// In a real scenario, we'd add ai_claude.go
+			provider = NewOpenAIProvider(g.settings.ClaudeApiKey, g.settings.AIBaseURL, g.settings.AIModelOverride)
+		case "gemini":
+			// Gemini also has an OpenAI-compatible endpoint now
+			provider = NewOpenAIProvider(g.settings.GeminiApiKey, g.settings.AIBaseURL, g.settings.AIModelOverride)
+		case "ollama":
+			url := g.settings.AIBaseURL
+			if url == "" {
+				url = "http://localhost:11434/v1"
+			}
+			provider = NewOpenAIProvider("ollama", url, g.settings.AIModelOverride)
+		default:
+			provider = &NoopAIProvider{}
+		}
+		g.aiManager = NewAIManager(provider)
+	}
 
 	// Initial generation around playableCharacter
 	g.worldManager.UpdateChunks()
@@ -526,6 +555,34 @@ func (g *Game) Update() error {
 		return g.menuHandler.Update()
 	}
 
+	// Update AI
+	if g.aiManager != nil {
+		applied := g.aiManager.Poll()
+		for _, a := range applied {
+			// Find the NPC/Player and apply the decision
+			if a.Decision.Err == nil {
+				if a.NPCID == "PLAYER" {
+					g.applyPlayerAIDecision(a.Decision)
+				} else {
+					for _, n := range g.npcs {
+						if n.Archetype.ID == a.NPCID || n.Name == a.NPCID {
+							n.ApplyAIDecision(a.Decision)
+							break
+						}
+					}
+				}
+			}
+		}
+
+		// AI Player Simulation
+		if g.settings.AISimulationMode && !g.playableCharacter.AIDecisionPending {
+			worldCtx := BuildWorldContext(g, nil)
+			options := []string{"wander", "attack_nearest", "defend"}
+			g.aiManager.RequestDecision(context.Background(), "PLAYER", worldCtx, options)
+			g.playableCharacter.AIDecisionPending = true
+		}
+	}
+
 	// 0. Update Dialogue & Log UI toggles
 	// We use 'L' or some other key to minimize/maximize logic if needed,
 	// but the plan says it can be maximized/minimized.
@@ -575,6 +632,7 @@ func (g *Game) Update() error {
 		Audio:      g.audio,
 		Registries: g.Registries,
 		Log:        g.LogEvent,
+		AIManager:  g.aiManager,
 	}
 
 	g.mechanicsManager.UpdateFogOfWar(ctx)

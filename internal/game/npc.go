@@ -1,6 +1,7 @@
 package game
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"math/rand"
@@ -27,6 +28,7 @@ type NPC struct {
 	PatrolHeading              bool
 	TargetActor *Actor
 	HasInitiatedDialogue bool
+	AIDecisionPending    bool
 }
 
 var npcNames = []string{
@@ -250,6 +252,14 @@ func (n *NPC) Update(ctx *SystemContext) {
 		}
 	}
 
+	// Trigger AI decision if needed
+	if ctx.AIManager != nil && !n.AIDecisionPending && n.needsAIDecision(playerDist) {
+		worldCtx := BuildWorldContext(ctx.World.Game, n)
+		options := []string{"attack", "flee", "wander", "patrol"}
+		ctx.AIManager.RequestDecision(context.Background(), n.Archetype.ID, worldCtx, options)
+		n.AIDecisionPending = true
+	}
+
 	targetX, targetY, hasTarget, isTargetPlayer := n.findTarget(playableCharacter, ctx.World.NPCs, playerDist)
 
 	if !hasTarget {
@@ -434,6 +444,33 @@ func (n *NPC) TakeDamage(amount int, attacker ActorInterface, ctx *SystemContext
 		if ctx.Audio != nil && n.Archetype != nil {
 			ctx.Audio.PlayRandomSound(n.Archetype.SoundID + "/death")
 		}
+	}
+}
+
+func (n *NPC) needsAIDecision(playerDist float64) bool {
+	// Trigger on detection
+	if playerDist < 10.0 && n.Behavior == BehaviorWander {
+		return true
+	}
+	// Trigger on low health
+	if n.Health < n.MaxHealth/4 {
+		return true
+	}
+	return false
+}
+
+func (n *NPC) ApplyAIDecision(dec AIDecision) {
+	n.AIDecisionPending = false
+	choice := strings.ToLower(dec.ChosenOption)
+
+	if strings.Contains(choice, "attack") {
+		n.Behavior = BehaviorKnightHunter
+	} else if strings.Contains(choice, "flee") {
+		n.Behavior = BehaviorFlee
+	} else if strings.Contains(choice, "wander") {
+		n.Behavior = BehaviorWander
+	} else if strings.Contains(choice, "patrol") {
+		n.Behavior = BehaviorPatrol
 	}
 }
 

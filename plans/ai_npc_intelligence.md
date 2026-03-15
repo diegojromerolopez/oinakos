@@ -174,28 +174,55 @@ type AIDecision struct {
 
 ### Supported providers
 
-| Provider | Model recommendation | Cost | Latency | Notes |
-| :--- | :--- | :--- | :--- | :--- |
-| **OpenAI** | `gpt-4o-mini` | ~$0.0001/req | 0.5–1s | Best quality/cost ratio |
-| **Anthropic Claude** | `claude-haiku-3` | ~$0.0001/req | 0.5–1.5s | Strong at roleplay |
-| **Google Gemini** | `gemini-1.5-flash` | Free tier | 0.5–2s | Good for prototyping |
-| **Hugging Face** | `mistral-7b-instruct` | Free (rate-limited) | 2–8s | Self-hostable |
-| **Ollama (local)** | `mistral:7b` | Free | 0.5–3s on Apple M* | No internet needed; ideal for WASM-native split |
+| Provider | Model recommendation | default_api | Notes |
+| :--- | :--- | :--- | :--- |
+| **OpenAI (ChatGPT)** | `gpt-4o-mini` | `openai_api_key` | Best quality/cost ratio. |
+| **Anthropic Claude** | `claude-3-5-sonnet` | `claude_api_key` | Exceptional at creative roleplay. |
+| **Google Gemini** | `gemini-1.5-flash` | v2/`gemini_api_key` | Fast, large context window. |
+| **Mistral** | `mistral-large-latest` | `mistral_api_key` | Strong open-weight alternative. |
+| **Hugging Face** | varies | `huggingface_api_key` | Access to thousands of open models. |
+| **Ollama (local)** | `llama3.1:8b` | None (Local) | No internet/keys needed. |
 
-Provider is selected via a config key in `oinakos/settings.yaml`:
+### Configuration (`oinakos/settings.yaml`)
+
+The game state and AI preferences are stored in a local YAML file. API keys are kept here to avoid hardcoding or environment variable complexity.
+
 ```yaml
-ai_provider: openai     # openai | claude | gemini | huggingface | ollama
-ai_api_key: "sk-..."
-ai_model: "gpt-4o-mini"
-ai_base_url: ""         # optional, for Ollama or proxies
-```
+# oinakos/settings.yaml
+ai_provider: "openai"          # openai | claude | gemini | mistral | huggingface | ollama | none
+ai_simulation_mode: false      # If true, the player character is also AI-controlled
 
-This is **never embedded in the binary** — it lives in the local `oinakos/` directory,
-keeping API keys out of the repository.
+# API Keys (leave empty if not using)
+openai_api_key: ""
+claude_api_key: ""
+gemini_api_key: ""
+mistral_api_key: ""
+huggingface_api_key: ""
+
+# Advanced
+ai_model_override: ""          # Leave empty to use provider defaults
+ai_base_url: ""                # For local proxies or Ollama custom ports
+```
 
 ---
 
-## Layer 3 — Conversational NPCs
+## Layer 3 — Settings & Simulation Mode
+
+### The Settings Menu
+In the main menu or pause screen, the "Settings" menu allows the user to:
+1. **Toggle AI Provider**: Cycle through the supported providers.
+2. **Toggle Simulation Mode**: Enable/Disable AI control of the player character.
+3. **YAML Location Hint**: The menu explicitly displays text: *"Edit API keys in oinakos/settings.yaml"* to guide users.
+
+### Simulation Mode (AI Player)
+When `ai_simulation_mode` is enabled:
+- The `PlayableCharacter` effectively becomes another AI-driven entity.
+- The engine calls `Decide()` for the player character just like an NPC.
+- Player inputs (keyboard/mouse) are ignored or used only to override AI actions temporarily.
+- This mode is useful for automated testing, "hands-off" roleplay, or cinematics.
+- The setting is persisted in `settings.yaml`.
+
+---
 
 ### Interaction flow
 
