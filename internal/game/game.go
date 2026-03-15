@@ -365,6 +365,7 @@ func (g *Game) DestroyProgress() {
 	g.floatingTexts = nil
 	g.ActiveDialogue = nil
 	g.EventLog = nil
+	g.LogScrollOffset = 0
 
 	g.initialMapID = ""
 	g.initialMapTypeID = ""
@@ -373,12 +374,25 @@ func (g *Game) DestroyProgress() {
 	g.saveMessage = ""
 	g.saveMessageTimer = 0
 
+	// Reset World
+	if g.World != nil {
+		g.World.NPCs = nil
+		g.World.Obstacles = nil
+		g.World.Projectiles = nil
+		g.World.FloatingTexts = nil
+		g.World.ExploredTiles = make(map[image.Point]bool)
+		g.World.PlayTime = 0
+	}
+
 	// Load default character config to reset hero selection
 	pConfig, err := LoadPlayableCharacterConfig(g.assets)
 	if err != nil {
 		log.Printf("Warning: failed to reload playable character config: %v", err)
 	}
 	g.playableCharacter = NewPlayableCharacter(0, 0, pConfig)
+	if g.World != nil {
+		g.World.PlayableCharacter = g.playableCharacter
+	}
 
 	// Reset camera
 	pIsoX, pIsoY := engine.CartesianToIso(g.playableCharacter.X, g.playableCharacter.Y)
@@ -390,6 +404,107 @@ func (g *Game) DestroyProgress() {
 	} else if len(g.mapTypeRegistry.IDs) > 0 {
 		g.currentMapType = *g.mapTypeRegistry.Types[g.mapTypeRegistry.IDs[0]]
 	}
+	if g.World != nil {
+		g.World.CurrentMapType = &g.currentMapType
+	}
+}
+
+// Restart resets the current map/session while preserving the chosen hero and campaign context.
+func (g *Game) Restart() {
+	g.isMainMenu = false
+	g.isCharacterSelect = false
+	g.isCampaignSelect = false
+	g.isGameOver = false
+	g.isMapWon = false
+	g.isGameWon = false
+	g.isPaused = false
+	g.isMenuOpen = false
+	g.isQuitConfirmationOpen = false
+
+	g.LoadingProgress = 1000
+	g.LoadingMessage = ""
+
+	g.playTime = 0
+	g.npcSpawnTimer = 0
+
+	g.generatedChunks = make(map[image.Point]bool)
+	g.ExploredTiles = make(map[image.Point]bool)
+
+	// Synchronously clear world lists to prevent old entities from being processed
+	g.npcs = nil
+	g.obstacles = nil
+	g.projectiles = nil
+	g.floatingTexts = nil
+	g.ActiveDialogue = nil
+	g.EventLog = nil
+	g.LogScrollOffset = 0
+
+	g.saveMessage = ""
+	g.saveMessageTimer = 0
+
+	// Reset World
+	if g.World != nil {
+		g.World.NPCs = nil
+		g.World.Obstacles = nil
+		g.World.Projectiles = nil
+		g.World.FloatingTexts = nil
+		g.World.ExploredTiles = make(map[image.Point]bool)
+		g.World.PlayTime = 0
+	}
+
+	// Reload current MapType to reset any mutated fields (like TargetKills/StartTime)
+	if g.currentMapType.ID != "" {
+		if m, ok := g.mapTypeRegistry.Types[g.currentMapType.ID]; ok {
+			g.currentMapType = *m
+		}
+	}
+
+	// Re-initialize playableCharacter using initialHeroID (if set)
+	if g.initialHeroID != "" {
+		if config, ok := g.playableCharacterRegistry.Characters[g.initialHeroID]; ok {
+			g.playableCharacter.Config = config
+			g.playableCharacter.Health = config.Stats.HealthMin
+			g.playableCharacter.MaxHealth = config.Stats.HealthMin
+			g.playableCharacter.Speed = config.Stats.Speed
+			g.playableCharacter.BaseAttack = config.Stats.BaseAttack
+			g.playableCharacter.BaseDefense = config.Stats.BaseDefense
+			g.playableCharacter.Weapon = config.Weapon
+			g.playableCharacter.State = StateIdle
+			g.playableCharacter.Tick = 0
+			g.playableCharacter.DeadTimer = 0
+			g.playableCharacter.HitTimer = 0
+			g.playableCharacter.Kills = 0
+			g.playableCharacter.MapKills = make(map[string]int)
+			g.playableCharacter.XP = 0
+			g.playableCharacter.Level = 1
+			g.playableCharacter.Name = config.Name
+			
+			// Set starting position synchronously to avoid race condition
+			if g.currentMapType.Player != nil {
+				g.playableCharacter.X = g.currentMapType.Player.X
+				g.playableCharacter.Y = g.currentMapType.Player.Y
+			} else {
+				g.playableCharacter.X, g.playableCharacter.Y = 0, 0
+			}
+		}
+	} else {
+		// Fallback to reload config if no hero selected
+		pConfig, _ := LoadPlayableCharacterConfig(g.assets)
+		g.playableCharacter = NewPlayableCharacter(0, 0, pConfig)
+	}
+
+	if g.World != nil {
+		g.World.PlayableCharacter = g.playableCharacter
+		g.World.ExploredTiles = g.ExploredTiles
+		g.World.CurrentMapType = &g.currentMapType
+	}
+
+	// Reset camera
+	pIsoX, pIsoY := engine.CartesianToIso(g.playableCharacter.X, g.playableCharacter.Y)
+	g.camera.SnapTo(pIsoX, pIsoY)
+
+	// Trigger map loading asynchronously
+	go g.worldManager.LoadMapLevel()
 }
 
 func (g *Game) Update() error {

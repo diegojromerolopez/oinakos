@@ -54,6 +54,7 @@ func (mh *MenuHandler) updateCharacterSelect() error {
 		if g.characterMenuIndex < nChars {
 			charID := g.playableCharacterRegistry.IDs[g.characterMenuIndex]
 			config := g.playableCharacterRegistry.Characters[charID]
+			g.initialHeroID = charID
 			g.playableCharacter.Config = config
 			g.playableCharacter.Health = config.Stats.HealthMin
 			g.playableCharacter.MaxHealth = config.Stats.HealthMin

@@ -32,15 +32,13 @@ func (mh *MenuHandler) updateGameWon() error {
 
 	if handleSelect {
 		if g.mapWonMenuIndex == 0 { // Replay
-			*g = *NewGame(g.assets, g.initialMapID, g.initialMapTypeID, g.initialHeroID, g.input, g.audio, g.debug)
+			g.Restart()
 		} else { // Quit
-			g.isQuitConfirmationOpen = true
-			g.quitConfirmationIndex = 1
+			g.DestroyProgress()
 		}
 	}
 	if g.input.IsKeyJustPressed(engine.KeyEscape) {
-		g.isQuitConfirmationOpen = true
-		g.quitConfirmationIndex = 1
+		g.DestroyProgress()
 	}
 	return nil
 }
@@ -48,10 +46,11 @@ func (mh *MenuHandler) updateGameWon() error {
 func (mh *MenuHandler) updateGameOver() error {
 	g := mh.game
 	if g.input.IsKeyJustPressed(engine.KeyEscape) {
-		g.CloseWindow()
+		g.DestroyProgress()
+		return nil
 	}
 	if g.input.IsKeyJustPressed(engine.KeyEnter) || g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft) {
-		*g = *NewGame(g.assets, g.initialMapID, g.initialMapTypeID, g.initialHeroID, g.input, g.audio, g.debug)
+		g.Restart()
 	}
 	return nil
 }
@@ -99,13 +98,11 @@ func (mh *MenuHandler) updateMapWon() error {
 				g.isMapWon = false
 			}
 		} else if g.mapWonMenuIndex == WinMenuQuit {
-			g.isQuitConfirmationOpen = true
-			g.quitConfirmationIndex = 1
+			g.DestroyProgress()
 		}
 	}
 	if g.input.IsKeyJustPressed(engine.KeyEscape) {
-		g.isQuitConfirmationOpen = true
-		g.quitConfirmationIndex = 1
+		g.DestroyProgress()
 	}
 	return nil
 }
