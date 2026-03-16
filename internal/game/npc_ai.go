@@ -192,20 +192,29 @@ func (n *NPC) executeMovement(dx, dy float64, obstacles []*Obstacle, isKite bool
 		if !n.checkCollisionAt(n.X+moveX, n.Y+moveY, obstacles) {
 			n.X += moveX
 			n.Y += moveY
+			n.State = NPCWalking
 		} else {
-			if !n.checkCollisionAt(n.X+moveX, n.Y, obstacles) { n.X += moveX }
-			if !n.checkCollisionAt(n.X, n.Y+moveY, obstacles) { n.Y += moveY }
+			// STOP immediately when hitting an obstacle
+			n.State = NPCIdle
+			n.Tick = 0
 		}
 
 		if !isKite {
 			if ndx > 0 {
-				if ndy < 0 { n.Facing = DirNE } else { n.Facing = DirSE }
+				if ndy < 0 {
+					n.Facing = DirNE
+				} else {
+					n.Facing = DirSE
+				}
 			} else if ndx < 0 {
-				if ndy < 0 { n.Facing = DirNW } else { n.Facing = DirSW }
+				if ndy < 0 {
+					n.Facing = DirNW
+				} else {
+					n.Facing = DirSW
+				}
 			}
 		}
 	}
-	n.State = NPCWalking
 }
 
 func (n *NPC) isEnemy(other *NPC, allNPCs []*NPC) bool {

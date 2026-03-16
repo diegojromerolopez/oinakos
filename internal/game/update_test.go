@@ -200,6 +200,47 @@ func TestCollisionDetailed(t *testing.T) {
 	}
 }
 
+func TestNoSlidingMovement(t *testing.T) {
+	ctx := NewTestContext()
+	// Place character at 0,0
+	mc := NewPlayableCharacter(0, 0, nil)
+	mc.Speed = 1.0
+	ctx.World.PlayableCharacter = mc
+
+	// Place an obstacle at 1.5, 1.5 with 1x1 footprint
+	obs := NewObstacle("test_obs", 1.5, 1.5, &ObstacleArchetype{
+		ID: "test",
+		Footprint: []FootprintPoint{
+			{-0.5, -0.5}, {0.5, -0.5}, {0.5, 0.5}, {-0.5, 0.5},
+		},
+	})
+	ctx.World.Obstacles = []*Obstacle{obs}
+	ctx.World.CurrentMapType = &MapType{MapWidth: 100, MapHeight: 100}
+
+	// Try to move diagonally towards the obstacle
+	ctx.Input.(*MockInputManager).PressedKeys[engine.KeyD] = true
+	ctx.Input.(*MockInputManager).PressedKeys[engine.KeyS] = true
+
+	// Initial position
+	oldX, oldY := mc.X, mc.Y
+
+	// Update
+	mc.Update(ctx)
+
+	// If it collided, X and Y should be exactly oldX and oldY
+	if mc.X != oldX || mc.Y != oldY {
+		t.Errorf("Character should have stopped at (%f, %f), but moved to (%f, %f)", oldX, oldY, mc.X, mc.Y)
+	}
+
+	if mc.State != StateIdle {
+		t.Errorf("Character should be StateIdle on collision, got %v", mc.State)
+	}
+	
+	if mc.Tick != 0 {
+		t.Errorf("Character Tick should be reset to 0 on collision, got %d", mc.Tick)
+	}
+}
+
 func TestNPCHitBranch_Detailed(t *testing.T) {
 	ctx := NewTestContext()
 	n := NewNPC(0, 0, nil, 1)

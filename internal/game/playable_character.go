@@ -265,9 +265,6 @@ func (mc *PlayableCharacter) Update(ctx *SystemContext) {
 	}
 
 	if dx != 0 || dy != 0 {
-		mc.State = StateWalking
-		mc.Tick++
-
 		mag := math.Sqrt(dx*dx + dy*dy)
 		dx /= mag
 		dy /= mag
@@ -278,26 +275,27 @@ func (mc *PlayableCharacter) Update(ctx *SystemContext) {
 		if !mc.checkCollisionAt(mc.X+moveX, mc.Y+moveY, worldObstacles) {
 			mc.X += moveX
 			mc.Y += moveY
-		} else {
-			if !mc.checkCollisionAt(mc.X+moveX, mc.Y, worldObstacles) {
-				mc.X += moveX
-			}
-			if !mc.checkCollisionAt(mc.X, mc.Y+moveY, worldObstacles) {
-				mc.Y += moveY
-			}
-		}
+			mc.State = StateWalking
+			mc.Tick++
 
-		if mc.Tick%30 == 0 {
-			DebugLog("Player Moved to (%.2f, %.2f)", mc.X, mc.Y)
-			if ctx.Audio != nil {
-				if mc.CurrentTile == "water.png" || mc.CurrentTile == "dark_water.png" {
-					ctx.Audio.PlayRandomSound("footstep_water")
-				} else if mc.CurrentTile == "paved_ground.png" || mc.CurrentTile == "big_stones.png" {
-					ctx.Audio.PlayRandomSound("footstep_stone")
-				} else {
-					ctx.Audio.PlayRandomSound("footstep_grass")
+			if mc.Tick%30 == 0 {
+				DebugLog("Player Moved to (%.2f, %.2f)", mc.X, mc.Y)
+				if ctx.Audio != nil {
+					if mc.CurrentTile == "water.png" || mc.CurrentTile == "dark_water.png" {
+						ctx.Audio.PlayRandomSound("footstep_water")
+					} else if mc.CurrentTile == "paved_ground.png" || mc.CurrentTile == "big_stones.png" {
+						ctx.Audio.PlayRandomSound("footstep_stone")
+					} else {
+						ctx.Audio.PlayRandomSound("footstep_grass")
+					}
 				}
 			}
+		} else {
+			// STOP immediately when hitting an obstacle
+			mc.State = StateIdle
+			mc.Tick = 0
+			// Use Realtime category if available or generic debug
+			DebugLog("Collision! Player stopped at (%.2f, %.2f)", mc.X, mc.Y)
 		}
 
 		if dx > 0 {
