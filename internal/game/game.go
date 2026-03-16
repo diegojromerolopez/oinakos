@@ -45,6 +45,7 @@ type Game struct {
 	isCampaign        bool      // True if playing a campaign
 	isMainMenu        bool      // True if showing main menu
 	mainMenuIndex     int       // Index for main menu
+	isAboutScreen     bool      // True if showing about screen
 	isSettingsScreen  bool      // True if showing settings screen
 	isCampaignSelect  bool      // True if showing campaign picker
 	campaignMenuIndex int       // Index of selected campaign
@@ -349,6 +350,7 @@ func (g *Game) DestroyProgress() {
 	g.isPaused = false
 	g.isMenuOpen = false
 	g.isQuitConfirmationOpen = false
+	g.isAboutScreen = false
 
 	g.LoadingProgress = 1000
 	g.LoadingMessage = ""

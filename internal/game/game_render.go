@@ -125,6 +125,8 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 		gr.drawCharacterSelect(screen)
 	} else if g.isCampaignSelect {
 		gr.drawCampaignSelect(screen)
+	} else if g.isAboutScreen {
+		gr.drawAboutScreen(screen)
 	} else if g.isSettingsScreen {
 		gr.drawSettingsScreen(screen)
 	} else {

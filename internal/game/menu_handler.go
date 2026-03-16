@@ -18,6 +18,10 @@ func (mh *MenuHandler) Update() error {
 		return mh.updateMainMenu()
 	}
 
+	if g.isAboutScreen {
+		return mh.updateAboutScreen()
+	}
+
 	if g.isSettingsScreen {
 		return mh.updateSettingsScreen()
 	}

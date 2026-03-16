@@ -7,7 +7,7 @@ import (
 
 func (mh *MenuHandler) updateMainMenu() error {
 	g := mh.game
-	nOptions := 4
+	nOptions := 5
 	if g.input.IsKeyJustPressed(engine.KeyUp) || g.input.IsKeyJustPressed(engine.KeyW) || g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) {
 		g.mainMenuIndex--
 		if g.mainMenuIndex < 0 {
@@ -72,7 +72,10 @@ func (mh *MenuHandler) updateMainMenu() error {
 			g.settingsMenuIndex = 0
 			g.isMainMenu = false
 			g.isSettingsScreen = true
-		case 3: // Quit
+		case 3: // About
+			g.isMainMenu = false
+			g.isAboutScreen = true
+		case 4: // Quit
 			g.isQuitConfirmationOpen = true
 			g.quitConfirmationIndex = 1
 		}
@@ -91,5 +94,14 @@ func (mh *MenuHandler) updateMainMenu() error {
 		g.loadDialogActive = false
 	}
 
+	return nil
+}
+
+func (mh *MenuHandler) updateAboutScreen() error {
+	g := mh.game
+	if g.input.IsKeyJustPressed(engine.KeyEscape) || g.input.IsKeyJustPressed(engine.KeyEnter) || g.input.IsKeyJustPressed(engine.KeyBackspace) || g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft) {
+		g.isAboutScreen = false
+		g.isMainMenu = true
+	}
 	return nil
 }
