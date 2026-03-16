@@ -65,9 +65,6 @@ func (mm *MechanicsManager) UpdateProximityEffects(ctx *SystemContext) {
 				if !inRange { continue }
 				if action.Type == ActionHarm {
 					if o.EffectTimers[entity] <= 0 {
-						if entity.GetActor().IsGiant() {
-							continue
-						}
 						switch e := entity.(type) {
 						case *PlayableCharacter: e.TakeDamage(action.Amount, ctx)
 						case *NPC:

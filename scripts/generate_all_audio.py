@@ -50,17 +50,6 @@ PHRASES = {
             "The end is nigh!"
         ]
     },
-    "giant": {
-        "hit": "Boom!",
-        "death": "The mountain falls...",
-        "attack": [
-            "I'll step on you!",
-            "Puny knight!",
-            "Fee-fi-fo-fum!",
-            "Crush!",
-            "You are but a bug!"
-        ]
-    },
     "goblin": {
         "hit": "Eeeek!",
         "death": "Not fair!",

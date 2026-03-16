@@ -103,12 +103,6 @@ func NewNPC(x, y float64, archetype *Archetype, level int) *NPC {
 	return n
 }
 
-func (n *NPC) IsGiant() bool {
-	if n.Archetype == nil {
-		return false
-	}
-	return n.Archetype.Group == "giant" || strings.HasPrefix(n.Archetype.ID, "giant_")
-}
 
 // Actor.GetCollisionCircle is used instead of GetFootprint.
 
@@ -367,9 +361,6 @@ func (n *NPC) TakeDamage(amount int, attacker ActorInterface, ctx *SystemContext
 				}
 
 				if action.Type == "transform_victim" {
-					if n.IsGiant() {
-						continue
-					}
 					eff := action.Effect.Victim
 					if eff != nil && eff.Transform != "" && ctx.Registries.Archetypes != nil {
 						targetArchID := interpolateConfigString(eff.Transform, n)
@@ -412,9 +403,6 @@ func (n *NPC) TakeDamage(amount int, attacker ActorInterface, ctx *SystemContext
 						attacker.Heal(action.Effect.Attacker.Heal)
 					}
 				} else if action.Type == "incinerate" {
-					if n.IsGiant() {
-						continue
-					}
 					eff := action.Effect.Victim
 					if eff != nil && eff.CorpseImage != "" && ctx.World.Obstacles != nil && ctx.Registries.Obstacles != nil {
 						staticID := interpolateConfigString(eff.CorpseImage, n)

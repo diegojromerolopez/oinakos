@@ -79,7 +79,7 @@ Oinakos features a logarithmic RPG progression system:
 ### 🛡️ NPC Archetypes
 Eleven archetypes form the spine of the enemy roster, most with distinct male and female variants:
 
-`Demon` · `Giant` · `Goblin` · `Lame Devil` · `Magi` · `Man-at-Arms` · `Mythical` · `Orc` · `Peasant` · `Slave` · `Trasgo`
+`Demon` · `Goblin` · `Lame Devil` · `Magi` · `Man-at-Arms` · `Mythical` · `Orc` · `Peasant` · `Slave` · `Trasgo`
 
 ---
 

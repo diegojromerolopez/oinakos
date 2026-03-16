@@ -33,7 +33,6 @@ Automatic voice variants used for generic mob behavior.
 | :--- | :--- | :--- | :--- |
 | **Demon** | Female | `en_US-kathleen-low` | Hollow and ominous. |
 | | Male | `en_US-bryce-medium` | Deep and sinister. |
-| **Giant** | Female | `en_GB-cori-high` | Grand and authoritative. |
 | | Male | `en_US-ryan-high` | Booming and powerful. |
 | **Orc** | Female | `en_GB-jenny_dioco-medium` | Rugged and rough. |
 | | Male | `en_GB-northern_english_male-medium`| Gritty warrior. |
