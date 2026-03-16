@@ -130,8 +130,8 @@ func DrawActor(a *Actor, screen engine.Image, textRenderer engine.TextRenderer, 
 
 	op.Translate(tx, ty)
 
-	// Draw Alignment Indicator - MOVED TO UI PASS
-	// DrawActorUI(a, screen, textRenderer, vectorRenderer, offsetX, offsetY, isPlayableCharacter)
+	// Draw Alignment Indicator - Render BEFORE sprite to be behind the feet
+	DrawAlignmentIndicator(screen, vectorRenderer, a.X, a.Y, offsetX, offsetY, a.Alignment, a.IsAlive())
 
 	// Palette Swapping (Shader)
 	hasPalette := a.Config.PrimaryColor != "" || a.Config.SecondaryColor != ""
@@ -161,10 +161,6 @@ func DrawActorUI(a *Actor, screen engine.Image, textRenderer engine.TextRenderer
  
 	isoX, isoY := engine.CartesianToIso(a.X, a.Y)
  
-	// Draw Alignment Indicator (Ellipsis) - Only in debug mode
-	if debug {
-		DrawAlignmentIndicator(screen, vectorRenderer, a.X, a.Y, offsetX, offsetY, a.Alignment, a.IsAlive())
-	}
 
 	// UI Elements (Health bar for NPCs, Names)
 	if !isPlayableCharacter {
