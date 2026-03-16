@@ -52,7 +52,7 @@ type Settings struct {
 var FrequencyOptions = []string{"never", "rare", "infrequent", "half the time", "frequent", "always"}
 var FontOptions = []string{"medieval", "modern_antiqua", "uncial_antiqua", "glass_antiqua", "kings", "eagle_lake", "default"}
 var FogOfWarOptions = []string{"none", "vision", "exploration"}
-var AIProviderOptions = []string{"none", "openai", "claude", "gemini", "mistral", "huggingface", "ollama"}
+var AIProviderOptions = []string{"none", "openai", "claude", "gemini", "mistral", "huggingface", "ollama", "webgpu"}
 
 func SetFontOptions(fonts []string) {
 	FontOptions = fonts
@@ -140,8 +140,7 @@ func getSettingsPath() string {
 }
 
 func LoadSettings() *Settings {
-	filename := getSettingsPath()
-	data, err := os.ReadFile(filename)
+	data, err := loadSettingsData()
 	if err != nil {
 		return DefaultSettings()
 	}
@@ -157,12 +156,10 @@ func LoadSettings() *Settings {
 }
 
 func (s *Settings) Save() error {
-	filename := getSettingsPath()
 	data, err := yaml.Marshal(s)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("Settings saved to: %s", filename)
-	return os.WriteFile(filename, data, 0644)
+	return saveSettingsData(data)
 }

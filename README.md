@@ -51,6 +51,19 @@ By enabling `ai_simulation_mode` in your `settings.yml`, you handover control to
 - **Tactical Awareness**: The AI evaluates its surroundings, deciding when to engage, when to focus on the map objective (e.g., reaching a portal), and when to flee to safety.
 - **Transparent Reasoning**: All AI decisions and the "thought process" behind them are logged to the console in real-time.
 
+#### WebGPU Local LLM (WASM Only)
+When running in the browser, Oinakos uses **WebGPU** to run a local LLM directly on your machine.
+- **Privacy & Performance**: No API keys or external server connections are required for the WASM version.
+- **Model**: `Llama-3-8B-Instruct-v0.1-q4f32_1-MLC` (via WebLLM).
+- **Rationale**: Selected for its superior balance between reasoning capabilities (essential for structured game decisions) and browser-efficient performance thanks to 4-bit quantization.
+- **First Load**: The browser will download and cache the model weights (approx. 5GB) during the first initialization.
+
+#### Desktop AI (Native Builds)
+When running the desktop application, Oinakos offers maximum flexibility through multiple provider integrations.
+- **Cloud Providers**: Seamlessly connect to OpenAI, Anthropic (Claude), Google (Gemini), Mistral, and Hugging Face.
+- **Local Power**: Full support for **Ollama**, allowing you to run any local model (Llama 3, Gemma, Mistral, etc.) without leaving your machine.
+- **Dynamic Configuration**: Configure models, API keys, and base URLs via `settings.yml` to tailor the simulation to your hardware and preferences.
+
 ### ⚔️ Combat & RPG Mechanics
 
 Oinakos features a logarithmic RPG progression system:
@@ -79,18 +92,41 @@ Eleven archetypes form the spine of the enemy roster, most with distinct male an
 - **Ollama** (optional, for local high-performance AI)
 
 ### 1. Configure your AI Provider
-The game supports multiple AI backends. Edit `~/.oinakos/settings.yml` (or create it next to the binary) to set your preferred provider:
+The game supports multiple AI backends. Edit the `settings.yml` file in your platform's configuration directory:
 
+| Platform | Configuration Path |
+| :--- | :--- |
+| **macOS** | `/Users/<user>/.oinakos/settings.yml` |
+| **Linux** | `/home/<user>/.oinakos/settings.yml` |
+| **Windows** | `%APPDATA%\oinakos\settings.yml` |
+
+#### Full `settings.yml` Example:
 ```yaml
-ai_provider: "ollama"           # ollama (local), gemini, openai, claude, mistral, huggingface
-ai_model_override: "gemma3:1b" # Optional: Force a specific model ID
+# AI General Settings
+ai_provider: "ollama"           # options: none, openai, claude, gemini, mistral, huggingface, ollama
+ai_simulation_mode: false       # If true, AI controls the player character
+ai_model_override: "llama3"     # Optional: Force a specific model ID (e.g., "gpt-4o")
 ai_base_url: ""                 # Optional: Override the default API endpoint
-gemini_api_key: "YOUR_KEY"     # Required for Gemini
-openai_api_key: "YOUR_KEY"     # Required for OpenAI
+
+# API Keys (Required for cloud providers)
+openai_api_key: "sk-..."
+claude_api_key: "..."
+gemini_api_key: "..."
+mistral_api_key: "..."
+huggingface_api_key: "..."
+
+# Gameplay Settings
+font: "medieval"                 # options: medieval, modern_antiqua, eagle_lake, default, etc.
+sound_frequency: "rare"          # options: never, rare, infrequent, half the time, frequent, always
+talking_frequency: "infrequent"  # Frequency of NPC barks
+fog_of_war: "none"               # options: none, vision, exploration
 ```
 
 - **Ollama (Local)**: Highly recommended for privacy and performance. Defaults to `http://localhost:11434/v1`.
 - **Dynamic Discovery**: On startup, the game scans your provider for available models and automatically resolves the best fit (prioritizing "flash" models for fast RPG responses).
+
+> [!NOTE]
+> **WASM Version**: The browser build ignores these settings and defaults to the local WebGPU LLM. Ensure your browser supports WebGPU (Chrome 113+, Edge 113+).
 
 ### 2. Play Natively (Desktop)
 ```bash

@@ -74,9 +74,13 @@ func (mh *MenuHandler) updateSettingsScreen() error {
 			g.settings.FogOfWar = FogOfWarOptions[g.settingsFogIndex]
 		}
 	} else if g.settingsMenuIndex == 3 { // AI Provider
+		options := AIProviderOptions
+		if g.isWasm() {
+			options = []string{"none", "webgpu"}
+		}
 		if g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) {
 			found := -1
-			for i, opt := range AIProviderOptions {
+			for i, opt := range options {
 				if opt == g.settings.AIProvider {
 					found = i
 					break
@@ -84,12 +88,12 @@ func (mh *MenuHandler) updateSettingsScreen() error {
 			}
 			if found == -1 { found = 0 }
 			found--
-			if found < 0 { found = len(AIProviderOptions) - 1 }
-			g.settings.AIProvider = AIProviderOptions[found]
+			if found < 0 { found = len(options) - 1 }
+			g.settings.AIProvider = options[found]
 		}
 		if g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) {
 			found := -1
-			for i, opt := range AIProviderOptions {
+			for i, opt := range options {
 				if opt == g.settings.AIProvider {
 					found = i
 					break
@@ -97,8 +101,8 @@ func (mh *MenuHandler) updateSettingsScreen() error {
 			}
 			if found == -1 { found = 0 }
 			found++
-			if found >= len(AIProviderOptions) { found = 0 }
-			g.settings.AIProvider = AIProviderOptions[found]
+			if found >= len(options) { found = 0 }
+			g.settings.AIProvider = options[found]
 		}
 	} else if g.settingsMenuIndex == 4 { // AI Simulation Mode
 		if g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) ||

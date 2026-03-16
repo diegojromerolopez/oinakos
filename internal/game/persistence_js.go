@@ -3,6 +3,7 @@
 package game
 
 import (
+	"os"
 	"syscall/js"
 )
 
@@ -25,4 +26,17 @@ func (g *Game) isWasm() bool {
 
 func (g *Game) CloseWindow() {
 	js.Global().Get("window").Call("close")
+}
+
+func loadSettingsData() ([]byte, error) {
+	val := js.Global().Get("localStorage").Call("getItem", "settings")
+	if val.IsNull() {
+		return nil, os.ErrNotExist
+	}
+	return []byte(val.String()), nil
+}
+
+func saveSettingsData(data []byte) error {
+	js.Global().Get("localStorage").Call("setItem", "settings", string(data))
+	return nil
 }
