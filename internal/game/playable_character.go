@@ -346,22 +346,26 @@ func (mc *PlayableCharacter) Update(ctx *SystemContext) {
 
 func (mc *PlayableCharacter) CheckAttackHits(ctx *SystemContext) {
 	worldObstacles := ctx.World.Obstacles
-	attackDist := 0.9
+	attackDist := 1.2
+	if mc.Weapon != nil {
+		attackDist = mc.Weapon.GetMaxDistance()
+	}
 	atX, atY := mc.X, mc.Y
 
+	// Adjust collision center based on facing
 	switch mc.Facing {
 	case DirSE:
-		atX += attackDist
-		atY += attackDist * 0.5
+		atX += attackDist * 0.7
+		atY += attackDist * 0.35
 	case DirSW:
-		atX -= attackDist * 0.5
-		atY += attackDist
+		atX -= attackDist * 0.35
+		atY += attackDist * 0.7
 	case DirNE:
-		atX += attackDist
-		atY -= attackDist * 0.5
+		atX += attackDist * 0.7
+		atY -= attackDist * 0.35
 	case DirNW:
-		atX -= attackDist * 0.5
-		atY -= attackDist
+		atX -= attackDist * 0.35
+		atY -= attackDist * 0.7
 	}
 
 	for _, n := range ctx.World.NPCs {
@@ -369,7 +373,8 @@ func (mc *PlayableCharacter) CheckAttackHits(ctx *SystemContext) {
 			continue
 		}
 		dist := math.Sqrt(math.Pow(atX-n.X, 2) + math.Pow(atY-n.Y, 2))
-		if dist < 1.6 {
+		if dist < attackDist*1.2 { // Allow a bit of leeway in the hitbox
+
 			attk := float64(mc.GetTotalAttack())
 			def := float64(n.GetTotalDefense())
 			if def <= 0 {
@@ -416,7 +421,7 @@ func (mc *PlayableCharacter) CheckAttackHits(ctx *SystemContext) {
 			continue
 		}
 		dist := math.Sqrt(math.Pow(atX-o.X, 2) + math.Pow(atY-o.Y, 2))
-		if dist < 1.8 {
+		if dist < attackDist*1.5 {
 			if o.Archetype != nil && o.Archetype.Destructible {
 				rawDmg := mc.Weapon.RollDamage()
 				o.TakeDamage(rawDmg)

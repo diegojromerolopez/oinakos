@@ -26,7 +26,7 @@ func TestCombatMechanics(t *testing.T) {
 	// Player attacks NPC
 	initialNpcHealth := npc.Health
 	// For testing, we won't roll, just assume a hit and calculate damage
-	rawDmg := mc.Weapon.MaxDamage // Assume max
+	rawDmg := mc.Weapon.Damage.Max // Assume max
 	protection := npc.GetTotalProtection()
 	damage := int(math.Max(1, float64(rawDmg-protection)))
 	npc.TakeDamage(damage, mc, ctx)

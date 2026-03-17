@@ -78,40 +78,10 @@ func LoadPlayableCharacterConfig(assets fs.FS) (*EntityConfig, error) {
 
 	sanitizeEntityConfig(&config, configPath)
 
-	// Link weapon
-	config.Weapon = GetWeaponByName(config.WeaponName)
+	// config.Weapon is now auto-loaded by YAML
+
 
 	return &config, nil
 }
 
-func GetWeaponByName(name string) *Weapon {
-	switch name {
-	case "Tizon":
-		return WeaponTizon
-	case "Orcish Axe":
-		return WeaponOrcishAxe
-	case "Iron Broadsword":
-		return WeaponIronBroadsword
-	case "Fists":
-		return WeaponFists
-	case "Cleaver":
-		return &Weapon{Name: "Cleaver", MinDamage: 3, MaxDamage: 7}
-	case "Trident":
-		return &Weapon{Name: "Trident", MinDamage: 6, MaxDamage: 12}
-	case "Whip":
-		return &Weapon{Name: "Whip", MinDamage: 4, MaxDamage: 9}
-	case "Bow":
-		return &Weapon{Name: "Bow", MinDamage: 3, MaxDamage: 6}
-	case "Dagger":
-		return &Weapon{Name: "Dagger", MinDamage: 2, MaxDamage: 5}
-	case "Pitchfork":
-		return &Weapon{Name: "Pitchfork", MinDamage: 4, MaxDamage: 10}
-	case "Gilded Pitchfork":
-		return &Weapon{Name: "Gilded Pitchfork", MinDamage: 8, MaxDamage: 18}
-	case "Shouts":
-		return &Weapon{Name: "Shouts", MinDamage: 10, MaxDamage: 50}
-	default:
-		// Return a basic unarmed weapon instead of nil to prevent panics
-		return WeaponFists
-	}
-}
+

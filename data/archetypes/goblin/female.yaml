@@ -11,5 +11,11 @@ stats:
   attack_cooldown: 60
   attack_range: 7.0
   projectile_speed: 5.0
-weapon: Bow
+weapon:
+  name: Bow
+  type: ranged
+  max_distance: '10.0'
+  damage:
+    min: 3
+    max: 6
 xp: 5

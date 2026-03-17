@@ -1,6 +1,8 @@
 id: tragantia
 name: Tragantia
-description: "A beautiful Arab princess cursed with a monstrous form; her lower extremities consist of two massive reptilian tails instead of legs. She is majestic yet fiercely territorial, striking out at any knight who dares approach her domain."
+description: A beautiful Arab princess cursed with a monstrous form; her lower extremities
+  consist of two massive reptilian tails instead of legs. She is majestic yet fiercely
+  territorial, striking out at any knight who dares approach her domain.
 unique: true
 gender: female
 behavior: hunter
@@ -12,5 +14,11 @@ stats:
   base_defense: 20
   attack_cooldown: 60
   attack_range: 1.5
-weapon: "Reptilian Whip"
+weapon:
+  name: Reptilian Whip
+  type: melee
+  max_distance: '3.0'
+  damage:
+    min: 8
+    max: 15
 xp: 150

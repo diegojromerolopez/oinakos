@@ -11,36 +11,40 @@ stats:
   attack_cooldown: 70
   attack_range: 8.0
   projectile_speed: 4.5
-weapon: Bow
+weapon:
+  name: Bow
+  type: ranged
+  max_distance: '10.0'
+  damage:
+    min: 3
+    max: 6
 xp: 5
-
 dialogues:
   player_greetings:
-    - "Wait, little one."
-    - "Don't shoot!"
+  - Wait, little one.
+  - Don't shoot!
   combat_barks:
-    - "Hehehe! You look slow!"
-    - "Hold still, tall-thing!"
-    - "More shinies for us!"
-    - "Stab! Stab! Hehe!"
-    - "You run, we shoot!"
+  - Hehehe! You look slow!
+  - Hold still, tall-thing!
+  - More shinies for us!
+  - Stab! Stab! Hehe!
+  - You run, we shoot!
   start_scenarios:
-    - weight: 1.0
-      text: "Shiny! You have many shiny things... maybe you give? Maybe I not shoot?"
-      choices:
-        - text: "I have no gold for you."
-          next: "no_gold"
-        - text: "What do you know about this place?"
-          next: "place_talk"
-
+  - weight: 1.0
+    text: Shiny! You have many shiny things... maybe you give? Maybe I not shoot?
+    choices:
+    - text: I have no gold for you.
+      next: no_gold
+    - text: What do you know about this place?
+      next: place_talk
   no_gold:
-    text: "No shiny? No life! Just kidding... for now. Go away, tall-thing."
+    text: No shiny? No life! Just kidding... for now. Go away, tall-thing.
     choices:
-      - text: "Fine."
-        next: "exit"
-
+    - text: Fine.
+      next: exit
   place_talk:
-    text: "Place is full of bigger things. Things that eat Goblins. Things that eat tall-things too."
+    text: Place is full of bigger things. Things that eat Goblins. Things that eat
+      tall-things too.
     choices:
-      - text: "Thanks for the tip."
-        next: "exit"
+    - text: Thanks for the tip.
+      next: exit

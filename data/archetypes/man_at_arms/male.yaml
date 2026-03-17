@@ -2,16 +2,16 @@ id: man_at_arms_male
 name: Man-at-Arms
 gender: male
 names:
-  - Alden
-  - Barret
-  - Cedric
-  - Desmond
-  - Elric
-  - Falco
-  - Garrick
-  - Halden
-  - Ivan
-  - Jarek
+- Alden
+- Barret
+- Cedric
+- Desmond
+- Elric
+- Falco
+- Garrick
+- Halden
+- Ivan
+- Jarek
 behavior: fighter
 stats:
   health_min: 60
@@ -20,39 +20,44 @@ stats:
   base_attack: 15
   base_defense: 10
   attack_cooldown: 55
-primary_color: "#0000FF" # Default Blue band
-secondary_color: "#303030" # Default Dark metal/leather
-weapon: Sword
+primary_color: '#0000FF'
+secondary_color: '#303030'
+weapon:
+  name: Sword
+  type: melee
+  max_distance: touch
+  damage:
+    min: 5
+    max: 10
 xp: 14
-
 dialogues:
   player_greetings:
-    - "Hail, soldier."
-    - "Ready for a fight?"
+  - Hail, soldier.
+  - Ready for a fight?
   start_scenarios:
-    - weight: 0.6
-      text: "Keep your blade sharp and your eyes open. The woods are full of things that want to eat you."
-      next: "patrol_talk"
-    - weight: 0.4
-      text: "Another day on the border. Not much coin, but plenty of blood."
-      next: "coin_talk"
-
+  - weight: 0.6
+    text: Keep your blade sharp and your eyes open. The woods are full of things that
+      want to eat you.
+    next: patrol_talk
+  - weight: 0.4
+    text: Another day on the border. Not much coin, but plenty of blood.
+    next: coin_talk
   patrol_talk:
-    text: "We're patrolling the perimeter. If you see anything with more than two legs—or less—you let us know."
+    text: "We're patrolling the perimeter. If you see anything with more than two\
+      \ legs\u2014or less\u2014you let us know."
     choices:
-      - text: "Understood."
-        next: "exit"
-
+    - text: Understood.
+      next: exit
   coin_talk:
-    text: "You look like someone who knows how to handle themselves. If you find any loot, maybe we can strike a deal."
+    text: You look like someone who knows how to handle themselves. If you find any
+      loot, maybe we can strike a deal.
     choices:
-      - text: "I'll keep that in mind."
-        next: "exit"
-      - text: "I'm not for hire."
-        next: "proud_response"
-
+    - text: I'll keep that in mind.
+      next: exit
+    - text: I'm not for hire.
+      next: proud_response
   proud_response:
-    text: "Hah! Pride doesn't fill a belly. But suit yourself, wanderer."
+    text: Hah! Pride doesn't fill a belly. But suit yourself, wanderer.
     choices:
-      - text: "Stay safe."
-        next: "exit"
+    - text: Stay safe.
+      next: exit

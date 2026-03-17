@@ -137,11 +137,12 @@ func (n *NPC) executeAttack(ctx *SystemContext, isTargetPlayer bool, dx, dy floa
 
 	if n.AttackTimer >= n.AttackCooldown {
 		n.AttackTimer = 0
-		attackRange := 1.0
-		if n.Archetype != nil && n.Archetype.Stats.AttackRange > 1.0 {
-			attackRange = n.Archetype.Stats.AttackRange
+		isRanged := false
+		if n.Weapon != nil {
+			isRanged = n.Weapon.IsRanged()
 		}
-		isRanged := attackRange > 1.0
+
+
 
 		if isRanged {
 			mag := math.Sqrt(dx*dx + dy*dy)
@@ -163,7 +164,13 @@ func (n *NPC) executeAttack(ctx *SystemContext, isTargetPlayer bool, dx, dy floa
 				if hitChance > 95 { hitChance = 95 }
 
 				if rand.Intn(100)+1 <= hitChance {
-					rawDmg := n.Weapon.RollDamage()
+					rawDmg := n.BaseAttack
+					if n.Weapon != nil {
+						rawDmg = n.Weapon.RollDamage()
+					} else {
+						rawDmg += WeaponFists.RollDamage()
+					}
+
 					finalDmg := int(math.Max(1, float64(rawDmg-targetProtection)))
 					target.TakeDamage(finalDmg, ctx)
 					ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{
@@ -185,7 +192,13 @@ func (n *NPC) executeAttack(ctx *SystemContext, isTargetPlayer bool, dx, dy floa
 				if hitChance > 95 { hitChance = 95 }
 
 				if rand.Intn(100)+1 <= hitChance {
-					rawDmg := n.Weapon.RollDamage()
+					rawDmg := n.BaseAttack
+					if n.Weapon != nil {
+						rawDmg = n.Weapon.RollDamage()
+					} else {
+						rawDmg += WeaponFists.RollDamage()
+					}
+
 					finalDmg := int(math.Max(1, float64(rawDmg-targetProtection)))
 					var targetNPC *NPC
 					for _, other := range ctx.World.NPCs {
@@ -267,11 +280,13 @@ func (n *NPC) Update(ctx *SystemContext) {
 	dy := targetY - n.Y
 	dist := math.Sqrt(dx*dx + dy*dy)
 
-	attackRange := 1.0
-	if n.Archetype != nil && n.Archetype.Stats.AttackRange > 1.0 {
-		attackRange = n.Archetype.Stats.AttackRange
+	attackRange := 1.4
+	isRanged := false
+	if n.Weapon != nil {
+		attackRange = n.Weapon.GetMaxDistance()
+		isRanged = n.Weapon.IsRanged()
 	}
-	isRanged := attackRange > 1.0
+
 
 	// Check alignment before attacking
 	canAttack := false

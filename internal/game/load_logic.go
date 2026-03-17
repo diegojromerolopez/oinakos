@@ -108,9 +108,10 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 	}
 	g.playableCharacter.BaseAttack = data.Player.BaseAttack
 	g.playableCharacter.BaseDefense = data.Player.BaseDefense
-	if data.Player.Weapon != "" {
-		g.playableCharacter.Weapon = GetWeaponByName(data.Player.Weapon)
+	if data.Player.Weapon != nil {
+		g.playableCharacter.Weapon = data.Player.Weapon
 	}
+
 
 	if g.playableCharacter.Health > 0 {
 		g.playableCharacter.State = StateIdle

@@ -2,9 +2,9 @@ id: magi_female
 name: Magi
 gender: female
 names:
-  - Seraphina
-  - Morgana
-  - Lysandra
+- Seraphina
+- Morgana
+- Lysandra
 behavior: wander
 stats:
   health_min: 100
@@ -13,43 +13,48 @@ stats:
   base_attack: 0
   base_defense: 5
   attack_cooldown: 1000
-weapon: None
+weapon:
+  name: Magi Blast
+  type: melee
+  max_distance: touch
+  damage:
+    min: 5
+    max: 10
 xp: 8
-
 actions:
   on_kill:
-    - action: "incinerate"
-      probability: 1.0
-      effect:
-        victim:
-          corpse_image: "burned_corpse_{gender}"
-
+  - action: incinerate
+    probability: 1.0
+    effect:
+      victim:
+        corpse_image: burned_corpse_{gender}
 dialogues:
   player_greetings:
-    - "My respects, Seer."
-    - "The air feels heavy with magic."
+  - My respects, Seer.
+  - The air feels heavy with magic.
   start_scenarios:
-    - weight: 0.8
-      text: "The stars spoke of a shadow falling upon this land. A shadow that walks on two legs."
-      next: "star_talk"
-    - weight: 0.2
-      text: "Be careful with that weapon. It is but a toy against the real forces at play."
-      next: "weapon_talk"
-
+  - weight: 0.8
+    text: The stars spoke of a shadow falling upon this land. A shadow that walks
+      on two legs.
+    next: star_talk
+  - weight: 0.2
+    text: Be careful with that weapon. It is but a toy against the real forces at
+      play.
+    next: weapon_talk
   star_talk:
-    text: "The alignment of the planes is shifting. It has reached a point of no return."
+    text: The alignment of the planes is shifting. It has reached a point of no return.
     choices:
-      - text: "What can be done?"
-        next: "doom_talk"
-
+    - text: What can be done?
+      next: doom_talk
   doom_talk:
-    text: "Nothing. We can only witness the end, and perhaps save a few fragments of what we were."
+    text: Nothing. We can only witness the end, and perhaps save a few fragments of
+      what we were.
     choices:
-      - text: "That's a grim view."
-        next: "exit"
-
+    - text: That's a grim view.
+      next: exit
   weapon_talk:
-    text: "A sword can cut a throat, but it cannot cut a curse. You will need more than just steel."
+    text: A sword can cut a throat, but it cannot cut a curse. You will need more
+      than just steel.
     choices:
-      - text: "I'll find what I need."
-        next: "exit"
+    - text: I'll find what I need.
+      next: exit

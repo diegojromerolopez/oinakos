@@ -2,7 +2,8 @@ id: oinakos
 name: Oinakos
 gender: male
 playable: true
-description: "The lead hero. A mysterious knight whose path is forged in iron and ancient duty."
+description: The lead hero. A mysterious knight whose path is forged in iron and ancient
+  duty.
 stats:
   health_min: 100
   health_max: 100
@@ -10,4 +11,10 @@ stats:
   base_defense: 5
   speed: 0.07
   attack_cooldown: 30
-weapon: Tizon
+weapon:
+  name: Tizon
+  type: melee
+  max_distance: touch
+  damage:
+    min: 15
+    max: 25

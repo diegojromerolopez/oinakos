@@ -2,7 +2,9 @@ id: gaiferos
 name: Gaiferos
 gender: male
 playable: true
-description: "The fiercely independent Paladin of Charlemagne's court. Famous for his solo rescue of his wife Melisendra from the Saracen kingdom of Sansueña."
+description: "The fiercely independent Paladin of Charlemagne's court. Famous for\
+  \ his solo rescue of his wife Melisendra from the Saracen kingdom of Sansue\xF1\
+  a."
 stats:
   health_min: 105
   health_max: 105
@@ -10,4 +12,10 @@ stats:
   base_defense: 12
   speed: 0.09
   attack_cooldown: 25
-weapon: Casatrix Testarum
+weapon:
+  name: Casatrix Testarum
+  type: melee
+  max_distance: touch
+  damage:
+    min: 10
+    max: 20

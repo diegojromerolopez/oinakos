@@ -1,7 +1,9 @@
 id: peasant_king
 group: Peasants
-name: "King of Peasants"
-description: "An intelligent psychopath who has convinced a mass of impoverished peasants to adore him. He wears a crown and peasant clothes, living in secret luxury while preaching hate against nobles to keep his followers focused on an external enemy."
+name: King of Peasants
+description: An intelligent psychopath who has convinced a mass of impoverished peasants
+  to adore him. He wears a crown and peasant clothes, living in secret luxury while
+  preaching hate against nobles to keep his followers focused on an external enemy.
 unique: true
 gender: male
 behavior: wander
@@ -13,5 +15,11 @@ stats:
   base_defense: 15
   attack_cooldown: 50
   attack_range: 1.2
-weapon: "Gilded Pitchfork"
+weapon:
+  name: Gilded Pitchfork
+  type: melee
+  max_distance: touch
+  damage:
+    min: 8
+    max: 18
 xp: 250

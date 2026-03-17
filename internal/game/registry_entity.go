@@ -27,7 +27,7 @@ type EntityConfig struct {
 		ProjectileSpeed     float64 `yaml:"projectile_speed"`
 	} `yaml:"stats"`
 	Actions    *ActionConfig `yaml:"actions,omitempty"`
-	WeaponName string        `yaml:"weapon"`
+	Weapon *Weapon `yaml:"weapon"`
 	CollisionRadius float64      `yaml:"collision_radius,omitempty"`
 
 	Footprint      []FootprintPoint `yaml:"footprint"`
@@ -56,7 +56,7 @@ type EntityConfig struct {
 	HitImage     engine.Image `yaml:"-"` // hit.png  (legacy / single hit frame)
 	Hit1Image    engine.Image `yaml:"-"` // hit1.png (first variant)
 	Hit2Image    engine.Image `yaml:"-"` // hit2.png (second variant, requires hit1.png)
-	Weapon       *Weapon     `yaml:"-"`
+
 
 	CachedBaseFootprint *engine.Polygon `yaml:"-"`
 
@@ -194,7 +194,8 @@ func (r *ArchetypeRegistry) LoadAll(assets fs.FS) error {
 		config.AssetDir = path.Join("assets/images/archetypes", subDir, variantName)
 		config.AudioDir = path.Join("assets/audio/archetypes", subDir, variantName)
 
-		config.Weapon = GetWeaponByName(config.WeaponName)
+		// config.Weapon is now auto-loaded by YAML
+
 		config.SoundID = config.ID
 
 		r.Archetypes[config.ID] = &config
@@ -239,7 +240,8 @@ func (r *PlayableCharacterRegistry) LoadAll(assets fs.FS) error {
 		config.SoundID = config.ID
 		config.PlayableCharacter = config.ID
 
-		config.Weapon = GetWeaponByName(config.WeaponName)
+		// config.Weapon is now auto-loaded by YAML
+
 
 		r.Characters[config.ID] = &config
 		if config.Playable {
@@ -336,8 +338,7 @@ func (r *NPCRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *
 			if config.PrimaryColor == "" { config.PrimaryColor = arch.PrimaryColor }
 			if config.SecondaryColor == "" { config.SecondaryColor = arch.SecondaryColor }
 			if len(config.Footprint) == 0 { config.Footprint = arch.Footprint }
-			if config.WeaponName == "" {
-				config.WeaponName = arch.WeaponName
+			if config.Weapon == nil {
 				config.Weapon = arch.Weapon
 			}
 			if config.Dialogues == nil {
@@ -411,7 +412,8 @@ func (r *NPCRegistry) LoadAll(assets fs.FS) error {
 		config.AssetDir = path.Join("assets/images/npcs", config.ID)
 		config.AudioDir = path.Join("assets/audio/npcs", config.ID)
 
-		config.Weapon = GetWeaponByName(config.WeaponName)
+		// config.Weapon is now auto-loaded by YAML
+
 
 		r.NPCs[config.ID] = &config
 		r.IDs = append(r.IDs, config.ID)

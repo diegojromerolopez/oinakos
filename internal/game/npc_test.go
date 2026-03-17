@@ -235,7 +235,7 @@ func TestNPC_MeleeAttack(t *testing.T) {
 	}, Behavior: "hunter"}
 	n := NewNPC(0, 0, arch, 1)
 	n.TargetActor = &mc.Actor
-	n.Weapon = &Weapon{MinDamage: 10, MaxDamage: 10}
+	n.Weapon = &Weapon{Name: "TestWeapon", Damage: Damage{Min: 10, Max: 10}}
 	n.AttackTimer = 60 // Ready to attack
 	ctx.World.NPCs = []*NPC{n}
 
@@ -298,7 +298,9 @@ func TestNPC_RangedAttack(t *testing.T) {
 	}, Behavior: "hunter"}
 	n := NewNPC(0, 0, arch, 1)
 	n.TargetActor = &mc.Actor
+	n.Weapon = &Weapon{Name: "Bow", Type: "ranged", MaxDistance: "5.0", Damage: Damage{Min: 3, Max: 6}}
 	n.AttackTimer = 60 // Ready to attack
+
 	ctx.World.NPCs = []*NPC{n}
 
 	n.Update(ctx)

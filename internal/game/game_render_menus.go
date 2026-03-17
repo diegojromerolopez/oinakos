@@ -139,7 +139,12 @@ func (gr *GameRenderer) drawHeroPreview(screen engine.Image, char *EntityConfig,
 	gr.graphics.DrawTextAt(screen, fmt.Sprintf("Attack:  %d", char.Stats.BaseAttack), statsX, statsY+25, color.White, 16)
 	gr.graphics.DrawTextAt(screen, fmt.Sprintf("Defense: %d", char.Stats.BaseDefense), statsX, statsY+50, color.White, 16)
 	gr.graphics.DrawTextAt(screen, fmt.Sprintf("Speed:   %.2f", char.Stats.Speed), statsX, statsY+75, color.White, 16)
-	gr.graphics.DrawTextAt(screen, fmt.Sprintf("Weapon:  %s", char.WeaponName), statsX, statsY+100, color.White, 16)
+	weaponName := "None"
+	if char.Weapon != nil {
+		weaponName = char.Weapon.Name
+	}
+	gr.graphics.DrawTextAt(screen, fmt.Sprintf("Weapon:  %s", weaponName), statsX, statsY+100, color.White, 16)
+
 
 	gr.graphics.DrawTextAt(screen, "--- BIOGRAPHY ---", x, y+230, color.RGBA{218, 165, 32, 255}, 20)
 	words := strings.Fields(char.Description)

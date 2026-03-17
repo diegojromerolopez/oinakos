@@ -1,6 +1,6 @@
 id: staro_rovinec
 name: Staro Rovinec
-description: "A corrupt magi who sold his soul. He smells of ash and blood."
+description: A corrupt magi who sold his soul. He smells of ash and blood.
 unique: true
 gender: male
 behavior: hunter
@@ -13,7 +13,13 @@ stats:
   attack_cooldown: 45
   attack_range: 5.0
   projectile_speed: 0.15
-weapon: "Magic Bolt"
+weapon:
+  name: Magic Bolt
+  type: ranged
+  max_distance: '6.0'
+  damage:
+    min: 10
+    max: 20
 xp: 200
-primary_color: "#200020"
-secondary_color: "#CC0000"
+primary_color: '#200020'
+secondary_color: '#CC0000'

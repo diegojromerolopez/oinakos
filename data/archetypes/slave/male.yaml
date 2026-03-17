@@ -1,7 +1,9 @@
 id: male
 name: Male Slave
 gender: male
-description: "A male human slave captured in recent wars against foreigners. He wears a chain around his neck and is clad only in a dirty loincloth. He appears emaciated, unhappy, and resigned to a life of hard labor."
+description: A male human slave captured in recent wars against foreigners. He wears
+  a chain around his neck and is clad only in a dirty loincloth. He appears emaciated,
+  unhappy, and resigned to a life of hard labor.
 behavior: wander
 stats:
   health_min: 15
@@ -11,5 +13,11 @@ stats:
   base_defense: 1
   attack_cooldown: 80
   attack_range: 0.6
-weapon: "Fists"
+weapon:
+  name: Fists
+  type: melee
+  max_distance: touch
+  damage:
+    min: 1
+    max: 2
 xp: 5

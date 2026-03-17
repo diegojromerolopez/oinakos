@@ -2,11 +2,11 @@ id: demon_male
 name: Demon
 gender: male
 names:
-  - Malphas
-  - Valac
-  - Orobas
-  - Amon
-  - Ronove
+- Malphas
+- Valac
+- Orobas
+- Amon
+- Ronove
 behavior: hunter
 stats:
   health_min: 50
@@ -15,13 +15,18 @@ stats:
   base_attack: 12
   base_defense: 6
   attack_cooldown: 45
-weapon: Trident
+weapon:
+  name: Great sword
+  type: melee
+  max_distance: touch
+  damage:
+    min: 6
+    max: 12
 xp: 15
-
 dialogues:
   combat_barks:
-    - "Your soul smells of sulfur and fear!"
-    - "Suffer for all eternity!"
-    - "The abyss welcomes you!"
-    - "BURN, MORTAL!"
-    - "I will feast on your despair!"
+  - Your soul smells of sulfur and fear!
+  - Suffer for all eternity!
+  - The abyss welcomes you!
+  - BURN, MORTAL!
+  - I will feast on your despair!

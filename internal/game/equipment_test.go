@@ -5,7 +5,7 @@ import (
 )
 
 func TestWeaponRollDamage_MinEqualsMax(t *testing.T) {
-	w := &Weapon{Name: "Test", MinDamage: 5, MaxDamage: 5}
+	w := &Weapon{Name: "Test", Damage: Damage{Min: 5, Max: 5}}
 	for i := 0; i < 20; i++ {
 		dmg := w.RollDamage()
 		if dmg != 5 {
@@ -14,8 +14,9 @@ func TestWeaponRollDamage_MinEqualsMax(t *testing.T) {
 	}
 }
 
+
 func TestWeaponRollDamage_Range(t *testing.T) {
-	w := &Weapon{Name: "Test", MinDamage: 3, MaxDamage: 7}
+	w := &Weapon{Name: "Test", Damage: Damage{Min: 3, Max: 7}}
 	for i := 0; i < 100; i++ {
 		dmg := w.RollDamage()
 		if dmg < 3 || dmg > 7 {
@@ -24,43 +25,17 @@ func TestWeaponRollDamage_Range(t *testing.T) {
 	}
 }
 
+
 func TestWeaponRollDamage_Bonus(t *testing.T) {
-	w := &Weapon{Name: "Test", MinDamage: 5, MaxDamage: 5, Bonus: 3}
+	w := &Weapon{Name: "Test", Damage: Damage{Min: 5, Max: 5}, Bonus: 3}
 	dmg := w.RollDamage()
 	if dmg != 8 {
 		t.Errorf("RollDamage with bonus=3: got %d, want 8", dmg)
 	}
 }
 
-func TestGetWeaponByName(t *testing.T) {
-	cases := []struct {
-		name    string
-		wantMin int
-		wantMax int
-	}{
-		{"Tizon", 15, 25},
-		{"Orcish Axe", 4, 8},
-		{"Iron Broadsword", 5, 10},
-		{"Fists", 1, 2},
-		{"Cleaver", 3, 7},
-		{"Trident", 6, 12},
-		{"Whip", 4, 9},
-		{"Bow", 3, 6},
-		{"Dagger", 2, 5},
-		{"Unknown", 1, 2}, // falls back to Fists
-	}
-	for _, tc := range cases {
-		w := GetWeaponByName(tc.name)
-		if w == nil {
-			t.Errorf("GetWeaponByName(%q): got nil", tc.name)
-			continue
-		}
-		if w.MinDamage != tc.wantMin || w.MaxDamage != tc.wantMax {
-			t.Errorf("GetWeaponByName(%q): got min=%d max=%d, want %d/%d",
-				tc.name, w.MinDamage, w.MaxDamage, tc.wantMin, tc.wantMax)
-		}
-	}
-}
+
+
 
 func TestArmorSlotConstants(t *testing.T) {
 	if SlotHead != 0 {

@@ -2,12 +2,12 @@ id: vampire_male
 name: Vampire (Male)
 gender: male
 names:
-  - Alucard
-  - Dracula
-  - Orlok
-  - Lestat
-  - Kain
-  - Vorador
+- Alucard
+- Dracula
+- Orlok
+- Lestat
+- Kain
+- Vorador
 behavior: hunter
 stats:
   health_min: 60
@@ -17,13 +17,19 @@ stats:
   base_defense: 8
   attack_cooldown: 40
   infecting_probability: 0.15
-weapon: Claws
+weapon:
+  name: Claws
+  type: melee
+  max_distance: touch
+  damage:
+    min: 6
+    max: 12
 xp: 25
 dialogues:
   player_greetings:
-    - "Your blood... it calls to me."
-    - "A mortal wanders into the night."
+  - Your blood... it calls to me.
+  - A mortal wanders into the night.
   combat_barks:
-    - "Bleed for me!"
-    - "Your life is mine!"
-    - "The night belongs to the children of the moon!"
+  - Bleed for me!
+  - Your life is mine!
+  - The night belongs to the children of the moon!

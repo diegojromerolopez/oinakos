@@ -3,14 +3,14 @@ group: Peasants
 gender: male
 name: Peasant
 names:
-  - Hicks
-  - Miller
-  - Cooper
-  - Smith
-  - Potter
-  - Baker
-  - Carter
-  - Fisher
+- Hicks
+- Miller
+- Cooper
+- Smith
+- Potter
+- Baker
+- Carter
+- Fisher
 behavior: wander
 stats:
   health_min: 15
@@ -19,37 +19,39 @@ stats:
   base_attack: 3
   base_defense: 1
   attack_cooldown: 80
-weapon: Dagger
+weapon:
+  name: Dagger
+  type: melee
+  max_distance: touch
+  damage:
+    min: 2
+    max: 5
 xp: 4
-
 dialogues:
   player_greetings:
-    - "Excuse me, sir."
-    - "Good day."
+  - Excuse me, sir.
+  - Good day.
   start_scenarios:
-    - weight: 0.7
-      text: "Hard work today. The soil is dry... or is it the curse?"
-      next: "soil_talk"
-    - weight: 0.3
-      text: "Have you seen the knights? They've been restless lately."
-      next: "knight_talk"
-
+  - weight: 0.7
+    text: Hard work today. The soil is dry... or is it the curse?
+    next: soil_talk
+  - weight: 0.3
+    text: Have you seen the knights? They've been restless lately.
+    next: knight_talk
   soil_talk:
-    text: "Nothing grows like it used to. We're all just waiting for the end."
+    text: Nothing grows like it used to. We're all just waiting for the end.
     choices:
-      - text: "Stay strong."
-        next: "exit"
-      - text: "Maybe I can help?"
-        next: "help_refuse"
-
+    - text: Stay strong.
+      next: exit
+    - text: Maybe I can help?
+      next: help_refuse
   knight_talk:
-    text: "They march back and forth. Searching for someone. Someone with red eyes."
+    text: They march back and forth. Searching for someone. Someone with red eyes.
     choices:
-      - text: "I'll keep a lookout."
-        next: "exit"
-
+    - text: I'll keep a lookout.
+      next: exit
   help_refuse:
-    text: "Unless you can make it rain gold and water, there's nothing to be done."
+    text: Unless you can make it rain gold and water, there's nothing to be done.
     choices:
-      - text: "I see."
-        next: "exit"
+    - text: I see.
+      next: exit

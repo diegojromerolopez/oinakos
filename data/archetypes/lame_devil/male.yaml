@@ -9,5 +9,11 @@ stats:
   base_attack: 3
   base_defense: 1
   attack_cooldown: 30
-weapon: Dagger
+weapon:
+  name: Crutch
+  type: melee
+  max_distance: touch
+  damage:
+    min: 2
+    max: 5
 xp: 6

@@ -1,13 +1,22 @@
 package game
 
-import "math/rand"
+import (
+	"math/rand"
+	"strconv"
+)
 
 // Weapon defines offensive gear
+type Damage struct {
+	Min int `yaml:"min"`
+	Max int `yaml:"max"`
+}
+
 type Weapon struct {
-	Name      string
-	MinDamage int
-	MaxDamage int
-	Bonus     int
+	Name        string `yaml:"name"`
+	Type        string `yaml:"type"`         // "ranged" or "melee"
+	MaxDistance string `yaml:"max_distance"` // "touch" or pixel distance
+	Damage      Damage `yaml:"damage"`
+	Bonus       int    `yaml:"-"`
 }
 
 // Armor defines defensive gear
@@ -27,11 +36,12 @@ const (
 
 // Default weapons
 var (
-	WeaponFists          = &Weapon{Name: "Fists", MinDamage: 1, MaxDamage: 2}
-	WeaponTizon          = &Weapon{Name: "Tizon", MinDamage: 15, MaxDamage: 25}
-	WeaponIronBroadsword = &Weapon{Name: "Iron Broadsword", MinDamage: 5, MaxDamage: 10}
-	WeaponOrcishAxe      = &Weapon{Name: "Orcish Axe", MinDamage: 4, MaxDamage: 8}
+	WeaponFists          = &Weapon{Name: "Fists", Type: "melee", MaxDistance: "touch", Damage: Damage{Min: 1, Max: 2}}
+	WeaponTizon          = &Weapon{Name: "Tizon", Type: "melee", MaxDistance: "touch", Damage: Damage{Min: 15, Max: 25}}
+	WeaponIronBroadsword = &Weapon{Name: "Iron Broadsword", Type: "melee", MaxDistance: "touch", Damage: Damage{Min: 5, Max: 10}}
+	WeaponOrcishAxe      = &Weapon{Name: "Orcish Axe", Type: "melee", MaxDistance: "touch", Damage: Damage{Min: 4, Max: 8}}
 )
+
 
 // Default armor
 var (
@@ -51,9 +61,25 @@ var (
 )
 
 func (w *Weapon) RollDamage() int {
-	dmg := w.MinDamage
-	if w.MaxDamage > w.MinDamage {
-		dmg = rand.Intn(w.MaxDamage-w.MinDamage+1) + w.MinDamage
+	dmg := w.Damage.Min
+	if w.Damage.Max > w.Damage.Min {
+		dmg = rand.Intn(w.Damage.Max-w.Damage.Min+1) + w.Damage.Min
 	}
 	return dmg + w.Bonus
 }
+
+func (w *Weapon) GetMaxDistance() float64 {
+	if w.MaxDistance == "touch" || w.MaxDistance == "" {
+		return 1.4 // Default melee range
+	}
+	dist, err := strconv.ParseFloat(w.MaxDistance, 64)
+	if err != nil {
+		return 1.4
+	}
+	return dist
+}
+
+func (w *Weapon) IsRanged() bool {
+	return w.Type == "ranged" || w.GetMaxDistance() >= 2.0
+}
+

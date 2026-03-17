@@ -2,7 +2,9 @@ id: virculus
 name: Virculus
 gender: none
 playable: true
-description: "A crude, human-shaped automaton made from wood and sticks built in the 1500s. A large wooden chest forms its torso, revealing visible clockwork machinery whirring inside."
+description: A crude, human-shaped automaton made from wood and sticks built in the
+  1500s. A large wooden chest forms its torso, revealing visible clockwork machinery
+  whirring inside.
 stats:
   health_min: 150
   health_max: 200
@@ -11,4 +13,10 @@ stats:
   base_defense: 30
   attack_cooldown: 90
   attack_range: 0.8
-weapon: "Wooden Claws"
+weapon:
+  name: Wooden Claws
+  type: melee
+  max_distance: touch
+  damage:
+    min: 8
+    max: 15

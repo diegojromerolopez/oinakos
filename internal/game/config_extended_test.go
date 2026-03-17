@@ -28,38 +28,7 @@ func TestIsWell(t *testing.T) {
 	}
 }
 
-func TestGetWeaponByName_AllBranches(t *testing.T) {
-	cases := []struct {
-		name     string
-		wantNil  bool
-		wantName string
-	}{
-		{"Tizon", false, "Tizon"},
-		{"Orcish Axe", false, "Orcish Axe"},
-		{"Iron Broadsword", false, "Iron Broadsword"},
-		{"Fists", false, "Fists"},
-		{"Cleaver", false, "Cleaver"},
-		{"Trident", false, "Trident"},
-		{"Whip", false, "Whip"},
-		{"Bow", false, "Bow"},
-		{"Dagger", false, "Dagger"},
-		{"Gilded Pitchfork", false, "Gilded Pitchfork"},
-		{"Shouts", false, "Shouts"},
-		{"unknown_weapon", false, "Fists"}, // default fallback
-		{"", false, "Fists"},               // empty string fallback
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			got := GetWeaponByName(tc.name)
-			if got == nil {
-				t.Fatal("GetWeaponByName returned nil")
-			}
-			if got.Name != tc.wantName {
-				t.Errorf("got weapon %q, want %q", got.Name, tc.wantName)
-			}
-		})
-	}
-}
+
 
 func TestObjectiveTypeUnmarshalYAML_AllTypes(t *testing.T) {
 	cases := []struct {

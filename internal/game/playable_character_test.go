@@ -84,7 +84,7 @@ func TestPlayableCharacterGetters(t *testing.T) {
 func TestPlayableCharacterCheckAttackHits(t *testing.T) {
 	ctx := NewTestContext()
 	mc := NewPlayableCharacter(0, 0, nil)
-	mc.Weapon = &Weapon{MinDamage: 10, MaxDamage: 10}
+	mc.Weapon = &Weapon{Name: "TestWeapon", Damage: Damage{Min: 10, Max: 10}}
 	mc.Facing = DirSE
 
 	npc := &NPC{Actor: Actor{X: 1, Y: 0.5, State: NPCIdle}}

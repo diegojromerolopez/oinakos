@@ -2,16 +2,16 @@ id: orc_male
 name: Orc
 gender: male
 names:
-  - Grog
-  - Zog
-  - Bob
-  - Drok
-  - Gorak
-  - Mug
-  - Snarl
-  - Thrak
-  - Vrog
-  - Kurg
+- Grog
+- Zog
+- Bob
+- Drok
+- Gorak
+- Mug
+- Snarl
+- Thrak
+- Vrog
+- Kurg
 behavior: hunter
 stats:
   health_min: 30
@@ -20,36 +20,40 @@ stats:
   base_attack: 8
   base_defense: 4
   attack_cooldown: 60
-weapon: Axe
+weapon:
+  name: Orcish Axe
+  type: melee
+  max_distance: touch
+  damage:
+    min: 4
+    max: 8
 xp: 11
-
 dialogues:
   player_greetings:
-    - "*Grumbles*"
-    - "Stop, Orc."
+  - '*Grumbles*'
+  - Stop, Orc.
   combat_barks:
-    - "Your skin will make a fine banner!"
-    - "Crush the weakling!"
-    - "Die, two-legs!"
-    - "FOR THE HORDE!"
-    - "Fresh meat for the pit!"
+  - Your skin will make a fine banner!
+  - Crush the weakling!
+  - Die, two-legs!
+  - FOR THE HORDE!
+  - Fresh meat for the pit!
   start_scenarios:
-    - weight: 1.0
-      text: "Human... you smell of weak steel and fear. Why you not running?"
-      choices:
-        - text: "I'm not afraid of you."
-          next: "brave"
-        - text: "I'm just passing through."
-          next: "pass"
-
+  - weight: 1.0
+    text: Human... you smell of weak steel and fear. Why you not running?
+    choices:
+    - text: I'm not afraid of you.
+      next: brave
+    - text: I'm just passing through.
+      next: pass
   brave:
-    text: "Hah! Many humans say that before they become soup. You different? We see."
+    text: Hah! Many humans say that before they become soup. You different? We see.
     choices:
-      - text: "We will see."
-        next: "exit"
-
+    - text: We will see.
+      next: exit
   pass:
-    text: "Pass? The path belongs to the Strong. You look... medium. Go quickly before I change mind."
+    text: Pass? The path belongs to the Strong. You look... medium. Go quickly before
+      I change mind.
     choices:
-      - text: "Leaving now."
-        next: "exit"
+    - text: Leaving now.
+      next: exit

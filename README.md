@@ -31,7 +31,7 @@ Choose your knight before entering battle. Each character has unique stats, weap
 - **Campaigns & Maps**: Structured multi-map campaigns (*The Chronicles*, *Orc Invasion*, *Demonic Incursion*, *Kalot Embolot*) or freeform sandbox maps.
 - **Infinite Procedural World**: Chunk-based generation creates an endless world of forests, ruins, and villages.
 - **Dynamic Ambush System**: NPCs spawn from the edges of your view with distinct AI profiles (wander, hunter, patrol, chaotic, fighter, escort).
-- **Unique Boss NPCs**: Encounter named enemies like **Stultus** (a ranged shouter), **Marcus Ardea**, **Virculus** (a clockwork automaton), **Tragantia** (a reptile-woman), **Lieutenant Varrick**, and **Staro Rovinec** — each with custom descriptions, stats, and voice lines.
+- **Unique Boss NPCs**: Encounter named enemies like **Stultus** (a ranged shouter), **Marcus Ardea**, **Virculus** (a clockwork automaton), **Tragantia** (a reptile-woman), and **Staro Rovinec** — each with custom descriptions, stats, and voice lines.
 - **Save System**: Full quicksave/load support. Native saves to `.oinakos.yaml` files; WASM auto-saves to browser `localStorage`.
 - **NPC Faction System**: NPCs grouped by faction (e.g., *Peasants*, *Crimson Arm*) share hive-mind alert responses within a 20-unit radius.
 - **Dynamic Palette Swapping**: GPU shaders recolor NPC unit armbands/capes at runtime using Magenta/Yellow color masks defined in YAML.

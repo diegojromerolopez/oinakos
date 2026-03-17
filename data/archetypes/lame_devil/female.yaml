@@ -1,0 +1,19 @@
+id: lame_devil_female
+name: Lame Devil female
+gender: female
+behavior: chaotic
+stats:
+  health_min: 7
+  health_max: 11
+  speed: 0.06
+  base_attack: 3
+  base_defense: 1
+  attack_cooldown: 28
+weapon:
+  name: Club
+  type: melee
+  max_distance: touch
+  damage:
+    min: 2
+    max: 5
+xp: 6

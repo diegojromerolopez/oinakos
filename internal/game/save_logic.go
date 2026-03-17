@@ -83,8 +83,9 @@ func (g *Game) serialize() ([]byte, error) {
 		BaseDefense: g.playableCharacter.BaseDefense,
 	}
 	if g.playableCharacter.Weapon != nil {
-		data.Player.Weapon = g.playableCharacter.Weapon.Name
+		data.Player.Weapon = g.playableCharacter.Weapon
 	}
+
 
 	for _, n := range g.npcs {
 		if n.Archetype == nil {

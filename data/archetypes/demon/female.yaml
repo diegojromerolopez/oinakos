@@ -2,11 +2,11 @@ id: demon_female
 name: Demon female
 gender: female
 names:
-  - Lilith
-  - Morrigan
-  - Jezebeth
-  - Lamashtu
-  - Kasdeya
+- Lilith
+- Morrigan
+- Jezebeth
+- Lamashtu
+- Kasdeya
 behavior: hunter
 stats:
   health_min: 40
@@ -15,13 +15,18 @@ stats:
   base_attack: 10
   base_defense: 5
   attack_cooldown: 40
-weapon: Whip
+weapon:
+  name: Long sword
+  type: melee
+  max_distance: '3.5'
+  damage:
+    min: 4
+    max: 9
 xp: 15
-
 dialogues:
   combat_barks:
-    - "The void is hungry today!"
-    - "Your screams are music to my ears!"
-    - "Fragile creature... begone!"
-    - "COWER BEFORE ME!"
-    - "I've waited centuries for a soul like yours!"
+  - The void is hungry today!
+  - Your screams are music to my ears!
+  - Fragile creature... begone!
+  - COWER BEFORE ME!
+  - I've waited centuries for a soul like yours!

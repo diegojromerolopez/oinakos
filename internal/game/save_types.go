@@ -14,7 +14,7 @@ type PlayerSaveData struct {
 	MapKills    map[string]int `yaml:"map_kills"`
 	BaseAttack  int            `yaml:"base_attack"`
 	BaseDefense int            `yaml:"base_defense"`
-	Weapon      string         `yaml:"weapon"`
+	Weapon      *Weapon        `yaml:"weapon"`
 }
 
 type NPCSaveData struct {

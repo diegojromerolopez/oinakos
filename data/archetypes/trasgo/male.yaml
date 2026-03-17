@@ -1,7 +1,9 @@
 id: trasgo
 name: Trasgo
 gender: male
-description: "A short, gnome-sized humanoid jester wearing a bright red hat. He is neutral and will not attack unless provoked, but runs incredibly fast and will laugh out loud while performing tricks and leaping around."
+description: A short, gnome-sized humanoid jester wearing a bright red hat. He is
+  neutral and will not attack unless provoked, but runs incredibly fast and will laugh
+  out loud while performing tricks and leaping around.
 behavior: wander
 stats:
   health_min: 30
@@ -11,13 +13,19 @@ stats:
   base_defense: 10
   attack_cooldown: 100
   attack_range: 0.0
-weapon: "None"
-alignment: "neutral"
+weapon:
+  name: None
+  type: melee
+  max_distance: touch
+  damage:
+    min: 0
+    max: 0
+alignment: neutral
 xp: 10
 dialogues:
   combat_barks:
-    - "Hehehe! Catch me if you can!"
-    - "Oops! Did I do that? *Laughs*"
-    - "Your sword is too slow, too slow!"
-    - "Boing! Boing! Hehe!"
-    - "*Cackles and leaps away*"
+  - Hehehe! Catch me if you can!
+  - Oops! Did I do that? *Laughs*
+  - Your sword is too slow, too slow!
+  - Boing! Boing! Hehe!
+  - '*Cackles and leaps away*'
