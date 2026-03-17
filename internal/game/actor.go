@@ -105,6 +105,7 @@ type Actor struct {
 	XP          int
 	Name        string
 	CurrentTile string // Set by Game loop before Update
+	IsOccluded  bool   // Visual occlusion by an obstacle
 
 	// Timers
 	HitTimer  int // How long to show hit sprite (BloodTimer on NPC)

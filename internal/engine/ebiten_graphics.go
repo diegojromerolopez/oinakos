@@ -145,7 +145,7 @@ func (e *EbitenGraphics) DrawFilledEllipse(screen Image, x, y, rx, ry float32, c
 
 	var op ebiten.DrawImageOptions
 	op.GeoM.Scale(float64(rx)/64.0, float64(ry)/64.0)
-	op.GeoM.Translate(float64(x), float64(y))
+	op.GeoM.Translate(float64(x)-float64(rx), float64(y)-float64(ry))
 	op.ColorScale.ScaleWithColor(clr)
 	wrapper.img.DrawImage(e.circleImage, &op)
 }

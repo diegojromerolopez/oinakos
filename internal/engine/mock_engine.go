@@ -26,6 +26,9 @@ func (m *MockImage) SubImage(r image.Rectangle) Image {
 }
 func (m *MockImage) Clear()               {}
 func (m *MockImage) Fill(clr color.Color) {}
+func (m *MockImage) At(x, y int) color.Color {
+	return color.Transparent
+}
 
 // MockInput is a mock for engine.Input.
 type MockInput struct {

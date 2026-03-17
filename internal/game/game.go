@@ -781,10 +781,57 @@ func (g *Game) Update() error {
 	pIsoX, pIsoY := engine.CartesianToIso(g.playableCharacter.X, g.playableCharacter.Y)
 	g.camera.Follow(pIsoX, pIsoY, 0.1)
 
+	// Update occlusion states and feedback
+	g.updateOcclusion()
+
 	// Final safety check
 	g.ensurePlayerNotStuck()
 
 	return nil
+}
+
+func (g *Game) updateOcclusion() {
+	// Check Playable Character
+	g.handleOcclusionFeedback(&g.playableCharacter.Actor)
+
+	// Check NPCs
+	for _, n := range g.npcs {
+		g.handleOcclusionFeedback(&n.Actor)
+	}
+}
+
+func (g *Game) handleOcclusionFeedback(a *Actor) {
+	if a == nil || !a.IsAlive() {
+		return
+	}
+
+	sortY := GetActorSortY(a)
+	isoX, isoY := engine.CartesianToIso(a.X, a.Y)
+
+	isNowOccluded := false
+	for _, o := range g.obstacles {
+		if !o.Alive {
+			continue
+		}
+		// Obstacle must be logically "in front" of the actor to occlude it
+		if GetObstacleSortY(o) > sortY {
+			if IsPointCoveredByObstacle(o, isoX, isoY) {
+				isNowOccluded = true
+				break
+			}
+		}
+	}
+
+	if isNowOccluded && !a.IsOccluded {
+		// New occlusion event
+		msg := fmt.Sprintf("%s is hidden behind an obstacle.", a.Name)
+		if a.Name == "" && a.Config != nil {
+			msg = fmt.Sprintf("%s is hidden behind an obstacle.", a.Config.Name)
+		}
+		g.LogEvent(msg, LogInfo)
+	}
+
+	a.IsOccluded = isNowOccluded
 }
 
 func (g *Game) logRealtimePosition() {

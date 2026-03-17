@@ -131,7 +131,10 @@ func DrawActor(a *Actor, screen engine.Image, textRenderer engine.TextRenderer, 
 	op.Translate(tx, ty)
 
 	// Draw Alignment Indicator - Render BEFORE sprite to be behind the feet
-	DrawAlignmentIndicator(screen, vectorRenderer, a.X, a.Y, offsetX, offsetY, a.Alignment, a.IsAlive())
+	// Only draw here if NOT occluded. If occluded, it will be drawn in the UI pass on top.
+	if !a.IsOccluded {
+		DrawAlignmentIndicator(screen, vectorRenderer, a.X, a.Y, offsetX, offsetY, a.Alignment, a.IsAlive(), false)
+	}
 
 	// Palette Swapping (Shader)
 	hasPalette := a.Config.PrimaryColor != "" || a.Config.SecondaryColor != ""
@@ -161,6 +164,10 @@ func DrawActorUI(a *Actor, screen engine.Image, textRenderer engine.TextRenderer
  
 	isoX, isoY := engine.CartesianToIso(a.X, a.Y)
  
+	// If occluded, draw the alignment indicator (solid) on top
+	if a.IsOccluded {
+		DrawAlignmentIndicator(screen, vectorRenderer, a.X, a.Y, offsetX, offsetY, a.Alignment, a.IsAlive(), true)
+	}
 
 	// UI Elements (Health bar for NPCs, Names)
 	if !isPlayableCharacter {

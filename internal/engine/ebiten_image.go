@@ -119,6 +119,13 @@ func (w *EbitenImageWrapper) Fill(clr color.Color) {
 	}
 }
 
+func (w *EbitenImageWrapper) At(x, y int) color.Color {
+	if w.img == nil {
+		return color.Transparent
+	}
+	return w.img.At(x, y)
+}
+
 func (w *EbitenImageWrapper) UpdateRaw(img *ebiten.Image) {
 	w.img = img
 }

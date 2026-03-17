@@ -99,6 +99,7 @@ type Image interface {
 	SubImage(r image.Rectangle) Image
 	Clear()
 	Fill(clr color.Color)
+	At(x, y int) color.Color
 }
 
 // Vertex matches ebiten.Vertex

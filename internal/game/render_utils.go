@@ -6,7 +6,7 @@ import (
 )
 
 // DrawAlignmentIndicator draws an isometric ellipse under the feet of an entity.
-func DrawAlignmentIndicator(screen engine.Image, vectorRenderer engine.VectorRenderer, x, y, offsetX, offsetY float64, alignment Alignment, isAlive bool) {
+func DrawAlignmentIndicator(screen engine.Image, vectorRenderer engine.VectorRenderer, x, y, offsetX, offsetY float64, alignment Alignment, isAlive bool, isOccluded bool) {
 	if !isAlive || vectorRenderer == nil {
 		return
 	}
