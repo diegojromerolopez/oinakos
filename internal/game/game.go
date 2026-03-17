@@ -118,10 +118,16 @@ type Game struct {
 	LogUIState      DialogueUIState
 
 	aiManager *AIManager
+	Graphics  engine.Graphics
+	silhouetteBuffer engine.Image
 }
 
 func (g *Game) SetOnFontUpdate(cb func(string)) {
 	g.onFontUpdate = cb
+}
+
+func (g *Game) GetSilhouetteBuffer() engine.Image {
+	return g.silhouetteBuffer
 }
 
 func (g *Game) UpdateFont() {
@@ -130,7 +136,7 @@ func (g *Game) UpdateFont() {
 	}
 }
 
-func NewGame(assets fs.FS, initialMapID, initialMapTypeID, initialHeroID string, input engine.Input, audio AudioManager, debug bool, version string) *Game {
+func NewGame(assets fs.FS, graphics engine.Graphics, initialMapID, initialMapTypeID, initialHeroID string, input engine.Input, audio AudioManager, debug bool, version string) *Game {
 	rand.Seed(time.Now().UnixNano())
 
 	// Load playableCharacter config
@@ -179,9 +185,11 @@ func NewGame(assets fs.FS, initialMapID, initialMapTypeID, initialHeroID string,
 		initialMapID:     initialMapID,
 		initialMapTypeID: initialMapTypeID,
 		initialHeroID:    initialHeroID,
-		mapLevel:         1,
 		LoadingProgress:  1000,
 		Version:          version,
+		Graphics:         graphics,
+		silhouetteBuffer: graphics.NewImage(1280, 720),
+		mapLevel:         1,
 	}
 
 	g.Registries = &RegistryContainer{

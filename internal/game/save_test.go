@@ -1,6 +1,7 @@
 package game
 
 import (
+	"oinakos/internal/engine"
 	"os"
 	"path/filepath"
 	"strings"
@@ -8,7 +9,7 @@ import (
 )
 
 func TestSaveLoad(t *testing.T) {
-	g := NewGame(nil, "data/maps/test_save.yaml", "", "", &MockInputManager{}, &MockAudioManager{}, false, "0.1-test")
+	g := NewGame(nil, &engine.MockGraphics{}, "data/maps/test_save.yaml", "", "", &MockInputManager{}, &MockAudioManager{}, false, "0.1-test")
 	// Add NPC and Obstacle to test persistence
 	g.npcs = []*NPC{NewNPC(10, 20, &Archetype{ID: "test_npc"}, 1)}
 	g.npcs[0].Health = 5
@@ -22,7 +23,7 @@ func TestSaveLoad(t *testing.T) {
 	}
 
 	// Create a new game and load
-	g2 := NewGame(nil, "", "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
+	g2 := NewGame(nil, &engine.MockGraphics{}, "", "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
 	// Mock registries for loading to work
 	g2.npcRegistry.IDs = []string{"test_npc"}
 	g2.npcRegistry.NPCs["test_npc"] = &EntityConfig{ArchetypeID: "test_npc"}
@@ -94,7 +95,7 @@ func TestQuickSave(t *testing.T) {
 	SetOinakosDir(dir)
 	defer SetOinakosDir("") // Reset after test
 
-	g := NewGame(nil, dummyMapPath, "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
+	g := NewGame(nil, &engine.MockGraphics{}, dummyMapPath, "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
 	g.performQuicksave()
 
 	// Check if 'saves' dir exists in the temp dir
@@ -148,7 +149,7 @@ func TestLoad_Errors(t *testing.T) {
 	SetOinakosDir(dir)
 	defer SetOinakosDir("")
 
-	g := NewGame(nil, dummyMapPath, "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
+	g := NewGame(nil, &engine.MockGraphics{}, dummyMapPath, "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
 
 	// Ensure the saves directory exists for the save files in the temp dir
 	saveDir := filepath.Join(dir, "saves")
@@ -183,7 +184,7 @@ func TestLoad_Errors(t *testing.T) {
 }
 
 func TestSave_InvalidPath(t *testing.T) {
-	g := NewGame(nil, "", "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
+	g := NewGame(nil, &engine.MockGraphics{}, "", "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
 	err := g.Save("/invalid/dir/save.yaml")
 	if err == nil {
 		t.Error("Expected error saving to invalid directory")

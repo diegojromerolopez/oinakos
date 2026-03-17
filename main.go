@@ -95,7 +95,7 @@ func main() {
 	// Load initial font (default to first available or first from settings)
 	ei := engine.NewEbitenInput()
 
-	g := game.NewGame(finalAssets, initialMap, initialMapType, heroID, ei, &game.DefaultAudioManager{}, debug, Version)
+	g := game.NewGame(finalAssets, eg, initialMap, initialMapType, heroID, ei, &game.DefaultAudioManager{}, debug, Version)
 	
 	// Hook font update
 	g.SetOnFontUpdate(func(fontName string) {

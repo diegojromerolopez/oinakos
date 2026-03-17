@@ -9,6 +9,6 @@ func (n *NPC) Draw(screen engine.Image, textRenderer engine.TextRenderer, vector
 	DrawActor(&n.Actor, screen, textRenderer, vectorRenderer, paletteShader, offsetX, offsetY, false)
 }
 
-func (n *NPC) DrawUI(screen engine.Image, textRenderer engine.TextRenderer, vectorRenderer engine.VectorRenderer, offsetX, offsetY float64, debug bool) {
-	DrawActorUI(&n.Actor, screen, textRenderer, vectorRenderer, offsetX, offsetY, false, debug)
+func (n *NPC) DrawUI(g *Game, screen engine.Image, textRenderer engine.TextRenderer, vectorRenderer engine.VectorRenderer, offsetX, offsetY float64, debug bool) {
+	DrawActorUI(g, &n.Actor, screen, textRenderer, vectorRenderer, offsetX, offsetY, false, debug)
 }

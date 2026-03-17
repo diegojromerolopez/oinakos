@@ -22,7 +22,7 @@ height_px: 1000
 `),
 		},
 	}
-	g := NewGame(mockFS, "type1", "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
+	g := NewGame(mockFS, &engine.MockGraphics{}, "type1", "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
 	g.isMainMenu = false
 	g.isCharacterSelect = false
 
@@ -101,7 +101,7 @@ height_px: 1000
 		},
 	}
 	mockInput := NewMockInputManager()
-	g := NewGame(mockFS, "type1", "", "", mockInput, NewMockAudioManager(), false, "0.1-test")
+	g := NewGame(mockFS, &engine.MockGraphics{}, "type1", "", "", mockInput, NewMockAudioManager(), false, "0.1-test")
 	g.isMainMenu = false
 	g.isCharacterSelect = false
 
@@ -341,7 +341,7 @@ spawn_frequency: 0
 `),
 		},
 	}
-	g := NewGame(mockFS, "duel", "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
+	g := NewGame(mockFS, &engine.MockGraphics{}, "duel", "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
 	g.isMainMenu = false
 	g.isCharacterSelect = false
 
@@ -376,7 +376,7 @@ difficulty: 1
 `),
 		},
 	}
-	g := NewGame(mockFS, "test", "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
+	g := NewGame(mockFS, &engine.MockGraphics{}, "test", "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
 	g.isMainMenu = false
 	g.isCharacterSelect = false
 	mc := g.playableCharacter

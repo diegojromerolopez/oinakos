@@ -1,6 +1,7 @@
 package game
 
 import (
+	"oinakos/internal/engine"
 	"testing"
 	"testing/fstest"
 )
@@ -43,55 +44,62 @@ obstacles:
 		},
 	}
 
-	// Reach Point — target_point is defined in the YAML, so no override needed
-	g := NewGame(mockFS, "portal", "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
-	g.isMainMenu = false
-	g.isCharacterSelect = false
-	g.playableCharacter.X = 0
-	g.playableCharacter.Y = 0
-	g.Update()
-	if g.isMapWon {
-		t.Error("Portal objective should not be won at (0,0)")
-	}
-	g.playableCharacter.X = 5.1
-	g.playableCharacter.Y = 5.1
-	g.Update()
-	if !g.isMapWon {
-		t.Errorf("Portal win logic failed at (5.1,5.1), distance to (5,5) should be within 2.0 radius (actual dist = ~0.14)")
-	}
+	// Reach Point
+	t.Run("ReachPortal", func(t *testing.T) {
+		g := NewGame(mockFS, &engine.MockGraphics{}, "portal", "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
+		g.isMainMenu = false
+		g.isCharacterSelect = false
+		g.playableCharacter.X = 0
+		g.playableCharacter.Y = 0
+		g.Update()
+		if g.isMapWon {
+			t.Error("Portal objective should not be won at (0,0)")
+		}
+		g.playableCharacter.X = 5.1
+		g.playableCharacter.Y = 5.1
+		g.Update()
+		if !g.isMapWon {
+			t.Errorf("Portal win logic failed at (5.1,5.1), distance to (5,5) should be within 2.0 radius")
+		}
+	})
 
 	// Survive Time
-	g = NewGame(mockFS, "survive", "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
-	g.isMainMenu = false
-	g.isCharacterSelect = false
-	g.playTime = 5.0
-	g.Update()
-	if g.isMapWon {
-		t.Error("Survive objective should not be won at 5s (target 10s)")
-	}
-	g.playTime = 11.0
-	g.Update()
-	if !g.isMapWon {
-		t.Error("Survive objective win logic failed")
-	}
+	t.Run("SurviveTime", func(t *testing.T) {
+		g := NewGame(mockFS, &engine.MockGraphics{}, "survive", "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
+		g.isMainMenu = false
+		g.isCharacterSelect = false
+		g.playTime = 5.0
+		g.World.PlayTime = 5.0
+		g.Update()
+		if g.isMapWon {
+			t.Error("Survive objective should not be won at 5s (target 10s)")
+		}
+		g.playTime = 11.0
+		g.World.PlayTime = 11.0
+		g.Update()
+		if !g.isMapWon {
+			t.Error("Survive objective win logic failed")
+		}
+	})
 
-	// Destroy Building — test the win condition logic directly without relying on YAML loading
-	g = NewGame(mockFS, "building", "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
-	g.isMainMenu = false
-	g.isCharacterSelect = false
-	// Inject the target obstacle directly into game state
-	targetObstacle := NewObstacle("target_building", 0, 0, &ObstacleArchetype{ID: "house", Health: 500})
-	targetObstacle.Alive = true
-	g.obstacles = []*Obstacle{targetObstacle}
-	g.currentMapType.TargetObstacle = targetObstacle
+	// Destroy Building
+	t.Run("DestroyBuilding", func(t *testing.T) {
+		g := NewGame(mockFS, &engine.MockGraphics{}, "building", "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
+		g.isMainMenu = false
+		g.isCharacterSelect = false
+		targetObstacle := NewObstacle("target_building", 0, 0, &ObstacleArchetype{ID: "house", Health: 500})
+		targetObstacle.Alive = true
+		g.obstacles = []*Obstacle{targetObstacle}
+		g.currentMapType.TargetObstacle = targetObstacle
 
-	g.Update()
-	if g.isMapWon {
-		t.Error("Destroy objective won but building is still alive")
-	}
-	targetObstacle.Alive = false
-	g.Update()
-	if !g.isMapWon {
-		t.Errorf("Destroy objective failed even after building died")
-	}
+		g.Update()
+		if g.isMapWon {
+			t.Error("Destroy objective won but building is still alive")
+		}
+		targetObstacle.Alive = false
+		g.Update()
+		if !g.isMapWon {
+			t.Errorf("Destroy objective failed even after building died")
+		}
+	})
 }

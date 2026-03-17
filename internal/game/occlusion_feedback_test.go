@@ -17,7 +17,7 @@ func (m *SolidMockImage) At(x, y int) color.Color {
 func TestOcclusionFeedback(t *testing.T) {
 	// Setup a mock game
 	input := engine.NewMockInput()
-	g := NewGame(nil, "", "", "", input, nil, true, "0.1-test")
+	g := NewGame(nil, &engine.MockGraphics{}, "", "", "", input, nil, true, "0.1-test")
 	
 	// Create a mock actor
 	mcConfig := &EntityConfig{ID: "player", Name: "Hero"}

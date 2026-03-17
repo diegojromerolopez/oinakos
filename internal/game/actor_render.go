@@ -6,14 +6,11 @@ import (
 	"oinakos/internal/engine"
 )
 
-// DrawActor is the unified rendering function for any Actor (PlayableCharacter or NPC).
-func DrawActor(a *Actor, screen engine.Image, textRenderer engine.TextRenderer, vectorRenderer engine.VectorRenderer, paletteShader engine.Shader, offsetX, offsetY float64, isPlayableCharacter bool) {
-	if screen == nil || a.Config == nil {
-		return
+// DrawActorGetSprite returns the sprite to draw for an actor based on its state and facing.
+func DrawActorGetSprite(a *Actor) engine.Image {
+	if a.Config == nil {
+		return nil
 	}
-
-	isoX, isoY := engine.CartesianToIso(a.X, a.Y)
-
 	var drawSprite engine.Image
 	// Facing back (North)
 	if a.Facing == DirNE || a.Facing == DirNW {
@@ -31,18 +28,7 @@ func DrawActor(a *Actor, screen engine.Image, textRenderer engine.TextRenderer, 
 
 	// State-based overrides
 	if a.State == ActorDead {
-		if img := a.Config.CorpseImage; img != nil {
-			drawSprite = img
-		} else {
-			// If no corpse image and dead, we might draw nothing
-			if !isPlayableCharacter {
-				return
-			}
-			// Fallback for MC if corpse is missing (should not happen with standard assets)
-			if img := a.Config.StaticImage; img != nil {
-				drawSprite = img
-			}
-		}
+		return a.Config.CorpseImage
 	} else if a.HitTimer > 0 {
 		// Hit animation: toggle between hit frames
 		if img := a.Config.PickHitImage(a.Tick / 15); img != nil {
@@ -50,21 +36,20 @@ func DrawActor(a *Actor, screen engine.Image, textRenderer engine.TextRenderer, 
 		}
 	} else if a.State == ActorAttacking {
 		// Attack animation
-		cooldown := 30 // MC default
-		if a.Weapon != nil && !isPlayableCharacter {
-			// NPCs use their archetype's attack cooldown for animation speed
-			// Wait, the NPC code used n.AttackCooldown which I didn't see in Actor.
-			// Actually, NPC has it via its archetype stats.
-			// For unity, let's assume a standard anim speed if not specified.
-			cooldown = 30
-		}
+		cooldown := 30 // Default
 		if img := a.Config.PickAttackImage(a.Tick / cooldown); img != nil {
 			drawSprite = img
 		}
 	}
+	return drawSprite
+}
 
+// DrawActorGetOptions returns the DrawImageOptions for an actor.
+func DrawActorGetOptions(a *Actor, offsetX, offsetY float64, isPlayableCharacter bool) *engine.DrawImageOptions {
+	isoX, isoY := engine.CartesianToIso(a.X, a.Y)
+	drawSprite := DrawActorGetSprite(a)
 	if drawSprite == nil {
-		return
+		return engine.NewDrawImageOptions()
 	}
 
 	w, h := drawSprite.Size()
@@ -110,10 +95,6 @@ func DrawActor(a *Actor, screen engine.Image, textRenderer engine.TextRenderer, 
 				lungeAmt = (float64(30-a.Tick) / 15.0) * 5.0
 			}
 		} else {
-			// NPC lunge logic from before
-			// phase := float64(n.AttackTimer) / float64(n.AttackCooldown)
-			// But we don't have AttackTimer/Cooldown in Actor yet.
-			// Let's use Tick for consistency if we want it simple.
 			if a.Tick%60 < 15 {
 				lungeAmt = (float64(a.Tick%60) / 15.0) * 5.0
 			} else if a.Tick%60 < 30 {
@@ -129,6 +110,21 @@ func DrawActor(a *Actor, screen engine.Image, textRenderer engine.TextRenderer, 
 	}
 
 	op.Translate(tx, ty)
+	return op
+}
+
+// DrawActor is the unified rendering function for any Actor (PlayableCharacter or NPC).
+func DrawActor(a *Actor, screen engine.Image, textRenderer engine.TextRenderer, vectorRenderer engine.VectorRenderer, paletteShader engine.Shader, offsetX, offsetY float64, isPlayableCharacter bool) {
+	if screen == nil || a.Config == nil {
+		return
+	}
+
+	drawSprite := DrawActorGetSprite(a)
+	if drawSprite == nil {
+		return
+	}
+
+	op := DrawActorGetOptions(a, offsetX, offsetY, isPlayableCharacter)
 
 	// Draw Alignment Indicator - Render BEFORE sprite to be behind the feet
 	// Only draw here if NOT occluded. If occluded, it will be drawn in the UI pass on top.
@@ -153,20 +149,52 @@ func DrawActor(a *Actor, screen engine.Image, textRenderer engine.TextRenderer, 
 	} else {
 		screen.DrawImage(drawSprite, op)
 	}
-
 }
 
 // DrawActorUI draws the UI elements for an actor (alignment indicator, health bar, name tag).
-func DrawActorUI(a *Actor, screen engine.Image, textRenderer engine.TextRenderer, vectorRenderer engine.VectorRenderer, offsetX, offsetY float64, isPlayableCharacter bool, debug bool) {
+func DrawActorUI(g *Game, a *Actor, screen engine.Image, textRenderer engine.TextRenderer, vectorRenderer engine.VectorRenderer, offsetX, offsetY float64, isPlayableCharacter bool, debug bool) {
 	if screen == nil || a.Config == nil || !a.IsAlive() {
 		return
 	}
- 
+
 	isoX, isoY := engine.CartesianToIso(a.X, a.Y)
- 
+
 	// If occluded, draw the alignment indicator (solid) on top
 	if a.IsOccluded {
 		DrawAlignmentIndicator(screen, vectorRenderer, a.X, a.Y, offsetX, offsetY, a.Alignment, a.IsAlive(), true)
+		
+		// Draw black silhouette of the part that is BEHIND obstacles
+		sb := g.GetSilhouetteBuffer()
+		if sb != nil {
+			sb.Clear()
+			
+			// 1. Draw actor silhouette (solid black) to buffer
+			sOp := *DrawActorGetOptions(a, offsetX, offsetY, isPlayableCharacter)
+			sOp.SetColorScale(0, 0, 0, 1) // Pure black
+			
+			sprite := DrawActorGetSprite(a)
+			if sprite != nil {
+				sb.DrawImage(sprite, &sOp)
+				
+				// 2. Multiply with obstacle masks to only keep the "behind" parts
+				actorSortY := a.GetSortY()
+				for _, o := range g.obstacles {
+					if o.GetSortY() > actorSortY {
+						oOp := engine.NewDrawImageOptions()
+						ox, oy := o.GetIsoPos()
+						oOp.Translate(ox+offsetX, oy+offsetY)
+						oOp.Blend = engine.BlendDestinationIn
+						
+						if o.Archetype != nil && o.Archetype.Image != nil {
+							sb.DrawImage(o.Archetype.Image, oOp)
+						}
+					}
+				}
+				
+				// 3. Draw the final silhouette buffer to the screen
+				screen.DrawImage(sb, engine.NewDrawImageOptions())
+			}
+		}
 	}
 
 	// UI Elements (Health bar for NPCs, Names)

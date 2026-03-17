@@ -92,3 +92,20 @@ func (o *Obstacle) GetFootprint() engine.Polygon {
 	o.CachedFootprint = &transformed
 	return transformed
 }
+func (o *Obstacle) GetIsoPos() (float64, float64) {
+	return engine.CartesianToIso(o.X, o.Y)
+}
+
+func (o *Obstacle) GetSortY() float64 {
+	sortY := o.X + o.Y
+	if o.Archetype != nil {
+		if o.Archetype.Type == "static" || o.Archetype.Type == "well" {
+			sortY += 2.0
+		} else {
+			p := o.GetFootprint()
+			minX, minY, maxX, maxY := p.Bounds()
+			sortY = (minX + maxX + minY + maxY) / 2
+		}
+	}
+	return sortY
+}

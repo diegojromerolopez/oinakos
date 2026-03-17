@@ -58,7 +58,11 @@ func (w *EbitenImageWrapper) DrawImage(img Image, options *DrawImageOptions) {
 			op.Blend = ebiten.BlendDestinationOut
 		case BlendDestinationIn:
 			op.Blend = ebiten.BlendDestinationIn
+		case BlendSourceIn:
+			op.Blend = ebiten.BlendSourceIn
 		}
+
+		op.ColorScale.Scale(options.ColorScale.R, options.ColorScale.G, options.ColorScale.B, options.ColorScale.A)
 	}
 	w.img.DrawImage(wrapper.img, &op)
 }

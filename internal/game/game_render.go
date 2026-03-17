@@ -163,14 +163,7 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 			}
 
 			obj := o
-			sortY := obj.X + obj.Y
-			if obj.Archetype.Type == "static" || obj.Archetype.Type == "well" {
-				sortY += 2.0
-			} else {
-				p := obj.GetFootprint()
-				minX, minY, maxX, maxY := p.Bounds()
-				sortY = (minX + maxX + minY + maxY) / 2
-			}
+			sortY := o.GetSortY()
 
 			tasks = append(tasks, drawTask{
 				y: sortY,
@@ -189,10 +182,7 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 			}
 
 			npc := n
-			sortY := npc.X + npc.Y
-			if npc.State == NPCDead {
-				sortY -= 100.0
-			}
+			sortY := n.GetSortY()
 			tasks = append(tasks, drawTask{
 				y: sortY,
 				draw: func() {
@@ -201,10 +191,7 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 			})
 		}
 
-		mcSortY := g.playableCharacter.X + g.playableCharacter.Y
-		if g.playableCharacter.State == StateDead {
-			mcSortY -= 100.0
-		}
+		mcSortY := g.playableCharacter.GetSortY()
 		tasks = append(tasks, drawTask{
 			y: mcSortY,
 			draw: func() {
@@ -238,9 +225,9 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 			if drawX < -256 || drawX > float64(g.width)+256 || drawY < -256 || drawY > float64(g.height)+256 {
 				continue
 			}
-			n.DrawUI(screen, gr.graphics, gr.graphics, offsetX, offsetY, g.debug)
+			n.DrawUI(g, screen, gr.graphics, gr.graphics, offsetX, offsetY, g.debug)
 		}
-		g.playableCharacter.DrawUI(screen, gr.graphics, gr.graphics, offsetX, offsetY, g.debug)
+		g.playableCharacter.DrawUI(g, screen, gr.graphics, gr.graphics, offsetX, offsetY, g.debug)
 
 		if g.debug || g.showBoundaries {
 			gr.drawDebug(screen, offsetX, offsetY)

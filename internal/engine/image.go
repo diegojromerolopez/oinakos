@@ -18,6 +18,7 @@ const (
 	BlendSourceOver Blend = iota
 	BlendDestinationOut
 	BlendDestinationIn
+	BlendSourceIn
 )
 
 type ColorScale struct {

@@ -11,7 +11,7 @@ func TestGameInitialization(t *testing.T) {
 	// Mock embed.FS (empty)
 	var assets embed.FS
 
-	g := NewGame(assets, "", "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
+	g := NewGame(assets, &engine.MockGraphics{}, "", "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
 	if g == nil {
 		t.Fatal("NewGame returned nil")
 	}
@@ -27,7 +27,7 @@ func TestGameInitialization(t *testing.T) {
 
 func TestUpdateChunks(t *testing.T) {
 	var assets embed.FS
-	g := NewGame(assets, "", "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
+	g := NewGame(assets, &engine.MockGraphics{}, "", "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
 
 	// Set player position
 	g.playableCharacter.X = 100
@@ -42,7 +42,7 @@ func TestUpdateChunks(t *testing.T) {
 
 func TestLayout(t *testing.T) {
 	var assets embed.FS
-	g := NewGame(assets, "", "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
+	g := NewGame(assets, &engine.MockGraphics{}, "", "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
 
 	w, h := g.Layout(800, 600)
 	if w != 1280 || h != 720 {
@@ -69,7 +69,7 @@ func TestGameWinMenu(t *testing.T) {
 
 func TestSpawningLogic(t *testing.T) {
 	var assets embed.FS
-	g := NewGame(assets, "", "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
+	g := NewGame(assets, &engine.MockGraphics{}, "", "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
 
 	// Mock map with frequent spawning
 	g.currentMapType.Spawns = []SpawnConfig{
@@ -96,7 +96,7 @@ func TestHeroFlagOverride(t *testing.T) {
 	var assets fs.FS // empty FS
 
 	// Create game
-	g := NewGame(assets, "", "", "conde_olinos", input, audio, false, "0.1-test")
+	g := NewGame(assets, &engine.MockGraphics{}, "", "", "conde_olinos", input, audio, false, "0.1-test")
 
 	// Manually add the hero to the registry since assets are empty
 	heroConfig := &EntityConfig{
@@ -152,7 +152,7 @@ func TestHeroFlagInitialization(t *testing.T) {
 	var assets fs.FS
 
 	heroID := "boris_stronesco"
-	g := NewGame(assets, "", "", heroID, input, audio, false, "0.1-test")
+	g := NewGame(assets, &engine.MockGraphics{}, "", "", heroID, input, audio, false, "0.1-test")
 
 	if g.initialHeroID != heroID {
 		t.Errorf("Expected initialHeroID %s, got %s", heroID, g.initialHeroID)
@@ -164,7 +164,7 @@ func TestMenuButtonClick(t *testing.T) {
 	audio := &DefaultAudioManager{}
 	var assets fs.FS
 
-	g := NewGame(assets, "", "", "", input, audio, false, "0.1-test")
+	g := NewGame(assets, &engine.MockGraphics{}, "", "", "", input, audio, false, "0.1-test")
 	g.isMenuOpen = false
 	g.isMainMenu = false // Ensure we are in a state where handleDialogueInput is called
 	

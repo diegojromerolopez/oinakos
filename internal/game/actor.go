@@ -144,6 +144,14 @@ func (a *Actor) GetActor() *Actor {
 	return a
 }
 
+func (a *Actor) GetSortY() float64 {
+	sortY := a.X + a.Y
+	if a.State == ActorDead {
+		sortY -= 100.0
+	}
+	return sortY
+}
+
 // calculateStat applies logarithmic level scaling.
 func (a *Actor) calculateStat(base, level int) int {
 	if level <= 1 {

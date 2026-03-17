@@ -120,6 +120,7 @@ func (r *MapTypeRegistry) LoadAll(assets fs.FS) error {
 	for _, loadDir := range dirs {
 		forEachYAML(assets, loadDir, func(fpath string, data []byte) error {
 			normalizedPath := filepath.ToSlash(fpath)
+			log.Printf("DEBUG: forEachYAML processing %s", normalizedPath)
 			dir := filepath.Dir(normalizedPath)
 
 			// Skip top-level files in campaigns (which are campaigns, not map levels)
@@ -132,7 +133,6 @@ func (r *MapTypeRegistry) LoadAll(assets fs.FS) error {
 				log.Printf("Warning: failed to unmarshal %s: %v", fpath, err)
 				return nil
 			}
-
 			// Auto ID assignment
 			if config.ID == "" {
 				config.ID = strings.TrimSuffix(filepath.Base(fpath), filepath.Ext(fpath))
