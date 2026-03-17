@@ -95,11 +95,12 @@ run-debug: build
 	./$(BIN_DIR)/$(APP_NAME) -debug
 
 boundaries-editor: build-tools
-	@if [ -z "$(OBSTACLE)$(NPC)$(CHARACTER)" ]; then ./$(BIN_DIR)/boundaries_editor; else \
+	@if [ -z "$(OBSTACLE)$(NPC)$(CHARACTER)$(OBJECT)" ]; then ./$(BIN_DIR)/boundaries_editor; else \
 	./$(BIN_DIR)/boundaries_editor \
 		$(if $(OBSTACLE),--obstacle $(OBSTACLE)) \
 		$(if $(NPC),--npc $(NPC)) \
-		$(if $(CHARACTER),--character $(CHARACTER)); \
+		$(if $(CHARACTER),--character $(CHARACTER)) \
+		$(if $(OBJECT),--object $(OBJECT)); \
 	fi
 
 map-editor: build-tools

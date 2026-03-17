@@ -11,9 +11,22 @@ import (
 func TestSaveLoad(t *testing.T) {
 	g := NewGame(nil, &engine.MockGraphics{}, "data/maps/test_save.yaml", "", "", &MockInputManager{}, &MockAudioManager{}, false, "0.1-test")
 	// Add NPC and Obstacle to test persistence
-	g.npcs = []*NPC{NewNPC(10, 20, &Archetype{ID: "test_npc"}, 1)}
-	g.npcs[0].Health = 5
-	g.obstacles = []*Obstacle{NewObstacle("test_building", 30, 40, &ObstacleArchetype{ID: "test_arch", Health: 100})}
+	n := NewCharacter(10, 20, &EntityConfig{ID: "orc", XP: 10, Stats: struct {
+		HealthMin            int     `yaml:"health_min"`
+		HealthMax            int     `yaml:"health_max"`
+		Speed                float64 `yaml:"speed"`
+		BaseAttack           int     `yaml:"base_attack"`
+		BaseDefense          int     `yaml:"base_defense"`
+		AttackCooldown       int     `yaml:"attack_cooldown"`
+		AttackRange               float64 `yaml:"attack_range"`
+		ProjectileSpeed           float64 `yaml:"projectile_speed"`
+	}{HealthMin: 100, HealthMax: 100}}, 1, false)
+	g.World.Characters = []*Character{n}
+	g.characters = []*Character{n}
+	
+	obs := NewObstacle("test_building", 30, 40, &ObstacleArchetype{ID: "test_arch", Health: 100})
+	g.World.Obstacles = []*Obstacle{obs}
+	g.obstacles = []*Obstacle{obs}
 
 	testPath := "test_save.yaml"
 	defer os.Remove(testPath)
@@ -25,11 +38,8 @@ func TestSaveLoad(t *testing.T) {
 	// Create a new game and load
 	g2 := NewGame(nil, &engine.MockGraphics{}, "", "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
 	// Mock registries for loading to work
-	g2.npcRegistry.IDs = []string{"test_npc"}
-	g2.npcRegistry.NPCs["test_npc"] = &EntityConfig{ArchetypeID: "test_npc"}
-	g2.archetypeRegistry.Archetypes["test_npc"] = &Archetype{ID: "test_npc"}
-	g2.obstacleRegistry.IDs = []string{"test_arch"}
-	g2.obstacleRegistry.Archetypes["test_arch"] = &ObstacleArchetype{ID: "test_arch", Health: 100}
+	g2.characterRegistry.Characters["orc"] = &EntityConfig{ID: "orc"}
+	g2.obstacleRegistry.Archetypes["test_arch"] = &ObstacleArchetype{ID: "test_arch"}
 
 	if err := g2.Load(testPath); err != nil {
 		t.Fatalf("Failed to load: %v", err)
@@ -51,10 +61,10 @@ func TestSaveLoad(t *testing.T) {
 		t.Errorf("PlayTime mismatch: expected %f, got %f", g.playTime, g2.playTime)
 	}
 
-	if len(g2.npcs) != 1 {
-		t.Errorf("NPCs mismatch: expected 1, got %d", len(g2.npcs))
-	} else if g2.npcs[0].X != 10 || g2.npcs[0].Y != 20 {
-		t.Errorf("NPC pos mismatch: expected (10,20), got (%f,%f)", g2.npcs[0].X, g2.npcs[0].Y)
+	if len(g2.characters) != 1 {
+		t.Errorf("NPCs mismatch: expected 1, got %d", len(g2.characters))
+	} else if g2.characters[0].X != 10 || g2.characters[0].Y != 20 {
+		t.Errorf("NPC pos mismatch: expected (10,20), got (%f,%f)", g2.characters[0].X, g2.characters[0].Y)
 	}
 
 	if len(g2.obstacles) != 1 {

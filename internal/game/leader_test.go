@@ -7,14 +7,14 @@ import (
 func TestLeaderDeathConsequence(t *testing.T) {
 	ctx := NewTestContext()
 	// Setup
-	leaderArch := &Archetype{ID: "queen_leader", Name: "Queen"}
-	followerArch := &Archetype{ID: "guard_follower", Name: "Guard", LeaderID: "queen_leader"}
+	leaderArch := &EntityConfig{ID: "queen_leader", Name: "Queen"}
+	followerArch := &EntityConfig{ID: "guard_follower", Name: "Guard", LeaderID: "queen_leader"}
 	
-	leader := NewNPC(0, 0, leaderArch, 1)
-	follower := NewNPC(1, 1, followerArch, 1)
+	leader := NewCharacter(0, 0, leaderArch, 1, false)
+	follower := NewCharacter(1, 1, followerArch, 1, false)
 	
-	ctx.World.NPCs = []*NPC{leader, follower}
-	mc := &PlayableCharacter{Actor: Actor{X: 10, Y: 10}} // Far away
+	ctx.World.Characters = []*Character{leader, follower}
+	mc := NewCharacter(10, 10, nil, 1, true)
 	ctx.World.PlayableCharacter = mc
 	
 	// Initial state
@@ -30,7 +30,7 @@ func TestLeaderDeathConsequence(t *testing.T) {
 	
 	// Kill leader
 	leader.Health = 0
-	leader.State = NPCDead
+	leader.State = ActorDead
 	
 	// Update follower after leader death
 	follower.Update(ctx)
@@ -47,21 +47,21 @@ func TestLeaderDeathConsequence(t *testing.T) {
 func TestTraitorTargeting(t *testing.T) {
 	ctx := NewTestContext()
 	// Setup: Leader (Enemy), Peer (Enemy), Traitor (Neutral)
-	leaderArch := &Archetype{ID: "queen", Name: "Queen"}
-	followerArch := &Archetype{ID: "guard", Name: "Guard", LeaderID: "queen"}
+	leaderArch := &EntityConfig{ID: "queen", Name: "Queen"}
+	followerArch := &EntityConfig{ID: "guard", Name: "Guard", LeaderID: "queen"}
 
-	leader := NewNPC(0, 0, leaderArch, 1)
+	leader := NewCharacter(0, 0, leaderArch, 1, false)
 	leader.Alignment = AlignmentEnemy
 
-	peer := NewNPC(1, 1, followerArch, 1)
+	peer := NewCharacter(1, 1, followerArch, 1, false)
 	peer.Alignment = AlignmentEnemy
 	peer.Behavior = BehaviorNpcFighter
 
-	traitor := NewNPC(2, 2, followerArch, 1)
+	traitor := NewCharacter(2, 2, followerArch, 1, false)
 	traitor.Alignment = AlignmentNeutral // Switched!
 
-	ctx.World.NPCs = []*NPC{leader, peer, traitor}
-	mc := &PlayableCharacter{Actor: Actor{X: 10, Y: 10}}
+	ctx.World.Characters = []*Character{leader, peer, traitor}
+	mc := NewCharacter(10, 10, nil, 1, true)
 	ctx.World.PlayableCharacter = mc
 
 	// Peer should normally ignore Neutral NPCs if they weren't traitors,

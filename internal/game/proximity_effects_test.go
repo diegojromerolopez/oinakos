@@ -7,7 +7,7 @@ import (
 
 func TestProximityHazards(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewPlayableCharacter(0, 0, nil)
+	mc := NewCharacter(0, 0, nil, 1, true)
 	mc.Health = 100
 	mc.MaxHealth = 100
 	ctx.World.PlayableCharacter = mc
@@ -92,7 +92,7 @@ func TestProximityHazards(t *testing.T) {
 
 func TestProximityHealing(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewPlayableCharacter(0, 0, nil)
+	mc := NewCharacter(0, 0, nil, 1, true)
 	mc.Health = 50
 	mc.MaxHealth = 100
 	ctx.World.PlayableCharacter = mc
@@ -163,7 +163,7 @@ func TestProximityHealing(t *testing.T) {
 
 func TestInteractiveHealing(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewPlayableCharacter(0, 0, nil)
+	mc := NewCharacter(0, 0, nil, 1, true)
 	mc.Health = 10
 	mc.MaxHealth = 100
 	ctx.World.PlayableCharacter = mc
@@ -203,22 +203,22 @@ func TestInteractiveHealing(t *testing.T) {
 
 func TestNPCProximityEffects(t *testing.T) {
 	ctx := NewTestContext()
-	arch := &Archetype{
+	arch := &EntityConfig{
 		ID:   "peasant",
 		Name: "Peasant",
 	}
-	n := &NPC{
+	n := &Character{
 		Actor: Actor{
 			X:         0,
 			Y:         0,
 			Health:    50,
 			MaxHealth: 100,
-			State:     NPCIdle,
+			State:     ActorIdle,
+			Config:    arch,
 		},
-		Archetype: arch,
 	}
-	ctx.World.NPCs = []*NPC{n}
-	ctx.World.PlayableCharacter = NewPlayableCharacter(100, 100, nil) // Keep MC away
+	ctx.World.Characters = []*Character{n}
+	ctx.World.PlayableCharacter = NewCharacter(100, 100, nil, 1, true) // Keep MC away
 	mm := NewMechanicsManager(&Game{})
 
 	// 1. Hazard Effect on NPC

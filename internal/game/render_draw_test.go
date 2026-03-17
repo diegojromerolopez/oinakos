@@ -8,7 +8,7 @@ import (
 )
 
 func TestMainCharacterDraw(t *testing.T) {
-	mc := NewPlayableCharacter(0, 0, nil)
+	mc := NewCharacter(0, 0, nil, 1, true)
 	graphics := &engine.MockGraphics{}
 	screen := graphics.NewImage(100, 100)
 
@@ -24,24 +24,24 @@ func TestMainCharacterDraw(t *testing.T) {
 		mc.State = s
 		mc.Facing = DirSE // Trigger flip
 		mc.Tick = 10
-		mc.Draw(screen, graphics, graphics, 0, 0)
+		mc.Draw(screen, graphics, graphics, nil, 0, 0)
 
 		mc.Facing = DirNW // No flip
-		mc.Draw(screen, graphics, graphics, 0, 0)
+		mc.Draw(screen, graphics, graphics, nil, 0, 0)
 	}
 }
 
 func TestNPCDraw(t *testing.T) {
-	n := NewNPC(0, 0, nil, 1)
+	n := NewCharacter(0, 0, nil, 1, true)
 	graphics := &engine.MockGraphics{}
 	screen := graphics.NewImage(100, 100)
 	sprite := graphics.NewImage(32, 32)
 
 	// Manually set sprites since we are in headless test
-	n.Archetype = &Archetype{}
-	n.Archetype.StaticImage = sprite
-	n.Archetype.CorpseImage = sprite
-	n.Archetype.AttackImage = sprite
+	n.Config = &EntityConfig{ID: "orc"}
+	n.Config.StaticImage = sprite
+	n.Config.CorpseImage = sprite
+	n.Config.AttackImage = sprite
 
 	states := []ActorState{ActorIdle, ActorWalking, ActorAttacking, ActorDead}
 	for _, s := range states {

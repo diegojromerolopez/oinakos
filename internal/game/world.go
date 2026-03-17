@@ -6,8 +6,8 @@ import (
 
 // World holds all live game entities and spatial data.
 type World struct {
-	PlayableCharacter *PlayableCharacter
-	NPCs              []*NPC
+	PlayableCharacter *Character
+	Characters        []*Character
 	Obstacles         []*Obstacle
 	Projectiles       []*Projectile
 	FloatingTexts     []*FloatingText
@@ -16,11 +16,12 @@ type World struct {
 	ExploredTiles     map[image.Point]bool
 	PlayTime          float64
 	Game              *Game
+	Items             []*ItemInstance
 }
 
 func NewWorld() *World {
 	return &World{
-		NPCs:          make([]*NPC, 0),
+		Characters:    make([]*Character, 0),
 		Obstacles:     make([]*Obstacle, 0),
 		Projectiles:   make([]*Projectile, 0),
 		FloatingTexts: make([]*FloatingText, 0),

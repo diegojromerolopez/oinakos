@@ -6,15 +6,15 @@ import "testing"
 
 func TestCheckAttackHits_HitOrMiss(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewPlayableCharacter(0, 0, nil)
+	mc := NewCharacter(0, 0, nil, 1, true)
 	mc.BaseAttack = 50 // Very high → typically hits
 	mc.Facing = DirSE
 	ctx.World.PlayableCharacter = mc
 
-	npc := NewNPC(0.5, 0.5, &Archetype{ID: "test", XP: 1}, 1)
+	npc := NewCharacter(0.5, 0.5, &EntityConfig{ID: "test", XP: 1}, 1, false)
 	npc.Health = 100
 	npc.Alignment = AlignmentEnemy
-	ctx.World.NPCs = []*NPC{npc}
+	ctx.World.Characters = []*Character{npc}
 
 	mc.CheckAttackHits(ctx)
 
@@ -26,14 +26,14 @@ func TestCheckAttackHits_HitOrMiss(t *testing.T) {
 
 func TestCheckAttackHits_DeadNPCSkipped(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewPlayableCharacter(0, 0, nil)
+	mc := NewCharacter(0, 0, nil, 1, true)
 	mc.Facing = DirSE
 	ctx.World.PlayableCharacter = mc
 
-	npc := NewNPC(0.5, 0.5, nil, 1)
-	npc.State = NPCDead
+	npc := NewCharacter(0.5, 0.5, nil, 1, false)
+	npc.State = ActorDead
 	npc.Health = 50
-	ctx.World.NPCs = []*NPC{npc}
+	ctx.World.Characters = []*Character{npc}
 
 	mc.CheckAttackHits(ctx)
 
@@ -47,13 +47,13 @@ func TestCheckAttackHits_DeadNPCSkipped(t *testing.T) {
 
 func TestCheckAttackHits_OutOfRange(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewPlayableCharacter(0, 0, nil)
+	mc := NewCharacter(0, 0, nil, 1, true)
 	mc.Facing = DirSE
 	ctx.World.PlayableCharacter = mc
 
-	npc := NewNPC(50, 50, nil, 1) // Far away
+	npc := NewCharacter(50, 50, nil, 1, false) // Far away
 	npc.Health = 100
-	ctx.World.NPCs = []*NPC{npc}
+	ctx.World.Characters = []*Character{npc}
 
 	mc.CheckAttackHits(ctx)
 
@@ -72,16 +72,16 @@ func TestCheckAttackHits_AllDirections(t *testing.T) {
 
 	for i, dir := range directions {
 		ctx := NewTestContext()
-		mc := NewPlayableCharacter(0, 0, nil)
+		mc := NewCharacter(0, 0, nil, 1, true)
 		mc.BaseAttack = 9999 // Guarantee a hit
 		mc.Facing = dir
 		ctx.World.PlayableCharacter = mc
 
 		dx, dy := offsets[i][0], offsets[i][1]
-		npc := NewNPC(dx, dy, &Archetype{ID: "test"}, 1)
+		npc := NewCharacter(dx, dy, &EntityConfig{ID: "test"}, 1, false)
 		npc.Health = 100
 		npc.BaseDefense = 0
-		ctx.World.NPCs = []*NPC{npc}
+		ctx.World.Characters = []*Character{npc}
 
 		// The game has a 5% miss cap (max hitChance=95).
 		// We loop up to 100 times to virtually guarantee a hit happens.
@@ -102,23 +102,23 @@ func TestCheckAttackHits_AllDirections(t *testing.T) {
 
 func TestCheckAttackHits_KillUpdatesMapKills(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewPlayableCharacter(0, 0, nil)
+	mc := NewCharacter(0, 0, nil, 1, true)
 	mc.BaseAttack = 9999 // Guarantee a huge hit
 	mc.Facing = DirSE
 	ctx.World.PlayableCharacter = mc
 
-	// Ensure the MapKills map is initialized (it is inside NewPlayableCharacter)
-	npc := NewNPC(0.5, 0.5, &Archetype{ID: "crimson_guard", XP: 10}, 1)
+	// Ensure the MapKills map is initialized (it is inside NewCharacter)
+	npc := NewCharacter(0.5, 0.5, &EntityConfig{ID: "crimson_guard", XP: 10}, 1, false)
 	npc.Health = 1
 	npc.BaseDefense = 0
-	ctx.World.NPCs = []*NPC{npc}
+	ctx.World.Characters = []*Character{npc}
 
 	// The game has a 5% miss cap (max hitChance=95).
 	// We loop up to 100 times to virtually guarantee a hit happens.
 	hitDetected := false
 	for attempt := 0; attempt < 100; attempt++ {
 		mc.CheckAttackHits(ctx)
-		if npc.State == NPCDead {
+		if npc.State == ActorDead {
 			hitDetected = true
 			break
 		}

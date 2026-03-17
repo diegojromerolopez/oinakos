@@ -43,7 +43,7 @@ type WorldContext struct {
 	NearbyNPCs []NPCContext  `json:"nearby_npcs"`
 }
 
-func BuildWorldContext(g *Game, focusNPC *NPC) string {
+func BuildWorldContext(g *Game, focusNPC *Character) string {
 	wc := WorldContext{
 		MapID: g.currentMapType.ID,
 		Mission: MapMission{
@@ -71,11 +71,11 @@ func BuildWorldContext(g *Game, focusNPC *NPC) string {
 		wc.Mission.TargetY = g.currentMapType.TargetPoint.Y
 	}
 
-	var nearestNPC *NPC
+	var nearestNPC *Character
 	minDist := 999.0
 
-	for _, n := range g.npcs {
-		if !n.IsAlive() {
+	for _, n := range g.World.Characters {
+		if !n.IsAlive() || n.IsPlayerControlled {
 			continue
 		}
 
@@ -85,7 +85,7 @@ func BuildWorldContext(g *Game, focusNPC *NPC) string {
 			ctx := NPCContext{
 				Name:             n.Name,
 				Description:      n.Config.Description,
-				Archetype:        n.Archetype.ID,
+				Archetype:        n.Config.ArchetypeID,
 				HealthPct:        int(float64(n.Health) / float64(n.MaxHealth) * 100),
 				Alignment:        fmt.Sprint(n.Alignment),
 				DistanceToPlayer: dist,
@@ -105,7 +105,7 @@ func BuildWorldContext(g *Game, focusNPC *NPC) string {
 		ctx := NPCContext{
 			Name:             nearestNPC.Name,
 			Description:      nearestNPC.Config.Description,
-			Archetype:        nearestNPC.Archetype.ID,
+			Archetype:        nearestNPC.Config.ArchetypeID,
 			HealthPct:        int(float64(nearestNPC.Health) / float64(nearestNPC.MaxHealth) * 100),
 			Alignment:        fmt.Sprint(nearestNPC.Alignment),
 			DistanceToPlayer: minDist,

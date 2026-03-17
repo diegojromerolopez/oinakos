@@ -18,7 +18,7 @@ func (g *Game) Save(fpath string) error {
 	}
 	err = os.WriteFile(fpath, bytes, 0644)
 	if err == nil {
-		DebugLog("Game Successfully Saved to %s | NPCs: %d | Obstacles: %d", fpath, len(g.npcs), len(g.obstacles))
+		DebugLog("Game Successfully Saved to %s | NPCs: %d | Obstacles: %d", fpath, len(g.characters), len(g.obstacles))
 	}
 	return err
 }
@@ -81,14 +81,24 @@ func (g *Game) serialize() ([]byte, error) {
 		MapKills:    g.playableCharacter.MapKills,
 		BaseAttack:  g.playableCharacter.BaseAttack,
 		BaseDefense: g.playableCharacter.BaseDefense,
+		Inventory:   []string{},
+		Slots:       make(map[string]string),
+	}
+	for _, item := range g.playableCharacter.Inventory {
+		data.Player.Inventory = append(data.Player.Inventory, item.ID)
+	}
+	for slot, item := range g.playableCharacter.Slots {
+		if item != nil {
+			data.Player.Slots[slot] = item.ID
+		}
 	}
 	if g.playableCharacter.Weapon != nil {
 		data.Player.Weapon = g.playableCharacter.Weapon
 	}
 
 
-	for _, n := range g.npcs {
-		if n.Archetype == nil {
+	for _, n := range g.characters {
+		if n.Config == nil {
 			continue
 		}
 		behaviorStr := ""
@@ -119,15 +129,25 @@ func (g *Game) serialize() ([]byte, error) {
 			MustSurvive: n.MustSurvive,
 			BaseAttack:  n.BaseAttack,
 			BaseDefense: n.BaseDefense,
+			Inventory:   []string{},
+			Slots:       make(map[string]string),
 		}
-		if n.Archetype != nil {
-			if n.Archetype.Unique {
-				npcSave.NPCID = n.Archetype.ID
-			} else {
-				npcSave.ArchetypeID = n.Archetype.ID
+		for _, item := range n.Inventory {
+			npcSave.Inventory = append(npcSave.Inventory, item.ID)
+		}
+		for slot, item := range n.Slots {
+			if item != nil {
+				npcSave.Slots[slot] = item.ID
 			}
 		}
-		data.NPCs = append(data.NPCs, npcSave)
+		if n.Config != nil {
+			if n.Config.Unique {
+				npcSave.NPCID = n.Config.ID
+			} else {
+				npcSave.ArchetypeID = n.Config.ID
+			}
+		}
+		data.Characters = append(data.Characters, npcSave)
 	}
 
 	for _, o := range g.obstacles {
@@ -142,6 +162,14 @@ func (g *Game) serialize() ([]byte, error) {
 			Y:             &yVal,
 			Health:        o.Health,
 			CooldownTicks: o.CooldownTicks,
+		})
+	}
+
+	for _, it := range g.World.Items {
+		data.Items = append(data.Items, ItemSaveData{
+			ID: it.ID,
+			X:  it.X,
+			Y:  it.Y,
 		})
 	}
 

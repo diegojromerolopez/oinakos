@@ -1,0 +1,23 @@
+name: Orcish Axe
+description: A heavy, jagged axe favored by orc warriors.
+weight: 6.0
+type: weapon
+slot: weapon
+value: 20
+combat:
+  name: Orcish Axe
+  type: melee
+  max_distance: touch
+  damage:
+    min: 4
+    max: 8
+  weight: 6.0
+footprint:
+- x: -22.0
+  y: -21.984
+- x: 7.953
+  y: -21.984
+- x: 7.953
+  y: 7.969
+- x: -22.0
+  y: 7.969

@@ -1,0 +1,23 @@
+name: Tizon
+description: A legendary blade with a faint glow.
+weight: 15.0
+type: weapon
+slot: weapon
+value: 1000
+combat:
+  name: Tizon
+  type: melee
+  max_distance: touch
+  damage:
+    min: 15
+    max: 25
+  weight: 15.0
+footprint:
+  - x: -2.28
+    y: -2.34
+  - x: -1.13
+    y: -1.69
+  - x: 0.33
+    y: 0.36
+  - x: -1.52
+    y: -0.92

@@ -53,7 +53,7 @@ func (gr *GameRenderer) LoadAssets(assets fs.FS) {
 	
 	atomic.StoreInt32(&g.LoadingProgress, 300)
 	g.LoadingMessage = "Preparing Heroes..."
-	g.playableCharacterRegistry.LoadAssets(assets, gr.graphics, &g.LoadingProgress)
+	g.characterRegistry.LoadAssets(assets, gr.graphics, g.archetypeRegistry, &g.LoadingProgress)
 	
 	atomic.StoreInt32(&g.LoadingProgress, 500)
 	g.LoadingMessage = "Loading Environment..."
@@ -61,9 +61,13 @@ func (gr *GameRenderer) LoadAssets(assets fs.FS) {
 	
 	atomic.StoreInt32(&g.LoadingProgress, 700)
 	g.LoadingMessage = "Populating World..."
-	g.npcRegistry.LoadAssets(assets, gr.graphics, g.archetypeRegistry, &g.LoadingProgress)
+	g.characterRegistry.LoadAssets(assets, gr.graphics, g.archetypeRegistry, &g.LoadingProgress)
 	
-	atomic.StoreInt32(&g.LoadingProgress, 900)
+	atomic.StoreInt32(&g.LoadingProgress, 800)
+	g.LoadingMessage = "Geeking out on Loot..."
+	g.Registries.Objects.LoadAssets(assets, gr.graphics, &g.LoadingProgress)
+	
+	atomic.StoreInt32(&g.LoadingProgress, 950)
 	g.LoadingMessage = "Finalizing Graphics..."
 	runtime.Gosched()
 
@@ -139,11 +143,37 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 			return gr.getTileAt(x, y)
 		})
 
+		// 1. Dedicated Object Pass (Floor Items)
+		if g.World != nil {
+			for _, it := range g.World.Items {
+				if it == nil {
+					continue
+				}
+				if g.debug {
+					// Draw green silhouette
+					isoX, isoY := engine.CartesianToIso(it.X, it.Y)
+					if it.Config != nil && it.Config.Sprite != nil {
+						w, h := it.Config.Sprite.Size()
+						op := engine.NewDrawImageOptions()
+						tx := isoX + offsetX - float64(w)/2
+						ty := isoY + offsetY - float64(h)*0.9 // Grounded anchoring to match item_instance.go
+						op.Translate(tx, ty)
+						op.SetColorScale(0, 10, 0, 1) // Pure green silhouette
+						screen.DrawImage(it.Config.Sprite, op)
+					}
+				} else {
+					it.Draw(screen, offsetX, offsetY)
+				}
+			}
+		}
+
+		// 2. Sorted Entity Pass (Actors, Obstacles, Projectiles)
 		type drawTask struct {
 			y    float64
 			draw func()
 		}
-		tasks := make([]drawTask, 0, len(g.obstacles)+len(g.npcs)+1)
+		tasks := make([]drawTask, 0, len(g.obstacles)+len(g.characters)+2)
+
 
 		for _, o := range g.obstacles {
 			img := o.Archetype.Image
@@ -173,7 +203,7 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 			})
 		}
 
-		for _, n := range g.npcs {
+		for _, n := range g.characters {
 			isoX, isoY := engine.CartesianToIso(n.X, n.Y)
 			drawX := isoX + offsetX
 			drawY := isoY + offsetY
@@ -186,7 +216,7 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 			tasks = append(tasks, drawTask{
 				y: sortY,
 				draw: func() {
-					npc.Draw(screen, gr.graphics, gr.graphics, gr.PaletteShader, offsetX, offsetY)
+					DrawActor(&npc.Actor, screen, gr.graphics, gr.graphics, gr.PaletteShader, offsetX, offsetY, npc.IsPlayerControlled)
 				},
 			})
 		}
@@ -195,7 +225,7 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 		tasks = append(tasks, drawTask{
 			y: mcSortY,
 			draw: func() {
-				g.playableCharacter.Draw(screen, gr.graphics, gr.graphics, offsetX, offsetY)
+				DrawActor(&g.playableCharacter.Actor, screen, gr.graphics, gr.graphics, gr.PaletteShader, offsetX, offsetY, true)
 			},
 		})
 
@@ -218,16 +248,16 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 		}
 
 		// UI Pass: Draw character and NPC UI on top (always visible)
-		for _, n := range g.npcs {
+		for _, n := range g.characters {
 			isoX, isoY := engine.CartesianToIso(n.X, n.Y)
 			drawX := isoX + offsetX
 			drawY := isoY + offsetY
 			if drawX < -256 || drawX > float64(g.width)+256 || drawY < -256 || drawY > float64(g.height)+256 {
 				continue
 			}
-			n.DrawUI(g, screen, gr.graphics, gr.graphics, offsetX, offsetY, g.debug)
+			DrawActorUI(g, &n.Actor, screen, gr.graphics, gr.graphics, offsetX, offsetY, n.IsPlayerControlled, g.debug)
 		}
-		g.playableCharacter.DrawUI(g, screen, gr.graphics, gr.graphics, offsetX, offsetY, g.debug)
+		DrawActorUI(g, &g.playableCharacter.Actor, screen, gr.graphics, gr.graphics, offsetX, offsetY, true, g.debug)
 
 		if g.debug || g.showBoundaries {
 			gr.drawDebug(screen, offsetX, offsetY)
@@ -245,6 +275,8 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 			gr.drawMapWon(screen)
 		} else if g.isPaused {
 			gr.drawPauseMenu(screen)
+		} else if g.isInventoryOpen {
+			gr.drawInventoryScreen(screen)
 		} else {
 			gr.drawFog(screen)
 			gr.drawHUD(screen)

@@ -133,7 +133,7 @@ func (gr *GameRenderer) drawObjectiveArrow(screen engine.Image) {
 		targetX, targetY = g.currentMapType.TargetPoint.X, g.currentMapType.TargetPoint.Y
 		hasTarget = true
 	case ObjKillVIP:
-		for _, n := range g.npcs {
+		for _, n := range g.characters {
 			if n.Alignment == AlignmentEnemy && n.IsAlive() {
 				targetX, targetY = n.X, n.Y
 				hasTarget = true
@@ -187,6 +187,23 @@ func (gr *GameRenderer) drawDebug(screen engine.Image, offsetX, offsetY float64)
 
 
 	for _, o := range gr.game.obstacles {
-		drawPolygon(o.GetFootprint(), cyan)
+		if o != nil {
+			drawPolygon(o.GetFootprint(), cyan)
+		}
+	}
+
+	green := color.RGBA{0, 255, 0, 255}
+	if gr.game.World != nil {
+		for _, it := range gr.game.World.Items {
+			if it != nil {
+				drawPolygon(it.GetFootprint(), green)
+				
+				// Draw object name below the footprint
+				if it.Config != nil {
+					isoX, isoY := engine.CartesianToIso(it.X, it.Y)
+					gr.graphics.DrawTextAt(screen, it.Config.Name, int(isoX+offsetX), int(isoY+offsetY+15), color.White, 12)
+				}
+			}
+		}
 	}
 }

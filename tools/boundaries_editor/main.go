@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"oinakos/internal/engine"
 	"oinakos/internal/game"
@@ -128,6 +129,7 @@ func main() {
 	graphics := engine.NewEbitenGraphics()
 	var entities []*EditorEntity
 
+	// Load Obstacles
 	obsReg := game.NewObstacleRegistry()
 	if err := obsReg.LoadAll(assets); err == nil {
 		obsReg.LoadAssets(assets, graphics, nil)
@@ -135,11 +137,34 @@ func main() {
 			arch := obsReg.Archetypes[id]
 			obs := game.NewObstacle("editor_preview", 0, 0, arch)
 			var img engine.Image
-			if arch.Image != nil { img = arch.Image }
+			if arch.Image != nil {
+				img = arch.Image
+			}
 			entities = append(entities, &EditorEntity{
 				ID: id, Type: "Obstacle", Image: img, Footprint: &arch.Footprint,
 				YamlPath: filepath.Join("data/obstacles", id+".yaml"),
 				DrawMain: func(screen engine.Image, g engine.Graphics, ox, oy float64) { obs.Draw(screen, g, ox, oy) },
+			})
+		}
+	}
+
+	// Load Objects
+	objReg := game.NewObjectRegistry()
+	if err := objReg.LoadAll(assets); err == nil {
+		objReg.LoadAssets(assets, graphics, nil)
+		for _, id := range objReg.IDs {
+			cfg := objReg.Objects[id]
+			item := game.NewItemInstance(id, cfg, 0, 0)
+			var img engine.Image
+			if cfg.Sprite != nil {
+				img = cfg.Sprite
+			}
+			entities = append(entities, &EditorEntity{
+				ID: id, Type: "Object", Image: img, Footprint: &cfg.Footprint,
+				YamlPath: filepath.Join("data/objects", id+".yaml"),
+				DrawMain: func(screen engine.Image, _ engine.Graphics, ox, oy float64) {
+					item.Draw(screen, ox, oy)
+				},
 			})
 		}
 	}
@@ -149,13 +174,25 @@ func main() {
 	})
  
 	var targetID string
+	var targetType string
 	flag.StringVar(&targetID, "obstacle", "", "ID of the obstacle to select")
+	flag.StringVar(&targetID, "object", "", "ID of the object to select")
 	flag.Parse()
+	
+	if targetID == "" {
+		// Try to find if any other flag was used (for backward compatibility or convenience)
+		flag.Visit(func(f *flag.Flag) {
+			if f.Name == "obstacle" || f.Name == "object" {
+				targetID = f.Value.String()
+				targetType = strings.Title(f.Name)
+			}
+		})
+	}
  
 	selectedIndex := 0
 	if targetID != "" {
 		for i, e := range entities {
-			if e.ID == targetID {
+			if e.ID == targetID && (targetType == "" || e.Type == targetType) {
 				selectedIndex = i
 				break
 			}

@@ -37,9 +37,12 @@ func (gr *GameRenderer) drawHUD(screen engine.Image) {
 	gr.graphics.DrawTextAt(screen, fmt.Sprintf("POS %.1f,%.1f  KILLS: %d  XP: %d  LVL: %d", g.playableCharacter.X, g.playableCharacter.Y, g.playableCharacter.Kills, g.playableCharacter.XP, g.playableCharacter.Level), 20, 80, color.White, 12)
 	gr.graphics.DrawTextAt(screen, fmt.Sprintf("ATK: %d  DEF: %d  SHIELD: %d", g.playableCharacter.GetTotalAttack(), g.playableCharacter.GetTotalDefense(), g.playableCharacter.GetTotalProtection()), 20, 95, color.White, 12)
 
-	weaponText := fmt.Sprintf("WEAPON: %s (%d-%d)", g.playableCharacter.Weapon.Name, g.playableCharacter.Weapon.Damage.Min, g.playableCharacter.Weapon.Damage.Max)
-	if g.playableCharacter.Weapon.Bonus > 0 {
-		weaponText += fmt.Sprintf(" +%d", g.playableCharacter.Weapon.Bonus)
+	weaponText := "WEAPON: Unarmed (1-2)"
+	if g.playableCharacter.Weapon != nil {
+		weaponText = fmt.Sprintf("WEAPON: %s (%d-%d)", g.playableCharacter.Weapon.Name, g.playableCharacter.Weapon.Damage.Min, g.playableCharacter.Weapon.Damage.Max)
+		if g.playableCharacter.Weapon.Bonus > 0 {
+			weaponText += fmt.Sprintf(" +%d", g.playableCharacter.Weapon.Bonus)
+		}
 	}
 	gr.graphics.DrawTextAt(screen, weaponText, 20, 110, color.White, 12)
 	gr.graphics.DrawTextAt(screen, fmt.Sprintf("TIME: %02d:%02d", minutes, seconds), 20, 125, color.White, 12)
@@ -93,7 +96,7 @@ func (gr *GameRenderer) drawHoverInfo(screen engine.Image) {
 	mx, my := g.input.MousePosition()
 	offsetX, offsetY := g.camera.GetOffsets(g.width, g.height)
 
-	for _, n := range g.npcs {
+	for _, n := range g.characters {
 		if !n.IsAlive() {
 			continue
 		}
@@ -102,8 +105,24 @@ func (gr *GameRenderer) drawHoverInfo(screen engine.Image) {
 
 		dist := math.Sqrt(math.Pow(float64(mx)-scrX, 2) + math.Pow(float64(my)-scrY+40, 2))
 		if dist < 40 {
-			if n.Archetype != nil && n.Archetype.Description != "" {
-				gr.drawInfoBox(screen, n.Name, n.Archetype.Description, mx, my)
+			if n.Config != nil && n.Config.Description != "" {
+				gr.drawInfoBox(screen, n.Name, n.Config.Description, mx, my)
+				return
+			}
+		}
+	}
+
+	// Check for items
+	if g.World != nil {
+		mouseX, mouseY := engine.IsoToCartesian(float64(mx)-offsetX, float64(my)-offsetY)
+		for _, it := range g.World.Items {
+			if it == nil || it.Config == nil {
+				continue
+			}
+			poly := it.GetFootprint()
+			if poly.Contains(mouseX, mouseY) {
+				isoX, isoY := engine.CartesianToIso(it.X, it.Y)
+				gr.graphics.DrawTextAt(screen, it.Config.Name, int(isoX+offsetX), int(isoY+offsetY+15), color.White, 12)
 				return
 			}
 		}

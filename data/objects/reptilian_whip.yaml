@@ -1,0 +1,13 @@
+name: Reptilian Whip
+description: A standard reptilian whip.
+weight: 1.0
+type: weapon
+slot: weapon
+value: 50
+combat:
+  name: Reptilian Whip
+  type: melee
+  damage:
+    min: 8
+    max: 15
+  max_distance: '3.0'

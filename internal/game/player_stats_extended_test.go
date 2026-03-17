@@ -4,7 +4,7 @@ import "testing"
 
 // TestPlayerAddXP_LevelUp verifies that gaining enough XP increases the player's level and heals them.
 func TestPlayerAddXP_LevelUp(t *testing.T) {
-	mc := NewPlayableCharacter(0, 0, nil)
+	mc := NewCharacter(0, 0, nil, 1, true)
 	mc.XP = 90
 	mc.Level = 1
 	mc.MaxHealth = 100
@@ -23,7 +23,7 @@ func TestPlayerAddXP_LevelUp(t *testing.T) {
 
 // TestPlayerAddXP_MultipleLevels verifies gaining a large amount of XP at once works correctly.
 func TestPlayerAddXP_MultipleLevels(t *testing.T) {
-	mc := NewPlayableCharacter(0, 0, nil)
+	mc := NewCharacter(0, 0, nil, 1, true)
 	mc.XP = 0
 	mc.Level = 1
 
@@ -38,9 +38,9 @@ func TestPlayerAddXP_MultipleLevels(t *testing.T) {
 	}
 }
 
-// TestPlayerStats_Reset verifies that NewPlayableCharacter sets sensible defaults.
+// TestPlayerStats_Reset verifies that NewCharacter sets sensible defaults.
 func TestPlayerStats_Defaults(t *testing.T) {
-	mc := NewPlayableCharacter(0, 0, nil)
+	mc := NewCharacter(0, 0, nil, 1, true)
 	if mc.MaxHealth <= 0 {
 		t.Errorf("Expected positive MaxHealth, got %d", mc.MaxHealth)
 	}

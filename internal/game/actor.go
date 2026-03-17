@@ -1,8 +1,8 @@
 package game
 
 import (
+	"log"
 	"math"
-
 	"oinakos/internal/engine"
 )
 
@@ -15,28 +15,14 @@ const (
 	ActorAttacking
 	ActorDead
 	ActorDrinking // Player-specific (well interaction)
+	ActorCrouching // Picking up items
 )
 
 // Backward-compatible aliases for PlayableCharacterState
 type PlayableCharacterState = ActorState
 
-const (
-	StateIdle     = ActorIdle
-	StateWalking  = ActorWalking
-	StateAttacking = ActorAttacking
-	StateDead     = ActorDead
-	StateDrinking = ActorDrinking
-)
-
 // Backward-compatible aliases for NPCState
 type NPCState = ActorState
-
-const (
-	NPCIdle      = ActorIdle
-	NPCWalking   = ActorWalking
-	NPCAttacking = ActorAttacking
-	NPCDead      = ActorDead
-)
 
 // Direction represents isometric facing direction.
 type Direction int
@@ -89,30 +75,46 @@ type Actor struct {
 	Config      *EntityConfig
 	Facing      Direction
 	State       ActorState
-	Tick        int
-	Health      int
-	MaxHealth   int
-	BaseAttack  int
-	BaseDefense int
-	Speed       float64
-	Weapon      *Weapon
-	Alignment   Alignment
-	LastAIDecisionTick int
-	Group       string
-	LeaderID    string
-	MustSurvive bool
-	Level       int
-	XP          int
-	Name        string
-	CurrentTile string // Set by Game loop before Update
-	IsOccluded  bool   // Visual occlusion by an obstacle
-
-	// Timers
-	HitTimer  int // How long to show hit sprite (BloodTimer on NPC)
-	DeadTimer int // Ticks since death
 
 	// Equipment
-	EquippedArmor map[ArmorSlot]*Armor
+	Inventory   []*ObjectConfig
+	Slots       map[string]*ObjectConfig // Maps slot name (head, body, ring1, ring2, etc.) to item
+	MaxWeight   float64
+
+	// Bonus from items
+	AttackBonus     int
+	DefenseBonus    int
+	ProtectionBonus int
+	SpeedBonus      float64
+	MaxHealthBonus  int
+	RegenPerSecond  int
+
+	Tick               int
+	Health             int
+	MaxHealth          int
+	BaseAttack         int
+	BaseDefense        int
+	Speed              float64
+	Weapon             *Weapon
+	Alignment          Alignment
+	LastAIDecisionTick int
+	Group              string
+	LeaderID           string
+	MustSurvive        bool
+	Level              int
+	XP                 int
+	Name               string
+	CurrentTile        string // Set by Game loop before Update
+	IsOccluded         bool   // Visual occlusion by an obstacle
+
+	// Progress & Scoring (formerly player-only)
+	Kills         int
+	MapKills      map[string]int
+
+	// Timers
+	HitTimer    int // How long to show hit sprite (BloodTimer on NPC)
+	DeadTimer   int // Ticks since death
+	CrouchTimer int // Ticks for crouch animation
 }
 
 // IsAlive returns true if this actor is not in the Dead state.
@@ -127,11 +129,204 @@ func (a *Actor) Heal(amount int) {
 	}
 	oldHealth := a.Health
 	a.Health += amount
-	if a.Health > a.MaxHealth {
-		a.Health = a.MaxHealth
+	maxH := a.MaxHealth + a.MaxHealthBonus
+	if a.Health > maxH {
+		a.Health = maxH
 	}
 	if a.Health > oldHealth {
 		DebugLog("Actor Healed [%s] %s! +%d | Health: %d -> %d", a.Alignment, a.Name, amount, oldHealth, a.Health)
+	}
+}
+
+// ApplyPermanentEffects permanently modifies the actor's base stats based on the object's effects.
+func (a *Actor) ApplyPermanentEffects(obj *ObjectConfig) {
+	if obj == nil || obj.Effects == nil {
+		return
+	}
+	for stat, effect := range obj.Effects {
+		switch stat {
+		case "attack":
+			a.BaseAttack += int(effect.Increase)
+		case "defense":
+			a.BaseDefense += int(effect.Increase)
+		case "speed":
+			a.Speed += effect.Increase
+		case "max_health":
+			a.MaxHealth += int(effect.Increase)
+			a.Health += int(effect.Increase)
+		case "xp":
+			a.AddXP(int(effect.Increase))
+		}
+	}
+}
+
+func (a *Actor) UpdateEffects() {
+	a.AttackBonus = 0
+	a.DefenseBonus = 0
+	a.ProtectionBonus = 0
+	a.SpeedBonus = 0
+	a.MaxHealthBonus = 0
+	a.RegenPerSecond = 0
+
+	// Apply effects from equipped slots
+	for _, obj := range a.Slots {
+		if obj == nil {
+			continue
+		}
+		for stat, effect := range obj.Effects {
+			switch stat {
+			case "attack":
+				a.AttackBonus += int(effect.Increase)
+			case "defense":
+				a.DefenseBonus += int(effect.Increase)
+			case "protection":
+				a.ProtectionBonus += int(effect.Increase)
+			case "speed":
+				a.SpeedBonus += effect.Increase
+			case "max_health":
+				a.MaxHealthBonus += int(effect.Increase)
+			case "regen":
+				a.RegenPerSecond += int(effect.Increase)
+			}
+		}
+	}
+
+	// Sync active weapon from "weapon" slot
+	if weaponObj, ok := a.Slots["weapon"]; ok && weaponObj != nil {
+		if weaponObj.Combat != nil {
+			a.Weapon = weaponObj.Combat
+		}
+	} else {
+		a.Weapon = nil
+	}
+}
+
+// EquipItem tries to equip the given object into its slot.
+// Returns true if the item was equipped (improves stats or fills empty slot).
+// Old equipped item is moved to inventory if necessary.
+func (a *Actor) EquipItem(obj *ObjectConfig) bool {
+	if obj.Slot == "" {
+		return false
+	}
+	
+	current := a.Slots[obj.Slot]
+	shouldEquip := false
+
+	if current == nil {
+		shouldEquip = true
+	} else if obj.Type == "weapon" && current.Type == "weapon" {
+		curDmg := current.Combat.Damage.Average()
+		newDmg := obj.Combat.Damage.Average()
+		if newDmg > curDmg {
+			shouldEquip = true
+		}
+	} else {
+		// Compare stat totals
+		curStats := 0.0
+		newStats := 0.0
+		for _, e := range current.Effects { curStats += e.Increase }
+		for _, e := range obj.Effects { newStats += e.Increase }
+		if newStats > curStats {
+			shouldEquip = true
+		}
+	}
+
+	if shouldEquip {
+		if current != nil {
+			a.Inventory = append(a.Inventory, current)
+		}
+		a.Slots[obj.Slot] = obj
+		
+		// Remove from inventory if it was there
+		for i, item := range a.Inventory {
+			if item == obj {
+				a.Inventory = append(a.Inventory[:i], a.Inventory[i+1:]...)
+				break
+			}
+		}
+		
+		a.UpdateEffects()
+		return true
+	}
+
+	return false
+}
+
+// EvaluateUpgrade checks if the item is better than what the actor has equipped.
+func (a *Actor) EvaluateUpgrade(obj *ObjectConfig) bool {
+	if obj.Slot == "" {
+		return false
+	}
+	
+	current := a.Slots[obj.Slot]
+	if current == nil {
+		return true // Upgrade if empty slot
+	}
+	
+	if obj.Type == "weapon" && current.Type == "weapon" {
+		curDmg := current.Combat.Damage.Average()
+		newDmg := obj.Combat.Damage.Average()
+		return newDmg > curDmg
+	}
+	
+	// Compare stat totals
+	curStats := 0.0
+	newStats := 0.0
+	for _, e := range current.Effects { curStats += e.Increase }
+	for _, e := range obj.Effects { newStats += e.Increase }
+	return newStats > curStats
+}
+
+
+// GetTotalWeight returns the total weight of everything carried and equipped.
+func (a *Actor) GetTotalWeight() float64 {
+	total := 0.0
+	// 1. Starter/Active weapon weight (if it's not in a slot to avoid double counting)
+	if a.Weapon != nil {
+		// Optimization: if it's already in the slots, it will be counted in the slots loop
+		inSlot := false
+		if weaponObj, ok := a.Slots["weapon"]; ok && weaponObj != nil {
+			if weaponObj.Combat == a.Weapon {
+				inSlot = true
+			}
+		}
+		if !inSlot {
+			total += a.Weapon.Weight
+		}
+	}
+	// 2. Inventory (backpack)
+	for _, item := range a.Inventory {
+		if item != nil {
+			total += item.Weight
+		}
+	}
+	// 3. Equipped items
+	for _, item := range a.Slots {
+		if item != nil {
+			total += item.Weight
+		}
+	}
+	return total
+}
+
+func (a *Actor) SharedUpdate(ctx *SystemContext) {
+	if !a.IsAlive() {
+		return
+	}
+	a.UpdateEffects() // Refresh bonuses from items
+
+	// Regeneration (1 unit per second = 1 unit every 60 ticks)
+	if a.RegenPerSecond > 0 && a.Health < a.GetTotalMaxHealth() {
+		if a.Tick%60 == 0 {
+			a.Heal(a.RegenPerSecond)
+		}
+	}
+
+	if a.CrouchTimer > 0 {
+		a.CrouchTimer--
+		if a.CrouchTimer == 0 && a.State == ActorCrouching {
+			a.State = ActorIdle
+		}
 	}
 }
 
@@ -150,6 +345,43 @@ func (a *Actor) GetSortY() float64 {
 		sortY -= 100.0
 	}
 	return sortY
+}
+
+// GetTotalProtection returns the sum of all equipped armor.
+func (a *Actor) GetTotalProtection() int {
+	return a.ProtectionBonus
+}
+
+// LoadEquipment loads items from Config.Equipment map into Slots and Config.Inventory array into Inventory.
+func (a *Actor) LoadEquipment(objRegistry *ObjectRegistry) {
+	if a.Config == nil || objRegistry == nil {
+		return
+	}
+	a.Inventory = nil
+	if a.Slots == nil {
+		a.Slots = make(map[string]*ObjectConfig)
+	}
+
+	// Load explicitly mapped slots first
+	for slotName, objID := range a.Config.Equipment {
+		if obj, ok := objRegistry.Objects[objID]; ok {
+			if obj.Slot != "" && obj.Slot != slotName && obj.Slot != "ring" {
+				// Mismatch warning (e.g., trying to equip a helmet in the weapon slot)
+				log.Printf("[WARNING] Entity %s equipped %s in slot %s, but item defines slot as %s", a.Config.Name, obj.Name, slotName, obj.Slot)
+			}
+			a.Slots[slotName] = obj
+		}
+	}
+
+	// Load backpack inventory
+	for _, objID := range a.Config.Inventory {
+		if obj, ok := objRegistry.Objects[objID]; ok {
+			a.Inventory = append(a.Inventory, obj)
+		}
+	}
+
+	a.UpdateEffects()
+	a.MaxWeight = a.Config.MaxWeight
 }
 
 // calculateStat applies logarithmic level scaling.
@@ -173,26 +405,21 @@ func (a *Actor) GetSpeedModifier() float64 {
 	}
 }
 
-// GetTotalAttack returns the level-scaled attack value.
+// GetTotalAttack returns the level-scaled attack value plus item bonuses.
 func (a *Actor) GetTotalAttack() int {
-	return a.calculateStat(a.BaseAttack, a.Level)
+	return a.calculateStat(a.BaseAttack, a.Level) + a.AttackBonus
 }
 
-// GetTotalDefense returns the level-scaled defense value.
+// GetTotalDefense returns the level-scaled defense value plus item bonuses.
 func (a *Actor) GetTotalDefense() int {
-	return a.calculateStat(a.BaseDefense, a.Level)
+	return a.calculateStat(a.BaseDefense, a.Level) + a.DefenseBonus
 }
 
-// GetTotalProtection returns the sum of all equipped armor.
-func (a *Actor) GetTotalProtection() int {
-	total := 0
-	for _, armor := range a.EquippedArmor {
-		if armor != nil {
-			total += armor.Protection
-		}
-	}
-	return total
+// GetTotalMaxHealth returns the maximum health plus item bonuses.
+func (a *Actor) GetTotalMaxHealth() int {
+	return a.MaxHealth + a.MaxHealthBonus
 }
+
 
 // GetCollisionCircle returns the collision circle for this actor.
 func (a *Actor) GetCollisionCircle() engine.Circle {

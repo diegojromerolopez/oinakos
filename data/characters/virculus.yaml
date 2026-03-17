@@ -14,9 +14,12 @@ stats:
   attack_cooldown: 90
   attack_range: 0.8
 weapon:
-  name: Wooden Claws
-  type: melee
-  max_distance: touch
+  name: "Clockwork Claws"
+  type: "melee"
   damage:
-    min: 8
-    max: 15
+    min: 15
+    max: 25
+  max_distance: touch
+max_weight: 250
+equipment:
+inventory: []

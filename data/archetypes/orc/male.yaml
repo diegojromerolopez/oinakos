@@ -20,13 +20,10 @@ stats:
   base_attack: 8
   base_defense: 4
   attack_cooldown: 60
-weapon:
-  name: Orcish Axe
-  type: melee
-  max_distance: touch
-  damage:
-    min: 4
-    max: 8
+max_weight: 220
+equipment:
+  weapon: orcish_axe
+inventory: []
 xp: 11
 dialogues:
   player_greetings:

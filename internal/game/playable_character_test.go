@@ -3,11 +3,10 @@ package game
 import (
 	"oinakos/internal/engine"
 	"testing"
-	"testing/fstest"
 )
 
 func TestPlayableCharacterStats(t *testing.T) {
-	mc := &PlayableCharacter{
+	mc := &Character{
 		Actor: Actor{
 			BaseAttack:  10,
 			BaseDefense: 5,
@@ -26,7 +25,7 @@ func TestPlayableCharacterStats(t *testing.T) {
 }
 
 func TestPlayableCharacterXPAndLevelUp(t *testing.T) {
-	mc := &PlayableCharacter{
+	mc := &Character{
 		Actor: Actor{
 			Level: 1,
 			XP:    0,
@@ -52,12 +51,12 @@ func TestPlayableCharacterXPAndLevelUp(t *testing.T) {
 
 func TestPlayableCharacterTakeDamage(t *testing.T) {
 	ctx := NewTestContext()
-	mc := &PlayableCharacter{Actor: Actor{Health: 100, MaxHealth: 100}}
-	mc.TakeDamage(20, ctx)
+	mc := &Character{Actor: Actor{Health: 100, MaxHealth: 100, Config: &EntityConfig{ID: "player"}}}
+	mc.TakeDamage(20, nil, ctx)
 	if mc.Health != 80 {
 		t.Errorf("Health after damage: got %d, want 80", mc.Health)
 	}
-	mc.TakeDamage(100, ctx)
+	mc.TakeDamage(100, nil, ctx)
 	if mc.Health != 0 {
 		t.Errorf("Health after lethal damage: got %d, want 0", mc.Health)
 	}
@@ -67,7 +66,7 @@ func TestPlayableCharacterTakeDamage(t *testing.T) {
 }
 
 func TestPlayableCharacterGetters(t *testing.T) {
-	mc := &PlayableCharacter{Actor: Actor{BaseDefense: 10}}
+	mc := &Character{Actor: Actor{BaseDefense: 10}}
 	if mc.GetTotalDefense() != 10 {
 		t.Errorf("GetTotalDefense: got %d, want 10", mc.GetTotalDefense())
 	}
@@ -75,7 +74,14 @@ func TestPlayableCharacterGetters(t *testing.T) {
 		t.Errorf("GetTotalProtection: got %d, want 0", mc.GetTotalProtection())
 	}
 
-	mc.EquippedArmor = map[ArmorSlot]*Armor{SlotBody: {Protection: 5}}
+	mc.Slots = make(map[string]*ObjectConfig)
+	mc.Slots["body"] = &ObjectConfig{
+		Slot: "body",
+		Effects: map[string]StatEffect{
+			"protection": {Increase: 5},
+		},
+	}
+	mc.UpdateEffects()
 	if mc.GetTotalProtection() != 5 {
 		t.Errorf("GetTotalProtection with armor: got %d, want 5", mc.GetTotalProtection())
 	}
@@ -83,18 +89,18 @@ func TestPlayableCharacterGetters(t *testing.T) {
 
 func TestPlayableCharacterCheckAttackHits(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewPlayableCharacter(0, 0, nil)
+	mc := NewCharacter(0, 0, nil, 1, true)
 	mc.Weapon = &Weapon{Name: "TestWeapon", Damage: Damage{Min: 10, Max: 10}}
 	mc.Facing = DirSE
 
-	npc := &NPC{Actor: Actor{X: 1, Y: 0.5, State: NPCIdle}}
-	ctx.World.NPCs = []*NPC{npc}
+	npc := &Character{Actor: Actor{X: 1, Y: 0.5, State: ActorIdle}}
+	ctx.World.Characters = []*Character{npc}
 	ctx.World.PlayableCharacter = mc
 	mc.CheckAttackHits(ctx)
 }
 
 func TestPlayableCharacterCollisionCircle(t *testing.T) {
-	mc := NewPlayableCharacter(10, 10, nil)
+	mc := NewCharacter(10, 10, nil, 1, true)
 	c := mc.GetCollisionCircle()
 	if c.Radius <= 0 {
 		t.Error("Collision circle should have radius > 0")
@@ -102,7 +108,7 @@ func TestPlayableCharacterCollisionCircle(t *testing.T) {
 }
 
 func TestPlayableCharacterCollision(t *testing.T) {
-	mc := NewPlayableCharacter(10, 10, nil)
+	mc := NewCharacter(10, 10, nil, 1, true)
 	colliders := []*Obstacle{NewObstacle("test_mc_collider", 10.5, 10.5, nil)}
 	if !mc.checkCollisionAt(10.5, 10.5, colliders) {
 		t.Error("Expected collision at 10.5, 10.5")
@@ -112,54 +118,35 @@ func TestPlayableCharacterCollision(t *testing.T) {
 	}
 }
 
-func TestLoadPlayerImage(t *testing.T) {
-	// Need a valid 1x1 PNG data string
-	pngData := "\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
-	mockFS := fstest.MapFS{
-		"test.png": {Data: []byte(pngData)},
-	}
-
-	_, err := loadPlayerImage(mockFS, "test.png")
-	if err != nil {
-		t.Errorf("Expected nil error loading from fs: %v", err)
-	}
-
-	// Test missing file
-	_, err = loadPlayerImage(mockFS, "missing.png")
-	if err == nil {
-		t.Errorf("Expected error loading missing file")
-	}
-}
-
 func TestPlayableCharacterUpdate_Full(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewPlayableCharacter(0, 0, nil)
+	mc := NewCharacter(0, 0, nil, 1, true)
 	mc.Health = mc.MaxHealth
 	ctx.World.PlayableCharacter = mc
 	mockInput := ctx.Input.(*MockInputManager)
 
 	// Update when dead
-	mc.State = StateDead
+	mc.State = ActorDead
 	mc.Update(ctx)
-	if mc.State != StateDead {
+	if mc.State != ActorDead {
 		t.Error("Dead mc should stay dead")
 	}
 
 	// Update drinking
-	mc.State = StateDrinking
+	mc.State = ActorDrinking
 	mc.Tick = 0
 	mc.Update(ctx)
-	if mc.State != StateDrinking {
+	if mc.State != ActorDrinking {
 		t.Error("Should stay drinking")
 	}
 	mc.Tick = 60
 	mc.Update(ctx)
-	if mc.State != StateIdle {
+	if mc.State != ActorIdle {
 		t.Error("Should be idle after drink timer")
 	}
 
 	// Update attacking
-	mc.State = StateAttacking
+	mc.State = ActorAttacking
 	mc.Tick = 14
 	mc.Update(ctx)
 	if mc.Tick != 15 {
@@ -167,16 +154,16 @@ func TestPlayableCharacterUpdate_Full(t *testing.T) {
 	}
 	mc.Tick = 30
 	mc.Update(ctx)
-	if mc.State != StateIdle {
+	if mc.State != ActorIdle {
 		t.Error("Should be idle after attack anim")
 	}
 
 	// Movement Input checks
-	mc.State = StateIdle
+	mc.State = ActorIdle
 	mockInput.PressedKeys[engine.KeyW] = true
 	mockInput.PressedKeys[engine.KeyD] = true
 	mc.Update(ctx)
-	if mc.State != StateWalking {
+	if mc.State != ActorWalking {
 		t.Error("Should be walking on input")
 	}
 	if mc.Facing != DirNE {

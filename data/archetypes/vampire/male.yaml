@@ -17,13 +17,6 @@ stats:
   base_defense: 8
   attack_cooldown: 40
   infecting_probability: 0.15
-weapon:
-  name: Claws
-  type: melee
-  max_distance: touch
-  damage:
-    min: 6
-    max: 12
 xp: 25
 dialogues:
   player_greetings:
@@ -33,3 +26,6 @@ dialogues:
   - Bleed for me!
   - Your life is mine!
   - The night belongs to the children of the moon!
+max_weight: 150
+equipment:
+inventory: []

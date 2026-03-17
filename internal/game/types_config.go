@@ -154,6 +154,9 @@ type PreSpawnObstacle struct {
 	ID          string   `yaml:"id"`
 	Archetype   string   `yaml:"archetype"`
 	ArchetypeID string   `yaml:"archetype_id,omitempty"`
+	Actions    *ActionConfig `yaml:"actions,omitempty"`
+	Weapon      WeaponConfig  `yaml:"weapon"`
+	CollisionRadius float64      `yaml:"collision_radius,omitempty"`
 	X           *float64 `yaml:"x,omitempty"`
 	Y           *float64 `yaml:"y,omitempty"`
 	Disabled    bool     `yaml:"disabled,omitempty"`
@@ -282,4 +285,66 @@ type VictimEffect struct {
 
 type AttackerEffect struct {
 	Heal int `yaml:"heal,omitempty"`
+}
+
+type StatEffect struct {
+	Increase float64 `yaml:"increase"`
+}
+
+type ObjectConfig struct {
+	ID          string                `yaml:"id"`
+	Name        string                `yaml:"name"`
+	Description string                `yaml:"description"`
+	Weight      float64               `yaml:"weight"`
+	Type        string                `yaml:"type"`
+	Category    string                `yaml:"category,omitempty"` // e.g. "magic"
+	Value       int                   `yaml:"value"`
+	Content     string                `yaml:"content,omitempty"`
+	Consumable  bool                  `yaml:"consumable,omitempty"`
+	Combat      *Weapon               `yaml:"combat,omitempty"`
+	Slot        string                `yaml:"slot,omitempty"` // e.g. "head", "body", "shield", "weapon", "ring"
+	Effects     map[string]StatEffect `yaml:"effects,omitempty"`
+
+	// Run-time loaded assets
+	AssetDir  string           `yaml:"-"`
+	Sprite    engine.Image     `yaml:"-"`
+	Footprint []FootprintPoint `yaml:"footprint,omitempty"`
+}
+
+type WeaponConfig struct {
+	ID     string
+	Inline *Weapon
+}
+
+func (w *WeaponConfig) UnmarshalYAML(value *yaml.Node) error {
+	var s string
+	if err := value.Decode(&s); err == nil {
+		w.ID = s
+		return nil
+	}
+	var inline Weapon
+	if err := value.Decode(&inline); err == nil {
+		w.Inline = &inline
+		return nil
+	}
+	if value.Kind == yaml.ScalarNode && value.Value == "" {
+		return nil
+	}
+	return fmt.Errorf("invalid weapon: must be string ID or weapon object at line %d", value.Line)
+}
+
+func (w *WeaponConfig) IsEmpty() bool {
+	return w.ID == "" && w.Inline == nil
+}
+
+func (w *WeaponConfig) Resolve(reg *ObjectRegistry) *Weapon {
+	if w.Inline != nil {
+		return w.Inline
+	}
+	if w.ID != "" && reg != nil {
+		if obj, ok := reg.Objects[w.ID]; ok {
+			return obj.Combat
+		}
+	}
+	return nil
 }

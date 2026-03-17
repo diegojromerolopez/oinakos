@@ -15,9 +15,13 @@ stats:
   attack_range: 5.0
   projectile_speed: 0.12
 weapon:
-  name: Black Flame
-  type: ranged
-  max_distance: '8.0'
+  name: "Cursed Blast"
+  type: "ranged"
   damage:
-    min: 12
-    max: 25
+    min: 15
+    max: 30
+  max_distance: "5.0"
+max_weight: 200
+equipment:
+inventory:
+  - book_lore

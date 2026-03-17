@@ -75,7 +75,7 @@ func (p *Projectile) Update(ctx *SystemContext) {
 			protection := mc.GetTotalProtection()
 			finalDmg := int(math.Max(1, float64(p.Damage-protection)))
 			DebugLog("Projectile HIT Player for %d damage", finalDmg)
-			mc.TakeDamage(finalDmg, ctx)
+			mc.TakeDamage(finalDmg, nil, ctx)
 
 			ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{
 				Text:  fmt.Sprintf("-%d", finalDmg),

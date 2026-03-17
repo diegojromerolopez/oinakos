@@ -84,7 +84,7 @@ func TestSpawningLogic(t *testing.T) {
 		g.worldManager.UpdateNPCSpawning()
 	}
 
-	if len(g.npcs) == 0 {
+	if len(g.characters) == 0 {
 		t.Error("Should have spawned NPCs")
 	}
 }
@@ -116,12 +116,12 @@ func TestHeroFlagOverride(t *testing.T) {
 			Speed:     0.05,
 		},
 	}
-	g.playableCharacterRegistry.Characters["conde_olinos"] = heroConfig
-	g.playableCharacterRegistry.IDs = append(g.playableCharacterRegistry.IDs, "conde_olinos")
+	g.characterRegistry.Characters["conde_olinos"] = heroConfig
+	g.characterRegistry.IDs = append(g.characterRegistry.IDs, "conde_olinos")
 
 	// Re-run the initialization logic that handles the flag
 	// Since we already called NewGame, we manually trigger the block we added
-	if config, ok := g.playableCharacterRegistry.Characters[g.initialHeroID]; ok {
+	if config, ok := g.characterRegistry.Characters[g.initialHeroID]; ok {
 		g.playableCharacter.Config = config
 		g.playableCharacter.Health = config.Stats.HealthMin
 		g.playableCharacter.MaxHealth = config.Stats.HealthMin

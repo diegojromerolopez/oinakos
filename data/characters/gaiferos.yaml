@@ -12,10 +12,7 @@ stats:
   base_defense: 12
   speed: 0.09
   attack_cooldown: 25
-weapon:
-  name: Casatrix Testarum
-  type: melee
-  max_distance: touch
-  damage:
-    min: 10
-    max: 20
+max_weight: 250
+equipment:
+  weapon: casatrix_testarum
+inventory: []

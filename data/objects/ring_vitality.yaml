@@ -1,0 +1,10 @@
+name: Ring of Vitality
+description: A magic ring that increases your maximum health.
+weight: 0.1
+type: ring
+category: magic
+slot: ring
+value: 400
+effects:
+  max_health:
+    increase: 50

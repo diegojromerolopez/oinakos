@@ -1,0 +1,22 @@
+name: Steel Dagger
+description: A short, sharp blade made of tempered steel. Very fast.
+weight: 1.5
+type: weapon
+slot: weapon
+value: 40
+combat:
+  name: Steel Dagger
+  type: melee
+  max_distance: touch
+  damage:
+    min: 3
+    max: 6
+footprint:
+  - x: -1.25
+    y: -1.81
+  - x: -0.63
+    y: -0.88
+  - x: -0.41
+    y: 0.09
+  - x: -0.95
+    y: -0.61

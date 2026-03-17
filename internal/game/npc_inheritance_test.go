@@ -64,7 +64,7 @@ gender: male
 
 	// 1. Create registries
 	archReg := NewArchetypeRegistry()
-	npcReg := NewNPCRegistry()
+	npcReg := NewCharacterRegistry()
 
 	// 2. Add the base archetype manually
 	archReg.Archetypes["man_at_arms_male"] = &EntityConfig{
@@ -89,13 +89,13 @@ gender: male
 		Gender:      "male",
 		AudioDir:    "assets/audio/npcs/crimson_guard",
 	}
-	npcReg.NPCs = configs
+	npcReg.Characters = configs
 
 	// 4. Run LoadAssets to exercise inheritance logic
 	graphics := &MockGraphicsInheritance{}
 	npcReg.LoadAssets(fsys, graphics, archReg, nil)
 
-	npc := npcReg.NPCs["crimson_guard"]
+	npc := npcReg.Characters["crimson_guard"]
 
 	// VERIFY: Did it find the correct SoundID?
 	// It should favor local audio (crimson_guard/hit.wav exists)
@@ -115,7 +115,7 @@ gender: male
 		Gender:      "male",
 		AudioDir:    "assets/audio/npcs/golden_guard", // Empty in mock FS
 	}
-	npcReg.NPCs["golden_guard"] = npc2
+	npcReg.Characters["golden_guard"] = npc2
 	npcReg.LoadAssets(fsys, graphics, archReg, nil)
 
 	if npc2.SoundID != "man_at_arms_male" {
@@ -128,8 +128,8 @@ func TestNPC_GenderFallback(t *testing.T) {
 	archReg := NewArchetypeRegistry()
 	archReg.Archetypes["virculus"] = &EntityConfig{ID: "virculus"}
 
-	npcReg := NewNPCRegistry()
-	npcReg.NPCs["virculus"] = &EntityConfig{
+	npcReg := NewCharacterRegistry()
+	npcReg.Characters["virculus"] = &EntityConfig{
 		ID:          "virculus",
 		ArchetypeID: "virculus",
 		Gender:      "none",
@@ -137,7 +137,7 @@ func TestNPC_GenderFallback(t *testing.T) {
 
 	npcReg.LoadAssets(fstest.MapFS{}, &MockGraphicsInheritance{}, archReg, nil)
 
-	if npcReg.NPCs["virculus"].SoundID != "virculus" {
-		t.Errorf("Expected SoundID 'virculus', got %q", npcReg.NPCs["virculus"].SoundID)
+	if npcReg.Characters["virculus"].SoundID != "virculus" {
+		t.Errorf("Expected SoundID 'virculus', got %q", npcReg.Characters["virculus"].SoundID)
 	}
 }

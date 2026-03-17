@@ -11,12 +11,17 @@ type Damage struct {
 	Max int `yaml:"max"`
 }
 
+func (d Damage) Average() float64 {
+	return float64(d.Min+d.Max) / 2.0
+}
+
 type Weapon struct {
-	Name        string `yaml:"name"`
-	Type        string `yaml:"type"`         // "ranged" or "melee"
-	MaxDistance string `yaml:"max_distance"` // "touch" or pixel distance
-	Damage      Damage `yaml:"damage"`
-	Bonus       int    `yaml:"-"`
+	Name        string  `yaml:"name"`
+	Type        string  `yaml:"type"`         // "ranged" or "melee"
+	MaxDistance string  `yaml:"max_distance"` // "touch" or pixel distance
+	Damage      Damage  `yaml:"damage"`
+	Weight      float64 `yaml:"weight,omitempty"`
+	Bonus       int     `yaml:"-"`
 }
 
 // Armor defines defensive gear

@@ -1,0 +1,24 @@
+name: Iron Sword
+description: A sturdy blade of common iron.
+weight: 4.0
+type: weapon
+slot: weapon
+value: 50
+combat:
+  name: Iron Sword
+  type: melee
+  max_distance: touch
+  damage:
+    min: 4
+    max: 8
+footprint:
+  - x: -2.52
+    y: -1.61
+  - x: -1.56
+    y: -1.25
+  - x: 0.86
+    y: -0.3
+  - x: -1.5
+    y: -0.88
+  - x: -2.47
+    y: -1.34

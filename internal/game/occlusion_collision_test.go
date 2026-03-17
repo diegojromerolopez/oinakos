@@ -44,9 +44,9 @@ func TestOcclusionAndCollision(t *testing.T) {
 	graphics := &mockGraphics{}
 	mcConfig := &EntityConfig{ID: "player"}
 	mcConfig.StaticImage = graphics.NewImage(32, 32)
-	mcConfig.Weapon = WeaponTizon
+	mcConfig.Weapon = WeaponConfig{Inline: WeaponTizon}
 
-	mc := NewPlayableCharacter(0, 14, mcConfig) // Move player "behind" the building
+	mc := NewCharacter(0, 14, mcConfig, 1, true) // Move player "behind" the building
 
 	obsConfig := &ObstacleArchetype{
 		ID:   "smithery",

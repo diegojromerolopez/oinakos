@@ -14,9 +14,9 @@ func (g *Game) applyPlayerAIDecision(dec AIDecision) {
 
 	if strings.Contains(choice, "attack") {
 		// Find target mentioned in reasoning or just nearest enemy
-		var nearest *NPC
+		var nearest *Character
 		minDist := 999.0
-		for _, n := range g.npcs {
+		for _, n := range g.characters {
 			if !n.IsAlive() || n.Alignment == AlignmentAlly || n.Alignment == AlignmentNeutral {
 				continue
 			}
@@ -44,9 +44,9 @@ func (g *Game) applyPlayerAIDecision(dec AIDecision) {
 		g.playableCharacter.WanderDirY = 0
 	} else if strings.Contains(choice, "flee") {
 		// Move away from nearest enemy
-		var nearest *NPC
+		var nearest *Character
 		minDist := 999.0
-		for _, n := range g.npcs {
+		for _, n := range g.characters {
 			if !n.IsAlive() || n.Alignment == AlignmentAlly || n.Alignment == AlignmentNeutral {
 				continue
 			}

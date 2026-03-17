@@ -9,6 +9,12 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type PreSpawnObject struct {
+	ID string  `yaml:"id"`
+	X  float64 `yaml:"x"`
+	Y  float64 `yaml:"y"`
+}
+
 type MapType struct {
 	ID              string             `yaml:"id"`
 	Name            string             `yaml:"name"`
@@ -22,9 +28,10 @@ type MapType struct {
 	WidthPixels     int                `yaml:"width_px"`
 	HeightPixels    int                `yaml:"height_px"`
 	Inhabitants     []Inhabitant       `yaml:"inhabitants"`
-	NPCs            []Inhabitant       `yaml:"npcs,omitempty"`
+	Characters      []Inhabitant       `yaml:"characters,omitempty"`
 	Spawns          []SpawnConfig      `yaml:"spawns"`
 	Obstacles       []PreSpawnObstacle `yaml:"obstacles"`
+	Objects         []PreSpawnObject   `yaml:"objects"`
 	FloorTile       string             `yaml:"floor_tile"`
 	FloorZones      []*FloorZone       `yaml:"floor_zones"`
 	TargetPointRaw  *TargetPointConfig `yaml:"target_point"` // Optional YAML-supplied target point

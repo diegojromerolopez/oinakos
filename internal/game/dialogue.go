@@ -62,7 +62,7 @@ const (
 )
 
 type DialogueState struct {
-	SpeakerNPC     *NPC
+	SpeakerNPC     *Character
 	CurrentText    string
 	Choices        []Choice
 	SelectedChoice int

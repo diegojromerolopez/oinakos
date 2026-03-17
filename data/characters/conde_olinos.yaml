@@ -12,10 +12,7 @@ stats:
   base_defense: 10
   speed: 0.07
   attack_cooldown: 30
-weapon:
-  name: Long sword
-  type: melee
-  max_distance: touch
-  damage:
-    min: 5
-    max: 10
+max_weight: 250
+equipment:
+  weapon: long_sword
+inventory: []

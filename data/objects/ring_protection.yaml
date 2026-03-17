@@ -1,0 +1,10 @@
+name: Ring of Protection
+description: A magic ring that protects its wearer.
+weight: 0.1
+type: ring
+category: magic
+slot: ring
+value: 200
+effects:
+  protection:
+    increase: 1

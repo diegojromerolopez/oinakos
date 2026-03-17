@@ -6,7 +6,8 @@ import (
 
 func (mh *MenuHandler) updateCharacterSelect() error {
 	g := mh.game
-	nChars := len(g.playableCharacterRegistry.IDs)
+	playableIDs := g.characterRegistry.PlayableIDs()
+	nChars := len(playableIDs)
 	nOptions := nChars + 1 // +1 for "Back"
 	if g.input.IsKeyJustPressed(engine.KeyUp) || g.input.IsKeyJustPressed(engine.KeyW) || g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) {
 		g.characterMenuIndex--
@@ -52,8 +53,8 @@ func (mh *MenuHandler) updateCharacterSelect() error {
 
 	if handleSelect {
 		if g.characterMenuIndex < nChars {
-			charID := g.playableCharacterRegistry.IDs[g.characterMenuIndex]
-			config := g.playableCharacterRegistry.Characters[charID]
+			charID := playableIDs[g.characterMenuIndex]
+			config := g.characterRegistry.Characters[charID]
 			g.initialHeroID = charID
 			g.playableCharacter.Config = config
 			g.playableCharacter.Health = config.Stats.HealthMin
@@ -61,7 +62,7 @@ func (mh *MenuHandler) updateCharacterSelect() error {
 			g.playableCharacter.Speed = config.Stats.Speed
 			g.playableCharacter.BaseAttack = config.Stats.BaseAttack
 			g.playableCharacter.BaseDefense = config.Stats.BaseDefense
-			g.playableCharacter.Weapon = config.Weapon
+			g.playableCharacter.Weapon = config.Weapon.Resolve(g.Registries.Objects)
 			g.playableCharacter.Name = config.Name
 
 			g.isCharacterSelect = false

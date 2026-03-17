@@ -26,6 +26,7 @@ All game content is defined in YAML under `data/` and loaded at startup:
 - **`PlayableCharacterRegistry`** — player-selectable characters. Each sets `EntityConfig.PlayableCharacter = config.ID`.
 - **`MapTypeRegistry`** — both standalone maps and individual campaign map levels.
 - **`CampaignRegistry`** — ordered sequences of map IDs.
+- **`ObjectRegistry`** — definitions for items, weapons, and equipment (loaded from `data/objects`).
 
 ### Playable Characters
 - Defined in `data/characters/`. Loaded by `PlayableCharacterRegistry`.
@@ -96,7 +97,8 @@ All game content is defined in YAML under `data/` and loaded at startup:
 ### Sprites
 - **Characters & NPCs**: **160×160 px**, solid **`#00FF00`** (chroma-key green) background.
 - **Proportions**: Realistic human scale relative to the isometric tile.
-- Required frames: `static.png`, `attack.png`, `corpse.png`. Optional: `back.png`, `hit.png`, `hit1.png`, `hit2.png`, `attack1.png`, `attack2.png`.
+- Required frames: `static.png`, `attack.png`, `corpse.png`. 
+- Optional: `crouch.png` (required for picking up items), `back.png`, `hit.png`, `hit1.png`, `hit2.png`, `attack1.png`, `attack2.png`.
 
 ### Palette Masking (Shader-Swappable Colors)
 - **Magenta (`#FF00FF`)**: Primary color zone — swapped at runtime with `primary_color` from YAML.
@@ -109,6 +111,7 @@ All game content is defined in YAML under `data/` and loaded at startup:
 - `make boundaries-editor OBSTACLE=tree_oak`
 - `make boundaries-editor NPC=stultus`
 - `make boundaries-editor CHARACTER=oinakos`
+- `make boundaries-editor OBJECT=iron_sword`
 
 ### Audio
 - Format: **WAV**, single-channel or stereo, any sample rate (engine resamples to 44100 Hz).
@@ -131,6 +134,7 @@ All game content is defined in YAML under `data/` and loaded at startup:
 │   ├── characters/         # <id>.yaml → playable character definitions
 │   ├── npcs/               # <id>.yaml → unique/named NPCs
 │   ├── obstacles/          # <id>.yaml → map object definitions
+│   ├── objects/            # <id>.yaml → items, weapons, and equipment definitions
 │   ├── maps/               # <id>.yaml → standalone sandbox maps
 │   └── campaigns/          # <id>.yaml → ordered map sequences
 │       └── <id>/           # Per-campaign map level YAMLs
@@ -170,6 +174,7 @@ All game content is defined in YAML under `data/` and loaded at startup:
 | `make boundaries-editor OBSTACLE=id` | Launch footprint editor for an obstacle |
 | `make boundaries-editor NPC=id` | Launch footprint editor for a unique NPC |
 | `make boundaries-editor CHARACTER=id` | Launch footprint editor for a character |
+| `make boundaries-editor OBJECT=id` | Launch footprint editor for an object |
 | `make bundle-mac` | Build `dist/Oinakos.app` |
 | `make bundle-windows` | Build `dist/Oinakos_Windows.zip` |
 | `make bundle-linux` | Build `dist/Oinakos_Linux.tar.gz` |

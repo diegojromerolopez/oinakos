@@ -1,0 +1,18 @@
+id: crimson_guard
+group: "Crimson Arm"
+name: Crimson Guard
+archetype: man_at_arms
+gender: male
+unique: false
+primary_color: "#DC143C"
+secondary_color: "#FFFFFF"
+stats:
+  health_min: 100
+  health_max: 120
+  base_attack: 20
+  base_defense: 12
+xp: 20
+max_weight: 150
+equipment:
+  ring1: ring_power
+inventory: []

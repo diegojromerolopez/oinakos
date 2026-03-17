@@ -24,6 +24,7 @@ Choose your knight before entering battle. Each character has unique stats, weap
 | **Conde Olinos** | Spanish | Long Sword | A tragic noble whose song moved the sea. Speaks Spanish. |
 | **Gaiferos** | Spanish | Axe | A brave knight on a quest to free his beloved Melisendra. Speaks Spanish. |
 | **Conde Estruch** | Catalan | Sword | A noble entangled in the mysteries of the old Catalan lands. |
+| **Princess Elvira** | Spanish | Cursed Blast | A noble sorceress seeking to cleanse her family name. |
 
 ### ⚔️ Key Gameplay Features
 - **AI-Driven Simulation Mode**: Toggle `ai_simulation_mode` in settings to watch the player character make tactical decisions (attack, flee, move to objective) using local or cloud AI.
@@ -36,6 +37,7 @@ Choose your knight before entering battle. Each character has unique stats, weap
 - **NPC Faction System**: NPCs grouped by faction (e.g., *Peasants*, *Crimson Arm*) share hive-mind alert responses within a 20-unit radius.
 - **Dynamic Palette Swapping**: GPU shaders recolor NPC unit armbands/capes at runtime using Magenta/Yellow color masks defined in YAML.
 - **Interactive Environments**: Obstacles have an `actions` system — healing wells, damaging campfires — each with optional interaction gates.
+- **Items & Inventory**: Collect weapons, armor, and lore items. Characters have weight limits and limited backpack space.
 
 ### 🧠 AI & NPC Intelligence
 
@@ -193,6 +195,7 @@ Graphical tool for editing collision footprints in isometric space.
 make boundaries-editor OBSTACLE=tree_oak
 make boundaries-editor NPC=stultus
 make boundaries-editor CHARACTER=oinakos
+make boundaries-editor OBJECT=iron_sword
 ```
 Changes are saved automatically to the corresponding `.yaml` file in `data/`.
 
@@ -307,6 +310,7 @@ actions:
 │   ├── characters/   # Playable character definitions
 │   ├── npcs/         # Unique named NPCs
 │   ├── obstacles/    # Map object definitions
+│   ├── objects/      # Item and equipment definitions
 │   ├── maps/         # Standalone map levels
 │   └── campaigns/    # Multi-map campaign definitions
 ├── assets/

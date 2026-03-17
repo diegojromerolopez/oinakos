@@ -17,13 +17,10 @@ stats:
   base_attack: 2
   base_defense: 0
   attack_cooldown: 100
-weapon:
-  name: Dagger
-  type: melee
-  max_distance: touch
-  damage:
-    min: 2
-    max: 5
+max_weight: 100
+equipment:
+  weapon: rolling_pin
+inventory: []
 xp: 4
 dialogues:
   player_greetings:

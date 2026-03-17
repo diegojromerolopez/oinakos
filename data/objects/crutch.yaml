@@ -1,0 +1,13 @@
+name: Crutch
+description: A standard crutch.
+weight: 1.0
+type: weapon
+slot: weapon
+value: 50
+combat:
+  name: Crutch
+  type: melee
+  damage:
+    min: 2
+    max: 5
+  max_distance: touch

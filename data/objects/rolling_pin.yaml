@@ -1,0 +1,14 @@
+name: Rolling Pin
+description: Heavy wood, surprisingly effective in close quarters.
+weight: 1.0
+type: weapon
+slot: weapon
+value: 2
+combat:
+  name: Rolling Pin
+  type: melee
+  max_distance: touch
+  damage:
+    min: 1
+    max: 3
+  weight: 1.0

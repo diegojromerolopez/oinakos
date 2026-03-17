@@ -40,9 +40,9 @@ func (mm *MechanicsManager) UpdateProximityEffects(ctx *SystemContext) {
 	world := ctx.World
 	for _, o := range world.Obstacles {
 		if !o.Alive || o.Archetype == nil { continue }
-		entities := make([]ActorInterface, 0, len(world.NPCs)+1)
+		entities := make([]ActorInterface, 0, len(world.Characters)+1)
 		entities = append(entities, world.PlayableCharacter)
-		for _, n := range world.NPCs {
+		for _, n := range world.Characters {
 			if n.IsAlive() { entities = append(entities, n) }
 		}
 		for _, entity := range entities {
@@ -50,8 +50,8 @@ func (mm *MechanicsManager) UpdateProximityEffects(ctx *SystemContext) {
 			var eCircle engine.Circle
 			var isMC bool
 			switch e := entity.(type) {
-			case *PlayableCharacter: ex, ey, eCircle, isMC = e.X, e.Y, e.GetCollisionCircle(), true
-			case *NPC: ex, ey, eCircle = e.X, e.Y, e.GetCollisionCircle()
+			case *Character:
+				ex, ey, eCircle, isMC = e.X, e.Y, e.GetCollisionCircle(), e.IsPlayerControlled
 			default: continue
 			}
 			for _, action := range o.Archetype.Actions {
@@ -66,9 +66,7 @@ func (mm *MechanicsManager) UpdateProximityEffects(ctx *SystemContext) {
 				if action.Type == ActionHarm {
 					if o.EffectTimers[entity] <= 0 {
 						switch e := entity.(type) {
-						case *PlayableCharacter: e.TakeDamage(action.Amount, ctx)
-						case *NPC:
-							e.TakeDamage(action.Amount, nil, ctx)
+						case *Character: e.TakeDamage(action.Amount, nil, ctx)
 						}
 						o.EffectTimers[entity] = 60
 						world.FloatingTexts = append(world.FloatingTexts, &FloatingText{
@@ -79,15 +77,14 @@ func (mm *MechanicsManager) UpdateProximityEffects(ctx *SystemContext) {
 					allowed := true
 					if action.AlignmentLimit != "" && action.AlignmentLimit != "all" {
 						var alignment Alignment
-						if isMC { alignment = AlignmentAlly } else { alignment = entity.(*NPC).Alignment }
+						if isMC { alignment = AlignmentAlly } else { alignment = entity.(*Character).Alignment }
 						if (action.AlignmentLimit == "enemy" && alignment != AlignmentEnemy) || (action.AlignmentLimit == "ally" && alignment != AlignmentAlly) {
 							allowed = false
 						}
 					}
 					if allowed && o.EffectTimers[entity] <= 0 {
 						switch e := entity.(type) {
-						case *PlayableCharacter: e.Heal(action.Amount)
-						case *NPC: e.Heal(action.Amount)
+						case *Character: e.Heal(action.Amount)
 						}
 						o.EffectTimers[entity] = 60
 						world.FloatingTexts = append(world.FloatingTexts, &FloatingText{
@@ -131,8 +128,8 @@ func (mm *MechanicsManager) CheckWinConditions(ctx *SystemContext) bool {
 		if radius <= 0 { radius = 2.0 }
 		if dist < radius { mapWon = true }
 	case ObjProtectNPC:
-		if len(world.NPCs) > 0 {
-			escort := world.NPCs[0]
+		if len(world.Characters) > 0 {
+			escort := world.Characters[0]
 			if !escort.IsAlive() { /* handle game over externally */ } else {
 				dx, dy := escort.X-world.CurrentMapType.TargetPoint.X, escort.Y-world.CurrentMapType.TargetPoint.Y
 				dist, radius := math.Sqrt(dx*dx+dy*dy), world.CurrentMapType.TargetRadius
@@ -140,7 +137,7 @@ func (mm *MechanicsManager) CheckWinConditions(ctx *SystemContext) bool {
 				if dist < radius { mapWon = true }
 			}
 		}
-	case ObjKillVIP: if len(world.NPCs) > 0 && !world.NPCs[0].IsAlive() { mapWon = true }
+	case ObjKillVIP: if len(world.Characters) > 0 && !world.Characters[0].IsAlive() { mapWon = true }
 	case ObjPacifist:
 		for _, kills := range world.PlayableCharacter.MapKills { if kills > 0 { /* handle game over externally */ break } }
 	case ObjDestroyBuilding:

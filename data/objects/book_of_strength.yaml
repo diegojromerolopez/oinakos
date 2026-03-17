@@ -1,0 +1,21 @@
+id: book_of_strength
+name: Tome of Strength
+description: A heavy, dust-covered tome containing ancient forbidden techniques of power. Reading it increases your base attack permanently.
+weight: 2.0
+type: consumable
+category: magic
+value: 500
+content: "\"...and so the First King struck the anvil \nwith bare fists until the iron bent to \nHis will. Strength is not born of muscle, \nbut of the unyielding refusal to break.\"\n\n(You feel a surge of power course through your veins. Your Base Attack increases permanently!)\n"
+consumable: true
+effects:
+  attack:
+    increase: 10
+footprint:
+  - x: -1.53
+    y: -1.16
+  - x: -1.19
+    y: -1.56
+  - x: -0.19
+    y: -0.56
+  - x: -0.67
+    y: -0.27

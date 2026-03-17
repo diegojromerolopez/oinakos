@@ -1,0 +1,23 @@
+name: Magic Staff
+description: A wooden staff imbued with arcane power.
+weight: 4.0
+type: weapon
+slot: weapon
+value: 300
+combat:
+  name: Magic Staff
+  type: ranged
+  max_distance: '8.0'
+  damage:
+    min: 8
+    max: 20
+  weight: 4.0
+footprint:
+  - x: -1.55
+    y: -2.7
+  - x: -0.8
+    y: -1.27
+  - x: -0.27
+    y: 0.83
+  - x: -1.14
+    y: -1.11

@@ -1,0 +1,21 @@
+name: Bone Amulet
+description: An amulet made of carved knuckles. It feels cold to the touch.
+weight: 0.5
+type: amulet
+category: magic
+slot: ring
+value: 150
+effects:
+  regen:
+    increase: 1
+  max_health:
+    increase: 10
+footprint:
+- x: -22.0
+  y: -21.984
+- x: 7.953
+  y: -21.984
+- x: 7.953
+  y: 7.969
+- x: -22.0
+  y: 7.969

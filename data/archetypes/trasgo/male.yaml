@@ -13,13 +13,6 @@ stats:
   base_defense: 10
   attack_cooldown: 100
   attack_range: 0.0
-weapon:
-  name: None
-  type: melee
-  max_distance: touch
-  damage:
-    min: 0
-    max: 0
 alignment: neutral
 xp: 10
 dialogues:
@@ -29,3 +22,6 @@ dialogues:
   - Your sword is too slow, too slow!
   - Boing! Boing! Hehe!
   - '*Cackles and leaps away*'
+max_weight: 60
+equipment:
+inventory: []

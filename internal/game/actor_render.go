@@ -40,6 +40,12 @@ func DrawActorGetSprite(a *Actor) engine.Image {
 		if img := a.Config.PickAttackImage(a.Tick / cooldown); img != nil {
 			drawSprite = img
 		}
+	} else if a.State == ActorCrouching {
+		if img := a.Config.CrouchImage; img != nil {
+			return img
+		}
+		// Fallback to static if no crouch image
+		return a.Config.StaticImage
 	}
 	return drawSprite
 }
@@ -214,9 +220,11 @@ func DrawActorUI(g *Game, a *Actor, screen engine.Image, textRenderer engine.Tex
 
 		if vectorRenderer != nil {
 			vectorRenderer.DrawFilledRect(screen, float32(bx), float32(by), float32(barWidth), float32(barHeight), color.RGBA{100, 0, 0, 255}, false)
-			hpFrac := float32(a.Health) / float32(a.MaxHealth)
-			if hpFrac > 0 {
-				vectorRenderer.DrawFilledRect(screen, float32(bx), float32(by), float32(barWidth)*hpFrac, float32(barHeight), color.RGBA{0, 255, 0, 255}, false)
+			if a.MaxHealth > 0 {
+				hpFrac := float32(a.Health) / float32(a.MaxHealth)
+				if hpFrac > 0 {
+					vectorRenderer.DrawFilledRect(screen, float32(bx), float32(by), float32(barWidth)*hpFrac, float32(barHeight), color.RGBA{0, 255, 0, 255}, false)
+				}
 			}
 		}
 	}

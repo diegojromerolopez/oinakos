@@ -1,5 +1,5 @@
 id: "sandbox"
-name: "Floor Systems Sandbox"
+name: "Sandbox"
 type: "survive"
 description: "A sandbox testing area showing off various floor types and variants."
 difficulty: 1
@@ -10,47 +10,6 @@ floor_tile: "grass.png"
 player:
   x: 0
   y: 0
-floor_zones:
-  - name: "Town Square"
-    tile: "big_stones.png"
-    priority: 15
-    perimeter:
-      - {x: -8, y: -8}
-      - {x: 8, y: -8}
-      - {x: 8, y: 8}
-      - {x: -8, y: 8}
-  - name: "Water Pit"
-    tile: "water.png"
-    priority: 10
-    perimeter:
-      - {x: -15, y: -15}
-      - {x: -10, y: -15}
-      - {x: -10, y: -10}
-      - {x: -15, y: -10}
-  - name: "Paved Road"
-    tile: "paved_ground.png"
-    priority: 10
-    perimeter:
-      - {x: -2, y: -25}
-      - {x: 2, y: -25}
-      - {x: 2, y: 25}
-      - {x: -2, y: 25}
-  - name: "Muddy Swamp"
-    tile: "mud.png"
-    priority: 10
-    perimeter:
-      - {x: -25, y: 10}
-      - {x: -15, y: 10}
-      - {x: -15, y: 20}
-      - {x: -25, y: 20}
-  - name: "Dark Water Pit"
-    tile: "dark_water.png"
-    priority: 10
-    perimeter:
-      - {x: 10, y: 10}
-      - {x: 18, y: 10}
-      - {x: 18, y: 18}
-      - {x: 10, y: 18}
 inhabitants:
   - archetype: "peasant_male"
     name: "Mayor Sandbox"
@@ -77,34 +36,25 @@ inhabitants:
     x: 20
     y: 20
     alignment: enemy
-obstacles:
-  - archetype: well
-    x: 0
-    y: -4
-  - archetype: house_1
-    x: -6
-    y: -6
-  - archetype: house_2
-    x: 6
-    y: -6
-  - archetype: smithery
-    x: -6
-    y: 6
-  - archetype: tavern
-    x: 6
-    y: 6
-  - archetype: tree_1
-    x: -10
-    y: 0
-  - archetype: tree_2
-    x: 10
-    y: 0
-  - archetype: bush_1
-    x: -4
+objects:
+  - id: bow
+    x: 1
+    y: 1
+  - id: durandal
+    x: 2
+    y: 2
+  - id: magic_staff
+    x: -2
+    y: 2
+  - id: iron_helmet
+    x: 2
     y: -2
-  - archetype: bush_2
-    x: 4
+  - id: shadow_dagger
+    x: -2
     y: -2
-  - archetype: rock_1
+  - id: tizon
     x: 0
-    y: 10
+    y: 2
+  - id: gilded_pitchfork
+    x: 2
+    y: 0

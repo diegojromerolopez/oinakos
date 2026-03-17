@@ -1,0 +1,22 @@
+name: Gilded Pitchfork
+description: A standard gilded pitchfork.
+weight: 1.0
+type: weapon
+slot: weapon
+value: 50
+combat:
+  name: Gilded Pitchfork
+  type: melee
+  damage:
+    min: 8
+    max: 18
+  max_distance: touch
+footprint:
+- x: -22.0
+  y: -21.984
+- x: 7.953
+  y: -21.984
+- x: 7.953
+  y: 7.969
+- x: -22.0
+  y: 7.969

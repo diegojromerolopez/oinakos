@@ -14,25 +14,29 @@ type PlayerSaveData struct {
 	MapKills    map[string]int `yaml:"map_kills"`
 	BaseAttack  int            `yaml:"base_attack"`
 	BaseDefense int            `yaml:"base_defense"`
-	Weapon      *Weapon        `yaml:"weapon"`
+	Weapon      *Weapon           `yaml:"weapon"`
+	Inventory   []string          `yaml:"inventory,omitempty"`
+	Slots       map[string]string `yaml:"slots,omitempty"`
 }
 
 type NPCSaveData struct {
-	ArchetypeID string    `yaml:"archetype_id,omitempty"`
-	NPCID       string    `yaml:"npc_id,omitempty"`
-	X           float64 `yaml:"x"`
-	Y           float64 `yaml:"y"`
-	Health      int     `yaml:"health"`
-	MaxHealth   int     `yaml:"max_health"`
-	Level       int     `yaml:"level"`
-	Behavior    string    `yaml:"behavior"`
-	Name        string    `yaml:"name,omitempty"`
-	Alignment   Alignment `yaml:"alignment,omitempty"`
-	Group       string    `yaml:"group,omitempty"`
-	LeaderID    string    `yaml:"leader_id,omitempty"`
-	MustSurvive bool      `yaml:"must_survive,omitempty"`
-	BaseAttack  int       `yaml:"base_attack,omitempty"`
-	BaseDefense int       `yaml:"base_defense,omitempty"`
+	ArchetypeID string            `yaml:"archetype_id,omitempty"`
+	NPCID       string            `yaml:"npc_id,omitempty"`
+	X           float64           `yaml:"x"`
+	Y           float64           `yaml:"y"`
+	Health      int               `yaml:"health"`
+	MaxHealth   int               `yaml:"max_health"`
+	Level       int               `yaml:"level"`
+	Behavior    string            `yaml:"behavior"`
+	Name        string            `yaml:"name,omitempty"`
+	Alignment   Alignment         `yaml:"alignment,omitempty"`
+	Group       string            `yaml:"group,omitempty"`
+	LeaderID    string            `yaml:"leader_id,omitempty"`
+	MustSurvive bool              `yaml:"must_survive,omitempty"`
+	BaseAttack  int               `yaml:"base_attack,omitempty"`
+	BaseDefense int               `yaml:"base_defense,omitempty"`
+	Inventory   []string          `yaml:"inventory,omitempty"`
+	Slots       map[string]string `yaml:"slots,omitempty"`
 }
 
 type ObstacleSaveData struct {
@@ -43,6 +47,12 @@ type ObstacleSaveData struct {
 	Health        int      `yaml:"health,omitempty"`
 	CooldownTicks int      `yaml:"cooldown_ticks,omitempty"`
 	Disabled      bool     `yaml:"disabled,omitempty"`
+}
+
+type ItemSaveData struct {
+	ID   string  `yaml:"id"`
+	X    float64 `yaml:"x"`
+	Y    float64 `yaml:"y"`
 }
 
 type SaveData struct {
@@ -67,6 +77,7 @@ type SaveData struct {
 		ExploredTiles []image.Point `yaml:"explored_tiles,omitempty"`
 	} `yaml:"map"`
 	Player    PlayerSaveData     `yaml:"player"`
-	NPCs      []NPCSaveData      `yaml:"npcs"`
+	Characters []NPCSaveData      `yaml:"characters"`
 	Obstacles []ObstacleSaveData `yaml:"obstacles"`
+	Items     []ItemSaveData     `yaml:"items,omitempty"`
 }

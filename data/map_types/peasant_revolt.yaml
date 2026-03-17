@@ -524,6 +524,16 @@ floor_zones:
     y: 30.0
   - x: -5.0
     y: 30.0
+objects:
+  - id: pitchfork
+    x: 0
+    y: 5
+  - id: club
+    x: 5
+    y: 0
+  - id: wooden_club
+    x: -5
+    y: 0
 - name: town_center
   tile: paved_ground.png
   priority: 1

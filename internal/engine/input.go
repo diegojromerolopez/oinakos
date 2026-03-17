@@ -24,6 +24,7 @@ const (
 	KeyShift
 	KeyBackspace
 	KeyDelete
+	KeyI
 )
 
 // Input defines an interface for all input operations to allow mocking.

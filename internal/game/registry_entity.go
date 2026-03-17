@@ -27,7 +27,7 @@ type EntityConfig struct {
 		ProjectileSpeed     float64 `yaml:"projectile_speed"`
 	} `yaml:"stats"`
 	Actions    *ActionConfig `yaml:"actions,omitempty"`
-	Weapon *Weapon `yaml:"weapon"`
+	Weapon      WeaponConfig  `yaml:"weapon"`
 	CollisionRadius float64      `yaml:"collision_radius,omitempty"`
 
 	Footprint      []FootprintPoint `yaml:"footprint"`
@@ -43,6 +43,10 @@ type EntityConfig struct {
 	LeaderID       string           `yaml:"leader,omitempty"`
 	MustSurvive    bool             `yaml:"must_survive,omitempty"`
 	Playable       bool             `yaml:"playable,omitempty"`
+	MaxWeight      float64          `yaml:"max_weight,omitempty"`
+	MaxItems       int              `yaml:"max_items,omitempty"`
+	Equipment      map[string]string `yaml:"equipment,omitempty"` // map of slot name to object ID
+	Inventory      []string         `yaml:"inventory,omitempty"`  // IDs of objects in backpack
 
 	// Run-time loaded assets
 	AssetDir     string      `yaml:"-"`
@@ -50,6 +54,7 @@ type EntityConfig struct {
 	StaticImage  engine.Image `yaml:"-"`
 	BackImage    engine.Image `yaml:"-"` // back.png (instead of static.png when facing UP)
 	CorpseImage  engine.Image `yaml:"-"`
+	CrouchImage  engine.Image `yaml:"-"` // crouch.png (for picking up items)
 	AttackImage  engine.Image `yaml:"-"` // attack.png (default)
 	Attack1Image engine.Image `yaml:"-"` // attack1.png
 	Attack2Image engine.Image `yaml:"-"` // attack2.png
@@ -155,6 +160,7 @@ func (r *ArchetypeRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, p
 		addJob("hit.png", &config.HitImage)
 		addJob("hit1.png", &config.Hit1Image)
 		addJob("hit2.png", &config.Hit2Image)
+		addJob("crouch.png", &config.CrouchImage)
 	}
 	loadSpritesParallel(assets, jobs, graphics, progress)
 }
@@ -204,19 +210,31 @@ func (r *ArchetypeRegistry) LoadAll(assets fs.FS) error {
 	})
 }
 
-type PlayableCharacterRegistry struct {
+type CharacterRegistry struct {
 	Characters map[string]*EntityConfig
 	IDs        []string
 }
 
-func NewPlayableCharacterRegistry() *PlayableCharacterRegistry {
-	return &PlayableCharacterRegistry{
+func NewCharacterRegistry() *CharacterRegistry {
+	return &CharacterRegistry{
 		Characters: make(map[string]*EntityConfig),
 		IDs:        make([]string, 0),
 	}
 }
 
-func (r *PlayableCharacterRegistry) LoadAll(assets fs.FS) error {
+// PlayableIDs returns the subset of IDs whose characters have Playable == true,
+// in the same order they were registered.
+func (r *CharacterRegistry) PlayableIDs() []string {
+	var ids []string
+	for _, id := range r.IDs {
+		if c, ok := r.Characters[id]; ok && c.Playable {
+			ids = append(ids, id)
+		}
+	}
+	return ids
+}
+
+func (r *CharacterRegistry) LoadAll(assets fs.FS) error {
 	if assets == nil {
 		return nil
 	}
@@ -234,65 +252,25 @@ func (r *PlayableCharacterRegistry) LoadAll(assets fs.FS) error {
 
 		sanitizeEntityConfig(&config, fpath)
 
-		variantName := config.ID
-		config.AssetDir = path.Join("assets/images/characters", variantName)
-		config.AudioDir = path.Join("assets/audio/characters", variantName)
+		// Set asset and audio directories
+		config.AssetDir = path.Join("assets/images/characters", config.ID)
+		config.AudioDir = path.Join("assets/audio/characters", config.ID)
 		config.SoundID = config.ID
-		config.PlayableCharacter = config.ID
 
-		// config.Weapon is now auto-loaded by YAML
-
+		if config.Playable {
+			config.PlayableCharacter = config.ID
+		}
 
 		r.Characters[config.ID] = &config
-		if config.Playable {
-			r.IDs = append(r.IDs, config.ID)
-		}
+		r.IDs = append(r.IDs, config.ID)
 		return nil
 	})
 }
 
-func (r *PlayableCharacterRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, progress *int32) {
+func (r *CharacterRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *ArchetypeRegistry, progress *int32) {
 	var jobs []*SpriteLoadJob
 	for _, config := range r.Characters {
-		if config.AssetDir == "" {
-			continue
-		}
-		
-		addJob := func(filename string, target *engine.Image) {
-			jobs = append(jobs, &SpriteLoadJob{
-				Path: path.Join(config.AssetDir, filename),
-				Dest: target,
-			})
-		}
-		
-		addJob("static.png", &config.StaticImage)
-		addJob("back.png", &config.BackImage)
-		addJob("corpse.png", &config.CorpseImage)
-		addJob("attack.png", &config.AttackImage)
-		addJob("attack1.png", &config.Attack1Image)
-		addJob("attack2.png", &config.Attack2Image)
-		addJob("hit.png", &config.HitImage)
-		addJob("hit1.png", &config.Hit1Image)
-		addJob("hit2.png", &config.Hit2Image)
-	}
-	loadSpritesParallel(assets, jobs, graphics, progress)
-}
-
-type NPCRegistry struct {
-	NPCs map[string]*EntityConfig
-	IDs  []string
-}
-
-func NewNPCRegistry() *NPCRegistry {
-	return &NPCRegistry{
-		NPCs: make(map[string]*EntityConfig),
-		IDs:  make([]string, 0),
-	}
-}
-
-func (r *NPCRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *ArchetypeRegistry, progress *int32) {
-	var jobs []*SpriteLoadJob
-	for _, config := range r.NPCs {
+		// Fallback to archetype logic for non-playable characters
 		lookupID := config.ArchetypeID
 		if config.Gender != "" && !strings.Contains(config.ArchetypeID, config.Gender) {
 			fullID := config.ArchetypeID + "_" + config.Gender
@@ -301,9 +279,9 @@ func (r *NPCRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *
 			}
 		}
 
-		arch, ok := archs.Archetypes[lookupID]
+		arch, _ := archs.Archetypes[lookupID]
 
-		// Determine SoundID: favor local audio if files exist in config.AudioDir
+		// Audio ID resolution
 		hasLocalAudio := false
 		if config.AudioDir != "" {
 			if entries, err := fs.ReadDir(assets, config.AudioDir); err == nil {
@@ -318,15 +296,13 @@ func (r *NPCRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *
 
 		if hasLocalAudio {
 			config.SoundID = config.ID
+		} else if arch != nil {
+			config.SoundID = lookupID
 		} else {
-			if ok {
-				config.SoundID = lookupID
-			} else {
-				config.SoundID = config.ID
-			}
+			config.SoundID = config.ID
 		}
 
-		// Fallback stats/colors/sounds from archetype...
+		// Stat fallbacks from archetype
 		if arch != nil {
 			if config.Stats.HealthMin == 0 { config.Stats.HealthMin = arch.Stats.HealthMin }
 			if config.Stats.HealthMax == 0 { config.Stats.HealthMax = arch.Stats.HealthMax }
@@ -338,15 +314,11 @@ func (r *NPCRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *
 			if config.PrimaryColor == "" { config.PrimaryColor = arch.PrimaryColor }
 			if config.SecondaryColor == "" { config.SecondaryColor = arch.SecondaryColor }
 			if len(config.Footprint) == 0 { config.Footprint = arch.Footprint }
-			if config.Weapon == nil {
-				config.Weapon = arch.Weapon
-			}
-			if config.Dialogues == nil {
-				config.Dialogues = arch.Dialogues
-			}
+			if config.Weapon.IsEmpty() { config.Weapon = arch.Weapon }
+			if config.Dialogues == nil { config.Dialogues = arch.Dialogues }
 		}
 
-		// Collect jobs
+		// Asset loading jobs
 		if config.AssetDir != "" {
 			addJob := func(filename string, target *engine.Image, fallback engine.Image) {
 				fpath := path.Join(config.AssetDir, filename)
@@ -357,66 +329,26 @@ func (r *NPCRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *
 				}
 			}
 			
-			var archStatic, archBack, archCorpse engine.Image
+			var archStatic, archBack, archCorpse, archCrouch engine.Image
 			if arch != nil {
-				archStatic, archBack, archCorpse = arch.StaticImage, arch.BackImage, arch.CorpseImage
+				archStatic, archBack, archCorpse, archCrouch = arch.StaticImage, arch.BackImage, arch.CorpseImage, arch.CrouchImage
 			}
 
 			addJob("static.png", &config.StaticImage, archStatic)
-			// Special case for unique NPCs without their own assets
-			if config.StaticImage == nil && config.Unique {
-				charDir := path.Join("assets/images/characters", config.ID)
-				if _, err := fs.Stat(assets, path.Join(charDir, "static.png")); err == nil {
-					config.AssetDir = charDir
-					jobs = append(jobs, &SpriteLoadJob{Path: path.Join(charDir, "static.png"), Dest: &config.StaticImage})
-					jobs = append(jobs, &SpriteLoadJob{Path: path.Join(charDir, "back.png"), Dest: &config.BackImage})
-					jobs = append(jobs, &SpriteLoadJob{Path: path.Join(charDir, "corpse.png"), Dest: &config.CorpseImage})
-				}
-			} else {
-				addJob("back.png", &config.BackImage, archBack)
-				addJob("corpse.png", &config.CorpseImage, archCorpse)
-			}
+			addJob("back.png", &config.BackImage, archBack)
+			addJob("corpse.png", &config.CorpseImage, archCorpse)
+			addJob("crouch.png", &config.CrouchImage, archCrouch)
 			
-			// Always check for these if dir exists
-			if _, err := fs.Stat(assets, config.AssetDir); err == nil {
-				addJob("attack.png", &config.AttackImage, nil)
-				addJob("attack1.png", &config.Attack1Image, nil)
-				addJob("attack2.png", &config.Attack2Image, nil)
-				addJob("hit.png", &config.HitImage, nil)
-				addJob("hit1.png", &config.Hit1Image, nil)
-				addJob("hit2.png", &config.Hit2Image, nil)
-			}
+			addJob("attack.png", &config.AttackImage, nil)
+			addJob("attack1.png", &config.Attack1Image, nil)
+			addJob("attack2.png", &config.Attack2Image, nil)
+			addJob("hit.png", &config.HitImage, nil)
+			addJob("hit1.png", &config.Hit1Image, nil)
+			addJob("hit2.png", &config.Hit2Image, nil)
 		}
 		sanitizeEntityConfig(config, config.ID)
 	}
 	if len(jobs) > 0 {
 		loadSpritesParallel(assets, jobs, graphics, progress)
 	}
-}
-
-func (r *NPCRegistry) LoadAll(assets fs.FS) error {
-	if assets == nil {
-		return nil
-	}
-	const baseDir = "data/npcs"
-	return forEachYAML(assets, baseDir, func(fpath string, data []byte) error {
-		var config EntityConfig
-		if err := yaml.Unmarshal(data, &config); err != nil {
-			log.Printf("Warning: failed to unmarshal %s: %v", fpath, err)
-			return nil
-		}
-		if config.ID == "" {
-			config.ID = strings.TrimSuffix(filepath.Base(fpath), filepath.Ext(fpath))
-		}
-
-		config.AssetDir = path.Join("assets/images/npcs", config.ID)
-		config.AudioDir = path.Join("assets/audio/npcs", config.ID)
-
-		// config.Weapon is now auto-loaded by YAML
-
-
-		r.NPCs[config.ID] = &config
-		r.IDs = append(r.IDs, config.ID)
-		return nil
-	})
 }

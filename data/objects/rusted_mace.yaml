@@ -1,0 +1,25 @@
+name: Rusted Mace
+description: A blunt instrument of war. Rusted but still heavy.
+weight: 10.0
+type: weapon
+slot: weapon
+value: 30
+combat:
+  name: Rusted Mace
+  type: melee
+  max_distance: touch
+  damage:
+    min: 6
+    max: 14
+  weight: 10.0
+footprint:
+  - x: -0.41
+    y: -1.59
+  - x: -0.09
+    y: -1.28
+  - x: -0.7
+    y: -0.23
+  - x: -1.52
+    y: -0.48
+  - x: -1.7
+    y: -1.05

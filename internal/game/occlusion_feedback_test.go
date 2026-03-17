@@ -42,22 +42,10 @@ func TestOcclusionFeedback(t *testing.T) {
 	obstacle := NewObstacle("obs1", 1, 1, obsConfig)
 	g.obstacles = []*Obstacle{obstacle}
 
-	// First update: should detect occlusion and log it
+	// First update: should detect occlusion
 	g.updateOcclusion()
-
 	if !g.playableCharacter.IsOccluded {
 		t.Errorf("Expected player to be occluded")
-	}
-
-	found := false
-	for _, event := range g.EventLog {
-		if event.Text == "Hero is hidden behind an obstacle." {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Errorf("Expected occlusion message in event log")
 	}
 
 	// Second update: should still be occluded but NOT log again

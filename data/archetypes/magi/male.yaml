@@ -13,13 +13,6 @@ stats:
   base_attack: 0
   base_defense: 5
   attack_cooldown: 1000
-weapon:
-  name: Magi Blast
-  type: melee
-  max_distance: touch
-  damage:
-    min: 5
-    max: 10
 xp: 8
 actions:
   on_kill:
@@ -57,3 +50,6 @@ dialogues:
     choices:
     - text: Thank you.
       next: exit
+max_weight: 100
+equipment:
+inventory: []

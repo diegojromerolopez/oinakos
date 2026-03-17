@@ -1,0 +1,22 @@
+name: Sword
+description: A standard sword.
+weight: 1.0
+type: weapon
+slot: weapon
+value: 50
+combat:
+  name: Sword
+  type: melee
+  damage:
+    min: 5
+    max: 10
+  max_distance: touch
+footprint:
+  - x: -1.98
+    y: -1.95
+  - x: -1.06
+    y: -1.19
+  - x: 0.2
+    y: 0.17
+  - x: -1.41
+    y: -1.22

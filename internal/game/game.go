@@ -28,10 +28,10 @@ const (
 
 type Game struct {
 	width, height     int
-	playableCharacter     *PlayableCharacter
+	playableCharacter     *Character
 	playerConfig      *EntityConfig
 	obstacles         []*Obstacle
-	npcs              []*NPC
+	characters        []*Character
 	projectiles       []*Projectile
 	isGameOver        bool
 	isMapWon          bool
@@ -47,6 +47,8 @@ type Game struct {
 	mainMenuIndex     int       // Index for main menu
 	isAboutScreen     bool      // True if showing about screen
 	isSettingsScreen  bool      // True if showing settings screen
+	isInventoryOpen   bool      // True if showing inventory screen
+	ActiveBook        *ObjectConfig // True if currently reading a book
 	isCampaignSelect  bool      // True if showing campaign picker
 	campaignMenuIndex int       // Index of selected campaign
 	initialMapTypeID  string
@@ -62,7 +64,7 @@ type Game struct {
 
 	floatingTexts             []*FloatingText
 	archetypeRegistry         *ArchetypeRegistry
-	playableCharacterRegistry *PlayableCharacterRegistry
+	characterRegistry         *CharacterRegistry
 	mapTypeRegistry           *MapTypeRegistry
 	campaignRegistry          *CampaignRegistry
 	obstacleRegistry          *ObstacleRegistry
@@ -72,7 +74,6 @@ type Game struct {
 	input                     engine.Input
 	showBoundaries            bool
 	audio                     AudioManager
-	npcRegistry               *NPCRegistry
 
 	isMenuOpen       bool
 	menuIndex        int // 0: Resume, 1: Quicksave, 2: Load, 3: Quit
@@ -145,15 +146,12 @@ func NewGame(assets fs.FS, graphics engine.Graphics, initialMapID, initialMapTyp
 		log.Printf("Warning: failed to load playable character: %v. Using default values.", err)
 	}
 
-	playableCharacter := NewPlayableCharacter(0, 0, pConfig)
-	pIsoX, pIsoY := engine.CartesianToIso(playableCharacter.X, playableCharacter.Y)
-
 	// Registries
 	archetypeRegistry := NewArchetypeRegistry()
 	archetypeRegistry.LoadAll(assets)
 
-	playableCharacterRegistry := NewPlayableCharacterRegistry()
-	playableCharacterRegistry.LoadAll(assets)
+	characterRegistry := NewCharacterRegistry()
+	characterRegistry.LoadAll(assets)
 
 	mapTypeRegistry := NewMapTypeRegistry()
 	mapTypeRegistry.LoadAll(assets)
@@ -164,8 +162,8 @@ func NewGame(assets fs.FS, graphics engine.Graphics, initialMapID, initialMapTyp
 	obstacleRegistry := NewObstacleRegistry()
 	obstacleRegistry.LoadAll(assets)
 
-	npcRegistry := NewNPCRegistry()
-	npcRegistry.LoadAll(assets)
+	objectRegistry := NewObjectRegistry()
+	objectRegistry.LoadAll(assets)
 
 	var selectedMapType MapType
 	if m, ok := mapTypeRegistry.Types["safe_zone"]; ok {
@@ -173,6 +171,10 @@ func NewGame(assets fs.FS, graphics engine.Graphics, initialMapID, initialMapTyp
 	} else if len(mapTypeRegistry.IDs) > 0 {
 		selectedMapType = *mapTypeRegistry.Types[mapTypeRegistry.IDs[0]]
 	}
+
+	// Create playable character placeholder
+	playableCharacter := NewCharacter(0, 0, pConfig, 1, true)
+	pIsoX, pIsoY := engine.CartesianToIso(playableCharacter.X, playableCharacter.Y)
 
 	g := &Game{
 		width:             1280,
@@ -193,33 +195,31 @@ func NewGame(assets fs.FS, graphics engine.Graphics, initialMapID, initialMapTyp
 	}
 
 	g.Registries = &RegistryContainer{
-		Archetypes:         archetypeRegistry,
-		PlayableCharacters: playableCharacterRegistry,
-		Maps:               mapTypeRegistry,
-		Campaigns:          campaignRegistry,
-		Obstacles:          obstacleRegistry,
-		NPCs:               npcRegistry,
+		Archetypes: archetypeRegistry,
+		Characters: characterRegistry,
+		Maps:       mapTypeRegistry,
+		Campaigns:  campaignRegistry,
+		Obstacles:  obstacleRegistry,
+		Objects:    objectRegistry,
 	}
 
 	g.World = &World{
 		PlayableCharacter: playableCharacter,
-		NPCs:              nil,
+		Characters:        nil,
 		Obstacles:         nil,
 		Projectiles:       nil,
 		FloatingTexts:     nil,
 		CurrentMapType:    &selectedMapType,
 		ExploredTiles:     make(map[image.Point]bool),
+		Items:             nil,
 	}
 
-	// For backward compatibility during migration, we also keep the top-level fields
-	// pointing to the same data where possible, or just keep them synced.
 	g.playableCharacter = playableCharacter
 	g.archetypeRegistry = archetypeRegistry
 	g.mapTypeRegistry = mapTypeRegistry
 	g.campaignRegistry = campaignRegistry
 	g.obstacleRegistry = obstacleRegistry
-	g.npcRegistry = npcRegistry
-	g.playableCharacterRegistry = playableCharacterRegistry
+	g.characterRegistry = characterRegistry
 	g.currentMapType = selectedMapType
 	g.ExploredTiles = g.World.ExploredTiles
 	g.generatedChunks = make(map[image.Point]bool)
@@ -247,14 +247,14 @@ func NewGame(assets fs.FS, graphics engine.Graphics, initialMapID, initialMapTyp
 	}
 
 	if g.initialHeroID != "" {
-		if config, ok := g.playableCharacterRegistry.Characters[g.initialHeroID]; ok {
+		if config, ok := g.characterRegistry.Characters[g.initialHeroID]; ok {
 			g.playableCharacter.Config = config
 			g.playableCharacter.Health = config.Stats.HealthMin
 			g.playableCharacter.MaxHealth = config.Stats.HealthMin
 			g.playableCharacter.Speed = config.Stats.Speed
 			g.playableCharacter.BaseAttack = config.Stats.BaseAttack
 			g.playableCharacter.BaseDefense = config.Stats.BaseDefense
-			g.playableCharacter.Weapon = config.Weapon
+			g.playableCharacter.Weapon = config.Weapon.Resolve(g.Registries.Objects)
 			g.playableCharacter.Name = config.Name
 			g.isCharacterSelect = false
 			log.Printf("Using initial hero: %s", g.initialHeroID)
@@ -336,7 +336,7 @@ func NewGame(assets fs.FS, graphics engine.Graphics, initialMapID, initialMapTyp
 
 	// Spawn NPCs if not loaded from instance and not in menu
 	if !instanceLoaded && !g.isMainMenu {
-		g.npcs = make([]*NPC, 0)
+		g.characters = make([]*Character, 0)
 		if isTestingEnvironment {
 			g.worldManager.LoadMapLevel()
 		} else {
@@ -357,6 +357,7 @@ func (g *Game) DestroyProgress() {
 	g.isGameWon = false
 	g.isPaused = false
 	g.isMenuOpen = false
+	g.isInventoryOpen = false
 	g.isQuitConfirmationOpen = false
 	g.isAboutScreen = false
 
@@ -379,7 +380,7 @@ func (g *Game) DestroyProgress() {
 	g.generatedChunks = make(map[image.Point]bool)
 	g.ExploredTiles = make(map[image.Point]bool)
 
-	g.npcs = nil
+	g.characters = nil
 	g.obstacles = nil
 	g.projectiles = nil
 	g.floatingTexts = nil
@@ -396,7 +397,7 @@ func (g *Game) DestroyProgress() {
 
 	// Reset World
 	if g.World != nil {
-		g.World.NPCs = nil
+		g.World.Characters = nil
 		g.World.Obstacles = nil
 		g.World.Projectiles = nil
 		g.World.FloatingTexts = nil
@@ -409,10 +410,10 @@ func (g *Game) DestroyProgress() {
 	if err != nil {
 		log.Printf("Warning: failed to reload playable character config: %v", err)
 	}
-	g.playableCharacter = NewPlayableCharacter(0, 0, pConfig)
-	if g.World != nil {
-		g.World.PlayableCharacter = g.playableCharacter
-	}
+	g.World.PlayableCharacter = NewCharacter(0, 0, pConfig, 1, true)
+	g.playableCharacter = g.World.PlayableCharacter
+	g.characters = nil
+	g.World.Characters = nil
 
 	// Reset camera
 	pIsoX, pIsoY := engine.CartesianToIso(g.playableCharacter.X, g.playableCharacter.Y)
@@ -439,6 +440,7 @@ func (g *Game) Restart() {
 	g.isGameWon = false
 	g.isPaused = false
 	g.isMenuOpen = false
+	g.isInventoryOpen = false
 	g.isQuitConfirmationOpen = false
 
 	g.LoadingProgress = 1000
@@ -451,7 +453,7 @@ func (g *Game) Restart() {
 	g.ExploredTiles = make(map[image.Point]bool)
 
 	// Synchronously clear world lists to prevent old entities from being processed
-	g.npcs = nil
+	g.characters = nil
 	g.obstacles = nil
 	g.projectiles = nil
 	g.floatingTexts = nil
@@ -464,7 +466,7 @@ func (g *Game) Restart() {
 
 	// Reset World
 	if g.World != nil {
-		g.World.NPCs = nil
+		g.World.Characters = nil
 		g.World.Obstacles = nil
 		g.World.Projectiles = nil
 		g.World.FloatingTexts = nil
@@ -481,15 +483,15 @@ func (g *Game) Restart() {
 
 	// Re-initialize playableCharacter using initialHeroID (if set)
 	if g.initialHeroID != "" {
-		if config, ok := g.playableCharacterRegistry.Characters[g.initialHeroID]; ok {
+		if config, ok := g.characterRegistry.Characters[g.initialHeroID]; ok {
 			g.playableCharacter.Config = config
 			g.playableCharacter.Health = config.Stats.HealthMin
 			g.playableCharacter.MaxHealth = config.Stats.HealthMin
 			g.playableCharacter.Speed = config.Stats.Speed
 			g.playableCharacter.BaseAttack = config.Stats.BaseAttack
 			g.playableCharacter.BaseDefense = config.Stats.BaseDefense
-			g.playableCharacter.Weapon = config.Weapon
-			g.playableCharacter.State = StateIdle
+			g.playableCharacter.Weapon = config.Weapon.Resolve(g.Registries.Objects)
+			g.playableCharacter.State = ActorIdle
 			g.playableCharacter.Tick = 0
 			g.playableCharacter.DeadTimer = 0
 			g.playableCharacter.HitTimer = 0
@@ -510,7 +512,7 @@ func (g *Game) Restart() {
 	} else {
 		// Fallback to reload config if no hero selected
 		pConfig, _ := LoadPlayableCharacterConfig(g.assets)
-		g.playableCharacter = NewPlayableCharacter(0, 0, pConfig)
+		g.playableCharacter = NewCharacter(0, 0, pConfig, 1, true)
 	}
 
 	if g.World != nil {
@@ -537,10 +539,21 @@ func (g *Game) Update() error {
 		SetDebugMode(g.debug)
 	}
 
-	// 1. Check if we are in a menu state
-	if g.isQuitConfirmationOpen || g.isMainMenu || g.isSettingsScreen ||
-		g.isCharacterSelect || g.isCampaignSelect || g.isGameWon ||
-		g.isGameOver || g.isMapWon || g.isMenuOpen || g.loadDialogActive {
+	// Toggle inventory overlay
+	if g.input.IsKeyJustPressed(engine.KeyI) && !g.isMainMenu && !g.isCharacterSelect && !g.isCampaignSelect && !g.isGameOver && !g.isMapWon && !g.isGameWon {
+		g.isInventoryOpen = !g.isInventoryOpen
+		if g.isInventoryOpen {
+			g.isMenuOpen = false // Ensure pause menu is closed
+		}
+	}
+
+	// Menu logic override
+	if g.isMainMenu || g.isCharacterSelect || g.isCampaignSelect || g.isQuitConfirmationOpen || g.isAboutScreen || g.isSettingsScreen || g.isGameOver || g.isMapWon || g.isGameWon || g.isMenuOpen {
+		if g.isSettingsScreen {
+			if !g.isSettingsFromPause {
+				// g.worldManager.DrawBackground(g.Graphics, g.silhouetteBuffer) // Undefined
+			}
+		}
 		return g.menuHandler.Update()
 	}
 
@@ -563,8 +576,8 @@ func (g *Game) Update() error {
 					g.applyPlayerAIDecision(a.Decision)
 					g.playableCharacter.LastAIDecisionTick = g.Tick
 				} else {
-					for _, n := range g.npcs {
-						if n.Name == a.NPCID || (n.Archetype != nil && n.Archetype.ID == a.NPCID) {
+					for _, n := range g.characters {
+						if n.Name == a.NPCID || (n.Config != nil && n.Config.ID == a.NPCID) {
 							// Check if decision is to talk/say something
 							choice := strings.ToLower(a.Decision.ChosenOption)
 							if strings.Contains(choice, "talk") || strings.Contains(choice, "say") || strings.Contains(choice, "mutter") {
@@ -589,8 +602,8 @@ func (g *Game) Update() error {
 						g.playableCharacter.WanderDirY = rand.Float64()*2 - 1
 					}
 				} else {
-					for _, n := range g.npcs {
-						if n.Archetype.ID == a.NPCID || n.Name == a.NPCID {
+					for _, n := range g.characters {
+						if n.Config.ID == a.NPCID || n.Name == a.NPCID {
 							n.AIDecisionPending = false
 							break
 						}
@@ -621,7 +634,7 @@ func (g *Game) Update() error {
 		// NPC Random Bark Logic
 		prob := g.settings.GetTalkingProbability()
 		if prob > 0 && g.Tick%600 == 0 { // Check every 10 seconds
-			for _, n := range g.npcs {
+			for _, n := range g.characters {
 				if !n.IsAlive() || n.AIDecisionPending {
 					continue
 				}
@@ -636,8 +649,8 @@ func (g *Game) Update() error {
 						n.LastAIDecisionTick = g.Tick
 					} else {
 						// Fallback to static barks
-						if n.Archetype != nil && n.Archetype.Dialogues != nil {
-							bark := n.Archetype.Dialogues.PickIdleBark()
+						if n.Config != nil && n.Config.Dialogues != nil {
+							bark := n.Config.Dialogues.PickIdleBark()
 							if bark != "" {
 								g.LogEvent(fmt.Sprintf("%s: %s", n.Name, bark), LogNPC)
 							}
@@ -734,10 +747,6 @@ func (g *Game) Update() error {
 	}
 	os.WriteFile("/tmp/oinakos_pos.txt", []byte(fmt.Sprintf("%.2f,%.2f", g.playableCharacter.X, g.playableCharacter.Y)), 0644)
 
-	for _, o := range g.obstacles {
-		o.Update()
-	}
-
 	g.mechanicsManager.UpdateProximityEffects(ctx)
 
 	// Check Win/Loss Conditions
@@ -764,8 +773,8 @@ func (g *Game) Update() error {
 	g.obstacles = aliveObstacles
 
 	// Update all NPCs
-	ctx.World.NPCs = g.npcs
-	for _, n := range ctx.World.NPCs {
+	ctx.World.Characters = g.characters
+	for _, n := range ctx.World.Characters {
 		n.CurrentTile = g.currentMapType.GetTileAt(n.X, n.Y)
 		n.Update(ctx)
 		if n.MustSurvive && !n.IsAlive() {
@@ -775,6 +784,8 @@ func (g *Game) Update() error {
 			g.isGameOver = true
 		}
 	}
+
+	g.UpdatePickups()
 
 	// Update floating texts
 	activeTexts := make([]*FloatingText, 0)
@@ -795,6 +806,10 @@ func (g *Game) Update() error {
 	// Final safety check
 	g.ensurePlayerNotStuck()
 
+	if g.isInventoryOpen {
+		g.menuHandler.updateInventoryScreen()
+	}
+
 	return nil
 }
 
@@ -803,7 +818,7 @@ func (g *Game) updateOcclusion() {
 	g.handleOcclusionFeedback(&g.playableCharacter.Actor)
 
 	// Check NPCs
-	for _, n := range g.npcs {
+	for _, n := range g.characters {
 		g.handleOcclusionFeedback(&n.Actor)
 	}
 }
@@ -830,15 +845,7 @@ func (g *Game) handleOcclusionFeedback(a *Actor) {
 		}
 	}
 
-	if isNowOccluded && !a.IsOccluded {
-		// New occlusion event
-		msg := fmt.Sprintf("%s is hidden behind an obstacle.", a.Name)
-		if a.Name == "" && a.Config != nil {
-			msg = fmt.Sprintf("%s is hidden behind an obstacle.", a.Config.Name)
-		}
-		g.LogEvent(msg, LogInfo)
-	}
-
+	// Removed logging of occlusion event as per user request
 	a.IsOccluded = isNowOccluded
 }
 
@@ -945,7 +952,7 @@ func (g *Game) handleDialogueInput() {
 		isoY := float64(my) - offY
 		cartX, cartY := engine.IsoToCartesian(isoX, isoY)
 
-		for _, n := range g.npcs {
+		for _, n := range g.characters {
 			if !n.IsAlive() || n.Alignment == AlignmentEnemy {
 				continue
 			}
@@ -1048,12 +1055,12 @@ func (g *Game) handleDialogueProximity() {
 	if g.ActiveDialogue != nil {
 		return
 	}
-	for _, n := range g.npcs {
+	for _, n := range g.characters {
 		if !n.IsAlive() || n.Alignment == AlignmentEnemy || n.HasInitiatedDialogue {
 			continue
 		}
-		if n.Archetype != nil && n.Archetype.Dialogues != nil {
-			for _, s := range n.Archetype.Dialogues.StartScenarios {
+		if n.Config != nil && n.Config.Dialogues != nil {
+			for _, s := range n.Config.Dialogues.StartScenarios {
 				if s.AutoInitiate {
 					dist := math.Sqrt(math.Pow(n.X-g.playableCharacter.X, 2) + math.Pow(n.Y-g.playableCharacter.Y, 2))
 					if dist < s.ProximityRange {
@@ -1067,18 +1074,18 @@ func (g *Game) handleDialogueProximity() {
 	}
 }
 
-func (g *Game) InitiateDialogue(npc *NPC) {
+func (g *Game) InitiateDialogue(npc *Character) {
 	DebugLog("InitiateDialogue: Attempting to talk to NPC %s (Alignment: %v)", npc.Name, npc.Alignment)
-	if npc.Archetype == nil {
+	if npc.Config == nil {
 		DebugLog("InitiateDialogue FAILED: NPC %s has no archetype", npc.Name)
 		return
 	}
-	if npc.Archetype.Dialogues == nil {
-		DebugLog("InitiateDialogue FAILED: NPC %s (Archetype: %s) has no dialogues block", npc.Name, npc.Archetype.ID)
+	if npc.Config.Dialogues == nil {
+		DebugLog("InitiateDialogue FAILED: NPC %s (Archetype: %s) has no dialogues block", npc.Name, npc.Config.ID)
 		return
 	}
 
-	dr := npc.Archetype.Dialogues
+	dr := npc.Config.Dialogues
 	DebugLog("InitiateDialogue: Found %d start scenarios for %s", len(dr.StartScenarios), npc.Name)
 	greeting := dr.PickGreeting()
 	g.LogEvent(fmt.Sprintf("%s: %s", g.playableCharacter.Name, greeting), LogPlayer)
@@ -1124,7 +1131,7 @@ func (g *Game) AdvanceDialogue() {
 		return
 	}
 
-	dr := g.ActiveDialogue.SpeakerNPC.Archetype.Dialogues
+	dr := g.ActiveDialogue.SpeakerNPC.Config.Dialogues
 	if node, ok := dr.Nodes[choice.Next]; ok {
 		g.ActiveDialogue.CurrentText = node.Text
 		g.ActiveDialogue.Choices = node.Choices
@@ -1139,7 +1146,7 @@ func (g *Game) CloseDialogue() {
 	g.ActiveDialogue = nil
 }
 
-func (g *Game) ApplyDialogueEffect(npc *NPC, effect DialogueEffect) {
+func (g *Game) ApplyDialogueEffect(npc *Character, effect DialogueEffect) {
 	switch effect.Type {
 	case "change_alignment":
 		switch effect.Value {

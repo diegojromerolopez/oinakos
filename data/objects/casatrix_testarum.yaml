@@ -1,0 +1,13 @@
+name: Casatrix Testarum
+description: A standard casatrix testarum.
+weight: 1.0
+type: weapon
+slot: weapon
+value: 50
+combat:
+  name: Casatrix Testarum
+  type: melee
+  damage:
+    min: 10
+    max: 20
+  max_distance: touch

@@ -9,11 +9,7 @@ stats:
   base_attack: 3
   base_defense: 1
   attack_cooldown: 28
-weapon:
-  name: Club
-  type: melee
-  max_distance: touch
-  damage:
-    min: 2
-    max: 5
 xp: 6
+equipment:
+  weapon: club
+inventory: []

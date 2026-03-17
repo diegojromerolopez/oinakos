@@ -1,0 +1,50 @@
+id: stultus
+name: Stultus
+description: Stultus is a younger man in his mid-40s. He is tall, slim, with black
+  hair and weary, baggy eyes. A short moustache and beard frame his face. His voice
+  is his weapon; he attacks by unleashing devastating shouts. Legends say his power
+  resides in his tongue, which he guards fiercely.
+unique: true
+gender: male
+behavior: hunter
+stats:
+  health_min: 650
+  health_max: 650
+  speed: 0.05
+  base_attack: 60
+  base_defense: 25
+  attack_cooldown: 50
+  attack_range: 4.0
+  projectile_speed: 0.25
+xp: 160
+dialogues:
+  player_greetings:
+  - Hey, Stultus!
+  - What's the word?
+  start_scenarios:
+  - weight: 1.0
+    text: You there! Have you seen the red-eyed knight passing through?
+    auto_initiate: true
+    proximity_range: 3.5
+    choices:
+    - text: I have. He went toward the cliffs.
+      next: cliff_warn
+    - text: None of your business, old man.
+      next: insult_path
+      effects:
+      - type: change_behavior
+        value: flee
+  cliff_warn:
+    text: The cliffs? By the gods... that path is cursed.
+    choices:
+    - text: Thanks for the warning.
+      next: exit
+  insult_path:
+    text: Fine! I won't waste my breath on you! *runs away*
+    choices:
+    - text: Good riddance.
+      next: exit
+max_weight: 180
+equipment:
+  ring1: ring_speed
+inventory: []

@@ -1,0 +1,22 @@
+name: Wooden Club
+description: A heavy branch, crudely shaped for hitting things.
+weight: 3.5
+type: weapon
+slot: weapon
+value: 5
+combat:
+  name: Wooden Club
+  type: melee
+  max_distance: touch
+  damage:
+    min: 2
+    max: 5
+footprint:
+  - x: -2.36
+    y: -1.52
+  - x: -1.64
+    y: -1.48
+  - x: 0.5
+    y: -0.5
+  - x: -1.66
+    y: -0.66

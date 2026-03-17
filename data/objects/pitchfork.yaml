@@ -1,0 +1,23 @@
+name: Pitchfork
+description: A simple farm tool, repurposed for defense.
+weight: 3.0
+type: weapon
+slot: weapon
+value: 5
+combat:
+  name: Pitchfork
+  type: melee
+  max_distance: touch
+  damage:
+    min: 2
+    max: 5
+  weight: 3.0
+footprint:
+- x: -22.0
+  y: -21.984
+- x: 7.953
+  y: -21.984
+- x: 7.953
+  y: 7.969
+- x: -22.0
+  y: 7.969

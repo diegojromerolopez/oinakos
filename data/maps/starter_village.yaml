@@ -255,3 +255,28 @@ obstacles:
   - archetype_id: bush_4
     x: 8
     y: 6
+objects:
+  - id: iron_sword
+    x: 5
+    y: 5
+  - id: leather_armor
+    x: 6
+    y: 6
+  - id: bone_amulet
+    x: 7
+    y: 7
+  - id: iron_helmet
+    x: 8
+    y: 8
+  - id: magic_staff
+    x: 9
+    y: 9
+  - id: orcish_axe
+    x: 10
+    y: 10
+  - id: wooden_club
+    x: 4
+    y: 4
+  - id: club
+    x: 4
+    y: 6

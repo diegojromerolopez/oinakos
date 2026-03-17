@@ -1,0 +1,18 @@
+name: Silver Pendant
+description: A beautiful silver pendant on a thin chain.
+weight: 0.2
+type: ring
+slot: ring
+value: 120
+effects:
+  protection:
+    increase: 1
+footprint:
+  - x: -0.95
+    y: -0.98
+  - x: -0.63
+    y: -0.88
+  - x: -0.41
+    y: -0.53
+  - x: -0.61
+    y: -0.52

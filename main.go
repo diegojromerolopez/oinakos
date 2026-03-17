@@ -83,11 +83,7 @@ func main() {
 	archetypeReg := game.NewArchetypeRegistry()
 	archetypeReg.LoadAll(finalAssets)
 
-	npcReg := game.NewNPCRegistry()
-	npcReg.LoadAll(finalAssets)
-
-	// Load audio for ALL playable characters: assets/audio/characters/<id>/<stem>.wav → "<id>/<stem>"
-	charReg := game.NewPlayableCharacterRegistry()
+	charReg := game.NewCharacterRegistry()
 	charReg.LoadAll(finalAssets)
 
 	// Providers

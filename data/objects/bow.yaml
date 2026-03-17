@@ -1,0 +1,24 @@
+name: Bow
+description: A standard bow.
+weight: 1.0
+type: weapon
+slot: weapon
+value: 50
+combat:
+  name: Bow
+  type: ranged
+  damage:
+    min: 3
+    max: 6
+  max_distance: '10.0'
+footprint:
+  - x: -2.11
+    y: -2.02
+  - x: -0.47
+    y: -0.97
+  - x: 0.08
+    y: -0.14
+  - x: 0.28
+    y: 0.41
+  - x: 0.35
+    y: 0.65

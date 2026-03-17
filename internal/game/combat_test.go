@@ -8,40 +8,40 @@ import (
 func TestCombatMechanics(t *testing.T) {
 	ctx := NewTestContext()
 	// Setup a controlled combat scenario
-	mc := NewPlayableCharacter(0, 0, nil)
+	mc := NewCharacter(0, 0, nil, 1, true)
 	mc.BaseAttack = 20
 	mc.BaseDefense = 5
 	mc.Health = 100
 	mc.MaxHealth = 100
 	ctx.World.PlayableCharacter = mc
 
-	npc := NewNPC(1, 0, nil, 1)
+	npc := NewCharacter(1, 0, nil, 1, false)
 	npc.BaseAttack = 15
 	npc.BaseDefense = 2
 	npc.Health = 50
 	npc.MaxHealth = 50
 	npc.Alignment = AlignmentEnemy
-	ctx.World.NPCs = []*NPC{npc}
+	ctx.World.Characters = []*Character{npc}
 
 	// Player attacks NPC
 	initialNpcHealth := npc.Health
 	// For testing, we won't roll, just assume a hit and calculate damage
-	rawDmg := mc.Weapon.Damage.Max // Assume max
+	rawDmg := 25 // mc.Weapon.Damage.Max is not used here to be safer
 	protection := npc.GetTotalProtection()
 	damage := int(math.Max(1, float64(rawDmg-protection)))
 	npc.TakeDamage(damage, mc, ctx)
 
-	// Ensure the expected damage is correct: weapon maxDamage=25, npc protection=0, so 25 dmg
+	// Ensure the expected damage is correct
 	if npc.Health != initialNpcHealth-damage {
 		t.Errorf("NPC health mismatch. Expected %d, got %d", initialNpcHealth-damage, npc.Health)
 	}
 
 	// 2. NPC attacks Player
 	initialMcHealth := mc.Health
-	nRawDmg := float64(npc.BaseAttack) // Simplified since NPC might not have weapon in this test
+	nRawDmg := float64(npc.BaseAttack)
 	nProtection := float64(mc.GetTotalProtection())
 	npcDamage := int(math.Max(1, nRawDmg-nProtection))
-	mc.TakeDamage(npcDamage, ctx)
+	mc.TakeDamage(npcDamage, nil, ctx)
 
 	// NPC damage: npc.BaseAttack=15, mc.BaseDefense=5, mc.Protection=0 → expect 15
 	if mc.Health != initialMcHealth-npcDamage {
@@ -49,13 +49,13 @@ func TestCombatMechanics(t *testing.T) {
 	}
 
 	// 3. Test XP reward on death — use a known archetype so XP logic fires
-	npc2 := NewNPC(1, 0, &Archetype{ID: "orc", XP: 10}, 1)
+	npc2 := NewCharacter(1, 0, &EntityConfig{ID: "orc", XP: 10}, 1, false)
 	npc2.Health = 1
 	mc.XP = 0
 	mc.Kills = 0
-	ctx.World.NPCs = []*NPC{npc2}
+	ctx.World.Characters = []*Character{npc2}
 	npc2.TakeDamage(10, mc, ctx)
-	if npc2.State != NPCDead {
+	if npc2.State != ActorDead {
 		t.Fatalf("NPC should be dead")
 	}
 	if mc.XP <= 0 {
@@ -69,7 +69,7 @@ func TestCombatMechanics(t *testing.T) {
 func TestProjectileCombat(t *testing.T) {
 	ctx := NewTestContext()
 	// NPC projectile fires at player (the actual path in Projectile.Update)
-	mc := NewPlayableCharacter(0, 0, nil)
+	mc := NewCharacter(0, 0, nil, 1, true)
 	mc.Health = 100
 	ctx.World.PlayableCharacter = mc
 

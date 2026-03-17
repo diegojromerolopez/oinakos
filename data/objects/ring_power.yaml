@@ -1,0 +1,10 @@
+name: Ring of Power
+description: A magic ring that increases your strength.
+weight: 0.1
+type: ring
+category: magic
+slot: ring
+value: 250
+effects:
+  attack:
+    increase: 1

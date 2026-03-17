@@ -15,13 +15,9 @@ stats:
   base_attack: 12
   base_defense: 6
   attack_cooldown: 45
-weapon:
-  name: Great sword
-  type: melee
-  max_distance: touch
-  damage:
-    min: 6
-    max: 12
+max_weight: 250
+equipment:
+inventory: []
 xp: 15
 dialogues:
   combat_barks:

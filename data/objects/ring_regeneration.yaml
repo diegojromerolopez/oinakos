@@ -1,0 +1,10 @@
+name: Ring of Regeneration
+description: A magic ring that slowly heals your wounds.
+weight: 0.1
+type: ring
+category: magic
+slot: ring
+value: 500
+effects:
+  regen:
+    increase: 1

@@ -1,0 +1,14 @@
+id: golden_guard
+name: Golden Guard
+archetype: man_at_arms
+gender: male
+unique: false
+primary_color: "#FFD700" # Gold
+secondary_color: "#FFFFFF"
+stats:
+  health_min: 120
+  health_max: 150
+  base_attack: 22
+  base_defense: 18
+max_weight: 180
+xp: 24

@@ -1,0 +1,24 @@
+name: Long sword
+description: A standard long sword.
+weight: 1.0
+type: weapon
+slot: weapon
+value: 50
+combat:
+  name: Long sword
+  type: melee
+  damage:
+    min: 5
+    max: 10
+  max_distance: touch
+footprint:
+  - x: -1.91
+    y: -1.97
+  - x: -1.22
+    y: -1.41
+  - x: 0.33
+    y: 0.17
+  - x: -0.52
+    y: -0.42
+  - x: -1.66
+    y: -1.47

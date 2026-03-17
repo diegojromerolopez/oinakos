@@ -1,0 +1,22 @@
+name: Club
+description: A standard club.
+weight: 1.0
+type: weapon
+slot: weapon
+value: 50
+combat:
+  name: Club
+  type: melee
+  damage:
+    min: 2
+    max: 5
+  max_distance: touch
+footprint:
+  - x: -0.88
+    y: -1.5
+  - x: -0.41
+    y: -1.47
+  - x: -0.38
+    y: -0.75
+  - x: -1.34
+    y: -0.28

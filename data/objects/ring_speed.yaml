@@ -1,0 +1,10 @@
+name: Ring of Speed
+description: A magic ring that makes you move faster.
+weight: 0.1
+type: ring
+category: magic
+slot: ring
+value: 300
+effects:
+  speed:
+    increase: 0.5

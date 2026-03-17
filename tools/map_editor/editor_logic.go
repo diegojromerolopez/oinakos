@@ -132,7 +132,7 @@ func (m *MapEditor) placeItem(mx, my int) {
 			ArchetypeID: m.PendingItem.ID, X: &cx, Y: &cy,
 		})
 	} else {
-		m.MapData.NPCs = append(m.MapData.NPCs, game.NPCSaveData{
+		m.MapData.Characters = append(m.MapData.Characters, game.NPCSaveData{
 			ArchetypeID: m.PendingItem.ID, X: cx, Y: cy, Level: 1, Behavior: "wander",
 		})
 	}
@@ -144,7 +144,7 @@ func (m *MapEditor) pickAt(mx, my int) int {
 	worldY := float64(my) - (screenHeight / 2) + m.CamY
 	cx, cy := engine.IsoToCartesian(worldX, worldY)
 
-	for i, npc := range m.MapData.NPCs {
+	for i, npc := range m.MapData.Characters {
 		if math.Hypot(cx-npc.X, cy-npc.Y) < 1.0 { return i | (1 << 30) }
 	}
 	for i, obs := range m.MapData.Obstacles {
@@ -159,7 +159,7 @@ func (m *MapEditor) selectElement(val int) {
 	idx := val &^ (1 << 30)
 
 	if isNPC {
-		data := m.MapData.NPCs[idx]
+		data := m.MapData.Characters[idx]
 		m.Selection = &MapElement{
 			ID: fmt.Sprintf("npc_%d", idx), X: data.X, Y: data.Y, Item: m.findItem(data.ArchetypeID, "npc"),
 		}
@@ -185,8 +185,8 @@ func (m *MapEditor) removeSelection() {
 	fmt.Sscanf(parts[1], "%d", &idx)
 
 	if strings.HasPrefix(m.Selection.ID, "npc_") {
-		if idx < len(m.MapData.NPCs) {
-			m.MapData.NPCs = append(m.MapData.NPCs[:idx], m.MapData.NPCs[idx+1:]...)
+		if idx < len(m.MapData.Characters) {
+			m.MapData.Characters = append(m.MapData.Characters[:idx], m.MapData.Characters[idx+1:]...)
 		}
 	} else {
 		if idx < len(m.MapData.Obstacles) {
@@ -204,9 +204,9 @@ func (m *MapEditor) syncToSaveData() {
 	fmt.Sscanf(parts[1], "%d", &idx)
 
 	if strings.HasPrefix(m.Selection.ID, "npc_") {
-		if idx < len(m.MapData.NPCs) {
-			m.MapData.NPCs[idx].X = m.Selection.X
-			m.MapData.NPCs[idx].Y = m.Selection.Y
+		if idx < len(m.MapData.Characters) {
+			m.MapData.Characters[idx].X = m.Selection.X
+			m.MapData.Characters[idx].Y = m.Selection.Y
 		}
 	} else {
 		if idx < len(m.MapData.Obstacles) {

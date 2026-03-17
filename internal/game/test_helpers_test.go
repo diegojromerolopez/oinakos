@@ -16,7 +16,7 @@ func NewTestContext() *SystemContext {
 		Audio:      NewMockAudioManager(),
 		Registries: &RegistryContainer{
 			Archetypes: NewArchetypeRegistry(),
-			NPCs:       NewNPCRegistry(),
+			Characters:       NewCharacterRegistry(),
 			Obstacles:  NewObstacleRegistry(),
 		},
 		Log: func(s string, c LogCategory) {},

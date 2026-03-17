@@ -3,20 +3,20 @@ package game
 // RegistryContainer bundles all game registries for easier management and passing.
 type RegistryContainer struct {
 	Archetypes         *ArchetypeRegistry
-	PlayableCharacters *PlayableCharacterRegistry
+	Characters         *CharacterRegistry
 	Maps               *MapTypeRegistry
 	Campaigns          *CampaignRegistry
 	Obstacles          *ObstacleRegistry
-	NPCs               *NPCRegistry
+	Objects            *ObjectRegistry
 }
 
 func NewRegistryContainer() *RegistryContainer {
 	return &RegistryContainer{
-		Archetypes:         NewArchetypeRegistry(),
-		PlayableCharacters: NewPlayableCharacterRegistry(),
-		Maps:               NewMapTypeRegistry(),
-		Campaigns:          NewCampaignRegistry(),
-		Obstacles:          NewObstacleRegistry(),
-		NPCs:               NewNPCRegistry(),
+		Archetypes: NewArchetypeRegistry(),
+		Characters: NewCharacterRegistry(),
+		Maps:       NewMapTypeRegistry(),
+		Campaigns:  NewCampaignRegistry(),
+		Obstacles:  NewObstacleRegistry(),
+		Objects:    NewObjectRegistry(),
 	}
 }

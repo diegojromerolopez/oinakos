@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"image"
 	"io/fs"
 	"log"
@@ -32,7 +33,7 @@ func (wm *WorldManager) LoadMapAudio() {
 			return
 		}
 		if isNPC {
-			if conf, ok := g.npcRegistry.NPCs[id]; ok {
+			if conf, ok := g.characterRegistry.Characters[id]; ok {
 				configs[conf.ID] = conf
 				if conf.ArchetypeID != "" {
 					if arch, ok := g.archetypeRegistry.Archetypes[conf.ArchetypeID]; ok {
@@ -50,7 +51,7 @@ func (wm *WorldManager) LoadMapAudio() {
 		configs[g.playableCharacter.Config.ID] = g.playableCharacter.Config
 	}
 
-	allInhabs := append(g.currentMapType.Inhabitants, g.currentMapType.NPCs...)
+	allInhabs := append(g.currentMapType.Inhabitants, g.currentMapType.Characters...)
 	for _, ps := range allInhabs {
 		if ps.NPCID != "" {
 			collect(ps.NPCID, true)
@@ -67,7 +68,7 @@ func (wm *WorldManager) LoadMapAudio() {
 		collect(s.Archetype, false)
 	}
 
-	for _, n := range g.npcs {
+	for _, n := range g.characters {
 		if n.Config != nil {
 			configs[n.Config.ID] = n.Config
 		}
@@ -110,6 +111,7 @@ func (wm *WorldManager) LoadMapAudio() {
 		DebugLog("Parallel Loading %d audio files for map...", len(jobs))
 		loadAudioParallel(g.assets, jobs, &g.LoadingProgress)
 	}
+	g.characterRegistry.LoadAssets(g.assets, g.Graphics, g.archetypeRegistry, &g.LoadingProgress)
 	log.Printf("LoadMapAudio: processed %d jobs in %v", len(jobs), time.Since(startTime))
 }
 
@@ -155,10 +157,31 @@ func (wm *WorldManager) LoadMapLevel() {
 	}
 
 	g.playTime = 0
-	g.npcs = make([]*NPC, 0)
+	g.characters = make([]*Character, 0)
 	g.obstacles = make([]*Obstacle, 0)
 	g.floatingTexts = make([]*FloatingText, 0)
 	g.currentMapType.StartTime = 0
+	
+	if g.World != nil {
+		g.World.Items = make([]*ItemInstance, 0)
+		if g.Registries != nil && g.Registries.Objects != nil {
+			for _, o := range g.currentMapType.Objects {
+				if cfg, ok := g.Registries.Objects.Objects[o.ID]; ok {
+					// Ensure items are not overlapping obstacles
+					safeX, safeY := findSafePosition(o.X, o.Y, engine.Circle{Radius: 0.5}, g.obstacles)
+					it := &ItemInstance{
+						ID:       fmt.Sprintf("%s_%d", cfg.ID, rand.Int()),
+						Config:   cfg,
+						X:        safeX,
+						Y:        safeY,
+						Pickable: true,
+					}
+					g.World.Items = append(g.World.Items, it)
+				}
+			}
+		}
+	}
+
 	g.playableCharacter.MapKills = make(map[string]int)
 	g.mapWonMenuIndex = 0
 	g.ExploredTiles = make(map[image.Point]bool)
@@ -167,6 +190,7 @@ func (wm *WorldManager) LoadMapLevel() {
 		g.playableCharacter.X = g.currentMapType.Player.X
 		g.playableCharacter.Y = g.currentMapType.Player.Y
 	}
+	g.playableCharacter.LoadEquipment(g.Registries.Objects)
 
 	pIsoX, pIsoY := engine.CartesianToIso(g.playableCharacter.X, g.playableCharacter.Y)
 	g.camera.SnapTo(pIsoX, pIsoY)
@@ -187,11 +211,12 @@ func (wm *WorldManager) LoadMapLevel() {
 			tpY := g.playableCharacter.Y + (rand.Float64()*40 - 20)
 			if tpX > -5 && tpX < 5 { tpX += 10 }
 			if tpY > -5 && tpY < 5 { tpY += 10 }
-			vip := NewNPC(tpX, tpY, vipConfig, g.mapLevel*2)
+			vip := NewCharacter(tpX, tpY, vipConfig, g.mapLevel*2, false)
 			vip.MaxHealth *= g.mapLevel * 2
 			vip.Health = vip.MaxHealth
 			vip.BaseAttack += g.mapLevel * 2
-			g.npcs = append(g.npcs, vip)
+			vip.LoadEquipment(g.Registries.Objects)
+			g.characters = append(g.characters, vip)
 			g.currentMapType.TargetPoint = engine.Point{X: tpX, Y: tpY}
 		}
 	case ObjReachPortal, ObjReachZone:
@@ -228,8 +253,9 @@ func (wm *WorldManager) LoadMapLevel() {
 			g.currentMapType.TargetPoint = engine.Point{X: g.playableCharacter.X + offX, Y: g.playableCharacter.Y + offY}
 		}
 		if config, ok := g.archetypeRegistry.Archetypes["magi_male"]; ok {
-			escort := NewNPC(g.playableCharacter.X+2, g.playableCharacter.Y+2, config, g.mapLevel)
-			g.npcs = append([]*NPC{escort}, g.npcs...)
+			escort := NewCharacter(g.playableCharacter.X+2, g.playableCharacter.Y+2, config, g.mapLevel, false)
+			escort.LoadEquipment(g.Registries.Objects)
+			g.characters = append([]*Character{escort}, g.characters...)
 		}
 	case ObjDestroyBuilding:
 		var targetObs *Obstacle
@@ -261,13 +287,13 @@ func (wm *WorldManager) LoadMapLevel() {
 		}
 	}
 
-	allInhabs := append(g.currentMapType.Inhabitants, g.currentMapType.NPCs...)
+	allInhabs := append(g.currentMapType.Inhabitants, g.currentMapType.Characters...)
 	for _, ps := range allInhabs {
 		var config *EntityConfig
 		var ok bool
 		id := ps.NPC
 		if ps.NPCID != "" { id = ps.NPCID }
-		if id != "" { config, ok = g.npcRegistry.NPCs[id] } else {
+		if id != "" { config, ok = g.characterRegistry.Characters[id] } else {
 			arch := ps.Archetype
 			if ps.ArchetypeID != "" { arch = ps.ArchetypeID }
 			if arch != "" { config, ok = g.archetypeRegistry.Archetypes[arch]; id = arch }
@@ -277,11 +303,12 @@ func (wm *WorldManager) LoadMapLevel() {
 				g.playableCharacter.X, g.playableCharacter.Y = ps.X, ps.Y
 				continue
 			}
-			npc := NewNPC(ps.X, ps.Y, config, g.mapLevel)
+			npc := NewCharacter(ps.X, ps.Y, config, g.mapLevel, false)
 			npc.Alignment, npc.MustSurvive = ps.Alignment, ps.MustSurvive
 			if ps.Name != "" { npc.Name = ps.Name }
-			if ps.State == "dead" { npc.Health, npc.State = 0, NPCDead }
-			g.npcs = append(g.npcs, npc)
+			if ps.State == "dead" { npc.Health, npc.State = 0, ActorDead }
+			npc.LoadEquipment(g.Registries.Objects)
+			g.characters = append(g.characters, npc)
 		}
 	}
 
@@ -308,7 +335,7 @@ func (wm *WorldManager) LoadMapLevel() {
 		}
 	}
 
-	for _, n := range g.npcs {
+	for _, n := range g.characters {
 		if !n.IsAlive() {
 			continue
 		}
@@ -352,7 +379,7 @@ func (wm *WorldManager) UpdateNPCSpawning() {
 			if s.Timer >= int(s.Frequency*60) {
 				s.Timer = 0
 				if rand.Float64() <= s.Probability {
-					if len(g.npcs) < 100 {
+					if len(g.characters) < 100 {
 						if s.X != nil && s.Y != nil { wm.spawnNPCNearPosition(*s.X, *s.Y, s) } else { wm.spawnNPCAtMapEdges(s) }
 					}
 				}
@@ -363,14 +390,14 @@ func (wm *WorldManager) UpdateNPCSpawning() {
 	g.npcSpawnTimer++
 	if g.npcSpawnTimer >= 300 {
 		g.npcSpawnTimer = 0
-		activeNPCs := make([]*NPC, 0)
-		for _, n := range g.npcs {
+		activeNPCs := make([]*Character, 0)
+		for _, n := range g.characters {
 			dist := math.Sqrt(math.Pow(n.X-g.playableCharacter.X, 2) + math.Pow(n.Y-g.playableCharacter.Y, 2))
 			if n.IsAlive() {
 				if dist < 40 { activeNPCs = append(activeNPCs, n) }
 			} else { activeNPCs = append(activeNPCs, n) }
 		}
-		g.npcs = activeNPCs
+		g.characters = activeNPCs
 	}
 }
 
@@ -381,12 +408,12 @@ func (wm *WorldManager) spawnNPCNearPosition(x, y float64, sc *SpawnConfig) {
 	if npcConfig == nil { return }
 	if rand.Float64() < 0.05 {
 		var variants []*EntityConfig
-		for _, v := range g.npcRegistry.NPCs {
+		for _, v := range g.characterRegistry.Characters {
 			if v.ArchetypeID == sc.Archetype && !v.Unique { variants = append(variants, v) }
 		}
 		if len(variants) > 0 { npcConfig = variants[rand.Intn(len(variants))] }
 	}
-	npc := NewNPC(x, y, npcConfig, g.mapLevel)
+	npc := NewCharacter(x, y, npcConfig, g.mapLevel, false)
 	npc.Alignment = sc.Alignment
 	for i := 0; i < 10; i++ {
 		collides := false
@@ -397,7 +424,8 @@ func (wm *WorldManager) spawnNPCNearPosition(x, y float64, sc *SpawnConfig) {
 		angle := rand.Float64() * 2 * math.Pi
 		npc.X = x + math.Cos(angle)*(2.0+rand.Float64()); npc.Y = y + math.Sin(angle)*(2.0+rand.Float64())
 	}
-	g.npcs = append(g.npcs, npc)
+	npc.LoadEquipment(g.Registries.Objects)
+	g.characters = append(g.characters, npc)
 }
 
 func (wm *WorldManager) spawnNPCAtMapEdges(sc *SpawnConfig) {
@@ -407,13 +435,13 @@ func (wm *WorldManager) spawnNPCAtMapEdges(sc *SpawnConfig) {
 	if npcConfig == nil { return }
 	if rand.Float64() < 0.05 {
 		var variants []*EntityConfig
-		for _, v := range g.npcRegistry.NPCs {
+		for _, v := range g.characterRegistry.Characters {
 			if v.ArchetypeID == sc.Archetype && !v.Unique { variants = append(variants, v) }
 		}
 		if len(variants) > 0 { npcConfig = variants[rand.Intn(len(variants))] }
 	}
 	angle := rand.Float64() * 2 * math.Pi
-	npc := NewNPC(g.playableCharacter.X+math.Cos(angle)*30, g.playableCharacter.Y+math.Sin(angle)*30, npcConfig, g.mapLevel)
+	npc := NewCharacter(g.playableCharacter.X+math.Cos(angle)*30, g.playableCharacter.Y+math.Sin(angle)*30, npcConfig, g.mapLevel, false)
 	npc.Alignment = sc.Alignment
 	for i := 0; i < 10; i++ {
 		collides := false
@@ -425,5 +453,6 @@ func (wm *WorldManager) spawnNPCAtMapEdges(sc *SpawnConfig) {
 		npc.X = g.playableCharacter.X + math.Cos(angle)*(30.0+rand.Float64()*2)
 		npc.Y = g.playableCharacter.Y + math.Sin(angle)*(30.0+rand.Float64()*2)
 	}
-	g.npcs = append(g.npcs, npc)
+	npc.LoadEquipment(g.Registries.Objects)
+	g.characters = append(g.characters, npc)
 }

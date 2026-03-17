@@ -57,7 +57,7 @@ func (g *Game) initAIManager() {
 		provider = &NoopAIProvider{}
 	}
 
-	g.aiManager = NewAIManager(provider)
+	g.aiManager = NewAIManager(NewFallbackAIProvider(provider, &NativeAIProvider{}))
 
 	// Fetch the actual URL used (since NewOpenAIProvider handles defaults)
 	actualURL := ""

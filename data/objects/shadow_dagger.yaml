@@ -1,0 +1,27 @@
+name: Shadow Dagger
+description: A dark blade that seems to pull at the air. Increases movement speed.
+weight: 1.5
+type: weapon
+category: magic
+slot: weapon
+value: 450
+effects:
+  speed:
+    increase: 0.02
+combat:
+  name: Shadow Dagger
+  type: melee
+  max_distance: touch
+  damage:
+    min: 2
+    max: 18
+  weight: 1.5
+footprint:
+  - x: -2.25
+    y: -1.44
+  - x: -0.53
+    y: -1.09
+  - x: 0.61
+    y: -0.3
+  - x: -0.77
+    y: -0.42

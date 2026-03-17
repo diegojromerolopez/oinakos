@@ -5,10 +5,10 @@ import (
 	"testing"
 )
 
-func TestPlayableCharacterRegistryCount(t *testing.T) {
+func TestCharacterRegistryCount(t *testing.T) {
 	// Go tests run in the package directory, so we need to go up to the repo root
 	assets := os.DirFS("../..")
-	reg := NewPlayableCharacterRegistry()
+	reg := NewCharacterRegistry()
 	err := reg.LoadAll(assets)
 	if err != nil {
 		t.Fatalf("Failed to load registry: %v", err)

@@ -43,3 +43,19 @@ spawns:
     alignment: enemy
     probability: 0.3
     frequency: 8.0
+player:
+  x: -20.0
+  y: -20.0
+objects:
+  - id: iron_sword
+    x: -19.0
+    y: -20.0
+  - id: orcish_axe
+    x: 10.0
+    y: 15.0
+  - id: rusted_mace
+    x: 15.0
+    y: 10.0
+  - id: bone_amulet
+    x: 12.0
+    y: 12.0

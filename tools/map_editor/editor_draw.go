@@ -88,7 +88,7 @@ func (m *MapEditor) drawEditor(screen *ebiten.Image) {
 		}
 	}
 
-	for i, npcData := range m.MapData.NPCs {
+	for i, npcData := range m.MapData.Characters {
 		var arch *game.Archetype
 		for _, item := range m.Library {
 			if item.ID == npcData.ArchetypeID {

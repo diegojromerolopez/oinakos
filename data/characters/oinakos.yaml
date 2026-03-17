@@ -11,10 +11,8 @@ stats:
   base_defense: 5
   speed: 0.07
   attack_cooldown: 30
-weapon:
-  name: Tizon
-  type: melee
-  max_distance: touch
-  damage:
-    min: 15
-    max: 25
+max_weight: 250
+equipment:
+  weapon: tizon
+  ring1: ring_protection
+inventory: []

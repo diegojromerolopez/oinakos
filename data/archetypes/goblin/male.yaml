@@ -11,13 +11,6 @@ stats:
   attack_cooldown: 70
   attack_range: 8.0
   projectile_speed: 4.5
-weapon:
-  name: Bow
-  type: ranged
-  max_distance: '10.0'
-  damage:
-    min: 3
-    max: 6
 xp: 5
 dialogues:
   player_greetings:
@@ -48,3 +41,7 @@ dialogues:
     choices:
     - text: Thanks for the tip.
       next: exit
+max_weight: 60
+equipment:
+  weapon: bow
+inventory: []

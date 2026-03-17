@@ -12,10 +12,7 @@ stats:
   base_defense: 15
   speed: 0.07
   attack_cooldown: 30
-weapon:
-  name: Durandal
-  type: melee
-  max_distance: touch
-  damage:
-    min: 20
-    max: 40
+max_weight: 250
+equipment:
+  weapon: durandal
+inventory: []

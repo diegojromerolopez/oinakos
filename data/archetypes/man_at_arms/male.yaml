@@ -22,13 +22,6 @@ stats:
   attack_cooldown: 55
 primary_color: '#0000FF'
 secondary_color: '#303030'
-weapon:
-  name: Sword
-  type: melee
-  max_distance: touch
-  damage:
-    min: 5
-    max: 10
 xp: 14
 dialogues:
   player_greetings:
@@ -61,3 +54,7 @@ dialogues:
     choices:
     - text: Stay safe.
       next: exit
+max_weight: 150
+equipment:
+  weapon: sword
+inventory: []

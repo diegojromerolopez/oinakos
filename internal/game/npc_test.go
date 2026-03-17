@@ -8,7 +8,7 @@ import (
 )
 
 func TestNPCCalculateStat(t *testing.T) {
-	n := &NPC{}
+	n := &Character{}
 	if res := n.Actor.calculateStat(10, 1); res != 10 {
 		t.Errorf("calculateStat(10, 1): got %d, want 10", res)
 	}
@@ -18,7 +18,7 @@ func TestNPCCalculateStat(t *testing.T) {
 }
 
 func TestNPCGetters(t *testing.T) {
-	n := &NPC{Actor: Actor{BaseAttack: 10, BaseDefense: 5}}
+	n := &Character{Actor: Actor{BaseAttack: 10, BaseDefense: 5}}
 	if n.GetTotalAttack() != 10 {
 		t.Errorf("GetTotalAttack: got %d, want 10", n.GetTotalAttack())
 	}
@@ -32,7 +32,7 @@ func TestNPCGetters(t *testing.T) {
 
 func TestNPCTakeDamage(t *testing.T) {
 	ctx := NewTestContext()
-	n := &NPC{Actor: Actor{Health: 100, MaxHealth: 100}}
+	n := &Character{Actor: Actor{Health: 100, MaxHealth: 100, Config: &EntityConfig{ID: "test"}}}
 	n.TakeDamage(10, nil, ctx)
 	if n.Health != 90 {
 		t.Errorf("Health after damage: got %d, want 90", n.Health)
@@ -42,8 +42,8 @@ func TestNPCTakeDamage(t *testing.T) {
 	}
 
 	n.TakeDamage(100, nil, ctx)
-	if n.Health != -10 {
-		t.Errorf("Health after lethal damage: got %d, want -10", n.Health)
+	if n.Health != 0 {
+		t.Errorf("Health after lethal damage: got %d, want 0", n.Health)
 	}
 	if n.IsAlive() {
 		t.Error("NPC should be dead")
@@ -51,18 +51,18 @@ func TestNPCTakeDamage(t *testing.T) {
 }
 
 func TestNPCIsAlive(t *testing.T) {
-	n1 := &NPC{Actor: Actor{State: NPCIdle}}
+	n1 := &Character{Actor: Actor{State: ActorIdle}}
 	if !n1.IsAlive() {
-		t.Error("Expected NPC with State=NPCIdle to be alive")
+		t.Error("Expected NPC with State=ActorIdle to be alive")
 	}
-	n2 := &NPC{Actor: Actor{State: NPCDead}}
+	n2 := &Character{Actor: Actor{State: ActorDead}}
 	if n2.IsAlive() {
-		t.Error("Expected NPC with State=NPCDead to be dead")
+		t.Error("Expected NPC with State=ActorDead to be dead")
 	}
 }
 
-func TestNewNPC(t *testing.T) {
-	arch := &Archetype{
+func TestNewCharacter(t *testing.T) {
+	arch := &EntityConfig{
 		ID:   "orc",
 		Name: "Orc",
 		Stats: struct {
@@ -81,7 +81,7 @@ func TestNewNPC(t *testing.T) {
 			BaseDefense: 5,
 		},
 	}
-	n := NewNPC(10, 20, arch, 1)
+	n := NewCharacter(10, 20, arch, 1, false)
 	if n.X != 10 || n.Y != 20 {
 		t.Errorf("Position: got (%v, %v), want (10, 20)", n.X, n.Y)
 	}
@@ -91,7 +91,7 @@ func TestNewNPC(t *testing.T) {
 }
 
 func TestNPCCollisionCircle(t *testing.T) {
-	n := NewNPC(10, 10, nil, 1)
+	n := NewCharacter(10, 10, nil, 1, false)
 	c := n.GetCollisionCircle()
 	if c.Radius <= 0 {
 		t.Error("NPC Collision circle should have radius > 0")
@@ -100,12 +100,12 @@ func TestNPCCollisionCircle(t *testing.T) {
 
 func TestNPCAllyFollowing(t *testing.T) {
 	ctx := NewTestContext()
-	n := NewNPC(0, 0, nil, 1)
+	n := NewCharacter(0, 0, nil, 1, false)
 	n.Alignment = AlignmentAlly
 	n.Behavior = BehaviorWander // Fix flakiness: avoid default random behavior clearing TargetActor
-	mc := &PlayableCharacter{Actor: Actor{X: 10, Y: 10, State: StateIdle}}
+	mc := &Character{Actor: Actor{X: 10, Y: 10, State: ActorIdle}, IsPlayerControlled: true}
 	ctx.World.PlayableCharacter = mc
-	ctx.World.NPCs = []*NPC{n}
+	ctx.World.Characters = []*Character{n}
 
 	// First update should set target to player because they are far away (dist 14.14 > 8.0)
 	n.Update(ctx)
@@ -113,13 +113,13 @@ func TestNPCAllyFollowing(t *testing.T) {
 	if n.TargetActor != &mc.Actor {
 		t.Errorf("Expected ally NPC to target player for rejoining, got %v", n.TargetActor)
 	}
-	if n.State != NPCWalking {
+	if n.State != ActorWalking {
 		t.Errorf("Expected ally NPC to be walking, got %v", n.State)
 	}
 }
 
 func TestNPCCollision(t *testing.T) {
-	n := NewNPC(10, 10, nil, 1)
+	n := NewCharacter(10, 10, nil, 1, false)
 	obs := []*Obstacle{NewObstacle("test_npc_collider", 10.5, 10.5, nil)}
 	if !n.checkCollisionAt(10.5, 10.5, obs) {
 		t.Error("Expected collision at 10.5, 10.5")
@@ -128,12 +128,14 @@ func TestNPCCollision(t *testing.T) {
 
 func TestNPCUpdate_Behaviors(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewPlayableCharacter(10, 10, nil)
+	mc := NewCharacter(10, 10, nil, 1, true)
+	mc.Health = 100
 	ctx.World.PlayableCharacter = mc
 
-	n := NewNPC(0, 0, nil, 1)
+	n := NewCharacter(0, 0, nil, 1, false)
+	n.Health = 100
 	n.Speed = 1.0
-	ctx.World.NPCs = []*NPC{n}
+	ctx.World.Characters = []*Character{n}
 
 	// 1. BehaviorKnightHunter (moves towards MC)
 	n.Behavior = BehaviorKnightHunter
@@ -142,7 +144,7 @@ func TestNPCUpdate_Behaviors(t *testing.T) {
 	if n.X == 0 && n.Y == 0 {
 		t.Error("BehaviorKnightHunter did not move")
 	}
-	if n.State != NPCWalking {
+	if n.State != ActorWalking {
 		t.Error("BehaviorKnightHunter failed state transition")
 	}
 	if n.TargetActor != &mc.Actor {
@@ -157,6 +159,7 @@ func TestNPCUpdate_Behaviors(t *testing.T) {
 	n.PatrolEndX, n.PatrolEndY = 10, 0
 	n.PatrolHeading = true
 	// Force it to reach the end
+	mc.X, mc.Y = 100, 100 // Move player far away so patrol continues
 	n.X = 9.9
 	n.Update(ctx)
 	if n.PatrolHeading != false {
@@ -166,6 +169,7 @@ func TestNPCUpdate_Behaviors(t *testing.T) {
 	// 3. BehaviorWander (random movement)
 	n.Behavior = BehaviorWander
 	n.TargetActor = nil
+	ctx.World.PlayableCharacter = nil // Clear player so it wanders
 	n.X, n.Y = 0, 0
 	n.Tick = 119 // trigger wander pick
 	n.Update(ctx)
@@ -176,11 +180,13 @@ func TestNPCUpdate_Behaviors(t *testing.T) {
 	// 4. BehaviorNpcFighter (targets nearest living NPC except self)
 	n.Behavior = BehaviorNpcFighter
 	n.TargetActor = nil
-	targetNPC := NewNPC(5, 5, nil, 1)
+	targetNPC := NewCharacter(5, 5, nil, 1, false)
+	targetNPC.Health = 100
 	targetNPC.Alignment = AlignmentAlly
-	deadNPC := NewNPC(2, 2, nil, 1)
-	deadNPC.State = NPCDead
-	ctx.World.NPCs = []*NPC{n, deadNPC, targetNPC}
+	deadNPC := NewCharacter(2, 2, nil, 1, false)
+	deadNPC.Health = 0
+	deadNPC.State = ActorDead
+	ctx.World.Characters = []*Character{n, deadNPC, targetNPC}
 	n.X, n.Y = 0, 0
 	n.Update(ctx)
 	if n.TargetActor != &targetNPC.Actor {
@@ -190,8 +196,11 @@ func TestNPCUpdate_Behaviors(t *testing.T) {
 	// 5. BehaviorChaotic (targets closest between MC or NPC)
 	n.Behavior = BehaviorChaotic
 	n.TargetActor = nil
+	ctx.World.PlayableCharacter = mc // RESTORE PLAYER
 	mc.X, mc.Y = 20, 20             // Far
+	mc.Health = 100
 	targetNPC.X, targetNPC.Y = 5, 5 // Near
+	targetNPC.Health = 100
 	n.X, n.Y = 0, 0
 	n.Update(ctx)
 	if n.TargetActor != &targetNPC.Actor {
@@ -212,10 +221,10 @@ func TestNPCUpdate_Behaviors(t *testing.T) {
 func TestNPC_MeleeAttack(t *testing.T) {
 	rand.Seed(1) // Ensure deterministic attack rolls so hit guarantees do not flip on the 5% margin within CI
 	ctx := NewTestContext()
-	mc := NewPlayableCharacter(0.5, 0, nil) // Very close
+	mc := NewCharacter(0.5, 0, nil, 1, true) // Very close
 	ctx.World.PlayableCharacter = mc
 
-	arch := &Archetype{Stats: struct {
+	arch := &EntityConfig{Stats: struct {
 		HealthMin            int     `yaml:"health_min"`
 		HealthMax            int     `yaml:"health_max"`
 		Speed                float64 `yaml:"speed"`
@@ -233,11 +242,11 @@ func TestNPC_MeleeAttack(t *testing.T) {
 		AttackCooldown: 60,
 		Speed:          1.0,
 	}, Behavior: "hunter"}
-	n := NewNPC(0, 0, arch, 1)
+	n := NewCharacter(0, 0, arch, 1, false)
 	n.TargetActor = &mc.Actor
 	n.Weapon = &Weapon{Name: "TestWeapon", Damage: Damage{Min: 10, Max: 10}}
 	n.AttackTimer = 60 // Ready to attack
-	ctx.World.NPCs = []*NPC{n}
+	ctx.World.Characters = []*Character{n}
 
 	// Loop until a hit connects (due to built-in 5% miss chance RNG)
 	startHealth := mc.Health
@@ -249,7 +258,7 @@ func TestNPC_MeleeAttack(t *testing.T) {
 		}
 	}
 
-	if n.State != NPCAttacking {
+	if n.State != ActorAttacking {
 		t.Error("NPC should transition to Attacking state")
 	}
 	if mc.Health >= startHealth {
@@ -258,11 +267,11 @@ func TestNPC_MeleeAttack(t *testing.T) {
 
 	// Test NPC vs NPC attack
 	n.TargetActor = nil
-	targetNPC := NewNPC(0.5, 0, nil, 1)
+	targetNPC := NewCharacter(0.5, 0, nil, 1, false)
 	targetNPC.Alignment = AlignmentAlly
 	n.TargetActor = &targetNPC.Actor
 	n.AttackTimer = 60
-	ctx.World.NPCs = []*NPC{n, targetNPC}
+	ctx.World.Characters = []*Character{n, targetNPC}
 	startNpcHealth := targetNPC.Health
 	for i := 0; i < 100; i++ {
 		n.AttackTimer = 60
@@ -279,10 +288,11 @@ func TestNPC_MeleeAttack(t *testing.T) {
 
 func TestNPC_RangedAttack(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewPlayableCharacter(4, 0, nil) // Within ranged attack
+	mc := NewCharacter(4, 0, nil, 1, true) // Within ranged attack
+	mc.Health = 100
 	ctx.World.PlayableCharacter = mc
 
-	arch := &Archetype{Stats: struct {
+	arch := &EntityConfig{Stats: struct {
 		HealthMin       int     `yaml:"health_min"`
 		HealthMax       int     `yaml:"health_max"`
 		Speed           float64 `yaml:"speed"`
@@ -296,16 +306,22 @@ func TestNPC_RangedAttack(t *testing.T) {
 		AttackCooldown: 60,
 		Speed:          1.0,
 	}, Behavior: "hunter"}
-	n := NewNPC(0, 0, arch, 1)
+	n := NewCharacter(0, 0, arch, 1, false)
+	n.Health = 100
 	n.TargetActor = &mc.Actor
-	n.Weapon = &Weapon{Name: "Bow", Type: "ranged", MaxDistance: "5.0", Damage: Damage{Min: 3, Max: 6}}
+	n.Slots = make(map[string]*ObjectConfig)
+	n.Slots["weapon"] = &ObjectConfig{
+		Slot: "weapon",
+		Combat: &Weapon{Name: "Bow", Type: "ranged", MaxDistance: "5.0", Damage: Damage{Min: 3, Max: 6}},
+	}
+	n.UpdateEffects()
 	n.AttackTimer = 60 // Ready to attack
 
-	ctx.World.NPCs = []*NPC{n}
+	ctx.World.Characters = []*Character{n}
 
 	n.Update(ctx)
 
-	if n.State != NPCAttacking {
+	if n.State != ActorAttacking {
 		t.Error("Ranged NPC should transition to Attacking state")
 	}
 	if len(ctx.World.Projectiles) == 0 {
@@ -315,12 +331,13 @@ func TestNPC_RangedAttack(t *testing.T) {
 	// Test kiting behavior (too close)
 	mc.X, mc.Y = 1, 0 // Inside minimum range
 	n.X, n.Y = 0, 0
+	n.State = ActorIdle // Force idle to allow movement
 	n.Update(ctx)
 
 	if math.Sqrt(math.Pow(n.X, 2)+math.Pow(n.Y, 2)) == 0 {
 		t.Error("Ranged NPC should kite away when player is too close")
 	}
-	if n.State != NPCWalking {
+	if n.State != ActorWalking {
 		t.Error("Kiting NPC should be walking")
 	}
 }
@@ -339,14 +356,14 @@ func TestNPCDraw_AttackAndDeadBehavior(t *testing.T) {
 	var attackImg engine.Image = engine.NewMockImage(10, 10)
 	var corpseImg engine.Image = engine.NewMockImage(10, 10)
 
-	n := NewNPC(0, 0, &Archetype{
+	n := NewCharacter(0, 0, &EntityConfig{
 		StaticImage: staticImg,
 		AttackImage: attackImg,
 		CorpseImage: corpseImg,
-	}, 1)
+	}, 1, false)
 
 	// 1. Attack WITH image
-	n.State = NPCAttacking
+	n.State = ActorAttacking
 	track1 := &trackingImage{}
 	n.Draw(track1, nil, nil, nil, 0, 0)
 	if len(track1.drawnImages) != 1 || track1.drawnImages[0] != attackImg {
@@ -354,10 +371,10 @@ func TestNPCDraw_AttackAndDeadBehavior(t *testing.T) {
 	}
 
 	// 2. Attack WITHOUT image (should fallback to static)
-	n2 := NewNPC(0, 0, &Archetype{
+	n2 := NewCharacter(0, 0, &EntityConfig{
 		StaticImage: staticImg,
-	}, 1)
-	n2.State = NPCAttacking
+	}, 1, false)
+	n2.State = ActorAttacking
 	track2 := &trackingImage{}
 	n2.Draw(track2, nil, nil, nil, 0, 0)
 	if len(track2.drawnImages) != 1 || track2.drawnImages[0] != staticImg {
@@ -365,11 +382,11 @@ func TestNPCDraw_AttackAndDeadBehavior(t *testing.T) {
 	}
 
 	// 3. Dead WITH image
-	n3 := NewNPC(0, 0, &Archetype{
+	n3 := NewCharacter(0, 0, &EntityConfig{
 		StaticImage: staticImg,
 		CorpseImage: corpseImg,
-	}, 1)
-	n3.State = NPCDead
+	}, 1, false)
+	n3.State = ActorDead
 	track3 := &trackingImage{}
 	n3.Draw(track3, nil, nil, nil, 0, 0)
 	if len(track3.drawnImages) != 1 || track3.drawnImages[0] != corpseImg {
@@ -377,10 +394,10 @@ func TestNPCDraw_AttackAndDeadBehavior(t *testing.T) {
 	}
 
 	// 4. Dead WITHOUT image (should draw nothing)
-	n4 := NewNPC(0, 0, &Archetype{
+	n4 := NewCharacter(0, 0, &EntityConfig{
 		StaticImage: staticImg,
-	}, 1)
-	n4.State = NPCDead
+	}, 1, false)
+	n4.State = ActorDead
 	track4 := &trackingImage{}
 	n4.Draw(track4, nil, nil, nil, 0, 0)
 	if len(track4.drawnImages) != 0 {

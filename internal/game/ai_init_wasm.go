@@ -20,7 +20,7 @@ func (g *Game) initAIManager() {
 	}
 
 	provider := NewWebGPUAIProvider()
-	g.aiManager = NewAIManager(provider)
+	g.aiManager = NewAIManager(NewFallbackAIProvider(provider, &NativeAIProvider{}))
 
 	DebugLog("AI Manager initialized with WebGPU provider")
 }

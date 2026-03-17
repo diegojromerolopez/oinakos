@@ -1,0 +1,22 @@
+name: Plate Armor
+description: Heavy articulated plate. Excellent protection, but very heavy.
+weight: 35.0
+type: armor
+slot: body
+value: 500
+effects:
+  protection:
+    increase: 8
+  speed:
+    increase: -0.015
+footprint:
+  - x: -1.84
+    y: -1.91
+  - x: -1.58
+    y: -2.36
+  - x: 0.5
+    y: -0.31
+  - x: -0.41
+    y: 0.41
+  - x: -2.2
+    y: -1.48

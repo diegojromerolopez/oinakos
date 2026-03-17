@@ -44,7 +44,7 @@ func TestLoadMapLevel_AllObjectiveTypes(t *testing.T) {
 			// Basic checks depending on objective
 			switch obj {
 			case ObjKillVIP:
-				if len(g.npcs) == 0 {
+				if len(g.characters) == 0 {
 					t.Error("VIP NPC not spawned")
 				}
 			case ObjReachBuilding:
@@ -59,8 +59,8 @@ func TestLoadMapLevel_AllObjectiveTypes(t *testing.T) {
 					t.Error("Target building not spawned")
 				}
 			case ObjProtectNPC:
-				if len(g.npcs) == 0 || g.npcs[0].Archetype.ID != "magi_male" {
-					t.Errorf("Escort not spawned correctly: %+v", g.npcs)
+				if len(g.characters) == 0 || g.characters[0].Config.ID != "magi_male" {
+					t.Errorf("Escort not spawned correctly: %+v", g.characters)
 				}
 			case ObjDestroyBuilding:
 				if g.currentMapType.TargetObstacle == nil {
@@ -76,8 +76,14 @@ func TestLoadMapLevel_InhabitantsAndObstacles(t *testing.T) {
 	g := NewGame(mockFS, &engine.MockGraphics{}, "", "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
 
 	g.archetypeRegistry.Archetypes["orc"] = &EntityConfig{ID: "orc"}
-	g.npcRegistry.NPCs["unique_orc"] = &EntityConfig{ID: "unique_orc", ArchetypeID: "orc"}
+	g.characterRegistry.Characters["unique_orc"] = &EntityConfig{ID: "unique_orc", ArchetypeID: "orc"}
 	g.obstacleRegistry.Archetypes["rock"] = &ObstacleArchetype{ID: "rock"}
+	g.Registries = &RegistryContainer{
+		Objects: NewObjectRegistry(),
+	}
+	g.Registries.Objects.Objects["test_sword"] = &ObjectConfig{ID: "test_sword"}
+	g.World = NewWorld()
+	g.World.Game = g
 
 	ten := 10.0
 	g.currentMapType = MapType{
@@ -89,18 +95,21 @@ func TestLoadMapLevel_InhabitantsAndObstacles(t *testing.T) {
 			{ID: "obs1", Archetype: "rock", X: &ten, Y: &ten},
 			{ID: "obs_disabled", Archetype: "rock", Disabled: true},
 		},
+		Objects: []PreSpawnObject{
+			{ID: "test_sword", X: 20, Y: 20},
+		},
 	}
 
 	g.worldManager.LoadMapLevel()
 
-	if len(g.npcs) != 2 {
-		t.Errorf("Expected 2 NPCs, got %d", len(g.npcs))
+	if len(g.characters) != 2 {
+		t.Errorf("Expected 2 NPCs, got %d", len(g.characters))
 	}
-	if g.npcs[0].State != NPCDead {
-		t.Errorf("Expected first NPC to be dead, got %v", g.npcs[0].State)
+	if g.characters[0].State != ActorDead {
+		t.Errorf("Expected first NPC to be dead, got %v", g.characters[0].State)
 	}
-	if g.npcs[1].Name != "Grimgor" {
-		t.Errorf("Expected second NPC name to be Grimgor, got %s", g.npcs[1].Name)
+	if g.characters[1].Name != "Grimgor" {
+		t.Errorf("Expected second NPC name to be Grimgor, got %s", g.characters[1].Name)
 	}
 
 	foundObs := false
@@ -117,6 +126,12 @@ func TestLoadMapLevel_InhabitantsAndObstacles(t *testing.T) {
 	}
 	if !foundObs {
 		t.Error("PreSpawn obstacle not found")
+	}
+
+	if len(g.World.Items) != 1 {
+		t.Errorf("Expected 1 world item to be loaded, got %d", len(g.World.Items))
+	} else if g.World.Items[0].X != 20 || g.World.Items[0].Y != 20 {
+		t.Errorf("Expected world item to be at 20,20 but got %f,%f", g.World.Items[0].X, g.World.Items[0].Y)
 	}
 }
 

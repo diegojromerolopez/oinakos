@@ -8,17 +8,17 @@ import (
 
 func TestNPCBehavior_Wander_SetsDirection(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewPlayableCharacter(100, 100, nil)
+	mc := NewCharacter(100, 100, nil, 1, true)
 	ctx.World.PlayableCharacter = mc
 
-	npc := NewNPC(0, 0, &Archetype{ID: "test"}, 1)
+	npc := NewCharacter(0, 0, &EntityConfig{ID: "test"}, 1, false)
 	npc.Behavior = BehaviorWander
 	npc.Alignment = AlignmentEnemy
 	npc.Speed = 0.1 // must be non-zero
 	// Pre-set direction so movement is predictable
 	npc.WanderDirX = 1.0
 	npc.WanderDirY = 0.0
-	ctx.World.NPCs = []*NPC{npc}
+	ctx.World.Characters = []*Character{npc}
 
 	for i := 0; i < 5; i++ {
 		npc.Update(ctx)
@@ -31,16 +31,16 @@ func TestNPCBehavior_Wander_SetsDirection(t *testing.T) {
 
 func TestNPCBehavior_Fighter_TargetsNearestNPC(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewPlayableCharacter(100, 100, nil) // Far away
+	mc := NewCharacter(100, 100, nil, 1, true) // Far away
 	ctx.World.PlayableCharacter = mc
 
-	fighter := NewNPC(0, 0, &Archetype{ID: "fighter"}, 1)
+	fighter := NewCharacter(0, 0, &EntityConfig{ID: "fighter"}, 1, false)
 	fighter.Behavior = BehaviorNpcFighter
 	fighter.Alignment = AlignmentEnemy
 
-	target := NewNPC(2, 0, &Archetype{ID: "target"}, 1)
+	target := NewCharacter(2, 0, &EntityConfig{ID: "target"}, 1, false)
 	target.Alignment = AlignmentAlly
-	ctx.World.NPCs = []*NPC{fighter, target}
+	ctx.World.Characters = []*Character{fighter, target}
 
 	for i := 0; i < 10; i++ {
 		fighter.Update(ctx)
@@ -53,16 +53,16 @@ func TestNPCBehavior_Fighter_TargetsNearestNPC(t *testing.T) {
 
 func TestNPCBehavior_Chaotic_TargetsNearestActor(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewPlayableCharacter(3, 0, nil) // Closer than farNPC
+	mc := NewCharacter(3, 0, nil, 1, true) // Closer than farNPC
 	ctx.World.PlayableCharacter = mc
 
-	chaotic := NewNPC(0, 0, &Archetype{ID: "chaotic"}, 1)
+	chaotic := NewCharacter(0, 0, &EntityConfig{ID: "chaotic"}, 1, false)
 	chaotic.Behavior = BehaviorChaotic
 	chaotic.Alignment = AlignmentEnemy
 
-	farNPC := NewNPC(20, 0, &Archetype{ID: "far"}, 1)
+	farNPC := NewCharacter(20, 0, &EntityConfig{ID: "far"}, 1, false)
 	farNPC.Alignment = AlignmentEnemy
-	ctx.World.NPCs = []*NPC{chaotic, farNPC}
+	ctx.World.Characters = []*Character{chaotic, farNPC}
 
 	chaotic.Update(ctx)
 
@@ -74,12 +74,12 @@ func TestNPCBehavior_Chaotic_TargetsNearestActor(t *testing.T) {
 
 func TestNPCBehavior_Neutral_DoesNotTargetActor(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewPlayableCharacter(0, 0, nil)
+	mc := NewCharacter(0, 0, nil, 1, true)
 	ctx.World.PlayableCharacter = mc
 
-	npc := NewNPC(1, 0, nil, 1)
+	npc := NewCharacter(1, 0, nil, 1, false)
 	npc.Alignment = AlignmentNeutral
-	ctx.World.NPCs = []*NPC{npc}
+	ctx.World.Characters = []*Character{npc}
 
 	for i := 0; i < 5; i++ {
 		npc.Update(ctx)
@@ -92,13 +92,13 @@ func TestNPCBehavior_Neutral_DoesNotTargetActor(t *testing.T) {
 
 func TestNPCBehavior_Ally_FollowsPlayerWhenNoEnemies(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewPlayableCharacter(10, 10, nil)
+	mc := NewCharacter(10, 10, nil, 1, true)
 	ctx.World.PlayableCharacter = mc
 
-	ally := NewNPC(0, 0, &Archetype{ID: "ally"}, 1)
+	ally := NewCharacter(0, 0, &EntityConfig{ID: "ally"}, 1, false)
 	ally.Alignment = AlignmentAlly
 	ally.Speed = 0.2 // must be non-zero
-	ctx.World.NPCs = []*NPC{ally}
+	ctx.World.Characters = []*Character{ally}
 
 	for i := 0; i < 20; i++ {
 		ally.Update(ctx)
@@ -110,3 +110,39 @@ func TestNPCBehavior_Ally_FollowsPlayerWhenNoEnemies(t *testing.T) {
 		t.Errorf("Ally NPC should be moving toward player; dist²=%.1f", dist)
 	}
 }
+
+func TestNPCBehavior_ScavengeUpgrade(t *testing.T) {
+	ctx := NewTestContext()
+	g := &Game{}
+	ctx.World.Game = g
+	
+	// Create NPC with a weak weapon
+	npc := NewCharacter(0, 0, &EntityConfig{ID: "scavenger", MaxWeight: 10.0}, 1, false)
+	npc.Speed = 0.2
+	weakWeapon := &ObjectConfig{
+		ID: "weak_weapon", Type: "weapon", Slot: "weapon", Weight: 2.0,
+		Combat: &Weapon{Damage: Damage{Min: 1, Max: 2}},
+	}
+	npc.EquipItem(weakWeapon)
+	
+	ctx.World.Characters = []*Character{npc}
+	
+	// Create a stronger weapon on the ground nearby
+	strongWeapon := &ObjectConfig{
+		ID: "strong_weapon", Type: "weapon", Slot: "weapon", Weight: 3.0,
+		Combat: &Weapon{Damage: Damage{Min: 10, Max: 20}},
+	}
+	item := NewItemInstance(strongWeapon.ID, strongWeapon, 2.0, 0.0)
+	ctx.World.Items = []*ItemInstance{item}
+	
+	// Let the NPC update for enough ticks to trigger the loot scan (Tick % 30 == 0) and walk to it
+	for i := 0; i < 150; i++ {
+		npc.Update(ctx)
+	}
+	
+	// NPC should have picked up the strong weapon and equipped it, dropping the weak weapon to inventory.
+	if npc.Weapon.Damage.Max != 20 {
+		t.Errorf("NPC did not equip the upgrade weapon. Current max damage: %d", npc.Weapon.Damage.Max)
+	}
+}
+

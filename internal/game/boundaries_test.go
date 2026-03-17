@@ -7,7 +7,7 @@ import (
 
 func TestPlayableCharacterBoundaries(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewPlayableCharacter(0, 0, nil)
+	mc := NewCharacter(0, 0, nil, 1, false)
 	mc.Speed = 1.0
 	ctx.World.PlayableCharacter = mc
 
@@ -66,10 +66,10 @@ func TestPlayableCharacterBoundaries(t *testing.T) {
 
 func TestNPCBoundaries(t *testing.T) {
 	ctx := NewTestContext()
-	n := NewNPC(0, 0, nil, 1)
+	n := NewCharacter(0, 0, nil, 1, false)
 	n.Speed = 1.0
 	n.Behavior = BehaviorWander
-	ctx.World.NPCs = []*NPC{n}
+	ctx.World.Characters = []*Character{n}
 
 	// Map 10x10 -> halfW=5, halfH=5
 	ctx.World.CurrentMapType = &MapType{MapWidth: 10.0, MapHeight: 10.0}

@@ -85,7 +85,7 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 	}
 
 	if data.Player.ArchetypeID != "" {
-		if config, ok := g.playableCharacterRegistry.Characters[data.Player.ArchetypeID]; ok {
+		if config, ok := g.characterRegistry.Characters[data.Player.ArchetypeID]; ok {
 			g.playableCharacter.Config = config
 			g.playableCharacter.Name = config.Name
 			g.isCharacterSelect = false
@@ -98,26 +98,74 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 	g.playableCharacter.X = data.Player.X
 	g.playableCharacter.Y = data.Player.Y
 	g.playableCharacter.Health = data.Player.Health
-	g.playableCharacter.MaxHealth = data.Player.MaxHealth
 	g.playableCharacter.XP = data.Player.XP
 	g.playableCharacter.Level = data.Player.Level
 	g.playableCharacter.Kills = data.Player.Kills
-	g.playableCharacter.MapKills = data.Player.MapKills
-	if g.playableCharacter.MapKills == nil {
-		g.playableCharacter.MapKills = make(map[string]int)
+	
+	// Load inventory
+	g.playableCharacter.Inventory = nil
+	for _, objID := range data.Player.Inventory {
+		if obj, ok := g.Registries.Objects.Objects[objID]; ok {
+			g.playableCharacter.Inventory = append(g.playableCharacter.Inventory, obj)
+		}
 	}
+	// Load slots
+	g.playableCharacter.Slots = make(map[string]*ObjectConfig)
+	for slot, objID := range data.Player.Slots {
+		if obj, ok := g.Registries.Objects.Objects[objID]; ok {
+			g.playableCharacter.Slots[slot] = obj
+		}
+	}
+	g.playableCharacter.UpdateEffects()
+
+	g.playableCharacter.MaxHealth = data.Player.MaxHealth
 	g.playableCharacter.BaseAttack = data.Player.BaseAttack
 	g.playableCharacter.BaseDefense = data.Player.BaseDefense
 	if data.Player.Weapon != nil {
 		g.playableCharacter.Weapon = data.Player.Weapon
 	}
 
+	// Load NPC inventory
+	for i := range g.characters {
+		if i < len(data.Characters) {
+			npc := g.characters[i]
+			npcData := data.Characters[i]
+			npc.Inventory = nil
+			for _, objID := range npcData.Inventory {
+				if obj, ok := g.Registries.Objects.Objects[objID]; ok {
+					npc.Inventory = append(npc.Inventory, obj)
+				}
+			}
+			// Load slots
+			npc.Slots = make(map[string]*ObjectConfig)
+			for slot, objID := range npcData.Slots {
+				if obj, ok := g.Registries.Objects.Objects[objID]; ok {
+					npc.Slots[slot] = obj
+				}
+			}
+			npc.UpdateEffects()
+		}
+	}
+
+	// Load floor items
+	g.World.Items = nil
+	for _, itemData := range data.Items {
+		if config, ok := g.Registries.Objects.Objects[itemData.ID]; ok {
+			g.World.Items = append(g.World.Items, NewItemInstance(itemData.ID, config, itemData.X, itemData.Y))
+		}
+	}
+
+	g.playableCharacter.MapKills = data.Player.MapKills
+	if g.playableCharacter.MapKills == nil {
+		g.playableCharacter.MapKills = make(map[string]int)
+	}
+
 
 	if g.playableCharacter.Health > 0 {
-		g.playableCharacter.State = StateIdle
+		g.playableCharacter.State = ActorIdle
 		g.isGameOver = false
 	} else {
-		g.playableCharacter.State = StateDead
+		g.playableCharacter.State = ActorDead
 		g.isGameOver = true
 	}
 
@@ -125,20 +173,20 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 	pIsoX, pIsoY := engine.CartesianToIso(g.playableCharacter.X, g.playableCharacter.Y)
 	g.camera.SnapTo(pIsoX, pIsoY)
 
-	g.npcs = nil
-	for i, nData := range data.NPCs {
+	g.characters = nil
+	for i, nData := range data.Characters {
 		sanitizeNPCSaveData(&nData, i, fpath)
 		id := nData.ArchetypeID
 		if id == "" { id = nData.NPCID }
 
 		config, ok := g.archetypeRegistry.Archetypes[id]
-		if !ok { config, ok = g.npcRegistry.NPCs[id] }
+		if !ok { config, ok = g.characterRegistry.Characters[id] }
 
 		if !ok {
 			log.Printf("Warning: saved NPC/Archetype ID %s not found in any registry", nData.ArchetypeID)
 			continue
 		}
-		n := NewNPC(nData.X, nData.Y, config, nData.Level)
+		n := NewCharacter(nData.X, nData.Y, config, nData.Level, false)
 		n.Health = nData.Health
 		n.MaxHealth = nData.MaxHealth
 		if nData.Name != "" { n.Name = nData.Name }
@@ -159,8 +207,9 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 		if nData.LeaderID != "" { n.LeaderID = nData.LeaderID }
 		if nData.MustSurvive { n.MustSurvive = nData.MustSurvive }
 
-		if n.Health <= 0 { n.State = NPCDead }
-		g.npcs = append(g.npcs, n)
+		if n.Health <= 0 { n.State = ActorDead }
+		n.LoadEquipment(g.Registries.Objects)
+		g.characters = append(g.characters, n)
 	}
 
 	g.obstacles = nil
