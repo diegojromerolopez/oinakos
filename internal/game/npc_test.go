@@ -41,12 +41,21 @@ func TestNPCTakeDamage(t *testing.T) {
 		t.Error("NPC should still be alive")
 	}
 
-	n.TakeDamage(100, nil, ctx)
-	if n.Health != 0 {
-		t.Errorf("Health after lethal damage: got %d, want 0", n.Health)
+	n.TakeDamage(90, nil, ctx)
+	if n.Health != 0 || n.State != ActorIncapacitated {
+		t.Errorf("Health after fatal damage: got %d, state=%v, want 0, state=ActorIncapacitated", n.Health, n.State)
+	}
+	if !n.IsAlive() {
+		t.Error("NPC should still be 'alive' (incapacitated) at 0 HP")
+	}
+
+	// Damage reaching death threshold (-10% of 100 = -10)
+	n.TakeDamage(10, nil, ctx)
+	if n.Health != -10 || n.State != ActorDead {
+		t.Errorf("Health after irremediable damage: got %d, state=%v, want -10, state=ActorDead", n.Health, n.State)
 	}
 	if n.IsAlive() {
-		t.Error("NPC should be dead")
+		t.Error("NPC should be truly dead at -10 HP")
 	}
 }
 

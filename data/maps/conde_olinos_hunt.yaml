@@ -56,7 +56,7 @@ npcs:
     must_survive: true
   
   # Queen and Guard Escort
-  - npc_id: "queen"
+  - npc_id: "queen_urraca"
     x: 10.0
     y: 0.0
     alignment: "enemy"
@@ -64,27 +64,27 @@ npcs:
     x: 12.0
     y: 3.0
     alignment: "enemy"
-    leader_id: "queen"
+    leader_id: "queen_urraca"
   - npc_id: "queens_guard"
     x: 12.0
     y: -3.0
     alignment: "enemy"
-    leader_id: "queen"
+    leader_id: "queen_urraca"
   - npc_id: "queens_guard"
     x: 14.0
     y: 0.0
     alignment: "enemy"
-    leader_id: "queen"
+    leader_id: "queen_urraca"
   - npc_id: "queens_guard"
     x: 16.0
     y: 2.0
     alignment: "enemy"
-    leader_id: "queen"
+    leader_id: "queen_urraca"
   - npc_id: "queens_guard"
     x: 16.0
     y: -2.0
     alignment: "enemy"
-    leader_id: "queen"
+    leader_id: "queen_urraca"
 
   # Town Inhabitants in a panic
   - archetype_id: "peasant_male"

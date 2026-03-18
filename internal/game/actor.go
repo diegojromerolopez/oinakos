@@ -10,12 +10,13 @@ import (
 type ActorState int
 
 const (
-	ActorIdle      ActorState = iota
+	ActorIdle ActorState = iota
 	ActorWalking
 	ActorAttacking
 	ActorDead
-	ActorDrinking // Player-specific (well interaction)
+	ActorDrinking  // Player-specific (well interaction)
 	ActorCrouching // Picking up items
+	ActorIncapacitated // Down but not yet Truly Dead
 )
 
 // Backward-compatible aliases for PlayableCharacterState
@@ -69,17 +70,31 @@ const (
 	BehaviorFlee
 )
 
+// PhysicalTrauma tracks irreversible physical injuries.
+type PhysicalTrauma struct {
+	LeftArmLost   bool
+	RightArmLost  bool
+	LeftLegLost   bool
+	RightLegLost  bool
+	LeftHandLost  bool
+	RightHandLost bool
+	EyesLost      int  // 0, 1, or 2
+	BurnedAlive   bool // Survivors of extreme fire
+	SpineBroken   bool
+}
+
 // Actor holds all runtime state shared between the player character and any NPC.
 type Actor struct {
-	X, Y        float64
-	Config      *EntityConfig
-	Facing      Direction
-	State       ActorState
+	X, Y   float64
+	Config *EntityConfig
+	Facing Direction
+	State  ActorState
+	Trauma PhysicalTrauma
 
 	// Equipment
-	Inventory   []*ObjectConfig
-	Slots       map[string]*ObjectConfig // Maps slot name (head, body, ring1, ring2, etc.) to item
-	MaxWeight   float64
+	Inventory []*ObjectConfig
+	Slots     map[string]*ObjectConfig // Maps slot name (head, body, ring1, ring2, etc.) to item
+	MaxWeight float64
 
 	// Bonus from items
 	AttackBonus     int
@@ -108,8 +123,8 @@ type Actor struct {
 	IsOccluded         bool   // Visual occlusion by an obstacle
 
 	// Progress & Scoring (formerly player-only)
-	Kills         int
-	MapKills      map[string]int
+	Kills    int
+	MapKills map[string]int
 
 	// Timers
 	HitTimer    int // How long to show hit sprite (BloodTimer on NPC)
@@ -117,22 +132,67 @@ type Actor struct {
 	CrouchTimer int // Ticks for crouch animation
 }
 
-// IsAlive returns true if this actor is not in the Dead state.
+// IsAlive returns true if the character is not in the Truly Dead state.
+// They can be active OR incapacitated.
 func (a *Actor) IsAlive() bool {
 	return a.State != ActorDead
 }
 
+// IsTrulyDead returns true if the character has reached the final death threshold.
+func (a *Actor) IsTrulyDead() bool {
+	return a.State == ActorDead
+}
+
+// IsIncapacitated returns true if the character is downed but not yet truly dead.
+func (a *Actor) IsIncapacitated() bool {
+	return a.State == ActorIncapacitated
+}
+
+// GetDeathThreshold returns the negative health value at which the character truly dies.
+func (a *Actor) GetDeathThreshold() int {
+	return -int(float64(a.GetTotalMaxHealth()) * 0.10)
+}
+
+// SyncLifeStatus ensures the actor's state is in sync with their current health.
+func (a *Actor) SyncLifeStatus() {
+	if a.IsTrulyDead() {
+		return
+	}
+
+	threshold := a.GetDeathThreshold()
+	if a.Health <= threshold {
+		a.Health = threshold
+		a.State = ActorDead
+		return
+	}
+
+	if a.Health <= 0 {
+		if a.State != ActorIncapacitated {
+			a.State = ActorIncapacitated
+			DebugLog("Actor [%s] %s is INCAPACITATED!", a.Alignment, a.Name)
+		}
+	} else {
+		if a.State == ActorIncapacitated {
+			a.State = ActorIdle
+			DebugLog("Actor [%s] %s has RECOVERED!", a.Alignment, a.Name)
+		}
+	}
+}
+
 // Heal increases health up to MaxHealth.
 func (a *Actor) Heal(amount int) {
-	if a.State == ActorDead {
+	if a.IsTrulyDead() {
 		return
 	}
 	oldHealth := a.Health
 	a.Health += amount
-	maxH := a.MaxHealth + a.MaxHealthBonus
+	maxH := a.GetTotalMaxHealth()
 	if a.Health > maxH {
 		a.Health = maxH
 	}
+	
+	a.SyncLifeStatus()
+
 	if a.Health > oldHealth {
 		DebugLog("Actor Healed [%s] %s! +%d | Health: %d -> %d", a.Alignment, a.Name, amount, oldHealth, a.Health)
 	}
@@ -191,6 +251,23 @@ func (a *Actor) UpdateEffects() {
 		}
 	}
 
+	// Apply effects from Trauma
+	if a.Trauma.LeftArmLost {
+		a.AttackBonus -= 5
+	}
+	if a.Trauma.RightArmLost {
+		a.AttackBonus -= 5
+	}
+	if a.Trauma.EyesLost > 0 {
+		a.AttackBonus -= 5 * a.Trauma.EyesLost
+	}
+	if a.Trauma.BurnedAlive {
+		a.MaxHealthBonus -= 30
+	}
+	if a.Trauma.SpineBroken {
+		a.MaxHealthBonus -= 20
+	}
+
 	// Sync active weapon from "weapon" slot
 	if weaponObj, ok := a.Slots["weapon"]; ok && weaponObj != nil {
 		if weaponObj.Combat != nil {
@@ -208,7 +285,7 @@ func (a *Actor) EquipItem(obj *ObjectConfig) bool {
 	if obj.Slot == "" {
 		return false
 	}
-	
+
 	current := a.Slots[obj.Slot]
 	shouldEquip := false
 
@@ -224,8 +301,12 @@ func (a *Actor) EquipItem(obj *ObjectConfig) bool {
 		// Compare stat totals
 		curStats := 0.0
 		newStats := 0.0
-		for _, e := range current.Effects { curStats += e.Increase }
-		for _, e := range obj.Effects { newStats += e.Increase }
+		for _, e := range current.Effects {
+			curStats += e.Increase
+		}
+		for _, e := range obj.Effects {
+			newStats += e.Increase
+		}
 		if newStats > curStats {
 			shouldEquip = true
 		}
@@ -236,7 +317,7 @@ func (a *Actor) EquipItem(obj *ObjectConfig) bool {
 			a.Inventory = append(a.Inventory, current)
 		}
 		a.Slots[obj.Slot] = obj
-		
+
 		// Remove from inventory if it was there
 		for i, item := range a.Inventory {
 			if item == obj {
@@ -244,7 +325,7 @@ func (a *Actor) EquipItem(obj *ObjectConfig) bool {
 				break
 			}
 		}
-		
+
 		a.UpdateEffects()
 		return true
 	}
@@ -257,26 +338,29 @@ func (a *Actor) EvaluateUpgrade(obj *ObjectConfig) bool {
 	if obj.Slot == "" {
 		return false
 	}
-	
+
 	current := a.Slots[obj.Slot]
 	if current == nil {
 		return true // Upgrade if empty slot
 	}
-	
+
 	if obj.Type == "weapon" && current.Type == "weapon" {
 		curDmg := current.Combat.Damage.Average()
 		newDmg := obj.Combat.Damage.Average()
 		return newDmg > curDmg
 	}
-	
+
 	// Compare stat totals
 	curStats := 0.0
 	newStats := 0.0
-	for _, e := range current.Effects { curStats += e.Increase }
-	for _, e := range obj.Effects { newStats += e.Increase }
+	for _, e := range current.Effects {
+		curStats += e.Increase
+	}
+	for _, e := range obj.Effects {
+		newStats += e.Increase
+	}
 	return newStats > curStats
 }
-
 
 // GetTotalWeight returns the total weight of everything carried and equipped.
 func (a *Actor) GetTotalWeight() float64 {
@@ -321,6 +405,18 @@ func (a *Actor) SharedUpdate(ctx *SystemContext) {
 			a.Heal(a.RegenPerSecond)
 		}
 	}
+
+	// Trauma: Continuous Pain from BurnedAlive (-1 HP every 600 ticks = 10s)
+	if a.Trauma.BurnedAlive && a.Tick%600 == 0 {
+		a.Health -= 1
+	}
+
+	// Incapacitated Bleed-out (-1 HP per "hour" = 3600 ticks / 1 minute)
+	if a.IsIncapacitated() && a.Tick%3600 == 0 {
+		a.Health -= 1
+	}
+
+	a.SyncLifeStatus()
 
 	if a.CrouchTimer > 0 {
 		a.CrouchTimer--
@@ -401,7 +497,20 @@ func (a *Actor) GetSpeedModifier() float64 {
 	case "mud.png":
 		return 0.8
 	default:
-		return 1.0
+		multiplier := 1.0
+		if a.Trauma.LeftLegLost {
+			multiplier -= 0.5
+		}
+		if a.Trauma.RightLegLost {
+			multiplier -= 0.5
+		}
+		if a.Trauma.SpineBroken {
+			multiplier *= 0.2 // Broken spine is a massive hit
+		}
+		if multiplier < 0.1 {
+			multiplier = 0.1 // Minimum crawl
+		}
+		return multiplier
 	}
 }
 
@@ -419,7 +528,6 @@ func (a *Actor) GetTotalDefense() int {
 func (a *Actor) GetTotalMaxHealth() int {
 	return a.MaxHealth + a.MaxHealthBonus
 }
-
 
 // GetCollisionCircle returns the collision circle for this actor.
 func (a *Actor) GetCollisionCircle() engine.Circle {
@@ -456,4 +564,3 @@ func (a *Actor) AddXP(amount int) {
 		a.Health = a.MaxHealth
 	}
 }
-

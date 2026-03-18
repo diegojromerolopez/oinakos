@@ -56,12 +56,21 @@ func TestPlayableCharacterTakeDamage(t *testing.T) {
 	if mc.Health != 80 {
 		t.Errorf("Health after damage: got %d, want 80", mc.Health)
 	}
-	mc.TakeDamage(100, nil, ctx)
-	if mc.Health != 0 {
-		t.Errorf("Health after lethal damage: got %d, want 0", mc.Health)
+	mc.TakeDamage(80, nil, ctx)
+	if mc.Health != 0 || mc.State != ActorIncapacitated {
+		t.Errorf("Health after fatal damage: got %d, state=%v, want 0, state=ActorIncapacitated", mc.Health, mc.State)
+	}
+	if !mc.IsAlive() {
+		t.Error("Character should still be 'alive' (incapacitated) at 0 HP")
+	}
+
+	// Death threshold (-10% of 100 = -10)
+	mc.TakeDamage(10, nil, ctx)
+	if mc.Health != -10 || mc.State != ActorDead {
+		t.Errorf("Health after irremediable damage: got %d, state=%v, want -10, state=ActorDead", mc.Health, mc.State)
 	}
 	if mc.IsAlive() {
-		t.Error("Character should be dead")
+		t.Error("Character should be truly dead at -10 HP")
 	}
 }
 

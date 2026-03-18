@@ -27,7 +27,7 @@ func DrawActorGetSprite(a *Actor) engine.Image {
 	}
 
 	// State-based overrides
-	if a.State == ActorDead {
+	if a.State == ActorDead || a.State == ActorIncapacitated {
 		return a.Config.CorpseImage
 	} else if a.HitTimer > 0 {
 		// Hit animation: toggle between hit frames
@@ -138,14 +138,35 @@ func DrawActor(a *Actor, screen engine.Image, textRenderer engine.TextRenderer, 
 		DrawAlignmentIndicator(screen, vectorRenderer, a.X, a.Y, offsetX, offsetY, a.Alignment, a.IsAlive(), false)
 	}
 
-	// Palette Swapping (Shader)
+	// Palette Swapping and Trauma (Shader)
 	hasPalette := a.Config.PrimaryColor != "" || a.Config.SecondaryColor != ""
-	if hasPalette && paletteShader != nil {
+	hasTrauma := a.Trauma != (PhysicalTrauma{}) // Check if any trauma is present
+
+	if (hasPalette || hasTrauma) && paletteShader != nil {
 		uniforms := make(map[string]any)
+
+		// Palette Colors
 		pArr := HexToRGBA(a.Config.PrimaryColor)
 		sArr := HexToRGBA(a.Config.SecondaryColor)
 		uniforms["PrimaryColor"] = pArr[:]
 		uniforms["SecondaryColor"] = sArr[:]
+
+		// Trauma Flags (1.0 = true, 0.0 = false)
+		toF := func(b bool) float32 {
+			if b {
+				return 1.0
+			}
+			return 0.0
+		}
+		uniforms["LeftArmLost"] = toF(a.Trauma.LeftArmLost)
+		uniforms["RightArmLost"] = toF(a.Trauma.RightArmLost)
+		uniforms["LeftLegLost"] = toF(a.Trauma.LeftLegLost)
+		uniforms["RightLegLost"] = toF(a.Trauma.RightLegLost)
+		uniforms["BurnedAlive"] = toF(a.Trauma.BurnedAlive)
+		uniforms["EyesLost"] = float32(a.Trauma.EyesLost)
+
+		// Status Tint (Placeholder for future effects)
+		uniforms["StatusTint"] = []float32{0, 0, 0, 0}
 
 		if g, ok := vectorRenderer.(engine.Graphics); ok {
 			g.DrawImageWithShader(screen, drawSprite, paletteShader, uniforms, op)

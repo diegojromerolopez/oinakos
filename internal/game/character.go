@@ -140,6 +140,7 @@ func (c *Character) updatePlayer(ctx *SystemContext) {
 	mapW, mapH := ctx.World.CurrentMapType.MapWidth, ctx.World.CurrentMapType.MapHeight
 
 	if c.State == ActorCrouching { return }
+	if c.IsIncapacitated() { return }
 
 	if c.State == ActorDead {
 		if c.DeadTimer == 0 {
@@ -263,8 +264,8 @@ func (c *Character) updateAI(ctx *SystemContext) {
 		}
 	}
 
-	if c.State == ActorCrouching || c.State == ActorDead {
-		if c.State == ActorDead {
+	if c.State == ActorCrouching || c.IsTrulyDead() || c.IsIncapacitated() {
+		if c.IsTrulyDead() {
 			if c.DeadTimer == 0 { c.X, c.Y = findSafePosition(c.X, c.Y, c.GetCollisionCircle(), worldObstacles) }
 			c.DeadTimer++
 		}
@@ -455,18 +456,85 @@ func (c *Character) rollDamage() int {
 }
 
 func (c *Character) TakeDamage(amount int, attacker ActorInterface, ctx *SystemContext) {
-	if c.State == ActorDead { return }
-	c.Health -= amount; c.HitTimer = 30
+	if c.State == ActorDead {
+		return
+	}
+	c.Health -= amount
+	c.HitTimer = 30
 	prefix := "unknown"
-	if c.Config != nil { prefix = c.Config.ID }
-	if c.IsPlayerControlled && c.Config != nil && c.Config.PlayableCharacter != "" { prefix = c.Config.PlayableCharacter }
-	if ctx.Audio != nil { ctx.Audio.PlayRandomSound(prefix + "/hit") }
+	if c.Config != nil {
+		prefix = c.Config.ID
+	}
+	if c.IsPlayerControlled && c.Config != nil && c.Config.PlayableCharacter != "" {
+		prefix = c.Config.PlayableCharacter
+	}
+	if ctx.Audio != nil {
+		ctx.Audio.PlayRandomSound(prefix + "/hit")
+	}
 
-	if c.Health <= 0 {
-		c.Health = 0
+	// Permanent Trauma Acquisition
+	// Deterministic: Every hit taken while <10% health (including incapacitated/negative health) causes a new trauma.
+	// Heavy Hit: 1% chance on any single blow dealing >15% of MaxHealth.
+	if float64(c.Health) < float64(c.GetTotalMaxHealth())*0.10 {
+		c.acquireRandomTrauma(attacker)
+	} else if amount > int(float64(c.GetTotalMaxHealth())*0.15) && rand.Float64() < 0.01 {
+		c.acquireRandomTrauma(attacker)
+	}
+
+	deathThreshold := c.GetDeathThreshold()
+	if c.Health < deathThreshold {
+		c.Health = deathThreshold
+	}
+
+	c.SyncLifeStatus()
+	
+	if !c.IsAlive() {
+		// die logic handles dropping items and awarding XP
 		c.die(attacker, ctx)
 	} else if !c.IsPlayerControlled {
 		c.handleAIReaction(attacker, ctx)
+	}
+}
+
+func (c *Character) acquireRandomTrauma(attacker ActorInterface) {
+	// Simple random trauma for now
+	r := rand.Intn(7)
+	switch r {
+	case 0:
+		if !c.Trauma.LeftArmLost {
+			c.Trauma.LeftArmLost = true
+			DebugLog("Actor [%s] %s lost their LEFT ARM!", c.Alignment, c.Name)
+		}
+	case 1:
+		if !c.Trauma.RightArmLost {
+			c.Trauma.RightArmLost = true
+			DebugLog("Actor [%s] %s lost their RIGHT ARM!", c.Alignment, c.Name)
+		}
+	case 2:
+		if !c.Trauma.LeftLegLost {
+			c.Trauma.LeftLegLost = true
+			DebugLog("Actor [%s] %s lost their LEFT LEG!", c.Alignment, c.Name)
+		}
+	case 3:
+		if !c.Trauma.RightLegLost {
+			c.Trauma.RightLegLost = true
+			DebugLog("Actor [%s] %s lost their RIGHT LEG!", c.Alignment, c.Name)
+		}
+	case 4:
+		if c.Trauma.EyesLost < 2 {
+			c.Trauma.EyesLost++
+			DebugLog("Actor [%s] %s lost an EYE! (Total lost: %d)", c.Alignment, c.Name, c.Trauma.EyesLost)
+		}
+	case 5:
+		if !c.Trauma.BurnedAlive {
+			c.Trauma.BurnedAlive = true
+			DebugLog("Actor [%s] %s was BURNED ALIVE and survived!", c.Alignment, c.Name)
+		}
+	case 6:
+		if !c.Trauma.SpineBroken {
+			c.Trauma.SpineBroken = true
+			DebugLog("Actor [%s] %s suffered a BROKEN SPINE!", c.Alignment, c.Name)
+		}
 	}
 }
 

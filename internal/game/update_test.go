@@ -266,15 +266,19 @@ func TestPlayableCharacterTakeDamageDetailed(t *testing.T) {
 	ctx := NewTestContext()
 	mc := NewCharacter(0, 0, nil, 1, true)
 	mc.Health = 100
+	mc.MaxHealth = 100
 	mc.TakeDamage(150, nil, ctx)
-	if mc.Health != 0 || mc.State != ActorDead {
+	if mc.Health != -10 || mc.State != ActorDead {
 		t.Errorf("Should be dead, health=%d, state=%v", mc.Health, mc.State)
 	}
 
 	// Take damage while dead
 	mc.TakeDamage(10, nil, ctx)
-	if mc.Health != 0 {
-		t.Error("Health should stay 0")
+	if mc.Health != -10 { // Health should stay at the dead threshold
+		t.Errorf("Health should stay at -10 (dead threshold), got %d", mc.Health)
+	}
+	if mc.State != ActorDead {
+		t.Errorf("State should remain ActorDead, got %v", mc.State)
 	}
 }
 

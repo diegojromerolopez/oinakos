@@ -12,9 +12,15 @@ func TestLeaderDeathConsequence(t *testing.T) {
 	
 	leader := NewCharacter(0, 0, leaderArch, 1, false)
 	follower := NewCharacter(1, 1, followerArch, 1, false)
+	leader.Health = 100
+	leader.MaxHealth = 100
+	follower.Health = 100
+	follower.MaxHealth = 100
 	
 	ctx.World.Characters = []*Character{leader, follower}
 	mc := NewCharacter(10, 10, nil, 1, true)
+	mc.Health = 100
+	mc.MaxHealth = 100
 	ctx.World.PlayableCharacter = mc
 	
 	// Initial state
@@ -28,8 +34,8 @@ func TestLeaderDeathConsequence(t *testing.T) {
 		t.Errorf("Follower should stay Enemy while leader is alive, got %v", follower.Alignment)
 	}
 	
-	// Kill leader
-	leader.Health = 0
+	// Kill leader (irremediably)
+	leader.Health = -10
 	leader.State = ActorDead
 	
 	// Update follower after leader death
@@ -60,8 +66,17 @@ func TestTraitorTargeting(t *testing.T) {
 	traitor := NewCharacter(2, 2, followerArch, 1, false)
 	traitor.Alignment = AlignmentNeutral // Switched!
 
+	leader.Health = 100
+	leader.MaxHealth = 100
+	peer.Health = 100
+	peer.MaxHealth = 100
+	traitor.Health = 100
+	traitor.MaxHealth = 100
+
 	ctx.World.Characters = []*Character{leader, peer, traitor}
 	mc := NewCharacter(10, 10, nil, 1, true)
+	mc.Health = 100
+	mc.MaxHealth = 100
 	ctx.World.PlayableCharacter = mc
 
 	// Peer should normally ignore Neutral NPCs if they weren't traitors,

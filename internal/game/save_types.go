@@ -17,6 +17,7 @@ type PlayerSaveData struct {
 	Weapon      *Weapon           `yaml:"weapon"`
 	Inventory   []string          `yaml:"inventory,omitempty"`
 	Slots       map[string]string `yaml:"slots,omitempty"`
+	Trauma      PhysicalTrauma    `yaml:"trauma,omitempty"`
 }
 
 type NPCSaveData struct {
@@ -37,6 +38,7 @@ type NPCSaveData struct {
 	BaseDefense int               `yaml:"base_defense,omitempty"`
 	Inventory   []string          `yaml:"inventory,omitempty"`
 	Slots       map[string]string `yaml:"slots,omitempty"`
+	Trauma      PhysicalTrauma    `yaml:"trauma,omitempty"`
 }
 
 type ObstacleSaveData struct {

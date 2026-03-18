@@ -103,11 +103,14 @@ func TestNPCNeutral_Retaliation(t *testing.T) {
 func TestNPCVision_IgnoreDeadTarget(t *testing.T) {
 	ctx := NewTestContext()
 	mc := NewCharacter(0, 0, nil, 1, true)
-	mc.Health = 0
+	mc.MaxHealth = 100
+	mc.Health = -10
 	mc.State = ActorDead
 	ctx.World.PlayableCharacter = mc
 
 	npc := NewCharacter(5, 0, &EntityConfig{ID: "hunter"}, 1, false)
+	npc.Health = 100
+	npc.MaxHealth = 100
 	npc.Behavior = BehaviorKnightHunter
 	npc.Alignment = AlignmentEnemy
 	ctx.World.Characters = []*Character{npc}

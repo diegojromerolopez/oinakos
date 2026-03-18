@@ -1,5 +1,5 @@
-id: queen
-name: The Queen
+id: queen_urraca
+name: Queen Urraca
 behavior: wander
 stats:
   health_min: 500
@@ -11,7 +11,7 @@ stats:
   attack_range: 5.0
   projectile_speed: 0.1
 unique: true
-description: A stern medieval queen. Her death will cause her guards to lose their
+description: Queen Urraca is a stern medieval queen. Her death will cause her guards to lose their
   will to fight.
 xp: 100
 group: queen_faction

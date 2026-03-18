@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"image"
 	"log"
 	"math"
@@ -12,7 +13,6 @@ import (
 	"oinakos/internal/engine"
 	"oinakos/internal/game"
 
-	"flag"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -129,10 +129,18 @@ func main() {
 	graphics := engine.NewEbitenGraphics()
 	var entities []*EditorEntity
 
+	// Try to locate oinakos subdirectory first if it exists (for flat layout compatibility)
+	localAssets := assets
+	if _, err := os.Stat("assets"); err != nil {
+		if _, err := os.Stat("oinakos/assets"); err == nil {
+			localAssets = os.DirFS("oinakos")
+		}
+	}
+
 	// Load Obstacles
 	obsReg := game.NewObstacleRegistry()
-	if err := obsReg.LoadAll(assets); err == nil {
-		obsReg.LoadAssets(assets, graphics, nil)
+	if err := obsReg.LoadAll(localAssets); err == nil {
+		obsReg.LoadAssets(localAssets, graphics, nil)
 		for _, id := range obsReg.IDs {
 			arch := obsReg.Archetypes[id]
 			obs := game.NewObstacle("editor_preview", 0, 0, arch)
@@ -150,8 +158,8 @@ func main() {
 
 	// Load Objects
 	objReg := game.NewObjectRegistry()
-	if err := objReg.LoadAll(assets); err == nil {
-		objReg.LoadAssets(assets, graphics, nil)
+	if err := objReg.LoadAll(localAssets); err == nil {
+		objReg.LoadAssets(localAssets, graphics, nil)
 		for _, id := range objReg.IDs {
 			cfg := objReg.Objects[id]
 			item := game.NewItemInstance(id, cfg, 0, 0)
@@ -169,26 +177,69 @@ func main() {
 		}
 	}
 
+	// Load Archetypes
+	archReg := game.NewArchetypeRegistry()
+	if err := archReg.LoadAll(localAssets); err == nil {
+		archReg.LoadAssets(localAssets, graphics, nil)
+		for _, id := range archReg.IDs {
+			cfg := archReg.Archetypes[id]
+			npc := game.NewCharacter(0, 0, cfg, 1, false)
+			entities = append(entities, &EditorEntity{
+				ID: id, Type: "Archetype", Image: cfg.StaticImage, Footprint: &cfg.Footprint,
+				YamlPath: findArchetypeYAML(id),
+				DrawMain: func(screen engine.Image, g engine.Graphics, ox, oy float64) {
+					npc.Draw(screen, g, g, nil, ox, oy)
+				},
+			})
+		}
+	}
+
+	// Load Characters
+	charReg := game.NewCharacterRegistry()
+	if err := charReg.LoadAll(localAssets); err == nil {
+		charReg.LoadAssets(localAssets, graphics, archReg, nil)
+		for _, id := range charReg.IDs {
+			cfg := charReg.Characters[id]
+			npc := game.NewCharacter(0, 0, cfg, 1, false)
+			charType := "NPC"
+			if cfg.Playable {
+				charType = "Character"
+			}
+			entities = append(entities, &EditorEntity{
+				ID: id, Type: charType, Image: cfg.StaticImage, Footprint: &cfg.Footprint,
+				YamlPath: filepath.Join("data/characters", id+".yaml"),
+				DrawMain: func(screen engine.Image, g engine.Graphics, ox, oy float64) {
+					npc.Draw(screen, g, g, nil, ox, oy)
+				},
+			})
+		}
+	}
+
 	sort.Slice(entities, func(i, j int) bool {
+		if entities[i].Type != entities[j].Type {
+			return entities[i].Type < entities[j].Type
+		}
 		return entities[i].ID < entities[j].ID
 	})
- 
+
 	var targetID string
 	var targetType string
 	flag.StringVar(&targetID, "obstacle", "", "ID of the obstacle to select")
 	flag.StringVar(&targetID, "object", "", "ID of the object to select")
+	flag.StringVar(&targetID, "npc", "", "ID of the NPC to select")
+	flag.StringVar(&targetID, "character", "", "ID of the character to select")
 	flag.Parse()
-	
+
 	if targetID == "" {
 		// Try to find if any other flag was used (for backward compatibility or convenience)
 		flag.Visit(func(f *flag.Flag) {
-			if f.Name == "obstacle" || f.Name == "object" {
+			if f.Name == "obstacle" || f.Name == "object" || f.Name == "npc" || f.Name == "character" {
 				targetID = f.Value.String()
 				targetType = strings.Title(f.Name)
 			}
 		})
 	}
- 
+
 	selectedIndex := 0
 	if targetID != "" {
 		for i, e := range entities {
@@ -203,5 +254,7 @@ func main() {
 	viewer.selectedIndex = selectedIndex
 	ebiten.SetWindowTitle("Oinakos Boundary Editor")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
-	if err := ebiten.RunGame(viewer); err != nil { log.Fatal(err) }
+	if err := ebiten.RunGame(viewer); err != nil {
+		log.Fatal(err)
+	}
 }
