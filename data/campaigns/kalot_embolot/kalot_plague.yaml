@@ -970,3 +970,4 @@ obstacles:
 - archetype: house_2
   x: 48.3
   y: -14.1
+weather: rain

@@ -1,39 +1,39 @@
 id: royal_escort
 name: The Royal Escort
-type: protect_npc # ObjProtectNPC
+type: protect_npc
 difficulty: 2
-description: "Protect the Mage and reach the destination"
-floor_tile: "grass.png"
+description: Protect the Mage and reach the destination
+floor_tile: grass.png
 obstacles:
-  - archetype: house_1
-    x: -15.0
-    y: 10.0
-  - archetype: house_2
-    x: -15.0
-    y: 20.0
-  - archetype: house_3
-    x: -15.0
-    y: 30.0
-  - archetype: warehouse
-    x: 10.0
-    y: 40.0
-  - archetype: smithery
-    x: -10.0
-    y: 40.0
-  - archetype: temple
-    x: -15.0
-    y: 50.0
-
+- archetype: house_1
+  x: -15.0
+  y: 10.0
+- archetype: house_2
+  x: -15.0
+  y: 20.0
+- archetype: house_3
+  x: -15.0
+  y: 30.0
+- archetype: warehouse
+  x: 10.0
+  y: 40.0
+- archetype: smithery
+  x: -10.0
+  y: 40.0
+- archetype: temple
+  x: -15.0
+  y: 50.0
 spawns:
-  - archetype: peasant_male
-    alignment: enemy
-    probability: 0.8
-    frequency: 3.0
-  - archetype: peasant_female
-    alignment: enemy
-    probability: 0.6
-    frequency: 4.0
-  - archetype: man_at_arms_male
-    alignment: enemy
-    probability: 0.2
-    frequency: 10.0
+- archetype: peasant_male
+  alignment: enemy
+  probability: 0.8
+  frequency: 3.0
+- archetype: peasant_female
+  alignment: enemy
+  probability: 0.6
+  frequency: 4.0
+- archetype: man_at_arms_male
+  alignment: enemy
+  probability: 0.2
+  frequency: 10.0
+weather: random

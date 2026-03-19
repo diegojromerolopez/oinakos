@@ -1,55 +1,56 @@
 id: destroy_camp
 name: Destroy the Encampment
-type: destroy_building # ObjDestroyBuilding
+type: destroy_building
 difficulty: 2
-description: "Destroy the enemy warehouse"
-floor_tile: "grass.png"
+description: Destroy the enemy warehouse
+floor_tile: grass.png
 target_point:
   x: 20.0
   y: 20.0
 inhabitants:
-  - archetype: orc_male
-    x: 18.0
-    y: 18.0
-    alignment: enemy
-  - archetype: orc_female
-    x: 22.0
-    y: 22.0
-    alignment: enemy
-  - archetype: orc_male
-    x: 15.0
-    y: 20.0
-    alignment: enemy
-  - archetype: orc_female
-    x: 25.0
-    y: 20.0
-    alignment: enemy
+- archetype: orc_male
+  x: 18.0
+  y: 18.0
+  alignment: enemy
+- archetype: orc_female
+  x: 22.0
+  y: 22.0
+  alignment: enemy
+- archetype: orc_male
+  x: 15.0
+  y: 20.0
+  alignment: enemy
+- archetype: orc_female
+  x: 25.0
+  y: 20.0
+  alignment: enemy
 obstacles:
-  - id: target_building
-    archetype: warehouse
-    x: 20.0
-    y: 20.0
-  - archetype: smithery
-    x: 18.0
-    y: 22.0
-  - archetype: house_1
-    x: 22.0
-    y: 18.0
-  - archetype: well
-    x: 15.0
-    y: 15.0
-  - archetype: bush_1
-    x: 30.0
-    y: 25.0
-  - archetype: bush_2
-    x: 25.0
-    y: 30.0
-  - archetype: bush_3
-    x: 10.0
-    y: 10.0
-  - archetype: bush_4
-    x: 10.0
-    y: 20.0
-  - archetype: bush_5
-    x: 20.0
-    y: 10.0
+- id: target_building
+  archetype: warehouse
+  x: 20.0
+  y: 20.0
+- archetype: smithery
+  x: 18.0
+  y: 22.0
+- archetype: house_1
+  x: 22.0
+  y: 18.0
+- archetype: well
+  x: 15.0
+  y: 15.0
+- archetype: bush_1
+  x: 30.0
+  y: 25.0
+- archetype: bush_2
+  x: 25.0
+  y: 30.0
+- archetype: bush_3
+  x: 10.0
+  y: 10.0
+- archetype: bush_4
+  x: 10.0
+  y: 20.0
+- archetype: bush_5
+  x: 20.0
+  y: 10.0
+weather: random

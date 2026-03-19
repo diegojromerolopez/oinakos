@@ -1,217 +1,213 @@
-id: "conde_olinos_hunt"
-name: "The Hunt of Conde Olinos"
-type: "reach_portal"
-description: "Protect the noble Conde Olinos from the Queen's wrath. Reach the portal in the upper right corner to escape."
+id: conde_olinos_hunt
+name: The Hunt of Conde Olinos
+type: reach_portal
+description: Protect the noble Conde Olinos from the Queen's wrath. Reach the portal
+  in the upper right corner to escape.
 difficulty: 5
 width_px: 6000
 height_px: 6000
-floor_tile: "grass.png"
-
+floor_tile: snow.png
 target_radius: 5.0
 target_point:
   x: 45.0
   y: 0.0
-
 player:
   x: -12.0
   y: 2.0
-
 floor_zones:
-  - name: "Town Square"
-    tile: "paved_ground.png"
-    priority: 5
-    perimeter:
-      - {x: -15.0, y: -6.0}
-      - {x: -5.0, y: -6.0}
-      - {x: -5.0, y: 6.0}
-      - {x: -15.0, y: 6.0}
-  - name: "Eastern Road"
-    tile: "paved_ground.png"
-    priority: 4
-    perimeter:
-      - {x: -5.0, y: -2.0}
-      - {x: 8.0, y: -2.0}
-      - {x: 8.0, y: 2.0}
-      - {x: -5.0, y: 2.0}
-  - name: "Escape Trail"
-    tile: "mud.png"
-    priority: 3
-    perimeter:
-      - {x: 8.0, y: -3.0}
-      - {x: 40.0, y: -10.0}
-      - {x: 50.0, y: 5.0}
-      - {x: 8.0, y: 3.0}
-
-npcs:
-  # Nobles
-  - npc_id: "conde_olinos"
-    x: -10.0
-    y: 2.0
-    must_survive: true
-    alignment: "ally"
-  - npc_id: "princess_elvira"
-    x: -11.0
-    y: 4.0
-    alignment: "ally"
-    must_survive: true
-  
-  # Queen and Guard Escort
-  - npc_id: "queen_urraca"
-    x: 10.0
-    y: 0.0
-    alignment: "enemy"
-  - npc_id: "queens_guard"
-    x: 12.0
-    y: 3.0
-    alignment: "enemy"
-    leader_id: "queen_urraca"
-  - npc_id: "queens_guard"
-    x: 12.0
-    y: -3.0
-    alignment: "enemy"
-    leader_id: "queen_urraca"
-  - npc_id: "queens_guard"
-    x: 14.0
-    y: 0.0
-    alignment: "enemy"
-    leader_id: "queen_urraca"
-  - npc_id: "queens_guard"
-    x: 16.0
-    y: 2.0
-    alignment: "enemy"
-    leader_id: "queen_urraca"
-  - npc_id: "queens_guard"
-    x: 16.0
-    y: -2.0
-    alignment: "enemy"
-    leader_id: "queen_urraca"
-
-  # Town Inhabitants in a panic
-  - archetype_id: "peasant_male"
-    x: -8.0
-    y: 4.0
-    alignment: "neutral"
-    behavior: flee
-  - archetype_id: "peasant_female"
-    x: -12.0
-    y: -4.0
-    alignment: "neutral"
-    behavior: flee
-  - archetype_id: "peasant_male"
-    x: -2.0
-    y: 4.5
-    alignment: "neutral"
-    behavior: flee
-  - archetype_id: "peasant_male"
-    x: 0.0
-    y: -4.0
-    alignment: "neutral"
-    behavior: flee
-  - archetype_id: "peasant_male"
-    x: 2.0
-    y: 5.0
-    alignment: "neutral"
-    behavior: flee
-  - archetype_id: "peasant_female"
-    x: 4.0
-    y: -5.0
-    alignment: "neutral"
-    behavior: flee
-
-obstacles:
-  - id: "escape_portal"
-    archetype_id: "portal_1"
-    x: 45.0
-    y: 0.0
-  
-  # Town Buildings
-  - archetype_id: "house_1"
-    x: -10.0
-    y: 9.0
-  - archetype_id: "house_2"
-    x: -5.0
-    y: 9.0
-  - archetype_id: "house_3"
-    x: 0.0
-    y: 9.0
-  - archetype_id: "tavern"
-    x: -10.0
-    y: -9.0
-  - archetype_id: "smithery"
-    x: -5.0
-    y: -9.0
-  - archetype_id: "well"
-    x: -2.0
-    y: -9.0
-  - archetype_id: "house_1"
-    x: 4.0
-    y: -9.0
-  - archetype_id: "farm"
-    x: 4.0
-    y: 9.0
-  - archetype_id: "rock_4"
-    x: -12.0
-    y: -2.0
-  - archetype_id: "rock_5"
-    x: -8.0
-    y: 2.0
-
-  # Thick forest bottlenecking the escape
-  - archetype_id: "tree_1"
-    x: 15.0
-    y: 10.0
-  - archetype_id: "tree_2"
-    x: 18.0
-    y: 12.0
-  - archetype_id: "tree_3"
-    x: 20.0
-    y: 8.0
-  - archetype_id: "tree_4"
-    x: 22.0
-    y: 14.0
-  - archetype_id: "tree_1"
-    x: 25.0
-    y: 9.0
-  
-  - archetype_id: "tree_2"
-    x: 15.0
-    y: -10.0
-  - archetype_id: "tree_3"
-    x: 18.0
-    y: -12.0
-  - archetype_id: "tree_4"
-    x: 20.0
-    y: -8.0
-  - archetype_id: "tree_1"
-    x: 22.0
-    y: -14.0
-  - archetype_id: "tree_2"
-    x: 25.0
-    y: -9.0
-  
-  - archetype_id: "tree_3"
-    x: 30.0
-    y: -12.0
-  - archetype_id: "tree_4"
-    x: 35.0
-    y: -8.0
-  - archetype_id: "tree_1"
-    x: 30.0
-    y: 10.0
-  - archetype_id: "tree_2"
-    x: 35.0
-    y: 12.0
-  
-  # Rocks near portal
-  - archetype_id: "rock_1"
-    x: 42.0
-    y: 5.0
-  - archetype_id: "rock_2"
-    x: 44.0
-    y: 6.0
-  - archetype_id: "rock_3"
-    x: 42.0
-    y: -5.0
-  - archetype_id: "rock_1"
-    x: 46.0
+- name: Town Square
+  tile: paved_ground.png
+  priority: 5
+  perimeter:
+  - x: -15.0
     y: -6.0
+  - x: -5.0
+    y: -6.0
+  - x: -5.0
+    y: 6.0
+  - x: -15.0
+    y: 6.0
+- name: Eastern Road
+  tile: paved_ground.png
+  priority: 4
+  perimeter:
+  - x: -5.0
+    y: -2.0
+  - x: 8.0
+    y: -2.0
+  - x: 8.0
+    y: 2.0
+  - x: -5.0
+    y: 2.0
+- name: Escape Trail
+  tile: mud.png
+  priority: 3
+  perimeter:
+  - x: 8.0
+    y: -3.0
+  - x: 40.0
+    y: -10.0
+  - x: 50.0
+    y: 5.0
+  - x: 8.0
+    y: 3.0
+npcs:
+- npc_id: conde_olinos
+  x: -10.0
+  y: 2.0
+  must_survive: true
+  alignment: ally
+- npc_id: princess_elvira
+  x: -11.0
+  y: 4.0
+  alignment: ally
+  must_survive: true
+- npc_id: queen_urraca
+  x: 10.0
+  y: 0.0
+  alignment: enemy
+- npc_id: queens_guard
+  x: 12.0
+  y: 3.0
+  alignment: enemy
+  leader_id: queen_urraca
+- npc_id: queens_guard
+  x: 12.0
+  y: -3.0
+  alignment: enemy
+  leader_id: queen_urraca
+- npc_id: queens_guard
+  x: 14.0
+  y: 0.0
+  alignment: enemy
+  leader_id: queen_urraca
+- npc_id: queens_guard
+  x: 16.0
+  y: 2.0
+  alignment: enemy
+  leader_id: queen_urraca
+- npc_id: queens_guard
+  x: 16.0
+  y: -2.0
+  alignment: enemy
+  leader_id: queen_urraca
+- archetype_id: peasant_male
+  x: -8.0
+  y: 4.0
+  alignment: neutral
+  behavior: flee
+- archetype_id: peasant_female
+  x: -12.0
+  y: -4.0
+  alignment: neutral
+  behavior: flee
+- archetype_id: peasant_male
+  x: -2.0
+  y: 4.5
+  alignment: neutral
+  behavior: flee
+- archetype_id: peasant_male
+  x: 0.0
+  y: -4.0
+  alignment: neutral
+  behavior: flee
+- archetype_id: peasant_male
+  x: 2.0
+  y: 5.0
+  alignment: neutral
+  behavior: flee
+- archetype_id: peasant_female
+  x: 4.0
+  y: -5.0
+  alignment: neutral
+  behavior: flee
+obstacles:
+- id: escape_portal
+  archetype_id: portal_1
+  x: 45.0
+  y: 0.0
+- archetype_id: house_1
+  x: -10.0
+  y: 9.0
+- archetype_id: house_2
+  x: -5.0
+  y: 9.0
+- archetype_id: house_3
+  x: 0.0
+  y: 9.0
+- archetype_id: tavern
+  x: -10.0
+  y: -9.0
+- archetype_id: smithery
+  x: -5.0
+  y: -9.0
+- archetype_id: well
+  x: -2.0
+  y: -9.0
+- archetype_id: house_1
+  x: 4.0
+  y: -9.0
+- archetype_id: farm
+  x: 4.0
+  y: 9.0
+- archetype_id: rock_4
+  x: -12.0
+  y: -2.0
+- archetype_id: rock_5
+  x: -8.0
+  y: 2.0
+- archetype_id: tree_1
+  x: 15.0
+  y: 10.0
+- archetype_id: tree_2
+  x: 18.0
+  y: 12.0
+- archetype_id: tree_3
+  x: 20.0
+  y: 8.0
+- archetype_id: tree_4
+  x: 22.0
+  y: 14.0
+- archetype_id: tree_1
+  x: 25.0
+  y: 9.0
+- archetype_id: tree_2
+  x: 15.0
+  y: -10.0
+- archetype_id: tree_3
+  x: 18.0
+  y: -12.0
+- archetype_id: tree_4
+  x: 20.0
+  y: -8.0
+- archetype_id: tree_1
+  x: 22.0
+  y: -14.0
+- archetype_id: tree_2
+  x: 25.0
+  y: -9.0
+- archetype_id: tree_3
+  x: 30.0
+  y: -12.0
+- archetype_id: tree_4
+  x: 35.0
+  y: -8.0
+- archetype_id: tree_1
+  x: 30.0
+  y: 10.0
+- archetype_id: tree_2
+  x: 35.0
+  y: 12.0
+- archetype_id: rock_1
+  x: 42.0
+  y: 5.0
+- archetype_id: rock_2
+  x: 44.0
+  y: 6.0
+- archetype_id: rock_3
+  x: 42.0
+  y: -5.0
+- archetype_id: rock_1
+  x: 46.0
+  y: -6.0
+weather: snow

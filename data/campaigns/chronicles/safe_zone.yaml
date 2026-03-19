@@ -9,216 +9,207 @@ player:
   x: 5.0
   y: 5.0
 floor_zones:
-  - name: central_road
-    tile: paved_ground.png
-    priority: 2
-    perimeter:
-      - x: -3.0
-        y: -30.0
-      - x: 3.0
-        y: -30.0
-      - x: 3.0
-        y: 30.0
-      - x: -3.0
-        y: 30.0
-  - name: town_square
-    tile: big_stones.png
-    priority: 3
-    perimeter:
-      - x: -8.0
-        y: -12.0
-      - x: 12.0
-        y: -12.0
-      - x: 12.0
-        y: 8.0
-      - x: -8.0
-        y: 8.0
-  - name: wheat_fields_east
-    tile: wheat_field.png
-    priority: 1
-    perimeter:
-      - x: 14.0
-        y: -15.0
-      - x: 35.0
-        y: -15.0
-      - x: 35.0
-        y: 15.0
-      - x: 14.0
-        y: 15.0
-  - name: wheat_fields_west
-    tile: wheat_field.png
-    priority: 1
-    perimeter:
-      - x: -35.0
-        y: -15.0
-      - x: -10.0
-        y: -15.0
-      - x: -10.0
-        y: 15.0
-      - x: -35.0
-        y: 15.0
-
+- name: central_road
+  tile: paved_ground.png
+  priority: 2
+  perimeter:
+  - x: -3.0
+    y: -30.0
+  - x: 3.0
+    y: -30.0
+  - x: 3.0
+    y: 30.0
+  - x: -3.0
+    y: 30.0
+- name: town_square
+  tile: big_stones.png
+  priority: 3
+  perimeter:
+  - x: -8.0
+    y: -12.0
+  - x: 12.0
+    y: -12.0
+  - x: 12.0
+    y: 8.0
+  - x: -8.0
+    y: 8.0
+- name: wheat_fields_east
+  tile: wheat_field.png
+  priority: 1
+  perimeter:
+  - x: 14.0
+    y: -15.0
+  - x: 35.0
+    y: -15.0
+  - x: 35.0
+    y: 15.0
+  - x: 14.0
+    y: 15.0
+- name: wheat_fields_west
+  tile: wheat_field.png
+  priority: 1
+  perimeter:
+  - x: -35.0
+    y: -15.0
+  - x: -10.0
+    y: -15.0
+  - x: -10.0
+    y: 15.0
+  - x: -35.0
+    y: 15.0
 inhabitants:
-  - npc: crimson_guard
-    x: 0.0
-    y: 12.0
-    alignment: neutral
-    behavior: patrol
-  - npc: crimson_guard
-    x: 1.0
-    y: 14.0
-    alignment: neutral
-    behavior: patrol
-  - npc: crimson_guard
-    x: -2.0
-    y: -15.0
-    alignment: neutral
-    behavior: patrol
-  - npc: crimson_guard
-    x: 0.0
-    y: -14.0
-    alignment: neutral
-    behavior: patrol
-  - npc: crimson_guard
-    x: 10.0
-    y: 0.0
-    alignment: neutral
-    behavior: patrol
-  - npc: crimson_guard
-    x: -6.0
-    y: -2.0
-    alignment: neutral
-    behavior: patrol
-  
-  # Dense Ambient Village Life
-  - archetype: peasant_male
-    x: -5.0
-    y: 2.0
-    alignment: neutral
-    behavior: wander
-  - archetype: peasant_male
-    x: -3.0
-    y: 0.0
-    alignment: neutral
-    behavior: wander
-  - archetype: peasant_female
-    x: 5.0
-    y: -4.0
-    alignment: neutral
-    behavior: wander
-  - archetype: peasant_female
-    x: -4.0
-    y: -8.0
-    alignment: neutral
-    behavior: wander
-  - archetype: peasant_male
-    x: 6.0
-    y: 4.0
-    alignment: neutral
-    behavior: wander
-  - archetype: peasant_male
-    x: 8.0
-    y: 5.0
-    alignment: neutral
-    behavior: wander
-  
-  # Farmers deep in the wheat fields
-  - archetype: peasant_male
-    x: -20.0
-    y: 5.0
-    alignment: neutral
-    behavior: wander
-  - archetype: peasant_female
-    x: 22.0
-    y: -4.0
-    alignment: neutral
-    behavior: wander
-  - archetype: peasant_male
-    x: 18.0
-    y: 12.0
-    alignment: neutral
-    behavior: wander
-
+- npc: crimson_guard
+  x: 0.0
+  y: 12.0
+  alignment: neutral
+  behavior: patrol
+- npc: crimson_guard
+  x: 1.0
+  y: 14.0
+  alignment: neutral
+  behavior: patrol
+- npc: crimson_guard
+  x: -2.0
+  y: -15.0
+  alignment: neutral
+  behavior: patrol
+- npc: crimson_guard
+  x: 0.0
+  y: -14.0
+  alignment: neutral
+  behavior: patrol
+- npc: crimson_guard
+  x: 10.0
+  y: 0.0
+  alignment: neutral
+  behavior: patrol
+- npc: crimson_guard
+  x: -6.0
+  y: -2.0
+  alignment: neutral
+  behavior: patrol
+- archetype: peasant_male
+  x: -5.0
+  y: 2.0
+  alignment: neutral
+  behavior: wander
+- archetype: peasant_male
+  x: -3.0
+  y: 0.0
+  alignment: neutral
+  behavior: wander
+- archetype: peasant_female
+  x: 5.0
+  y: -4.0
+  alignment: neutral
+  behavior: wander
+- archetype: peasant_female
+  x: -4.0
+  y: -8.0
+  alignment: neutral
+  behavior: wander
+- archetype: peasant_male
+  x: 6.0
+  y: 4.0
+  alignment: neutral
+  behavior: wander
+- archetype: peasant_male
+  x: 8.0
+  y: 5.0
+  alignment: neutral
+  behavior: wander
+- archetype: peasant_male
+  x: -20.0
+  y: 5.0
+  alignment: neutral
+  behavior: wander
+- archetype: peasant_female
+  x: 22.0
+  y: -4.0
+  alignment: neutral
+  behavior: wander
+- archetype: peasant_male
+  x: 18.0
+  y: 12.0
+  alignment: neutral
+  behavior: wander
 obstacles:
-  - archetype: well
-    x: 2.0
-    y: -2.0
-  
-  # Asymmetrical Town Layout
-  - archetype: house_1
-    x: -4.0
-    y: -16.0
-  - archetype: house_2
-    x: 4.0
-    y: -15.0
-  - archetype: smithery
-    x: -6.0
-    y: 14.0
-  - archetype: tavern
-    x: 6.0
-    y: 12.0
-  - archetype: house_3
-    x: -12.0
-    y: 0.0
-  - archetype: temple
-    x: 16.0
-    y: -3.0
-
-  # Organic Nature Clusters
-  - archetype: tree_5
-    x: 12.3
-    y: 35.1
-  - archetype: tree_5
-    x: 9.8
-    y: 37.0
-  - archetype: tree_6
-    x: -10.8
-    y: -35.0
-  - archetype: tree_6
-    x: -14.2
-    y: -38.5
-  - archetype: tree_5
-    x: -17.9
-    y: 11.6
-  - archetype: tree_5
-    x: 36.7
-    y: -25.9
-  - archetype: tree_6
-    x: 40.2
-    y: -22.5
-  - archetype: tree_5
-    x: -22.2
-    y: 29.5
-  - archetype: tree_5
-    x: 2.8
-    y: 35.9
-  - archetype: tree_6
-    x: 32.5
-    y: 8.3
-  - archetype: tree_6
-    x: -12.9
-    y: -41.5
-  - archetype: tree_5
-    x: 34.7
-    y: -32.3
-  - archetype: tree_6
-    x: 38.8
-    y: -34.8
-  - archetype: tree_6
-    x: -24.4
-    y: -28.0
-  - archetype: bush_1
-    x: -26.4
-    y: -20.6
-  - archetype: bush_2
-    x: 32.7
-    y: 14.7
-  - archetype: tree_6
-    x: -28.4
-    y: 27.3
-  - archetype: tree_6
-    x: 38.8
-    y: -2.0
-  - archetype: bush_3
-    x: -38.5
-    y: -2.1
+- archetype: well
+  x: 2.0
+  y: -2.0
+- archetype: house_1
+  x: -4.0
+  y: -16.0
+- archetype: house_2
+  x: 4.0
+  y: -15.0
+- archetype: smithery
+  x: -6.0
+  y: 14.0
+- archetype: tavern
+  x: 6.0
+  y: 12.0
+- archetype: house_3
+  x: -12.0
+  y: 0.0
+- archetype: temple
+  x: 16.0
+  y: -3.0
+- archetype: tree_5
+  x: 12.3
+  y: 35.1
+- archetype: tree_5
+  x: 9.8
+  y: 37.0
+- archetype: tree_6
+  x: -10.8
+  y: -35.0
+- archetype: tree_6
+  x: -14.2
+  y: -38.5
+- archetype: tree_5
+  x: -17.9
+  y: 11.6
+- archetype: tree_5
+  x: 36.7
+  y: -25.9
+- archetype: tree_6
+  x: 40.2
+  y: -22.5
+- archetype: tree_5
+  x: -22.2
+  y: 29.5
+- archetype: tree_5
+  x: 2.8
+  y: 35.9
+- archetype: tree_6
+  x: 32.5
+  y: 8.3
+- archetype: tree_6
+  x: -12.9
+  y: -41.5
+- archetype: tree_5
+  x: 34.7
+  y: -32.3
+- archetype: tree_6
+  x: 38.8
+  y: -34.8
+- archetype: tree_6
+  x: -24.4
+  y: -28.0
+- archetype: bush_1
+  x: -26.4
+  y: -20.6
+- archetype: bush_2
+  x: 32.7
+  y: 14.7
+- archetype: tree_6
+  x: -28.4
+  y: 27.3
+- archetype: tree_6
+  x: 38.8
+  y: -2.0
+- archetype: bush_3
+  x: -38.5
+  y: -2.1
+weather: clear

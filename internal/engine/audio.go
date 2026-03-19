@@ -160,6 +160,30 @@ func (m *AudioManager) Play(name string) {
 	}
 }
 
+func (m *AudioManager) PlayLoop(name string) {
+	m.mu.RLock()
+	p, ok := m.sounds[name]
+	m.mu.RUnlock()
+	if !ok {
+		return
+	}
+	if !p.IsPlaying() {
+		p.Rewind()
+		p.Play()
+	}
+}
+
+func (m *AudioManager) Stop(name string) {
+	m.mu.RLock()
+	p, ok := m.sounds[name]
+	m.mu.RUnlock()
+	if !ok {
+		return
+	}
+	p.Pause()
+	p.Rewind()
+}
+
 func (m *AudioManager) getMatchingKeys(prefix string) []string {
 	var matches []string
 	m.mu.RLock()
@@ -193,5 +217,17 @@ func PlaySound(name string) {
 func PlayRandomSound(prefix string) {
 	if GlobalAudio != nil {
 		GlobalAudio.PlayRandom(prefix)
+	}
+}
+
+func PlayLoop(name string) {
+	if GlobalAudio != nil {
+		GlobalAudio.PlayLoop(name)
+	}
+}
+
+func StopSound(name string) {
+	if GlobalAudio != nil {
+		GlobalAudio.Stop(name)
 	}
 }

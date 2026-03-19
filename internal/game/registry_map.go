@@ -36,6 +36,7 @@ type MapType struct {
 	FloorZones      []*FloorZone       `yaml:"floor_zones"`
 	TargetPointRaw  *TargetPointConfig `yaml:"target_point"` // Optional YAML-supplied target point
 	Player          *TargetPointConfig `yaml:"player,omitempty"`
+	Weather         string             `yaml:"weather"`
 	MapWidth        float64            `yaml:"-"` // Cartesian width
 	MapHeight       float64            `yaml:"-"` // Cartesian height
 

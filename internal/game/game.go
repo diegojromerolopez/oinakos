@@ -26,6 +26,15 @@ const (
 	WinMenuQuit     = 1
 )
 
+type WeatherType int
+
+const (
+	WeatherClear WeatherType = iota
+	WeatherRain
+	WeatherSnow
+	WeatherStorm
+)
+
 type Game struct {
 	width, height     int
 	playableCharacter     *Character
@@ -121,6 +130,10 @@ type Game struct {
 	aiManager *AIManager
 	Graphics  engine.Graphics
 	silhouetteBuffer engine.Image
+
+	CurrentWeather   WeatherType
+	WeatherIntensity float64
+	particles        []*Particle
 }
 
 func (g *Game) SetOnFontUpdate(cb func(string)) {
@@ -712,11 +725,14 @@ func (g *Game) Update() error {
 		Registries: g.Registries,
 		Log:        g.LogEvent,
 		AIManager:  g.aiManager,
+		Weather:    g.CurrentWeather,
+		Intensity:  g.WeatherIntensity,
 	}
 
 	g.mechanicsManager.UpdateFogOfWar(ctx)
 	g.worldManager.UpdateChunks()
 	g.worldManager.UpdateNPCSpawning()
+	g.updateWeather()
 
 	// Update projectiles
 	activeProjectiles := []*Projectile{}

@@ -212,8 +212,8 @@ func (c *Character) updatePlayer(ctx *SystemContext) {
 			mag := math.Sqrt(dx*dx + dy*dy)
 			dx /= mag
 			dy /= mag
-			moveX := dx * c.Speed * c.GetSpeedModifier()
-			moveY := dy * c.Speed * c.GetSpeedModifier()
+			moveX := dx * c.Speed * c.GetSpeedModifier(ctx)
+			moveY := dy * c.Speed * c.GetSpeedModifier(ctx)
 
 			if !c.checkCollisionAt(c.X+moveX, c.Y+moveY, worldObstacles) {
 				c.X += moveX
@@ -303,7 +303,7 @@ func (c *Character) updateAI(ctx *SystemContext) {
 			c.TargetItem = nil
 			c.State = ActorIdle
 		} else {
-			c.executeMovement(dx, dy, worldObstacles, false)
+			c.executeMovement(ctx, dx, dy, worldObstacles, false)
 			return
 		}
 	}
@@ -311,11 +311,11 @@ func (c *Character) updateAI(ctx *SystemContext) {
 	targetX, targetY, hasTarget, isTargetPlayer := c.findTarget(playableCharacter, ctx.World.Characters, playerDist)
 	if !hasTarget {
 		if c.Behavior == BehaviorWander {
-			c.updateWander(worldObstacles)
+			c.updateWander(ctx, worldObstacles)
 		} else if c.Behavior == BehaviorPatrol {
-			c.updatePatrol(worldObstacles)
+			c.updatePatrol(ctx, worldObstacles)
 		} else if c.Alignment == AlignmentAlly && playableCharacter != nil && playerDist > 5.0 && playerDist < 20.0 {
-			c.executeMovement(playableCharacter.X-c.X, playableCharacter.Y-c.Y, worldObstacles, false)
+			c.executeMovement(ctx, playableCharacter.X-c.X, playableCharacter.Y-c.Y, worldObstacles, false)
 		} else {
 			c.State = ActorIdle
 		}
@@ -335,26 +335,26 @@ func (c *Character) updateAI(ctx *SystemContext) {
 	
 	tooClose := dist < attackRange*0.5 && c.Weapon != nil && c.Weapon.IsRanged()
 	if tooClose && canAttack {
-		c.executeMovement(dx, dy, worldObstacles, true) // Flee if too close
+		c.executeMovement(ctx, dx, dy, worldObstacles, true) // Flee if too close
 	} else if dist < attackRange && canAttack {
 		c.executeAttack(ctx, isTargetPlayer, dx, dy)
 	} else {
 		flee := (c.Behavior == BehaviorFlee)
-		c.executeMovement(dx, dy, worldObstacles, flee)
+		c.executeMovement(ctx, dx, dy, worldObstacles, flee)
 	}
 	c.clampToMap(mapW, mapH)
 }
 
-func (c *Character) updateWander(obstacles []*Obstacle) {
+func (c *Character) updateWander(ctx *SystemContext, obstacles []*Obstacle) {
 	if c.Tick%120 == 0 || (c.WanderDirX == 0 && c.WanderDirY == 0) {
 		angle := rand.Float64() * 2 * math.Pi
 		c.WanderDirX = math.Cos(angle)
 		c.WanderDirY = math.Sin(angle)
 	}
-	c.executeMovement(c.WanderDirX, c.WanderDirY, obstacles, false)
+	c.executeMovement(ctx, c.WanderDirX, c.WanderDirY, obstacles, false)
 }
 
-func (c *Character) updatePatrol(obstacles []*Obstacle) {
+func (c *Character) updatePatrol(ctx *SystemContext, obstacles []*Obstacle) {
 	targetX, targetY := c.PatrolEndX, c.PatrolEndY
 	if !c.PatrolHeading {
 		targetX, targetY = c.PatrolStartX, c.PatrolStartY
@@ -364,7 +364,7 @@ func (c *Character) updatePatrol(obstacles []*Obstacle) {
 	if dist < 0.5 {
 		c.PatrolHeading = !c.PatrolHeading
 	} else {
-		c.executeMovement(targetX-c.X, targetY-c.Y, obstacles, false)
+		c.executeMovement(ctx, targetX-c.X, targetY-c.Y, obstacles, false)
 	}
 }
 
@@ -627,12 +627,12 @@ func (c *Character) handleAIReaction(attacker ActorInterface, ctx *SystemContext
 	}
 }
 
-func (c *Character) executeMovement(dx, dy float64, obstacles []*Obstacle, flee bool) {
+func (c *Character) executeMovement(ctx *SystemContext, dx, dy float64, obstacles []*Obstacle, flee bool) {
 	mag := math.Sqrt(dx*dx + dy*dy)
 	if mag < 0.01 { return }
 	mvX, mvY := dx/mag, dy/mag
 	if flee { mvX, mvY = -mvX, -mvY }
-	speed := c.Speed * c.GetSpeedModifier()
+	speed := c.Speed * c.GetSpeedModifier(ctx)
 	if !c.checkCollisionAt(c.X+mvX*speed, c.Y+mvY*speed, obstacles) {
 		c.X += mvX * speed; c.Y += mvY * speed; c.State = ActorWalking; c.updateFacing(mvX, mvY)
 	} else {

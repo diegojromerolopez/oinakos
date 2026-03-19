@@ -10,6 +10,8 @@ type AudioManager interface {
 	PlaySound(name string)
 	PlayRandomSound(prefix string)
 	SetProbability(prob float64)
+	PlayAmbientLoop(name string)
+	StopAmbientLoop(name string)
 }
 
 // DefaultAudioManager uses the actual engine audio functions with a probability filter.
@@ -31,6 +33,14 @@ func (d *DefaultAudioManager) PlayRandomSound(prefix string) {
 	if rand.Float64() < d.probability {
 		engine.PlayRandomSound(prefix)
 	}
+}
+
+func (d *DefaultAudioManager) PlayAmbientLoop(name string) {
+	engine.PlayLoop(name)
+}
+
+func (d *DefaultAudioManager) StopAmbientLoop(name string) {
+	engine.StopSound(name)
 }
 
 // MockAudioManager can be used in headless tests to prevent Ebiten panics.
@@ -60,4 +70,12 @@ func (m *MockAudioManager) PlayRandomSound(prefix string) {
 	if rand.Float64() < m.probability {
 		m.PlayedSounds = append(m.PlayedSounds, "RANDOM:"+prefix)
 	}
+}
+
+func (m *MockAudioManager) PlayAmbientLoop(name string) {
+	m.PlayedSounds = append(m.PlayedSounds, "LOOP:"+name)
+}
+
+func (m *MockAudioManager) StopAmbientLoop(name string) {
+	m.PlayedSounds = append(m.PlayedSounds, "STOP:"+name)
 }

@@ -1,11 +1,11 @@
-name: "Starter Village"
+name: Starter Village
 map:
   id: safe_zone
   width_px: 5120
   height_px: 5120
   level: 1
   play_time: 0
-  floor_tile: "grass.png"
+  floor_tile: grass.png
 player:
   x: 3
   y: 3
@@ -17,266 +17,278 @@ player:
   base_attack: 10
   base_defense: 5
 floor_zones:
-  - name: "Town Square"
-    tile: "paved_ground.png"
-    priority: 10
-    perimeter:
-      - {x: -8, y: -8}
-      - {x: 8, y: -8}
-      - {x: 8, y: 8}
-      - {x: -8, y: 8}
-  - name: "Main North Road"
-    tile: "paved_ground.png"
-    priority: 5
-    perimeter:
-      - {x: -3, y: -30}
-      - {x: 3, y: -30}
-      - {x: 3, y: -8}
-      - {x: -3, y: -8}
-  - name: "Main South Road"
-    tile: "paved_ground.png"
-    priority: 5
-    perimeter:
-      - {x: -3, y: 8}
-      - {x: 3, y: 8}
-      - {x: 3, y: 30}
-      - {x: -3, y: 30}
-  - name: "East Dirt Path"
-    tile: "mud.png"
-    priority: 3
-    perimeter:
-      - {x: 8, y: -2}
-      - {x: 30, y: -2}
-      - {x: 30, y: 2}
-      - {x: 8, y: 2}
-  - name: "West Dirt Path"
-    tile: "mud.png"
-    priority: 3
-    perimeter:
-      - {x: -30, y: -2}
-      - {x: -8, y: -2}
-      - {x: -8, y: 2}
-      - {x: -30, y: 2}
-npcs:
-  # Guards patrolling/standing
-  - archetype_id: queens_guard
-    x: -2
+- name: Town Square
+  tile: paved_ground.png
+  priority: 10
+  perimeter:
+  - x: -8
     y: -8
-    alignment: neutral
-    behavior: patrol
-  - archetype_id: queens_guard
-    x: 2
+  - x: 8
     y: -8
-    alignment: neutral
-    behavior: patrol
-  - archetype_id: golden_guard
-    x: 0
+  - x: 8
     y: 8
-    alignment: neutral
-    behavior: patrol
-  - archetype_id: golden_guard
-    x: 8
-    y: 0
-    alignment: neutral
-    behavior: patrol
-  - archetype_id: golden_guard
-    x: -8
-    y: 0
-    alignment: neutral
-    behavior: patrol
-  # Civilians in square
-  - archetype_id: peasant_male
-    name: "Mayor Farris"
-    x: -2
+  - x: -8
+    y: 8
+- name: Main North Road
+  tile: paved_ground.png
+  priority: 5
+  perimeter:
+  - x: -3
+    y: -30
+  - x: 3
+    y: -30
+  - x: 3
+    y: -8
+  - x: -3
+    y: -8
+- name: Main South Road
+  tile: paved_ground.png
+  priority: 5
+  perimeter:
+  - x: -3
+    y: 8
+  - x: 3
+    y: 8
+  - x: 3
+    y: 30
+  - x: -3
+    y: 30
+- name: East Dirt Path
+  tile: mud.png
+  priority: 3
+  perimeter:
+  - x: 8
     y: -2
-    alignment: neutral
-    behavior: wander
-  - archetype_id: peasant_female
-    x: 2
+  - x: 30
+    y: -2
+  - x: 30
     y: 2
-    alignment: neutral
-    behavior: wander
-  - archetype_id: peasant_male
-    x: -4
-    y: 4
-    alignment: neutral
-    behavior: wander
-  - archetype_id: peasant_male
-    x: 4
-    y: -4
-    alignment: neutral
-    behavior: wander
-  - archetype_id: peasant_male
-    x: 1
-    y: -5
-    alignment: neutral
-    behavior: wander
-  - archetype_id: peasant_female
-    x: -1
-    y: 5
-    alignment: neutral
-    behavior: wander
-  - archetype_id: peasant_male
-    x: 5
-    y: 1
-    alignment: neutral
-    behavior: wander
-  - archetype_id: peasant_female
-    x: -5
-    y: -1
-    alignment: neutral
-    behavior: wander
-  # Civilians on roads/paths
-  - archetype_id: peasant_male
-    x: 0
-    y: -15
-    alignment: neutral
-    behavior: wander
-  - archetype_id: peasant_female
-    x: 0
-    y: -20
-    alignment: neutral
-    behavior: wander
-  - archetype_id: peasant_male
-    x: 0
-    y: 15
-    alignment: neutral
-    behavior: wander
-  - archetype_id: peasant_male
-    x: 0
-    y: 20
-    alignment: neutral
-    behavior: wander
-  - archetype_id: peasant_male
-    x: -15
-    y: 0
-    alignment: neutral
-    behavior: wander
-  - archetype_id: peasant_female
-    x: -20
-    y: 0
-    alignment: neutral
-    behavior: wander
-  - archetype_id: peasant_male
-    x: 15
-    y: 0
-    alignment: neutral
-    behavior: wander
-  - archetype_id: peasant_female
-    x: 20
-    y: 0
-    alignment: neutral
-    behavior: wander
+  - x: 8
+    y: 2
+- name: West Dirt Path
+  tile: mud.png
+  priority: 3
+  perimeter:
+  - x: -30
+    y: -2
+  - x: -8
+    y: -2
+  - x: -8
+    y: 2
+  - x: -30
+    y: 2
+npcs:
+- archetype_id: queens_guard
+  x: -2
+  y: -8
+  alignment: neutral
+  behavior: patrol
+- archetype_id: queens_guard
+  x: 2
+  y: -8
+  alignment: neutral
+  behavior: patrol
+- archetype_id: golden_guard
+  x: 0
+  y: 8
+  alignment: neutral
+  behavior: patrol
+- archetype_id: golden_guard
+  x: 8
+  y: 0
+  alignment: neutral
+  behavior: patrol
+- archetype_id: golden_guard
+  x: -8
+  y: 0
+  alignment: neutral
+  behavior: patrol
+- archetype_id: peasant_male
+  name: Mayor Farris
+  x: -2
+  y: -2
+  alignment: neutral
+  behavior: wander
+- archetype_id: peasant_female
+  x: 2
+  y: 2
+  alignment: neutral
+  behavior: wander
+- archetype_id: peasant_male
+  x: -4
+  y: 4
+  alignment: neutral
+  behavior: wander
+- archetype_id: peasant_male
+  x: 4
+  y: -4
+  alignment: neutral
+  behavior: wander
+- archetype_id: peasant_male
+  x: 1
+  y: -5
+  alignment: neutral
+  behavior: wander
+- archetype_id: peasant_female
+  x: -1
+  y: 5
+  alignment: neutral
+  behavior: wander
+- archetype_id: peasant_male
+  x: 5
+  y: 1
+  alignment: neutral
+  behavior: wander
+- archetype_id: peasant_female
+  x: -5
+  y: -1
+  alignment: neutral
+  behavior: wander
+- archetype_id: peasant_male
+  x: 0
+  y: -15
+  alignment: neutral
+  behavior: wander
+- archetype_id: peasant_female
+  x: 0
+  y: -20
+  alignment: neutral
+  behavior: wander
+- archetype_id: peasant_male
+  x: 0
+  y: 15
+  alignment: neutral
+  behavior: wander
+- archetype_id: peasant_male
+  x: 0
+  y: 20
+  alignment: neutral
+  behavior: wander
+- archetype_id: peasant_male
+  x: -15
+  y: 0
+  alignment: neutral
+  behavior: wander
+- archetype_id: peasant_female
+  x: -20
+  y: 0
+  alignment: neutral
+  behavior: wander
+- archetype_id: peasant_male
+  x: 15
+  y: 0
+  alignment: neutral
+  behavior: wander
+- archetype_id: peasant_female
+  x: 20
+  y: 0
+  alignment: neutral
+  behavior: wander
 obstacles:
-  # Town Square Centerpiece
-  - archetype_id: well
-    x: 0
-    y: 0
-  # Northern Block (Left & Right of Main North Road)
-  - archetype_id: house_1
-    x: -6
-    y: -10
-  - archetype_id: house_2
-    x: -6
-    y: -15
-  - archetype_id: house_3
-    x: 6
-    y: -10
-  - archetype_id: house_1
-    x: 6
-    y: -15
-  - archetype_id: tavern
-    x: -6
-    y: -22
-  - archetype_id: smithery
-    x: 6
-    y: -22
-  # Southern Block
-  - archetype_id: house_2
-    x: -6
-    y: 10
-  - archetype_id: house_3
-    x: -6
-    y: 15
-  - archetype_id: house_1
-    x: 6
-    y: 10
-  - archetype_id: house_2
-    x: 6
-    y: 15
-  - archetype_id: temple
-    x: 0
-    y: 20
-  # Eastern Farm (along dirt path)
-  - archetype_id: farm
-    x: 12
-    y: 6
-  - archetype_id: house_3
-    x: 15
-    y: -4
-  # Western Houses (along dirt path)
-  - archetype_id: house_1
-    x: -15
-    y: 6
-  - archetype_id: house_2
-    x: -15
-    y: -4
-  # Trees and borders (Natural enclosure)
-  - archetype_id: tree_6
-    x: -12
-    y: -12
-  - archetype_id: tree_5
-    x: -16
-    y: -10
-  - archetype_id: tree_6
-    x: 12
-    y: -12
-  - archetype_id: tree_5
-    x: 16
-    y: -10
-  - archetype_id: tree_6
-    x: -12
-    y: 12
-  - archetype_id: tree_5
-    x: -16
-    y: 10
-  - archetype_id: tree_6
-    x: 20
-    y: 10
-  - archetype_id: bush_1
-    x: -8
-    y: -6
-  - archetype_id: bush_2
-    x: 8
-    y: -6
-  - archetype_id: bush_3
-    x: -8
-    y: 6
-  - archetype_id: bush_4
-    x: 8
-    y: 6
+- archetype_id: well
+  x: 0
+  y: 0
+- archetype_id: house_1
+  x: -6
+  y: -10
+- archetype_id: house_2
+  x: -6
+  y: -15
+- archetype_id: house_3
+  x: 6
+  y: -10
+- archetype_id: house_1
+  x: 6
+  y: -15
+- archetype_id: tavern
+  x: -6
+  y: -22
+- archetype_id: smithery
+  x: 6
+  y: -22
+- archetype_id: house_2
+  x: -6
+  y: 10
+- archetype_id: house_3
+  x: -6
+  y: 15
+- archetype_id: house_1
+  x: 6
+  y: 10
+- archetype_id: house_2
+  x: 6
+  y: 15
+- archetype_id: temple
+  x: 0
+  y: 20
+- archetype_id: farm
+  x: 12
+  y: 6
+- archetype_id: house_3
+  x: 15
+  y: -4
+- archetype_id: house_1
+  x: -15
+  y: 6
+- archetype_id: house_2
+  x: -15
+  y: -4
+- archetype_id: tree_6
+  x: -12
+  y: -12
+- archetype_id: tree_5
+  x: -16
+  y: -10
+- archetype_id: tree_6
+  x: 12
+  y: -12
+- archetype_id: tree_5
+  x: 16
+  y: -10
+- archetype_id: tree_6
+  x: -12
+  y: 12
+- archetype_id: tree_5
+  x: -16
+  y: 10
+- archetype_id: tree_6
+  x: 20
+  y: 10
+- archetype_id: bush_1
+  x: -8
+  y: -6
+- archetype_id: bush_2
+  x: 8
+  y: -6
+- archetype_id: bush_3
+  x: -8
+  y: 6
+- archetype_id: bush_4
+  x: 8
+  y: 6
 objects:
-  - id: iron_sword
-    x: 5
-    y: 5
-  - id: leather_armor
-    x: 6
-    y: 6
-  - id: bone_amulet
-    x: 7
-    y: 7
-  - id: iron_helmet
-    x: 8
-    y: 8
-  - id: magic_staff
-    x: 9
-    y: 9
-  - id: orcish_axe
-    x: 10
-    y: 10
-  - id: wooden_club
-    x: 4
-    y: 4
-  - id: club
-    x: 4
-    y: 6
+- id: iron_sword
+  x: 5
+  y: 5
+- id: leather_armor
+  x: 6
+  y: 6
+- id: bone_amulet
+  x: 7
+  y: 7
+- id: iron_helmet
+  x: 8
+  y: 8
+- id: magic_staff
+  x: 9
+  y: 9
+- id: orcish_axe
+  x: 10
+  y: 10
+- id: wooden_club
+  x: 4
+  y: 4
+- id: club
+  x: 4
+  y: 6
+weather: clear

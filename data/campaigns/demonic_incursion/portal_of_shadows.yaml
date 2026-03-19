@@ -1,7 +1,7 @@
 id: portal_of_shadows
-name: "Portal of Shadows"
+name: Portal of Shadows
 type: reach_portal
-description: "Close the portal by reaching its core before it's too late."
+description: Close the portal by reaching its core before it's too late.
 difficulty: 5
 target_radius: 3.0
 width_px: 5000
@@ -14,45 +14,50 @@ player:
   x: -20
   y: 0
 floor_zones:
-  - name: "Shattered Square"
-    tile: "big_stones.png"
-    priority: 5
-    perimeter:
-      - {x: -25, y: -5}
-      - {x: -15, y: -5}
-      - {x: -15, y: 5}
-      - {x: -25, y: 5}
-obstacles:
-  - id: portal_core
-    archetype: portal_1
-    x: 40
-    y: 0
-  - archetype: house_1
-    x: -22
-    y: 8
-  - archetype: house_2
-    x: -22
-    y: -8
-  - archetype: well
-    x: -20
-    y: 5
-  - archetype: tree_7
-    x: 0
-    y: 10
-  - archetype: tree_5
-    x: 10
-    y: -15
-  - archetype: tree_6
-    x: 20
-    y: 12
-  - archetype: rock_1
-    x: 35
-    y: 5
-  - archetype: rock_2
-    x: 35
+- name: Shattered Square
+  tile: big_stones.png
+  priority: 5
+  perimeter:
+  - x: -25
     y: -5
+  - x: -15
+    y: -5
+  - x: -15
+    y: 5
+  - x: -25
+    y: 5
+obstacles:
+- id: portal_core
+  archetype: portal_1
+  x: 40
+  y: 0
+- archetype: house_1
+  x: -22
+  y: 8
+- archetype: house_2
+  x: -22
+  y: -8
+- archetype: well
+  x: -20
+  y: 5
+- archetype: tree_7
+  x: 0
+  y: 10
+- archetype: tree_5
+  x: 10
+  y: -15
+- archetype: tree_6
+  x: 20
+  y: 12
+- archetype: rock_1
+  x: 35
+  y: 5
+- archetype: rock_2
+  x: 35
+  y: -5
 spawns:
-  - archetype: demon_male
-    alignment: enemy
-    probability: 0.25
-    frequency: 1.5
+- archetype: demon_male
+  alignment: enemy
+  probability: 0.25
+  frequency: 1.5
+weather: random

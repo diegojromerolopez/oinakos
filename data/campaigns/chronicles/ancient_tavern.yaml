@@ -162,3 +162,4 @@ floor_zones:
     y: 20.0
   - x: 5.0
     y: 20.0
+weather: random

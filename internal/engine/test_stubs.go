@@ -14,8 +14,8 @@ func PlaySound(name string) {}
 
 // PlayRandomSound stub for headless test builds.
 func PlayRandomSound(prefix string) {}
-
-// InitAudio stub for headless test builds.
+func PlayLoop(name string)        {}
+func StopSound(name string)        {}
 func InitAudio(assets fs.FS) {
 	GlobalAudio = &AudioManager{}
 }
@@ -28,6 +28,8 @@ func (m *AudioManager) LoadSoundFromBytes(name string, data []byte) {}
 func (m *AudioManager) HasSound(name string) bool { return false }
 func (m *AudioManager) PlayRandom(prefix string)    {}
 func (m *AudioManager) Play(name string)            {}
+func (m *AudioManager) PlayLoop(name string)        {}
+func (m *AudioManager) Stop(name string)            {}
 
 var GlobalAudio *AudioManager
 

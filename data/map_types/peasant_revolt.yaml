@@ -2,6 +2,7 @@ id: peasant_revolt
 name: Village Uprising
 type: reach_building
 difficulty: 1
+weather: "random"
 description: Reach the village center
 floor_tile: grass.png
 player:
@@ -512,18 +513,42 @@ inhabitants:
   y: 4.6
   alignment: neutral
 floor_zones:
-- name: village_road
-  tile: dirt.png
-  priority: 2
-  perimeter:
-  - x: -5.0
-    y: -30.0
-  - x: 5.0
-    y: -30.0
-  - x: 5.0
-    y: 30.0
-  - x: -5.0
-    y: 30.0
+  - name: village_road
+    tile: dirt.png
+    priority: 2
+    perimeter:
+    - x: -5.0
+      y: -30.0
+    - x: 5.0
+      y: -30.0
+    - x: 5.0
+      y: 30.0
+    - x: -5.0
+      y: 30.0
+  - name: town_center
+    tile: paved_ground.png
+    priority: 1
+    perimeter:
+    - x: -10.0
+      y: 10.0
+    - x: 10.0
+      y: 10.0
+    - x: 10.0
+      y: 30.0
+    - x: -10.0
+      y: 30.0
+  - name: farming_fields
+    tile: wheat_field.png
+    priority: 1
+    perimeter:
+    - x: 15.0
+      y: 0.0
+    - x: 30.0
+      y: 0.0
+    - x: 30.0
+      y: 30.0
+    - x: 15.0
+      y: 30.0
 objects:
   - id: pitchfork
     x: 0
@@ -534,27 +559,3 @@ objects:
   - id: wooden_club
     x: -5
     y: 0
-- name: town_center
-  tile: paved_ground.png
-  priority: 1
-  perimeter:
-  - x: -10.0
-    y: 10.0
-  - x: 10.0
-    y: 10.0
-  - x: 10.0
-    y: 30.0
-  - x: -10.0
-    y: 30.0
-- name: farming_fields
-  tile: wheat_field.png
-  priority: 1
-  perimeter:
-  - x: 15.0
-    y: 0.0
-  - x: 30.0
-    y: 0.0
-  - x: 30.0
-    y: 30.0
-  - x: 15.0
-    y: 30.0

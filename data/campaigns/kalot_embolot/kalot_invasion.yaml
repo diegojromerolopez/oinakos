@@ -534,3 +534,4 @@ obstacles:
 - archetype: tree_5
   x: -17.6
   y: -22.6
+weather: rain

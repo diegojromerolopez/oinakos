@@ -1,42 +1,43 @@
 id: duel
 name: The Honor Dual
-type: kill_vip # ObjKillVIP
+type: kill_vip
 difficulty: 4
-description: "Defeat Stult the Shouter in single combat"
-floor_tile: "grass.png"
+description: Defeat Stult the Shouter in single combat
+floor_tile: grass.png
 inhabitants:
-  - npc: stult
-    x: 0.0
-    y: 15.0
-    alignment: enemy # The champion is our enemy
+- npc: stult
+  x: 0.0
+  y: 15.0
+  alignment: enemy
 obstacles:
-  - archetype: rock_1
-    x: 5.0
-    y: 5.0
-  - archetype: rock_2
-    x: -5.0
-    y: 5.0
-  - archetype: rock_3
-    x: 5.0
-    y: -5.0
-  - archetype: rock_4
-    x: -5.0
-    y: -5.0
-  - archetype: temple
-    x: 0.0
-    y: 25.0
-  - archetype: bush_1
-    x: 8.0
-    y: 0.0
-  - archetype: bush_2
-    x: 0.0
-    y: 8.0
-  - archetype: bush_3
-    x: -8.0
-    y: 0.0
-  - archetype: bush_4
-    x: 0.0
-    y: -8.0
-  - archetype: bush_5
-    x: 10.0
-    y: 10.0
+- archetype: rock_1
+  x: 5.0
+  y: 5.0
+- archetype: rock_2
+  x: -5.0
+  y: 5.0
+- archetype: rock_3
+  x: 5.0
+  y: -5.0
+- archetype: rock_4
+  x: -5.0
+  y: -5.0
+- archetype: temple
+  x: 0.0
+  y: 25.0
+- archetype: bush_1
+  x: 8.0
+  y: 0.0
+- archetype: bush_2
+  x: 0.0
+  y: 8.0
+- archetype: bush_3
+  x: -8.0
+  y: 0.0
+- archetype: bush_4
+  x: 0.0
+  y: -8.0
+- archetype: bush_5
+  x: 10.0
+  y: 10.0
+weather: random

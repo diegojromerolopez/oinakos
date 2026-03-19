@@ -2,191 +2,178 @@ id: kalot_cleanse
 name: 'Kalot Embolot: The Cleanse'
 type: kill_vip
 difficulty: 5
-description: "Execute the corrupted magi Staro Rovinec. Beware the cursed dark waters that slow and trap you."
+description: Execute the corrupted magi Staro Rovinec. Beware the cursed dark waters
+  that slow and trap you.
 width_px: 6000
 height_px: 6000
 floor_tile: black_dirt.png
 player:
   x: 0.0
   y: -20.0
-
 floor_zones:
-  - name: boss_arena_paved
-    tile: big_stones.png
-    priority: 3
-    perimeter:
-      - x: -15.0
-        y: -15.0
-      - x: 15.0
-        y: -15.0
-      - x: 15.0
-        y: 15.0
-      - x: -15.0
-        y: 15.0
-  - name: dark_waters_north
-    tile: dark_water.png
-    priority: 2
-    perimeter:
-      - x: -30.0
-        y: -40.0
-      - x: 30.0
-        y: -40.0
-      - x: 20.0
-        y: -15.0
-      - x: -20.0
-        y: -15.0
-  - name: dark_waters_south
-    tile: dark_water.png
-    priority: 2
-    perimeter:
-      - x: -20.0
-        y: 15.0
-      - x: 20.0
-        y: 15.0
-      - x: 30.0
-        y: 40.0
-      - x: -30.0
-        y: 40.0
-  - name: slowing_mud_sides
-    tile: mud.png
-    priority: 1
-    perimeter:
-      - x: 15.0
-        y: -20.0
-      - x: 40.0
-        y: -20.0
-      - x: 40.0
-        y: 20.0
-      - x: 15.0
-        y: 20.0
-  - name: slowing_mud_sides_west
-    tile: mud.png
-    priority: 1
-    perimeter:
-      - x: -40.0
-        y: -20.0
-      - x: -15.0
-        y: -20.0
-      - x: -15.0
-        y: 20.0
-      - x: -40.0
-        y: 20.0
-
+- name: boss_arena_paved
+  tile: big_stones.png
+  priority: 3
+  perimeter:
+  - x: -15.0
+    y: -15.0
+  - x: 15.0
+    y: -15.0
+  - x: 15.0
+    y: 15.0
+  - x: -15.0
+    y: 15.0
+- name: dark_waters_north
+  tile: dark_water.png
+  priority: 2
+  perimeter:
+  - x: -30.0
+    y: -40.0
+  - x: 30.0
+    y: -40.0
+  - x: 20.0
+    y: -15.0
+  - x: -20.0
+    y: -15.0
+- name: dark_waters_south
+  tile: dark_water.png
+  priority: 2
+  perimeter:
+  - x: -20.0
+    y: 15.0
+  - x: 20.0
+    y: 15.0
+  - x: 30.0
+    y: 40.0
+  - x: -30.0
+    y: 40.0
+- name: slowing_mud_sides
+  tile: mud.png
+  priority: 1
+  perimeter:
+  - x: 15.0
+    y: -20.0
+  - x: 40.0
+    y: -20.0
+  - x: 40.0
+    y: 20.0
+  - x: 15.0
+    y: 20.0
+- name: slowing_mud_sides_west
+  tile: mud.png
+  priority: 1
+  perimeter:
+  - x: -40.0
+    y: -20.0
+  - x: -15.0
+    y: -20.0
+  - x: -15.0
+    y: 20.0
+  - x: -40.0
+    y: 20.0
 inhabitants:
-  # The Target VIP
-  - npc: staro_rovinec
-    x: 0.0
-    y: 0.0
-    alignment: enemy
-
-  # Core Cultists / Demon Guard (Dense)
-  - archetype: demon_male
-    x: 5.0
-    y: 5.0
-    alignment: enemy
-  - archetype: demon_female
-    x: -5.0
-    y: 5.0
-    alignment: enemy
-  - archetype: demon_male
-    x: 5.0
-    y: -5.0
-    alignment: enemy
-  - archetype: demon_female
-    x: -5.0
-    y: -5.0
-    alignment: enemy
-  - archetype: demon_male
-    x: 10.0
-    y: 0.0
-    alignment: enemy
-  - archetype: demon_female
-    x: -10.0
-    y: 0.0
-    alignment: enemy
-  
-  # Outer Ring Guards
-  - archetype: demon_male
-    x: 12.0
-    y: 12.0
-    alignment: enemy
-  - archetype: demon_female
-    x: -12.0
-    y: 12.0
-    alignment: enemy
-  - archetype: demon_male
-    x: 12.0
-    y: -12.0
-    alignment: enemy
-  - archetype: demon_female
-    x: -12.0
-    y: -12.0
-    alignment: enemy
-  - archetype: demon_male
-    x: 20.0
-    y: 0.0
-    alignment: enemy
-  - archetype: demon_female
-    x: -20.0
-    y: 0.0
-    alignment: enemy
-
+- npc: staro_rovinec
+  x: 0.0
+  y: 0.0
+  alignment: enemy
+- archetype: demon_male
+  x: 5.0
+  y: 5.0
+  alignment: enemy
+- archetype: demon_female
+  x: -5.0
+  y: 5.0
+  alignment: enemy
+- archetype: demon_male
+  x: 5.0
+  y: -5.0
+  alignment: enemy
+- archetype: demon_female
+  x: -5.0
+  y: -5.0
+  alignment: enemy
+- archetype: demon_male
+  x: 10.0
+  y: 0.0
+  alignment: enemy
+- archetype: demon_female
+  x: -10.0
+  y: 0.0
+  alignment: enemy
+- archetype: demon_male
+  x: 12.0
+  y: 12.0
+  alignment: enemy
+- archetype: demon_female
+  x: -12.0
+  y: 12.0
+  alignment: enemy
+- archetype: demon_male
+  x: 12.0
+  y: -12.0
+  alignment: enemy
+- archetype: demon_female
+  x: -12.0
+  y: -12.0
+  alignment: enemy
+- archetype: demon_male
+  x: 20.0
+  y: 0.0
+  alignment: enemy
+- archetype: demon_female
+  x: -20.0
+  y: 0.0
+  alignment: enemy
 obstacles:
-  # Desecrated Temple Ruins
-  - archetype: temple
-    x: 0.0
-    y: -10.0
-  - archetype: well
-    x: -8.0
-    y: -8.0
-  - archetype: well
-    x: 8.0
-    y: -8.0
-  
-  # Blood rings formed by campfires
-  - archetype: campfire
-    x: 0.0
-    y: -4.0
-  - archetype: campfire
-    x: -4.0
-    y: 0.0
-  - archetype: campfire
-    x: 4.0
-    y: 0.0
-  - archetype: campfire
-    x: 0.0
-    y: 4.0
-
-  # Rocky cover around the arena
-  - archetype: rock_1
-    x: -12.0
-    y: 12.0
-  - archetype: rock_2
-    x: 12.0
-    y: 12.0
-  - archetype: rock_3
-    x: -14.0
-    y: 0.0
-  - archetype: rock_4
-    x: 14.0
-    y: 0.0
-  
-  # Dead forest perimeter
-  - archetype: tree_5
-    x: -18.0
-    y: -18.0
-  - archetype: tree_5
-    x: 18.0
-    y: -18.0
-  - archetype: tree_6
-    x: -18.0
-    y: 18.0
-  - archetype: tree_6
-    x: 18.0
-    y: 18.0
-  - archetype: tree_5
-    x: -22.0
-    y: 0.0
-  - archetype: tree_6
-    x: 22.0
-    y: 0.0
+- archetype: temple
+  x: 0.0
+  y: -10.0
+- archetype: well
+  x: -8.0
+  y: -8.0
+- archetype: well
+  x: 8.0
+  y: -8.0
+- archetype: campfire
+  x: 0.0
+  y: -4.0
+- archetype: campfire
+  x: -4.0
+  y: 0.0
+- archetype: campfire
+  x: 4.0
+  y: 0.0
+- archetype: campfire
+  x: 0.0
+  y: 4.0
+- archetype: rock_1
+  x: -12.0
+  y: 12.0
+- archetype: rock_2
+  x: 12.0
+  y: 12.0
+- archetype: rock_3
+  x: -14.0
+  y: 0.0
+- archetype: rock_4
+  x: 14.0
+  y: 0.0
+- archetype: tree_5
+  x: -18.0
+  y: -18.0
+- archetype: tree_5
+  x: 18.0
+  y: -18.0
+- archetype: tree_6
+  x: -18.0
+  y: 18.0
+- archetype: tree_6
+  x: 18.0
+  y: 18.0
+- archetype: tree_5
+  x: -22.0
+  y: 0.0
+- archetype: tree_6
+  x: 22.0
+  y: 0.0
+weather: rain

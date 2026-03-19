@@ -279,6 +279,7 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 			gr.drawInventoryScreen(screen)
 		} else {
 			gr.drawFog(screen)
+			gr.drawWeather(screen)
 			gr.drawHUD(screen)
 			gr.drawDialogueBox(screen)
 			gr.drawHoverInfo(screen)
@@ -287,5 +288,50 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 
 	if g.isQuitConfirmationOpen {
 		gr.drawQuitConfirmation(screen)
+	}
+}
+
+func (gr *GameRenderer) drawWeather(screen engine.Image) {
+	g := gr.game
+	if g.CurrentWeather == WeatherClear {
+		return
+	}
+
+	// 1. World Overlay (Tint)
+	if g.CurrentWeather == WeatherRain || g.CurrentWeather == WeatherStorm {
+		// Slight grey/blue tint
+		gr.emptyImage.Fill(color.NRGBA{50, 50, 80, 40}) // Semi-transparent tint
+		op := engine.NewDrawImageOptions()
+		op.Scale(float64(g.width)/3, float64(g.height)/3) // emptyImage is 3x3
+		screen.DrawImage(gr.emptyImage, op)
+	}
+
+	// 2. Lightning Flash
+	if g.CurrentWeather == WeatherStorm && g.Tick%600 < 5 {
+		// Flash for 5 frames every 10 seconds approx
+		alpha := uint8(100 - (g.Tick%600)*20)
+		gr.emptyImage.Fill(color.NRGBA{255, 255, 255, alpha})
+		op := engine.NewDrawImageOptions()
+		op.Scale(float64(g.width)/3, float64(g.height)/3)
+		screen.DrawImage(gr.emptyImage, op)
+	}
+
+	// 3. Particles
+	for _, p := range g.particles {
+		op := engine.NewDrawImageOptions()
+		op.Translate(p.X, p.Y)
+
+		c := color.NRGBA{255, 255, 255, 200}
+		if p.Type == ParticleRain {
+			c = color.NRGBA{150, 150, 255, 180}
+			// Draw rain as a line
+			gr.emptyImage.Fill(c)
+			op.Scale(0.5, 4.0) // Thin and tall
+		} else {
+			// Draw snow as a dot
+			gr.emptyImage.Fill(c)
+			op.Scale(1.0, 1.0)
+		}
+		screen.DrawImage(gr.emptyImage, op)
 	}
 }

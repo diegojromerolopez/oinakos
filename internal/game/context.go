@@ -12,4 +12,6 @@ type SystemContext struct {
 	Registries *RegistryContainer
 	Log        func(string, LogCategory)
 	AIManager  *AIManager
+	Weather    WeatherType
+	Intensity  float64
 }

@@ -1,61 +1,60 @@
 id: orc_encampment
 name: Orcish Encampment
-type: kill_vip # ObjKillVIP
+type: kill_vip
 difficulty: 3
-description: "Slay the Orc Chieftain"
-floor_tile: "grass.png"
+description: Slay the Orc Chieftain
+floor_tile: grass.png
 obstacles:
-  - archetype: smithery
-    x: 15.0
-    y: 15.0
-  - archetype: house_2
-    x: 13.0
-    y: 17.0
-  - archetype: house_3
-    x: 17.0
-    y: 13.0
-  - archetype: warehouse
-    x: 10.0
-    y: 10.0
-
+- archetype: smithery
+  x: 15.0
+  y: 15.0
+- archetype: house_2
+  x: 13.0
+  y: 17.0
+- archetype: house_3
+  x: 17.0
+  y: 13.0
+- archetype: warehouse
+  x: 10.0
+  y: 10.0
 inhabitants:
-  - archetype: orc_male
-    x: 15.0
-    y: 15.0
-    alignment: enemy
-    name: "Golg the Dreaded"
-    stats:
-      health_min: 150
-      health_max: 150
-      base_attack: 25
-      base_defense: 10
-  - archetype: orc_male
-    x: 14.0
-    y: 16.0
-    alignment: enemy
-  - archetype: orc_female
-    x: 16.0
-    y: 14.0
-    alignment: enemy
-
+- archetype: orc_male
+  x: 15.0
+  y: 15.0
+  alignment: enemy
+  name: Golg the Dreaded
+  stats:
+    health_min: 150
+    health_max: 150
+    base_attack: 25
+    base_defense: 10
+- archetype: orc_male
+  x: 14.0
+  y: 16.0
+  alignment: enemy
+- archetype: orc_female
+  x: 16.0
+  y: 14.0
+  alignment: enemy
 spawns:
-  - archetype: orc_male
-    alignment: enemy
-    probability: 0.3
-    frequency: 8.0
+- archetype: orc_male
+  alignment: enemy
+  probability: 0.3
+  frequency: 8.0
 player:
   x: -20.0
   y: -20.0
 objects:
-  - id: iron_sword
-    x: -19.0
-    y: -20.0
-  - id: orcish_axe
-    x: 10.0
-    y: 15.0
-  - id: rusted_mace
-    x: 15.0
-    y: 10.0
-  - id: bone_amulet
-    x: 12.0
-    y: 12.0
+- id: iron_sword
+  x: -19.0
+  y: -20.0
+- id: orcish_axe
+  x: 10.0
+  y: 15.0
+- id: rusted_mace
+  x: 15.0
+  y: 10.0
+- id: bone_amulet
+  x: 12.0
+  y: 12.0
+weather: random

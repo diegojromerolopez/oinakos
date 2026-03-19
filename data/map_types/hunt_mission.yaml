@@ -1,57 +1,56 @@
-id: "hunt_mission"
-name: "Royal Hunt"
-type: "reach_portal"
-description: "A high-stakes mission where a VIP must reach an extraction point."
+id: hunt_mission
+name: Royal Hunt
+type: reach_portal
+description: A high-stakes mission where a VIP must reach an extraction point.
 difficulty: 4
 target_radius: 5.0
 target_point:
   x: 35.0
   y: 35.0
-floor_tile: "grass.png"
+floor_tile: grass.png
 obstacles:
-  - archetype: portal_1
-    id: "target_portal"
-    x: 35.0
-    y: 35.0
-  - archetype: tree_1
-    x: 10.0
-    y: 10.0
-  - archetype: tree_2
-    x: 15.0
-    y: 8.0
-  - archetype: rock_3
-    x: 12.0
-    y: 20.0
-  - archetype: bush_1
-    x: 5.0
-    y: 5.0
-  - archetype: tree_4
-    x: 25.0
-    y: 30.0
-  - archetype: rock_1
-    x: 30.0
-    y: 15.0
-
+- archetype: portal_1
+  id: target_portal
+  x: 35.0
+  y: 35.0
+- archetype: tree_1
+  x: 10.0
+  y: 10.0
+- archetype: tree_2
+  x: 15.0
+  y: 8.0
+- archetype: rock_3
+  x: 12.0
+  y: 20.0
+- archetype: bush_1
+  x: 5.0
+  y: 5.0
+- archetype: tree_4
+  x: 25.0
+  y: 30.0
+- archetype: rock_1
+  x: 30.0
+  y: 15.0
 inhabitants:
-  - archetype: man_at_arms_female
-    x: 10.0
-    y: 12.0
-    alignment: enemy
-  - archetype: orc_male
-    x: 20.0
-    y: 20.0
-    alignment: enemy
-  - archetype: peasant_male
-    x: 5.0
-    y: 15.0
-    alignment: enemy
-
+- archetype: man_at_arms_female
+  x: 10.0
+  y: 12.0
+  alignment: enemy
+- archetype: orc_male
+  x: 20.0
+  y: 20.0
+  alignment: enemy
+- archetype: peasant_male
+  x: 5.0
+  y: 15.0
+  alignment: enemy
 spawns:
-  - archetype: "man_at_arms_male"
-    alignment: "enemy"
-    probability: 0.5
-    frequency: 6.0
-  - archetype: "peasant_male"
-    alignment: "enemy"
-    probability: 0.7
-    frequency: 4.0
+- archetype: man_at_arms_male
+  alignment: enemy
+  probability: 0.5
+  frequency: 6.0
+- archetype: peasant_male
+  alignment: enemy
+  probability: 0.7
+  frequency: 4.0
+weather: random

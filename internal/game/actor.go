@@ -489,8 +489,8 @@ func (a *Actor) calculateStat(base, level int) int {
 	return base + bonus
 }
 
-// GetSpeedModifier returns a movement multiplier based on the current tile type.
-func (a *Actor) GetSpeedModifier() float64 {
+// GetSpeedModifier returns a movement multiplier based on the current tile type and environment.
+func (a *Actor) GetSpeedModifier(ctx *SystemContext) float64 {
 	switch a.CurrentTile {
 	case "water.png", "dark_water.png":
 		return 0.5
@@ -510,6 +510,18 @@ func (a *Actor) GetSpeedModifier() float64 {
 		if multiplier < 0.1 {
 			multiplier = 0.1 // Minimum crawl
 		}
+		
+		if ctx != nil {
+			switch ctx.Weather {
+			case WeatherRain:
+				multiplier *= 0.9
+			case WeatherSnow:
+				multiplier *= 0.75
+			case WeatherStorm:
+				multiplier *= 0.85
+			}
+		}
+
 		return multiplier
 	}
 }

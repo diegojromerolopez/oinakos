@@ -1,40 +1,40 @@
 id: goblin_horde
 name: The Goblin Tide
-type: kill_count # ObjKillCount
+type: kill_count
 difficulty: 2
 target_kill_count: 30
-description: "Kill 30 enemies to stop the raid"
-floor_tile: "grass.png"
+description: Kill 30 enemies to stop the raid
+floor_tile: grass.png
 obstacles:
-  - archetype: farm
-    x: -10.0
-    y: -10.0
-  - archetype: farm
-    x: 10.0
-    y: 10.0
-  - archetype: house_2
-    x: 0.0
-    y: 20.0
-  - archetype: house_3
-    x: 12.0
-    y: 0.0
-
+- archetype: farm
+  x: -10.0
+  y: -10.0
+- archetype: farm
+  x: 10.0
+  y: 10.0
+- archetype: house_2
+  x: 0.0
+  y: 20.0
+- archetype: house_3
+  x: 12.0
+  y: 0.0
 spawns:
-  - archetype: goblin_male
-    alignment: enemy
-    probability: 0.6
-    frequency: 3.0
-  - archetype: goblin_female
-    alignment: enemy
-    probability: 0.4
-    frequency: 4.5
-  - archetype: goblin_male
-    x: 20
-    alignment: enemy
-    probability: 0.5
-    frequency: 5.0
-  - archetype: goblin_female
-    y: 20
-    alignment: enemy
-    probability: 0.5
-    frequency: 5.0
+- archetype: goblin_male
+  alignment: enemy
+  probability: 0.6
+  frequency: 3.0
+- archetype: goblin_female
+  alignment: enemy
+  probability: 0.4
+  frequency: 4.5
+- archetype: goblin_male
+  x: 20
+  alignment: enemy
+  probability: 0.5
+  frequency: 5.0
+- archetype: goblin_female
+  y: 20
+  alignment: enemy
+  probability: 0.5
+  frequency: 5.0
+weather: random

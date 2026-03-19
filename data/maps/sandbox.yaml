@@ -1,60 +1,61 @@
-id: "sandbox"
-name: "Sandbox"
-type: "survive"
-description: "A sandbox testing area showing off various floor types and variants."
+id: sandbox
+name: Sandbox
+type: survive
+description: A sandbox testing area showing off various floor types and variants.
 difficulty: 1
 target_time: 1000
 width_px: 2560
 height_px: 2560
-floor_tile: "grass.png"
+weather: random
+floor_tile: grass.png
 player:
   x: 0
   y: 0
 inhabitants:
-  - archetype: "peasant_male"
-    name: "Mayor Sandbox"
-    x: 3
-    y: 3
-    alignment: neutral
-    behavior: wander
-  - archetype: "peasant_female"
-    x: -3
-    y: -3
-    alignment: neutral
-    behavior: wander
-  - archetype: "peasant_male"
-    x: 5
-    y: -5
-    alignment: neutral
-    behavior: wander
-  - archetype: "peasant_female"
-    x: -5
-    y: 5
-    alignment: neutral
-    behavior: wander
-  - archetype: "orc_male"
-    x: 20
-    y: 20
-    alignment: enemy
+- archetype: peasant_male
+  name: Mayor Sandbox
+  x: 3
+  y: 3
+  alignment: neutral
+  behavior: wander
+- archetype: peasant_female
+  x: -3
+  y: -3
+  alignment: neutral
+  behavior: wander
+- archetype: peasant_male
+  x: 5
+  y: -5
+  alignment: neutral
+  behavior: wander
+- archetype: peasant_female
+  x: -5
+  y: 5
+  alignment: neutral
+  behavior: wander
+- archetype: orc_male
+  x: 20
+  y: 20
+  alignment: enemy
 objects:
-  - id: bow
-    x: 1
-    y: 1
-  - id: durandal
-    x: 2
-    y: 2
-  - id: magic_staff
-    x: -2
-    y: 2
-  - id: iron_helmet
-    x: 2
-    y: -2
-  - id: shadow_dagger
-    x: -2
-    y: -2
-  - id: tizon
-    x: 0
-    y: 2
-  - id: gilded_pitchfork
-    x: 2
-    y: 0
+- id: bow
+  x: 1
+  y: 1
+- id: durandal
+  x: 2
+  y: 2
+- id: magic_staff
+  x: -2
+  y: 2
+- id: iron_helmet
+  x: 2
+  y: -2
+- id: shadow_dagger
+  x: -2
+  y: -2
+- id: tizon
+  x: 0
+  y: 2
+- id: gilded_pitchfork
+  x: 2
+  y: 0

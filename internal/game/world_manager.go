@@ -26,6 +26,9 @@ func NewWorldManager(g *Game) *WorldManager {
 func (wm *WorldManager) LoadMapAudio() {
 	startTime := time.Now()
 	g := wm.game
+	if g.assets == nil {
+		return
+	}
 	configs := make(map[string]*EntityConfig)
 
 	collect := func(id string, isNPC bool) {
@@ -107,6 +110,31 @@ func (wm *WorldManager) LoadMapAudio() {
 		}
 	}
 
+	// Load ambient weather sounds
+	ambientDir := "assets/audio/ambient"
+	entries, err := fs.ReadDir(g.assets, ambientDir)
+	if err == nil {
+		for _, e := range entries {
+			if e.IsDir() {
+				continue
+			}
+			lowerName := strings.ToLower(e.Name())
+			if !strings.HasSuffix(lowerName, ".wav") && !strings.HasSuffix(lowerName, ".mp3") {
+				continue
+			}
+			extLen := 4
+			stem := e.Name()[:len(e.Name())-extLen]
+			key := "ambient/" + stem
+			if engine.GlobalAudio != nil && engine.GlobalAudio.HasSound(key) {
+				continue
+			}
+			jobs = append(jobs, &AudioLoadJob{
+				Name: key,
+				Path: ambientDir + "/" + e.Name(),
+			})
+		}
+	}
+
 	if len(jobs) > 0 {
 		DebugLog("Parallel Loading %d audio files for map...", len(jobs))
 		loadAudioParallel(g.assets, jobs, &g.LoadingProgress)
@@ -161,6 +189,41 @@ func (wm *WorldManager) LoadMapLevel() {
 	g.obstacles = make([]*Obstacle, 0)
 	g.floatingTexts = make([]*FloatingText, 0)
 	g.currentMapType.StartTime = 0
+	
+	// Set weather
+	weatherStr := strings.ToLower(g.currentMapType.Weather)
+	if weatherStr == "random" {
+		r := rand.Float64()
+		if r < 0.2 {
+			weatherStr = "rain"
+		} else if r < 0.3 {
+			weatherStr = "snow"
+		} else if r < 0.35 {
+			weatherStr = "storm"
+		} else {
+			weatherStr = "clear"
+		}
+		log.Printf("Random weather chosen: %s", weatherStr)
+	}
+
+	g.CurrentWeather = WeatherClear
+	g.WeatherIntensity = 0.5
+	switch weatherStr {
+	case "rain":
+		g.CurrentWeather = WeatherRain
+	case "snow":
+		g.CurrentWeather = WeatherSnow
+		if g.currentMapType.FloorTile != "snow.png" && g.currentMapType.FloorTile != "snow_2.png" {
+			if rand.Float64() < 0.5 {
+				g.currentMapType.FloorTile = "snow.png"
+			} else {
+				g.currentMapType.FloorTile = "snow_2.png"
+			}
+		}
+	case "storm":
+		g.CurrentWeather = WeatherStorm
+	}
+	g.particles = nil // Clear current particles
 	
 	if g.World != nil {
 		g.World.Items = make([]*ItemInstance, 0)
