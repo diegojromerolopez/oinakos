@@ -3,6 +3,7 @@ type: tree
 destructible: true
 description: A sturdy tall tree. It can be chopped down.
 health: 1000
+scale: 1.172
 footprint:
   - x: -1.72
     y: -1.53

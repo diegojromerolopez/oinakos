@@ -2,6 +2,7 @@ name: "The Alchemist's Cauldron"
 type: building
 destructible: false
 description: "A shop selling vials of glowing liquids and ancient elixirs."
+scale: 1.250
 footprint:
   - x: -3.88
     y: 4.31

@@ -3,6 +3,7 @@ type: building
 destructible: true
 description: "A place where weapons are forged."
 health: 5000
+scale: 2.344
 footprint:
   - x: 2.45
     y: -7.08

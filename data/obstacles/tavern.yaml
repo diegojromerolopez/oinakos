@@ -2,6 +2,7 @@ name: "The Gilded Tankard"
 type: building
 destructible: false
 description: "A dark, welcoming tavern where heroes and scoundrels gather."
+scale: 1.250
 footprint:
   - x: 2.69
     y: 1.94

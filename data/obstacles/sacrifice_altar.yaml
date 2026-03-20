@@ -2,6 +2,7 @@ name: "Sacrifice Altar"
 type: monument
 destructible: false
 description: "An ancient altar stained with the blood of countless offerings. Use for dark rituals."
+scale: 1.250
 footprint:
   - x: -19.64
     y: -14.17

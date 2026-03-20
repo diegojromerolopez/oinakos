@@ -3,6 +3,7 @@ type: stall
 destructible: true
 health: 500
 description: "A stall smelling of salted brine and old dry fish."
+scale: 1.250
 footprint:
   - x: -8.97
     y: -0.72

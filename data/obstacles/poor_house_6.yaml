@@ -3,6 +3,7 @@ type: building
 destructible: true
 description: "A small hovel made of stacked stones and animal hides."
 health: 1400
+scale: 1.250
 footprint:
   - x: 0.31
     y: 0.13

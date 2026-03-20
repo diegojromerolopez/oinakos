@@ -3,6 +3,7 @@ type: building
 destructible: true
 description: A large storage building.
 health: 5000
+scale: 2.344
 footprint:
   - x: -14.48
     y: -14.58

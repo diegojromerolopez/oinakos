@@ -3,6 +3,7 @@ type: building
 destructible: true
 description: "A multi-level wooden structure that looks like it might topple over."
 health: 1800
+scale: 1.250
 footprint:
   - x: 1.5
     y: -0.81

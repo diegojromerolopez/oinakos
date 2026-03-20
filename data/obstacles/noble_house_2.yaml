@@ -3,6 +3,7 @@ type: building
 destructible: true
 description: "An even more imposing noble residence with a tower."
 health: 12000
+scale: 1.250
 footprint:
   - x: 3.16
     y: -4.59

@@ -22,6 +22,7 @@ type ObstacleArchetype struct {
 	FrameCount     int                    `yaml:"frame_count"`     // Total number of frames
 	FramesPerRow   int                    `yaml:"frames_per_row"`  // For grid-based spritesheets (default 0 = single row)
 	AnimationSpeed int                    `yaml:"animation_speed"` // Ticks per frame
+	Scale          float64                `yaml:"scale,omitempty"`  // Scaling factor for rendering (default 1.0)
 	Actions        []ObstacleActionConfig `yaml:"actions,omitempty"`
 	Image          engine.Image           `yaml:"-"`
 }

@@ -10,7 +10,8 @@ import (
 
 func (gr *GameRenderer) drawHUD(screen engine.Image) {
 	g := gr.game
-	gr.graphics.DrawFilledRect(screen, 10, 10, 350, 150, color.RGBA{0, 0, 0, 180}, false)
+	// Standard HUD box is 350x160. Increase height slightly if needed for very long objectives.
+	gr.graphics.DrawFilledRect(screen, 10, 10, 350, 160, color.RGBA{0, 0, 0, 180}, false)
 
 	gr.graphics.DrawTextAt(screen, fmt.Sprintf("HP: %d/%d", g.playableCharacter.Health, g.playableCharacter.MaxHealth), 20, 20, color.White, 16)
 
@@ -30,12 +31,19 @@ func (gr *GameRenderer) drawHUD(screen engine.Image) {
 	}
 
 	gr.graphics.DrawTextAt(screen, fmt.Sprintf("LVL: %d  XP: %d", g.playableCharacter.Level, g.playableCharacter.XP), 20, 45, color.White, 14)
-	gr.graphics.DrawTextAt(screen, fmt.Sprintf("OBJ: %s", g.currentMapType.Description), 20, 60, color.White, 12)
+	
+	objText := fmt.Sprintf("OBJ: %s", g.currentMapType.Description)
+	nextY := gr.drawWrappedText(screen, objText, 20, 60, 310, color.White, 12, 145)
 
 	minutes := int(g.playTime) / 60
 	seconds := int(g.playTime) % 60
-	gr.graphics.DrawTextAt(screen, fmt.Sprintf("POS %.1f,%.1f  KILLS: %d  XP: %d  LVL: %d", g.playableCharacter.X, g.playableCharacter.Y, g.playableCharacter.Kills, g.playableCharacter.XP, g.playableCharacter.Level), 20, 80, color.White, 12)
-	gr.graphics.DrawTextAt(screen, fmt.Sprintf("ATK: %d  DEF: %d  SHIELD: %d", g.playableCharacter.GetTotalAttack(), g.playableCharacter.GetTotalDefense(), g.playableCharacter.GetTotalProtection()), 20, 95, color.White, 12)
+	
+	yPos := nextY
+	if yPos < 80 { yPos = 80 }
+
+	gr.graphics.DrawTextAt(screen, fmt.Sprintf("POS %.1f,%.1f  KILLS: %d  XP: %d  LVL: %d", g.playableCharacter.X, g.playableCharacter.Y, g.playableCharacter.Kills, g.playableCharacter.XP, g.playableCharacter.Level), 20, yPos, color.White, 12)
+	yPos += 15
+	gr.graphics.DrawTextAt(screen, fmt.Sprintf("ATK: %d  DEF: %d  SHIELD: %d", g.playableCharacter.GetTotalAttack(), g.playableCharacter.GetTotalDefense(), g.playableCharacter.GetTotalProtection()), 20, yPos, color.White, 12)
 
 	weaponText := "WEAPON: Unarmed (1-2)"
 	if g.playableCharacter.Weapon != nil {
@@ -44,8 +52,8 @@ func (gr *GameRenderer) drawHUD(screen engine.Image) {
 			weaponText += fmt.Sprintf(" +%d", g.playableCharacter.Weapon.Bonus)
 		}
 	}
-	gr.graphics.DrawTextAt(screen, weaponText, 20, 110, color.White, 12)
-	gr.graphics.DrawTextAt(screen, fmt.Sprintf("TIME: %02d:%02d", minutes, seconds), 20, 125, color.White, 12)
+	gr.graphics.DrawTextAt(screen, weaponText, 20, yPos+15, color.White, 12)
+	gr.graphics.DrawTextAt(screen, fmt.Sprintf("TIME: %02d:%02d", minutes, seconds), 20, yPos+30, color.White, 12)
 
 	gr.graphics.DrawFilledRect(screen, float32(g.width-110), 20, 100, 30, color.RGBA{50, 50, 50, 200}, false)
 	gr.graphics.DrawTextAt(screen, "MENU", g.width-85, 28, color.White, 16)
@@ -308,15 +316,16 @@ func (gr *GameRenderer) drawDialogueBox(screen engine.Image) {
 	}
 }
 
-func (gr *GameRenderer) drawWrappedText(screen engine.Image, text string, x, y, maxWidth int, clr color.Color, size int, maxY int) {
+func (gr *GameRenderer) drawWrappedText(screen engine.Image, text string, x, y, maxWidth int, clr color.Color, size int, maxY int) int {
 	words := strings.Fields(text)
 	line := ""
 	currY := y
 	for _, w := range words {
 		wWidth, _ := gr.graphics.MeasureText(line+w+" ", float64(size))
 		if int(wWidth) > maxWidth {
-			if currY > maxY { return }
-			gr.graphics.DrawTextAt(screen, line, x, currY, clr, float64(size))
+			if currY <= maxY {
+				gr.graphics.DrawTextAt(screen, line, x, currY, clr, float64(size))
+			}
 			line = w + " "
 			currY += size + 6
 		} else {
@@ -326,4 +335,5 @@ func (gr *GameRenderer) drawWrappedText(screen engine.Image, text string, x, y, 
 	if currY <= maxY {
 		gr.graphics.DrawTextAt(screen, line, x, currY, clr, float64(size))
 	}
+	return currY + size + 6
 }

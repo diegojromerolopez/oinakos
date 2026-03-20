@@ -3,6 +3,7 @@ type: building
 destructible: true
 description: "A decaying hut made of mud and straw."
 health: 1500
+scale: 1.250
 footprint:
   - x: 1.13
     y: 0.75

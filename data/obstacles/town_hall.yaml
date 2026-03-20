@@ -3,6 +3,7 @@ type: building
 destructible: true
 description: "The administrative center of the town. Imposing and sturdy."
 health: 20000
+scale: 1.250
 footprint:
   - x: 6.0
     y: 6.0
