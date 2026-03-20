@@ -10,11 +10,11 @@ stats:
   health_max: 120
   base_attack: 50
   base_defense: 20
-  speed: 0.06
-  attack_cooldown: 35
+  speed: 0.08
+  attack_cooldown: 28
   infecting_probability: 0.8
 weapon:
-  name: "Vampiric Touch"
+  name: "Vampire Claws"
   type: "melee"
   damage:
     min: 40
