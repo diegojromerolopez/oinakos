@@ -53,31 +53,52 @@ func (gr *GameRenderer) LoadAssets(assets fs.FS) {
 	atomic.StoreInt32(&g.LoadingProgress, 50)
 	
 	s := time.Now()
-	g.archetypeRegistry.LoadAssets(assets, gr.graphics, &g.LoadingProgress)
+	// Always load all archetypes (small 10 items)
+	// Passing nil permitList loads all that aren't already loaded
+	g.archetypeRegistry.LoadAssets(assets, gr.graphics, nil, &g.LoadingProgress)
 	log.Printf("[LOADER] Archetypes loaded in %v", time.Since(s))
 	
 	s = time.Now()
 	atomic.StoreInt32(&g.LoadingProgress, 300)
 	g.LoadingMessage = "Preparing Heroes..."
-	g.characterRegistry.LoadAssets(assets, gr.graphics, g.archetypeRegistry, &g.LoadingProgress)
+	// Load all playable characters (17 items)
+	g.characterRegistry.LoadAssets(assets, gr.graphics, g.archetypeRegistry, nil, &g.LoadingProgress)
 	log.Printf("[LOADER] Heroes loaded in %v", time.Since(s))
 	
 	s = time.Now()
 	atomic.StoreInt32(&g.LoadingProgress, 500)
 	g.LoadingMessage = "Loading Environment..."
-	g.obstacleRegistry.LoadAssets(assets, gr.graphics, &g.LoadingProgress)
+	// Only load obstacles that are in the map or are wells
+	obstacleFilter := make(map[string]bool)
+	if g.World != nil {
+		for _, o := range g.obstacles {
+			obstacleFilter[o.Archetype.ID] = true
+		}
+	}
+	g.obstacleRegistry.LoadAssets(assets, gr.graphics, obstacleFilter, &g.LoadingProgress)
 	log.Printf("[LOADER] Obstacles loaded in %v", time.Since(s))
 	
 	s = time.Now()
 	atomic.StoreInt32(&g.LoadingProgress, 700)
 	g.LoadingMessage = "Populating World..."
-	g.characterRegistry.LoadAssets(assets, gr.graphics, g.archetypeRegistry, &g.LoadingProgress)
+	// Character Registry already loaded all playable. 
+	// Now load NPCs present in map (characters list)
+	npcFilter := make(map[string]bool)
+	if g.World != nil {
+		for _, n := range g.characters {
+			if n.Config != nil {
+				npcFilter[n.Config.ID] = true
+			}
+		}
+	}
+	g.characterRegistry.LoadAssets(assets, gr.graphics, g.archetypeRegistry, npcFilter, &g.LoadingProgress)
 	log.Printf("[LOADER] World NPCs loaded in %v", time.Since(s))
 	
 	s = time.Now()
 	atomic.StoreInt32(&g.LoadingProgress, 800)
 	g.LoadingMessage = "Geeking out on Loot..."
-	g.Registries.Objects.LoadAssets(assets, gr.graphics, &g.LoadingProgress)
+	// TODO: Filter object assets too?
+	g.Registries.Objects.LoadAssets(assets, gr.graphics, nil, &g.LoadingProgress)
 	log.Printf("[LOADER] Objects loaded in %v", time.Since(s))
 	
 	s = time.Now()

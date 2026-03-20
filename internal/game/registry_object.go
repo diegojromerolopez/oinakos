@@ -47,9 +47,15 @@ func (r *ObjectRegistry) LoadAll(assets fs.FS) error {
 	})
 }
 
-func (r *ObjectRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, progress *int32) {
+func (r *ObjectRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, permitList map[string]bool, progress *int32) {
 	var jobs []*SpriteLoadJob
 	for _, config := range r.Objects {
+		if config.Sprite != nil {
+			continue
+		}
+		if permitList != nil && !permitList[config.ID] {
+			continue
+		}
 		// Each object has its own image file named after its ID
 		filename := config.ID + ".png"
 		jobs = append(jobs, &SpriteLoadJob{
@@ -57,5 +63,7 @@ func (r *ObjectRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, prog
 			Dest: &config.Sprite,
 		})
 	}
-	loadSpritesParallel(assets, jobs, graphics, progress)
+	if len(jobs) > 0 {
+		loadSpritesParallel(assets, jobs, graphics, progress)
+	}
 }

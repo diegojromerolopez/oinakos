@@ -23,12 +23,17 @@ func NewWorldManager(g *Game) *WorldManager {
 	return &WorldManager{game: g}
 }
 
-func (wm *WorldManager) LoadMapAudio() {
+func (wm *WorldManager) LoadMapAssets() {
 	startTime := time.Now()
 	g := wm.game
 	if g.assets == nil {
 		return
 	}
+	
+	// Collect entities for filtering
+	characterFilter := make(map[string]bool)
+	obstacleFilter := make(map[string]bool)
+	
 	configs := make(map[string]*EntityConfig)
 
 	addConfig := func(conf *EntityConfig) {
@@ -36,9 +41,12 @@ func (wm *WorldManager) LoadMapAudio() {
 			return
 		}
 		configs[conf.ID] = conf
+		characterFilter[conf.ID] = true
 		if conf.ArchetypeID != "" {
 			if arch, ok := g.archetypeRegistry.Archetypes[conf.ArchetypeID]; ok {
 				configs[arch.ID] = arch
+				// We don't filter archetypes here as they are usually small/shared, 
+				// but we could if needed.
 			}
 		}
 	}
@@ -58,8 +66,13 @@ func (wm *WorldManager) LoadMapAudio() {
 			addConfig(arch)
 		}
 	}
+	
+	for _, o := range g.obstacles {
+		obstacleFilter[o.Archetype.ID] = true
+	}
 
-	var jobs []*AudioLoadJob
+	// 1. Audio Loading
+	var audioJobs []*AudioLoadJob
 	for _, conf := range configs {
 		if conf.AudioDir == "" {
 			continue
@@ -82,22 +95,26 @@ func (wm *WorldManager) LoadMapAudio() {
 			if engine.GlobalAudio != nil && engine.GlobalAudio.HasSound(key) {
 				continue
 			}
-			jobs = append(jobs, &AudioLoadJob{
+			audioJobs = append(audioJobs, &AudioLoadJob{
 				Name: key,
 				Path: conf.AudioDir + "/" + e.Name(),
 			})
 		}
 	}
 
-	if len(jobs) > 0 {
-		DebugLog("Parallel Loading %d audio files for characters/archetypes in map...", len(jobs))
-		loadAudioParallel(g.assets, jobs, &g.LoadingProgress)
+	if len(audioJobs) > 0 {
+		DebugLog("Parallel Loading %d audio files for characters/archetypes in map...", len(audioJobs))
+		loadAudioParallel(g.assets, audioJobs, &g.LoadingProgress)
 	}
 	
-	// Ensure sprites are also loaded for the same registry subset where applicable,
-	// though this uses the full registry load for now as it's less heavy than audio.
-	g.characterRegistry.LoadAssets(g.assets, g.Graphics, g.archetypeRegistry, &g.LoadingProgress)
-	log.Printf("LoadMapAudio: processed %d jobs in %v", len(jobs), time.Since(startTime))
+	// 2. Image Loading
+	// Load character images
+	g.characterRegistry.LoadAssets(g.assets, g.Graphics, g.archetypeRegistry, characterFilter, &g.LoadingProgress)
+	
+	// Load obstacle images
+	g.obstacleRegistry.LoadAssets(g.assets, g.Graphics, obstacleFilter, &g.LoadingProgress)
+	
+	log.Printf("LoadMapAssets: processed %d audio and images in %v", len(audioJobs), time.Since(startTime))
 }
 
 func (wm *WorldManager) LoadMapLevel() {
@@ -382,7 +399,7 @@ func (wm *WorldManager) LoadMapLevel() {
 	}
 
 		DebugLog("Starting Map Level %d: %s at safe pos %.2f,%.2f", g.mapLevel, g.currentMapType.Name, g.playableCharacter.X, g.playableCharacter.Y)
-		wm.LoadMapAudio()
+		wm.LoadMapAssets()
 }
 
 func (wm *WorldManager) UpdateChunks() {

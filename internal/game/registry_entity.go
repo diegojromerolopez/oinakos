@@ -137,9 +137,15 @@ func NewArchetypeRegistry() *ArchetypeRegistry {
 	}
 }
 
-func (r *ArchetypeRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, progress *int32) {
+func (r *ArchetypeRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, permitList map[string]bool, progress *int32) {
 	var jobs []*SpriteLoadJob
 	for _, config := range r.Archetypes {
+		if config.StaticImage != nil {
+			continue
+		}
+		if permitList != nil && !permitList[config.ID] {
+			continue
+		}
 		if config.AssetDir == "" {
 			continue
 		}
@@ -162,7 +168,9 @@ func (r *ArchetypeRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, p
 		addJob("hit2.png", &config.Hit2Image)
 		addJob("crouch.png", &config.CrouchImage)
 	}
-	loadSpritesParallel(assets, jobs, graphics, progress)
+	if len(jobs) > 0 {
+		loadSpritesParallel(assets, jobs, graphics, progress)
+	}
 }
 
 func (r *ArchetypeRegistry) LoadAll(assets fs.FS) error {
@@ -267,9 +275,15 @@ func (r *CharacterRegistry) LoadAll(assets fs.FS) error {
 	})
 }
 
-func (r *CharacterRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *ArchetypeRegistry, progress *int32) {
+func (r *CharacterRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *ArchetypeRegistry, permitList map[string]bool, progress *int32) {
 	var jobs []*SpriteLoadJob
 	for _, config := range r.Characters {
+		if config.StaticImage != nil {
+			continue
+		}
+		if permitList != nil && !permitList[config.ID] && !config.Playable {
+			continue
+		}
 		// Fallback to archetype logic for non-playable characters
 		lookupID := config.ArchetypeID
 		if config.Gender != "" && !strings.Contains(config.ArchetypeID, config.Gender) {

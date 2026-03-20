@@ -451,8 +451,10 @@ func (c *Character) hitCharacter(target *Character, ctx *SystemContext) {
 }
 
 func (c *Character) rollDamage() int {
-	if c.Weapon != nil { return c.Weapon.RollDamage() }
-	return c.BaseAttack + WeaponFists.RollDamage()
+	if c.Weapon != nil {
+		return c.GetTotalAttack() + c.Weapon.RollDamage()
+	}
+	return c.GetTotalAttack() + WeaponFists.RollDamage()
 }
 
 func (c *Character) TakeDamage(amount int, attacker ActorInterface, ctx *SystemContext) {

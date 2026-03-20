@@ -140,7 +140,7 @@ func main() {
 	// Load Obstacles
 	obsReg := game.NewObstacleRegistry()
 	if err := obsReg.LoadAll(localAssets); err == nil {
-		obsReg.LoadAssets(localAssets, graphics, nil)
+		obsReg.LoadAssets(localAssets, graphics, nil, nil)
 		for _, id := range obsReg.IDs {
 			arch := obsReg.Archetypes[id]
 			obs := game.NewObstacle("editor_preview", 0, 0, arch)
@@ -159,7 +159,7 @@ func main() {
 	// Load Objects
 	objReg := game.NewObjectRegistry()
 	if err := objReg.LoadAll(localAssets); err == nil {
-		objReg.LoadAssets(localAssets, graphics, nil)
+		objReg.LoadAssets(localAssets, graphics, nil, nil)
 		for _, id := range objReg.IDs {
 			cfg := objReg.Objects[id]
 			item := game.NewItemInstance(id, cfg, 0, 0)
@@ -180,7 +180,7 @@ func main() {
 	// Load Archetypes
 	archReg := game.NewArchetypeRegistry()
 	if err := archReg.LoadAll(localAssets); err == nil {
-		archReg.LoadAssets(localAssets, graphics, nil)
+		archReg.LoadAssets(localAssets, graphics, nil, nil)
 		for _, id := range archReg.IDs {
 			cfg := archReg.Archetypes[id]
 			npc := game.NewCharacter(0, 0, cfg, 1, false)
@@ -197,7 +197,7 @@ func main() {
 	// Load Characters
 	charReg := game.NewCharacterRegistry()
 	if err := charReg.LoadAll(localAssets); err == nil {
-		charReg.LoadAssets(localAssets, graphics, archReg, nil)
+		charReg.LoadAssets(localAssets, graphics, archReg, nil, nil)
 		for _, id := range charReg.IDs {
 			cfg := charReg.Characters[id]
 			npc := game.NewCharacter(0, 0, cfg, 1, false)
