@@ -50,39 +50,23 @@ func (gr *GameRenderer) LoadAssets(assets fs.FS) {
 	start := time.Now()
 	g := gr.game
 	g.LoadingMessage = "Initializing Oinakos..."
-	atomic.StoreInt32(&g.LoadingProgress, 50)
 	
-	s := time.Now()
-	// Always load all archetypes (small 10 items)
-	// Passing nil permitList loads all that aren't already loaded
-	g.archetypeRegistry.LoadAssets(assets, gr.graphics, nil, &g.LoadingProgress)
-	log.Printf("[LOADER] Archetypes loaded in %v", time.Since(s))
+	ls := &LoadingState{Progress: &g.LoadingProgress}
 	
-	s = time.Now()
-	atomic.StoreInt32(&g.LoadingProgress, 300)
-	g.LoadingMessage = "Preparing Heroes..."
-	// Load all playable characters (17 items)
-	g.characterRegistry.LoadAssets(assets, gr.graphics, g.archetypeRegistry, nil, &g.LoadingProgress)
-	log.Printf("[LOADER] Heroes loaded in %v", time.Since(s))
-	
-	s = time.Now()
-	atomic.StoreInt32(&g.LoadingProgress, 500)
-	g.LoadingMessage = "Loading Environment..."
-	// Only load obstacles that are in the map or are wells
+	// Pre-calculation (Pass 1)
+	// Only load archetypes
+	total := g.archetypeRegistry.CountAssets(nil)
+	// Only load playable
+	total += g.characterRegistry.CountAssets(assets, g.archetypeRegistry, nil)
+	// Filtered obstacles
 	obstacleFilter := make(map[string]bool)
 	if g.World != nil {
 		for _, o := range g.obstacles {
 			obstacleFilter[o.Archetype.ID] = true
 		}
 	}
-	g.obstacleRegistry.LoadAssets(assets, gr.graphics, obstacleFilter, &g.LoadingProgress)
-	log.Printf("[LOADER] Obstacles loaded in %v", time.Since(s))
-	
-	s = time.Now()
-	atomic.StoreInt32(&g.LoadingProgress, 700)
-	g.LoadingMessage = "Populating World..."
-	// Character Registry already loaded all playable. 
-	// Now load NPCs present in map (characters list)
+	total += g.obstacleRegistry.CountAssets(obstacleFilter)
+	// Filtered NPCs
 	npcFilter := make(map[string]bool)
 	if g.World != nil {
 		for _, n := range g.characters {
@@ -91,44 +75,21 @@ func (gr *GameRenderer) LoadAssets(assets fs.FS) {
 			}
 		}
 	}
-	g.characterRegistry.LoadAssets(assets, gr.graphics, g.archetypeRegistry, npcFilter, &g.LoadingProgress)
-	log.Printf("[LOADER] World NPCs loaded in %v", time.Since(s))
+	total += g.characterRegistry.CountAssets(assets, g.archetypeRegistry, npcFilter)
+	// All objects
+	total += g.Registries.Objects.CountAssets(nil)
 	
-	s = time.Now()
-	atomic.StoreInt32(&g.LoadingProgress, 800)
-	g.LoadingMessage = "Geeking out on Loot..."
-	// TODO: Filter object assets too?
-	g.Registries.Objects.LoadAssets(assets, gr.graphics, nil, &g.LoadingProgress)
-	log.Printf("[LOADER] Objects loaded in %v", time.Since(s))
-	
-	s = time.Now()
-	atomic.StoreInt32(&g.LoadingProgress, 950)
-	g.LoadingMessage = "Finalizing Graphics..."
-	runtime.Gosched()
-
-	var err error
-	gr.PaletteShader, err = gr.graphics.NewShader(paletteSwapShaderSource)
-	if err != nil {
-		log.Printf("Error building palette shader: %v", err)
-	}
-
-	// Load player assets
 	mc := gr.game.playableCharacter
+	var mcJobs []*SpriteLoadJob
 	if mc != nil && mc.Config != nil {
-		if mc.Config.AssetDir == "" {
-			mc.Config.AssetDir = "assets/images/characters/oinakos"
-		}
 		imgDir := mc.Config.AssetDir
-		var jobs []*SpriteLoadJob
+		if imgDir == "" { imgDir = "assets/images/characters/oinakos" }
+		
 		addJob := func(filename string, target *engine.Image) {
 			if *target == nil {
-				jobs = append(jobs, &SpriteLoadJob{
-					Path: path.Join(imgDir, filename),
-					Dest: target,
-				})
+				mcJobs = append(mcJobs, &SpriteLoadJob{Path: path.Join(imgDir, filename), Dest: target})
 			}
 		}
-
 		addJob("static.png", &mc.Config.StaticImage)
 		addJob("back.png", &mc.Config.BackImage)
 		addJob("corpse.png", &mc.Config.CorpseImage)
@@ -138,11 +99,51 @@ func (gr *GameRenderer) LoadAssets(assets fs.FS) {
 		addJob("hit.png", &mc.Config.HitImage)
 		addJob("hit1.png", &mc.Config.Hit1Image)
 		addJob("hit2.png", &mc.Config.Hit2Image)
-
-	if len(jobs) > 0 {
-	loadSpritesParallel(assets, jobs, gr.graphics, &g.LoadingProgress)
-}
 	}
+	total += len(mcJobs)
+	
+	// total represents unique images. Each image takes 2 steps (decode + upload).
+	ls.Total = int32(total * 2)
+	atomic.StoreInt32(&g.LoadingProgress, 0)
+
+	s := time.Now()
+	g.archetypeRegistry.LoadAssets(assets, gr.graphics, nil, ls)
+	log.Printf("[LOADER] Archetypes loaded in %v", time.Since(s))
+	
+	s = time.Now()
+	g.LoadingMessage = "Preparing Heroes..."
+	g.characterRegistry.LoadAssets(assets, gr.graphics, g.archetypeRegistry, nil, ls)
+	log.Printf("[LOADER] Heroes loaded in %v", time.Since(s))
+	
+	s = time.Now()
+	g.LoadingMessage = "Loading Environment..."
+	g.obstacleRegistry.LoadAssets(assets, gr.graphics, obstacleFilter, ls)
+	log.Printf("[LOADER] Obstacles loaded in %v", time.Since(s))
+	
+	s = time.Now()
+	g.LoadingMessage = "Populating World..."
+	g.characterRegistry.LoadAssets(assets, gr.graphics, g.archetypeRegistry, npcFilter, ls)
+	log.Printf("[LOADER] World NPCs loaded in %v", time.Since(s))
+	
+	s = time.Now()
+	g.LoadingMessage = "Geeking out on Loot..."
+	g.Registries.Objects.LoadAssets(assets, gr.graphics, nil, ls)
+	log.Printf("[LOADER] Objects loaded in %v", time.Since(s))
+	
+	s = time.Now()
+	g.LoadingMessage = "Finalizing Graphics..."
+	runtime.Gosched()
+
+	var err error
+	gr.PaletteShader, err = gr.graphics.NewShader(paletteSwapShaderSource)
+	if err != nil {
+		log.Printf("Error building palette shader: %v", err)
+	}
+
+	if len(mcJobs) > 0 {
+		loadSpritesParallel(assets, mcJobs, gr.graphics, ls)
+	}
+	
 	log.Printf("[LOADER] Total initialization finished in %v", time.Since(start))
 	atomic.StoreInt32(&g.LoadingProgress, 1000)
 }

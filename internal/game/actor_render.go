@@ -263,7 +263,7 @@ func DrawActorUI(g *Game, a *Actor, screen engine.Image, textRenderer engine.Tex
 			nameX := int(isoX + offsetX - float64(len(name))*3.5)
 			nameY := int(isoY + offsetY + 5)
 			var textColor color.Color = color.White
-			if !isPlayableCharacter && a.Config.Unique {
+			if !isPlayableCharacter && (a.IsTarget || a.MustSurvive) {
 				textColor = color.RGBA{218, 165, 32, 255} // Golden
 			}
 			textRenderer.DrawTextAt(screen, name, nameX, nameY, textColor, 12)

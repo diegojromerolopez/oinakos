@@ -148,6 +148,7 @@ type Inhabitant struct {
 	State       string    `yaml:"state,omitempty"` // e.g. "dead", empty means alive
 	Alignment   Alignment `yaml:"alignment"`
 	MustSurvive bool      `yaml:"must_survive,omitempty"`
+	IsTarget    bool      `yaml:"is_target,omitempty"`
 }
 
 type PreSpawnObstacle struct {

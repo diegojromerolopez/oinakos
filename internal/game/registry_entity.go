@@ -137,7 +137,14 @@ func NewArchetypeRegistry() *ArchetypeRegistry {
 	}
 }
 
-func (r *ArchetypeRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, permitList map[string]bool, progress *int32) {
+func (r *ArchetypeRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, permitList map[string]bool, ls *LoadingState) {
+	jobs := r.createLoadJobs(permitList)
+	if len(jobs) > 0 {
+		loadSpritesParallel(assets, jobs, graphics, ls)
+	}
+}
+
+func (r *ArchetypeRegistry) createLoadJobs(permitList map[string]bool) []*SpriteLoadJob {
 	var jobs []*SpriteLoadJob
 	for _, config := range r.Archetypes {
 		if config.StaticImage != nil {
@@ -168,9 +175,11 @@ func (r *ArchetypeRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, p
 		addJob("hit2.png", &config.Hit2Image)
 		addJob("crouch.png", &config.CrouchImage)
 	}
-	if len(jobs) > 0 {
-		loadSpritesParallel(assets, jobs, graphics, progress)
-	}
+	return jobs
+}
+
+func (r *ArchetypeRegistry) CountAssets(permitList map[string]bool) int {
+	return len(r.createLoadJobs(permitList))
 }
 
 func (r *ArchetypeRegistry) LoadAll(assets fs.FS) error {
@@ -275,7 +284,14 @@ func (r *CharacterRegistry) LoadAll(assets fs.FS) error {
 	})
 }
 
-func (r *CharacterRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *ArchetypeRegistry, permitList map[string]bool, progress *int32) {
+func (r *CharacterRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, archs *ArchetypeRegistry, permitList map[string]bool, ls *LoadingState) {
+	jobs := r.createLoadJobs(assets, archs, permitList)
+	if len(jobs) > 0 {
+		loadSpritesParallel(assets, jobs, graphics, ls)
+	}
+}
+
+func (r *CharacterRegistry) createLoadJobs(assets fs.FS, archs *ArchetypeRegistry, permitList map[string]bool) []*SpriteLoadJob {
 	var jobs []*SpriteLoadJob
 	for _, config := range r.Characters {
 		if config.StaticImage != nil {
@@ -362,7 +378,9 @@ func (r *CharacterRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, a
 		}
 		sanitizeEntityConfig(config, config.ID)
 	}
-	if len(jobs) > 0 {
-		loadSpritesParallel(assets, jobs, graphics, progress)
-	}
+	return jobs
+}
+
+func (r *CharacterRegistry) CountAssets(assets fs.FS, archs *ArchetypeRegistry, permitList map[string]bool) int {
+	return len(r.createLoadJobs(assets, archs, permitList))
 }

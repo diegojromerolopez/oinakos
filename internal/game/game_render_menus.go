@@ -591,14 +591,28 @@ func (gr *GameRenderer) drawLoadingProgress(screen engine.Image) {
 	}
 
 	tw, _ := gr.graphics.MeasureText(msg, 32)
-	gr.graphics.DrawTextAt(screen, msg, (g.width-int(tw))/2, g.height/2, color.RGBA{218, 165, 32, 255}, 32)
+	gr.graphics.DrawTextAt(screen, msg, (g.width-int(tw))/2, g.height/2-20, color.RGBA{218, 165, 32, 255}, 32)
 
 	hint := "Please wait while assets are being prepared"
 	hw, _ := gr.graphics.MeasureText(hint, 14)
-	gr.graphics.DrawTextAt(screen, hint, (g.width-int(hw))/2, g.height/2+50, color.RGBA{180, 180, 180, 255}, 14)
+	gr.graphics.DrawTextAt(screen, hint, (g.width-int(hw))/2, g.height/2+80, color.RGBA{180, 180, 180, 255}, 14)
+
+	// Progress Bar
+	prog := atomic.LoadInt32(&g.LoadingProgress)
+	barW := 400
+	barH := 10
+	barX := (g.width - barW) / 2
+	barY := g.height/2 + 30
+	
+	// Background of the bar
+	gr.graphics.DrawFilledRect(screen, float32(barX), float32(barY), float32(barW), float32(barH), color.RGBA{40, 40, 40, 255}, false)
+	// Foreground (the actual progress)
+	if prog > 0 {
+		fillW := float32(barW) * (float32(prog) / 1000.0)
+		gr.graphics.DrawFilledRect(screen, float32(barX), float32(barY), fillW, float32(barH), color.RGBA{218, 165, 32, 255}, false)
+	}
 
 	// Minimal tech indicator at the bottom
-	prog := atomic.LoadInt32(&g.LoadingProgress)
 	percent := fmt.Sprintf("LOADING PROGRESS: %d%%", int(float64(prog)/10.0))
 	pw, _ := gr.graphics.MeasureText(percent, 12)
 	gr.graphics.DrawTextAt(screen, percent, g.width-int(pw)-20, g.height-30, color.RGBA{100, 100, 100, 255}, 12)

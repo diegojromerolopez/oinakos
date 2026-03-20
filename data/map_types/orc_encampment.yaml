@@ -23,6 +23,7 @@ inhabitants:
   y: 15.0
   alignment: enemy
   name: Golg the Dreaded
+  is_target: true
   stats:
     health_min: 150
     health_max: 150

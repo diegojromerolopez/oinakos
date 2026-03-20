@@ -9,6 +9,7 @@ inhabitants:
   x: 0.0
   y: 15.0
   alignment: enemy
+  is_target: true
 obstacles:
 - archetype: rock_1
   x: 5.0

@@ -47,7 +47,14 @@ func (r *ObjectRegistry) LoadAll(assets fs.FS) error {
 	})
 }
 
-func (r *ObjectRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, permitList map[string]bool, progress *int32) {
+func (r *ObjectRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, permitList map[string]bool, ls *LoadingState) {
+	jobs := r.createLoadJobs(permitList)
+	if len(jobs) > 0 {
+		loadSpritesParallel(assets, jobs, graphics, ls)
+	}
+}
+
+func (r *ObjectRegistry) createLoadJobs(permitList map[string]bool) []*SpriteLoadJob {
 	var jobs []*SpriteLoadJob
 	for _, config := range r.Objects {
 		if config.Sprite != nil {
@@ -63,7 +70,9 @@ func (r *ObjectRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, perm
 			Dest: &config.Sprite,
 		})
 	}
-	if len(jobs) > 0 {
-		loadSpritesParallel(assets, jobs, graphics, progress)
-	}
+	return jobs
+}
+
+func (r *ObjectRegistry) CountAssets(permitList map[string]bool) int {
+	return len(r.createLoadJobs(permitList))
 }

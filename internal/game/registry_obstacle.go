@@ -66,7 +66,14 @@ func (r *ObstacleRegistry) LoadAll(assets fs.FS) error {
 	})
 }
 
-func (r *ObstacleRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, permitList map[string]bool, progress *int32) {
+func (r *ObstacleRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, permitList map[string]bool, ls *LoadingState) {
+	jobs := r.createLoadJobs(permitList)
+	if len(jobs) > 0 {
+		loadSpritesParallel(assets, jobs, graphics, ls)
+	}
+}
+
+func (r *ObstacleRegistry) createLoadJobs(permitList map[string]bool) []*SpriteLoadJob {
 	var jobs []*SpriteLoadJob
 	for _, config := range r.Archetypes {
 		if config.Image != nil {
@@ -75,14 +82,15 @@ func (r *ObstacleRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, pe
 		if permitList != nil && !permitList[config.ID] && !config.IsWell() {
 			continue
 		}
-		// Derive image path from ID: assets/images/obstacles/<id>.png
 		imagePath := path.Join("assets/images/obstacles", config.ID+".png")
 		jobs = append(jobs, &SpriteLoadJob{
 			Path: imagePath,
 			Dest: &config.Image,
 		})
 	}
-	if len(jobs) > 0 {
-		loadSpritesParallel(assets, jobs, graphics, progress)
-	}
+	return jobs
+}
+
+func (r *ObstacleRegistry) CountAssets(permitList map[string]bool) int {
+	return len(r.createLoadJobs(permitList))
 }

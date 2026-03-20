@@ -116,6 +116,7 @@ type Actor struct {
 	Group              string
 	LeaderID           string
 	MustSurvive        bool
+	IsTarget           bool
 	Level              int
 	XP                 int
 	Name               string

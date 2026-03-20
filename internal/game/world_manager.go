@@ -30,6 +30,8 @@ func (wm *WorldManager) LoadMapAssets() {
 		return
 	}
 	
+	ls := &LoadingState{Progress: &g.LoadingProgress}
+
 	// Collect entities for filtering
 	characterFilter := make(map[string]bool)
 	obstacleFilter := make(map[string]bool)
@@ -45,8 +47,6 @@ func (wm *WorldManager) LoadMapAssets() {
 		if conf.ArchetypeID != "" {
 			if arch, ok := g.archetypeRegistry.Archetypes[conf.ArchetypeID]; ok {
 				configs[arch.ID] = arch
-				// We don't filter archetypes here as they are usually small/shared, 
-				// but we could if needed.
 			}
 		}
 	}
@@ -71,7 +71,7 @@ func (wm *WorldManager) LoadMapAssets() {
 		obstacleFilter[o.Archetype.ID] = true
 	}
 
-	// 1. Audio Loading
+	// 1. Audio Counting
 	var audioJobs []*AudioLoadJob
 	for _, conf := range configs {
 		if conf.AudioDir == "" {
@@ -102,17 +102,26 @@ func (wm *WorldManager) LoadMapAssets() {
 		}
 	}
 
+	// 2. Image Counting
+	charImgCount := g.characterRegistry.CountAssets(g.assets, g.archetypeRegistry, characterFilter)
+	obsImgCount := g.obstacleRegistry.CountAssets(obstacleFilter)
+
+	// Multiply by 2 because each job has 2 steps:
+	// Images: Decoding + GPU Upload
+	// Audio: Decoding + Global Registration
+	ls.Total = int32((len(audioJobs) + charImgCount + obsImgCount) * 2)
+	atomic.StoreInt32(&g.LoadingProgress, 0)
+
 	if len(audioJobs) > 0 {
 		DebugLog("Parallel Loading %d audio files for characters/archetypes in map...", len(audioJobs))
-		loadAudioParallel(g.assets, audioJobs, &g.LoadingProgress)
+		loadAudioParallel(g.assets, audioJobs, ls)
 	}
 	
-	// 2. Image Loading
 	// Load character images
-	g.characterRegistry.LoadAssets(g.assets, g.Graphics, g.archetypeRegistry, characterFilter, &g.LoadingProgress)
+	g.characterRegistry.LoadAssets(g.assets, g.Graphics, g.archetypeRegistry, characterFilter, ls)
 	
 	// Load obstacle images
-	g.obstacleRegistry.LoadAssets(g.assets, g.Graphics, obstacleFilter, &g.LoadingProgress)
+	g.obstacleRegistry.LoadAssets(g.assets, g.Graphics, obstacleFilter, ls)
 	
 	log.Printf("LoadMapAssets: processed %d audio and images in %v", len(audioJobs), time.Since(startTime))
 }
@@ -253,6 +262,7 @@ func (wm *WorldManager) LoadMapLevel() {
 			vip.Health = vip.MaxHealth
 			vip.BaseAttack += g.mapLevel * 2
 			vip.LoadEquipment(g.Registries.Objects)
+			vip.IsTarget = true
 			g.characters = append(g.characters, vip)
 			g.currentMapType.TargetPoint = engine.Point{X: tpX, Y: tpY}
 		}
@@ -292,6 +302,7 @@ func (wm *WorldManager) LoadMapLevel() {
 		if config, ok := g.archetypeRegistry.Archetypes["magi_male"]; ok {
 			escort := NewCharacter(g.playableCharacter.X+2, g.playableCharacter.Y+2, config, g.mapLevel, false)
 			escort.LoadEquipment(g.Registries.Objects)
+			escort.MustSurvive = true
 			g.characters = append([]*Character{escort}, g.characters...)
 		}
 	case ObjDestroyBuilding:
@@ -341,7 +352,7 @@ func (wm *WorldManager) LoadMapLevel() {
 				continue
 			}
 			npc := NewCharacter(ps.X, ps.Y, config, g.mapLevel, false)
-			npc.Alignment, npc.MustSurvive = ps.Alignment, ps.MustSurvive
+			npc.Alignment, npc.MustSurvive, npc.IsTarget = ps.Alignment, ps.MustSurvive, ps.IsTarget
 			if ps.Name != "" { npc.Name = ps.Name }
 			if ps.State == "dead" { npc.Health, npc.State = 0, ActorDead }
 			npc.LoadEquipment(g.Registries.Objects)

@@ -17,10 +17,29 @@ type SpriteLoadJob struct {
 	Decoded image.Image
 }
 
-// loadSpritesParallel performs background PNG decoding and then finalizes Ebiten images on the main thread
-func loadSpritesParallel(assets fs.FS, jobs []*SpriteLoadJob, graphics engine.Graphics, progress *int32) {
+// LoadingState tracks progress across multiple asynchronous loading tasks (images, audio).
+type LoadingState struct {
+	Total    int32
+	Finished int32
+	Progress *int32
+}
+
+func (ls *LoadingState) Add(count int) {
+	if ls == nil { return }
+	atomic.AddInt32(&ls.Total, int32(count))
+}
+
+func (ls *LoadingState) Done() {
+	if ls == nil { return }
+	finished := atomic.AddInt32(&ls.Finished, 1)
+	total := atomic.LoadInt32(&ls.Total)
+	if total > 0 {
+		atomic.StoreInt32(ls.Progress, (finished*1000)/total)
+	}
+}
+
+func loadSpritesParallel(assets fs.FS, jobs []*SpriteLoadJob, graphics engine.Graphics, ls *LoadingState) {
 	if len(jobs) == 0 {
-		if progress != nil { atomic.StoreInt32(progress, 1000) }
 		return
 	}
 
@@ -38,8 +57,6 @@ func loadSpritesParallel(assets fs.FS, jobs []*SpriteLoadJob, graphics engine.Gr
 	close(jobChan)
 
 	var wg sync.WaitGroup
-	var completed int32
-	total := int32(len(jobs))
 
 	for i := 0; i < workerCount; i++ {
 		wg.Add(1)
@@ -51,11 +68,8 @@ func loadSpritesParallel(assets fs.FS, jobs []*SpriteLoadJob, graphics engine.Gr
 					job.Decoded = img
 				}
 				
-				if progress != nil {
-					done := atomic.AddInt32(&completed, 1)
-					// Reserve 0-800 for decoding, 800-1000 for GPU upload
-					p := int32(float64(done) / float64(total) * 800)
-					atomic.StoreInt32(progress, p)
+				if ls != nil {
+					ls.Done()
 				}
 				runtime.Gosched()
 			}
@@ -68,9 +82,8 @@ func loadSpritesParallel(assets fs.FS, jobs []*SpriteLoadJob, graphics engine.Gr
 		if job.Decoded != nil {
 			*job.Dest = graphics.NewImageFromImage(job.Decoded)
 		}
-		if progress != nil {
-			p := 800 + int32((float64(i+1)/float64(total))*200)
-			atomic.StoreInt32(progress, p)
+		if ls != nil {
+			ls.Done()
 		}
 		if i%10 == 0 { runtime.Gosched() }
 	}
@@ -83,9 +96,8 @@ type AudioLoadJob struct {
 }
 
 // loadAudioParallel performs background WAV/MP3 decoding
-func loadAudioParallel(assets fs.FS, jobs []*AudioLoadJob, progress *int32) {
+func loadAudioParallel(assets fs.FS, jobs []*AudioLoadJob, ls *LoadingState) {
 	if len(jobs) == 0 {
-		if progress != nil { atomic.StoreInt32(progress, 1000) }
 		return
 	}
 
@@ -105,8 +117,6 @@ func loadAudioParallel(assets fs.FS, jobs []*AudioLoadJob, progress *int32) {
 	close(jobChan)
 
 	var wg sync.WaitGroup
-	var completed int32
-	total := int32(len(jobs))
 
 	for i := 0; i < workerCount; i++ {
 		wg.Add(1)
@@ -118,10 +128,8 @@ func loadAudioParallel(assets fs.FS, jobs []*AudioLoadJob, progress *int32) {
 				if err == nil {
 					job.Data = data
 				}
-				if progress != nil {
-					done := atomic.AddInt32(&completed, 1)
-					p := int32(float64(done) / float64(total) * 1000)
-					atomic.StoreInt32(progress, p)
+				if ls != nil {
+					ls.Done()
 				}
 				runtime.Gosched()
 			}
@@ -131,11 +139,14 @@ func loadAudioParallel(assets fs.FS, jobs []*AudioLoadJob, progress *int32) {
 
 	// Register in GlobalAudio (using pre-decoded bytes to avoid double-decoding)
 	if engine.GlobalAudio != nil {
-		for _, job := range jobs {
+		for i, job := range jobs {
 			if job != nil && job.Data != nil {
 				engine.GlobalAudio.LoadSoundFromBytes(job.Name, job.Data)
 			}
+			if ls != nil {
+				ls.Done()
+			}
+			if i%10 == 0 { runtime.Gosched() }
 		}
 	}
-	if progress != nil { atomic.StoreInt32(progress, 1000) }
 }
