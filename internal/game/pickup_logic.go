@@ -176,7 +176,6 @@ func (g *Game) DropEquippedItem(a *Actor, slot string) bool {
 
 	if a == &g.playableCharacter.Actor {
 		g.AddFloatingText(fmt.Sprintf("Dropped %s", obj.Name), a.X, a.Y, color.RGBA{150, 150, 150, 255})
-		engine.PlaySound("assets/audio/archetypes/peasant/female/drop.wav") // Generic drop sound if exists, or silent
 	}
 
 	return true

@@ -12,6 +12,14 @@ func (g *Game) initAIManager() {
 		return
 	}
 
+	// Check if WebGPU is available (WASM-only check)
+	if !HasWebGPU() {
+		log.Printf("WebGPU not supported in this browser. Falling back to native AI provider for WASM.")
+		g.settings.AIProvider = "native"
+		g.aiManager = NewAIManager(&NativeAIProvider{})
+		return
+	}
+
 	// In WASM, we only support WebGPU LLM.
 	// If the user has any other provider selected, we override it to WebGPU.
 	if g.settings.AIProvider != "webgpu" {
@@ -24,3 +32,4 @@ func (g *Game) initAIManager() {
 
 	DebugLog("AI Manager initialized with WebGPU provider")
 }
+

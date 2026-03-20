@@ -17,7 +17,7 @@ all: build build-wasm build-tools dist
 
 # Versioning
 VERSION=0.1-alpha
-LDFLAGS=-ldflags "-X main.Version=$(VERSION)"
+LDFLAGS=-ldflags "-s -w -X main.Version=$(VERSION)"
 
 build:
 	@echo "Building native binary $(VERSION)..."
@@ -84,7 +84,7 @@ dist: build-wasm
 	@echo "window.oinakosWebLLM.init();" >> $(DIST_DIR)/index.html
 	@echo "</script><script>" >> $(DIST_DIR)/index.html
 	@cat $(DIST_DIR)/wasm_exec.js >> $(DIST_DIR)/index.html
-	@echo "</script><script>const go = new Go(); WebAssembly.instantiateStreaming(fetch('oinakos.wasm'), go.importObject).then((result) => { document.getElementById('status').style.display = 'none'; go.run(result.instance); });</script></body></html>" >> $(DIST_DIR)/index.html
+	@echo "</script><script>console.time('WASM Load'); const go = new Go(); WebAssembly.instantiateStreaming(fetch('oinakos.wasm'), go.importObject).then((result) => { console.timeEnd('WASM Load'); console.time('WASM Run'); document.getElementById('status').style.display = 'none'; go.run(result.instance); });</script></body></html>" >> $(DIST_DIR)/index.html
 	rm $(DIST_DIR)/wasm_exec.js
 	@echo "Dist files prepared in $(DIST_DIR)/: index.html (inlined JS) and oinakos.wasm"
 

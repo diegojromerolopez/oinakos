@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"log"
 	"path"
+	"time"
 	"runtime"
 	"sort"
 
@@ -46,27 +47,40 @@ func NewGameRenderer(g *Game, assets fs.FS, graphics engine.Graphics) *GameRende
 }
 
 func (gr *GameRenderer) LoadAssets(assets fs.FS) {
+	start := time.Now()
 	g := gr.game
 	g.LoadingMessage = "Initializing Oinakos..."
 	atomic.StoreInt32(&g.LoadingProgress, 50)
-	g.archetypeRegistry.LoadAssets(assets, gr.graphics, &g.LoadingProgress)
 	
+	s := time.Now()
+	g.archetypeRegistry.LoadAssets(assets, gr.graphics, &g.LoadingProgress)
+	log.Printf("[LOADER] Archetypes loaded in %v", time.Since(s))
+	
+	s = time.Now()
 	atomic.StoreInt32(&g.LoadingProgress, 300)
 	g.LoadingMessage = "Preparing Heroes..."
 	g.characterRegistry.LoadAssets(assets, gr.graphics, g.archetypeRegistry, &g.LoadingProgress)
+	log.Printf("[LOADER] Heroes loaded in %v", time.Since(s))
 	
+	s = time.Now()
 	atomic.StoreInt32(&g.LoadingProgress, 500)
 	g.LoadingMessage = "Loading Environment..."
 	g.obstacleRegistry.LoadAssets(assets, gr.graphics, &g.LoadingProgress)
+	log.Printf("[LOADER] Obstacles loaded in %v", time.Since(s))
 	
+	s = time.Now()
 	atomic.StoreInt32(&g.LoadingProgress, 700)
 	g.LoadingMessage = "Populating World..."
 	g.characterRegistry.LoadAssets(assets, gr.graphics, g.archetypeRegistry, &g.LoadingProgress)
+	log.Printf("[LOADER] World NPCs loaded in %v", time.Since(s))
 	
+	s = time.Now()
 	atomic.StoreInt32(&g.LoadingProgress, 800)
 	g.LoadingMessage = "Geeking out on Loot..."
 	g.Registries.Objects.LoadAssets(assets, gr.graphics, &g.LoadingProgress)
+	log.Printf("[LOADER] Objects loaded in %v", time.Since(s))
 	
+	s = time.Now()
 	atomic.StoreInt32(&g.LoadingProgress, 950)
 	g.LoadingMessage = "Finalizing Graphics..."
 	runtime.Gosched()
@@ -104,10 +118,11 @@ func (gr *GameRenderer) LoadAssets(assets fs.FS) {
 		addJob("hit1.png", &mc.Config.Hit1Image)
 		addJob("hit2.png", &mc.Config.Hit2Image)
 
-		if len(jobs) > 0 {
+	if len(jobs) > 0 {
 	loadSpritesParallel(assets, jobs, gr.graphics, &g.LoadingProgress)
 }
 	}
+	log.Printf("[LOADER] Total initialization finished in %v", time.Since(start))
 	atomic.StoreInt32(&g.LoadingProgress, 1000)
 }
 

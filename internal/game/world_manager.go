@@ -31,49 +31,31 @@ func (wm *WorldManager) LoadMapAudio() {
 	}
 	configs := make(map[string]*EntityConfig)
 
-	collect := func(id string, isNPC bool) {
-		if id == "" {
+	addConfig := func(conf *EntityConfig) {
+		if conf == nil {
 			return
 		}
-		if isNPC {
-			if conf, ok := g.characterRegistry.Characters[id]; ok {
-				configs[conf.ID] = conf
-				if conf.ArchetypeID != "" {
-					if arch, ok := g.archetypeRegistry.Archetypes[conf.ArchetypeID]; ok {
-						configs[arch.ID] = arch
-					}
-				}
+		configs[conf.ID] = conf
+		if conf.ArchetypeID != "" {
+			if arch, ok := g.archetypeRegistry.Archetypes[conf.ArchetypeID]; ok {
+				configs[arch.ID] = arch
 			}
-		}
-		if arch, ok := g.archetypeRegistry.Archetypes[id]; ok {
-			configs[arch.ID] = arch
 		}
 	}
 
 	if g.playableCharacter.Config != nil {
-		configs[g.playableCharacter.Config.ID] = g.playableCharacter.Config
-	}
-
-	allInhabs := append(g.currentMapType.Inhabitants, g.currentMapType.Characters...)
-	for _, ps := range allInhabs {
-		if ps.NPCID != "" {
-			collect(ps.NPCID, true)
-		} else if ps.NPC != "" {
-			collect(ps.NPC, true)
-		} else if ps.ArchetypeID != "" {
-			collect(ps.ArchetypeID, false)
-		} else if ps.Archetype != "" {
-			collect(ps.Archetype, false)
-		}
-	}
-
-	for _, s := range g.currentMapType.Spawns {
-		collect(s.Archetype, false)
+		addConfig(g.playableCharacter.Config)
 	}
 
 	for _, n := range g.characters {
 		if n.Config != nil {
-			configs[n.Config.ID] = n.Config
+			addConfig(n.Config)
+		}
+	}
+
+	for _, s := range g.currentMapType.Spawns {
+		if arch, ok := g.archetypeRegistry.Archetypes[s.Archetype]; ok {
+			addConfig(arch)
 		}
 	}
 
@@ -95,9 +77,6 @@ func (wm *WorldManager) LoadMapAudio() {
 				continue
 			}
 			extLen := 4
-			if strings.HasSuffix(lowerName, ".mp3") {
-				extLen = 4
-			}
 			stem := e.Name()[:len(e.Name())-extLen]
 			key := conf.ID + "/" + stem
 			if engine.GlobalAudio != nil && engine.GlobalAudio.HasSound(key) {
@@ -110,35 +89,13 @@ func (wm *WorldManager) LoadMapAudio() {
 		}
 	}
 
-	// Load ambient weather sounds
-	ambientDir := "assets/audio/ambient"
-	entries, err := fs.ReadDir(g.assets, ambientDir)
-	if err == nil {
-		for _, e := range entries {
-			if e.IsDir() {
-				continue
-			}
-			lowerName := strings.ToLower(e.Name())
-			if !strings.HasSuffix(lowerName, ".wav") && !strings.HasSuffix(lowerName, ".mp3") {
-				continue
-			}
-			extLen := 4
-			stem := e.Name()[:len(e.Name())-extLen]
-			key := "ambient/" + stem
-			if engine.GlobalAudio != nil && engine.GlobalAudio.HasSound(key) {
-				continue
-			}
-			jobs = append(jobs, &AudioLoadJob{
-				Name: key,
-				Path: ambientDir + "/" + e.Name(),
-			})
-		}
-	}
-
 	if len(jobs) > 0 {
-		DebugLog("Parallel Loading %d audio files for map...", len(jobs))
+		DebugLog("Parallel Loading %d audio files for characters/archetypes in map...", len(jobs))
 		loadAudioParallel(g.assets, jobs, &g.LoadingProgress)
 	}
+	
+	// Ensure sprites are also loaded for the same registry subset where applicable,
+	// though this uses the full registry load for now as it's less heavy than audio.
 	g.characterRegistry.LoadAssets(g.assets, g.Graphics, g.archetypeRegistry, &g.LoadingProgress)
 	log.Printf("LoadMapAudio: processed %d jobs in %v", len(jobs), time.Since(startTime))
 }

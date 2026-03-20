@@ -17,6 +17,13 @@ func NewWebGPUAIProvider() *WebGPUAIProvider {
 	}
 }
 
+// HasWebGPU returns true if the browser supports WebGPU.
+func HasWebGPU() bool {
+	gpu := js.Global().Get("navigator").Get("gpu")
+	return !gpu.IsUndefined() && !gpu.IsNull()
+}
+
+
 func (p *WebGPUAIProvider) Chat(ctx context.Context, systemPrompt, userMessage string, history []ChatMessage) <-chan AIResponse {
 	ch := make(chan AIResponse, 1)
 	

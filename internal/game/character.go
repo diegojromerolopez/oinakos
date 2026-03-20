@@ -463,10 +463,7 @@ func (c *Character) TakeDamage(amount int, attacker ActorInterface, ctx *SystemC
 	c.HitTimer = 30
 	prefix := "unknown"
 	if c.Config != nil {
-		prefix = c.Config.ID
-	}
-	if c.IsPlayerControlled && c.Config != nil && c.Config.PlayableCharacter != "" {
-		prefix = c.Config.PlayableCharacter
+		prefix = c.Config.SoundID
 	}
 	if ctx.Audio != nil {
 		ctx.Audio.PlayRandomSound(prefix + "/hit")
@@ -542,8 +539,7 @@ func (c *Character) die(attacker ActorInterface, ctx *SystemContext) {
 	c.State = ActorDead
 	if ctx.World != nil && ctx.World.Game != nil { ctx.World.Game.DropAllItems(&c.Actor) }
 	prefix := "unknown"
-	if c.Config != nil { prefix = c.Config.ID }
-	if c.IsPlayerControlled && c.Config != nil && c.Config.PlayableCharacter != "" { prefix = c.Config.PlayableCharacter }
+	if c.Config != nil { prefix = c.Config.SoundID }
 	if ctx.Audio != nil { ctx.Audio.PlayRandomSound(prefix + "/death") }
 	if attacker != nil {
 		if act := attacker.GetActor(); act != nil {
