@@ -43,7 +43,7 @@ func (g *Game) updateWeather() {
 	}
 
 	// Spawn particles
-	spawnRate := int(g.WeatherIntensity * 20)
+	spawnRate := int(g.WeatherIntensity * 8)
 	if g.CurrentWeather == WeatherRain || g.CurrentWeather == WeatherStorm {
 		for i := 0; i < spawnRate; i++ {
 			g.spawnParticle(ParticleRain)
@@ -69,7 +69,7 @@ func (g *Game) updateWeather() {
 		}
 
 		// Keep particle if it's still alive and on screen (roughly)
-		if p.Life > 0 && p.Y < float64(g.height)+20 && p.X > -20 && p.X < float64(g.width)+20 {
+		if p.Life > 0 && p.Y < float64(g.height)+20 && p.X > -220 && p.X < float64(g.width)+220 {
 			activeParticles = append(activeParticles, p)
 		}
 	}
@@ -77,9 +77,10 @@ func (g *Game) updateWeather() {
 }
 
 func (g *Game) spawnParticle(t ParticleType) {
-	// Screen-space spawning
+	// Use a wider spawn area to account for slant and ensure full screen coverage
+	spawnWidth := float64(g.width) + 400
 	p := &Particle{
-		X:    rand.Float64() * float64(g.width),
+		X:    (rand.Float64() * spawnWidth) - 200,
 		Y:    -20,
 		Type: t,
 		Life: 200 + rand.Intn(100),
