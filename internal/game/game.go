@@ -357,6 +357,11 @@ func NewGame(assets fs.FS, graphics engine.Graphics, initialMapID, initialMapTyp
 		}
 	}
 
+	// Hide system cursor
+	if input != nil {
+		input.SetCursorMode(engine.CursorModeHidden)
+	}
+
 	return g
 }
 

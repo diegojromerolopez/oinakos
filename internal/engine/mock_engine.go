@@ -86,6 +86,8 @@ func (m *MockInput) Wheel() (x, y float64) {
 	return m.WheelX, m.WheelY
 }
 
+func (m *MockInput) SetCursorMode(mode CursorMode) {}
+
 type MockShader struct{}
 
 func (m *MockShader) IsShader() {}

@@ -37,6 +37,7 @@ type Input interface {
 	IsMouseButtonPressed(button MouseButton) bool
 	IsMouseButtonJustPressed(button MouseButton) bool
 	Wheel() (x, y float64)
+	SetCursorMode(mode CursorMode)
 }
 
 type MouseButton int
@@ -44,4 +45,12 @@ type MouseButton int
 const (
 	MouseButtonLeft MouseButton = iota
 	MouseButtonRight
+)
+
+type CursorMode int
+
+const (
+	CursorModeVisible CursorMode = iota
+	CursorModeHidden
+	CursorModeCaptured
 )

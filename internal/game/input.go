@@ -64,3 +64,5 @@ func (m *MockInputManager) IsMouseButtonJustPressed(button engine.MouseButton) b
 func (m *MockInputManager) Wheel() (x, y float64) {
 	return m.WheelX, m.WheelY
 }
+
+func (m *MockInputManager) SetCursorMode(mode engine.CursorMode) {}

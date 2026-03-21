@@ -28,6 +28,8 @@ type GameRenderer struct {
 
 	fogImage   engine.Image
 	torchImage engine.Image
+
+	pointerBase engine.Image
 }
 
 func NewGameRenderer(g *Game, assets fs.FS, graphics engine.Graphics) *GameRenderer {
@@ -143,6 +145,8 @@ func (gr *GameRenderer) LoadAssets(assets fs.FS) {
 	if len(mcJobs) > 0 {
 		loadSpritesParallel(assets, mcJobs, gr.graphics, ls)
 	}
+
+	gr.pointerBase = gr.graphics.LoadSprite(assets, "assets/images/ui/pointer_base.png", true)
 	
 	log.Printf("[LOADER] Total initialization finished in %v", time.Since(start))
 	atomic.StoreInt32(&g.LoadingProgress, 1000)
@@ -325,6 +329,22 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 
 	if g.isQuitConfirmationOpen {
 		gr.drawQuitConfirmation(screen)
+	}
+
+	// Draw custom cursor
+	mx, my := g.input.MousePosition()
+
+	if gr.pointerBase != nil {
+		w, _ := gr.pointerBase.Size()
+		op := engine.NewDrawImageOptions()
+		
+		// Scale down to a reasonable cursor size (e.g. 64px)
+		scale := 64.0 / float64(w)
+		op.GeoM.Scale(scale, scale)
+		
+		// Hotspot: top-left corner at (mx, my) (User-adjusted image)
+		op.GeoM.Translate(float64(mx), float64(my))
+		screen.DrawImage(gr.pointerBase, op)
 	}
 }
 

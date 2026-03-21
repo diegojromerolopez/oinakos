@@ -15,6 +15,7 @@ func (m *mockInput) MousePosition() (x, y int) { return 0, 0 }
 func (m *mockInput) IsMouseButtonPressed(button engine.MouseButton) bool { return false }
 func (m *mockInput) IsMouseButtonJustPressed(button engine.MouseButton) bool { return false }
 func (m *mockInput) Wheel() (x, y float64) { return 0, 0 }
+func (m *mockInput) SetCursorMode(mode engine.CursorMode) {}
 
 func TestObjectLifecycle(t *testing.T) {
 

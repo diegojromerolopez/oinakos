@@ -49,6 +49,17 @@ func (e *EbitenInput) Wheel() (x, y float64) {
 	return ebiten.Wheel()
 }
 
+func (e *EbitenInput) SetCursorMode(mode CursorMode) {
+	switch mode {
+	case CursorModeVisible:
+		ebiten.SetCursorMode(ebiten.CursorModeVisible)
+	case CursorModeHidden:
+		ebiten.SetCursorMode(ebiten.CursorModeHidden)
+	case CursorModeCaptured:
+		ebiten.SetCursorMode(ebiten.CursorModeCaptured)
+	}
+}
+
 func toEbitenMouseButton(button MouseButton) ebiten.MouseButton {
 	switch button {
 	case MouseButtonLeft:

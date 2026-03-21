@@ -43,6 +43,7 @@ func (m *GenericMockInput) IsMouseButtonJustPressed(engine.MouseButton) bool { r
 func (m *GenericMockInput) Wheel() (float64, float64) { return 0, 0 }
 func (m *GenericMockInput) AppendInputChars(r []rune) []rune { return r }
 func (m *GenericMockInput) AppendJustPressedKeys(k []engine.Key) []engine.Key { return k }
+func (m *GenericMockInput) SetCursorMode(mode engine.CursorMode) {}
 
 func init() {
 	isTestingEnvironment = true

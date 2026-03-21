@@ -19,6 +19,35 @@ Oinakos is a performance-optimized, infinite isometric action RPG built in Go. T
 
 ---
 
+## 📏 Units of Measurement
+
+For historical accuracy and consistency in world-building, distances and lengths in Oinakos are measured in Ancient Roman units.
+
+| Roman Unit | English Name | Ratio to `pes` (Foot) | Metric Equivalent | Imperial Equivalent | Notes |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **digitus** | finger | 1/16 pes | ~18.5 mm | ~0.728 in | Smallest unit |
+| **uncia** | inch (thumb) | 1/12 pes | ~24.6 mm | ~0.971 in | |
+| **palmus** | palm (minor) | 1/4 pes | ~74 mm | ~2.912 in | |
+| **palmus maior** | palm length (major) | 3/4 pes | ~222 mm | ~8.737 in | |
+| **pes** | foot | 1 pes | ~296 mm | ~0.971 ft | Fundamental unit |
+| **palmipes** | foot and a palm | 1 1/4 pedes | ~370 mm | ~1.214 ft | |
+| **cubitum** | cubit | 1 1/2 pedes | ~444 mm | ~1.456 ft | |
+| **gradus** / **pes sestertius** | step | 2 1/2 pedes | ~0.74 m | ~2.427 ft | |
+| **passus** | pace | 5 pedes | ~1.48 m | ~4.854 ft | Double step |
+| **decempeda** / **pertica** | perch | 10 pedes | ~2.96 m | ~9.708 ft | Measuring rod |
+| **actus** | path, track | 120 pedes | ~35.5 m | ~116.496 ft | |
+| **stadium** | stade | 625 pedes | ~185 m | ~607.14 ft | 1/8 mile |
+| **mille passus** / **mille passuum** | (Roman) mile | 5,000 pedes | ~1.48 km | ~0.919 mi | 1,000 paces |
+| **leuga** / **leuca** | (Gallic) league | 7,500 pedes | ~2.22 km | ~1.379 mi | 1.5 miles |
+| **parasanga** | parasang | 18,750 pedes | ~5.55 km | ~3.45 mi | 30 stadia (Persian origin) |
+
+**Conversion Summary:**
+*   1 **pes** (foot) ≈ 296 mm.
+*   1 **passus** (pace) = 5 **pedes**.
+*   1 **mille passus** (Roman mile) = 1,000 **passus** = 5,000 **pedes**.
+
+---
+
 ### Data-Driven Registries
 All game content is defined in YAML under `data/` and loaded at startup:
 - **`ArchetypeRegistry`** — shared stats, sprites, audio dir, and AI profile for a category of NPC (e.g. `orc/male`).
