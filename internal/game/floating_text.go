@@ -17,8 +17,8 @@ var (
 )
 
 type FloatingText struct {
-	Text  string
-	X, Y  float64 // Cartesian coordinates
+	Text     string
+	X, Y, Z  float64 // Cartesian coordinates
 	Life  int     // Frames remaining
 	Color color.Color
 }

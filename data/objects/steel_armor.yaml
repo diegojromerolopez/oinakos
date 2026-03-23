@@ -1,0 +1,23 @@
+name: Steel Armor
+description: Polished steel plates, extremely strong and beautifully crafted. Highly protective.
+weight: 38.0
+type: armor
+slot: body
+resistance: 3500
+value: 1200
+effects:
+  protection:
+    increase: 55
+  speed:
+    increase: -0.015
+footprint:
+  - x: -1.74
+    y: -2.01
+  - x: -0.3
+    y: -1.39
+  - x: 0.27
+    y: 0.17
+  - x: -1.33
+    y: -0.23
+  - x: -2.23
+    y: -1.45

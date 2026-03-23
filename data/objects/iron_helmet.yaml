@@ -6,9 +6,9 @@ slot: head
 value: 60
 effects:
   protection:
-    increase: 1
+    increase: 5
   defense:
-    increase: 2
+    increase: 5
 footprint:
   - x: -1.58
     y: -1.98

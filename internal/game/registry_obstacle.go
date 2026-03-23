@@ -17,6 +17,7 @@ type ObstacleArchetype struct {
 	Destructible   bool                   `yaml:"destructible"` // If false, cannot be damaged
 	Description    string                 `yaml:"description"`
 	Health         int                    `yaml:"health"`        // Base health (ignored if Destructible is false)
+	Timber         int                    `yaml:"timber"`        // Available timber resources for harvesting
 	CooldownTime   float64                `yaml:"cooldown_time"` // Base cooldown in minutes
 	Footprint      []FootprintPoint       `yaml:"footprint"`
 	FrameCount     int                    `yaml:"frame_count"`     // Total number of frames

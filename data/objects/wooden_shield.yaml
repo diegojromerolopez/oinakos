@@ -6,9 +6,11 @@ slot: shield
 value: 25
 effects:
   protection:
-    increase: 1
+    increase: 8
   defense:
-    increase: 5
+    increase: 20
+  speed:
+    increase: -0.01
 footprint:
   - x: 0.38
     y: -0.69

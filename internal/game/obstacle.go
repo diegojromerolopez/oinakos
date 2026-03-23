@@ -7,8 +7,10 @@ import (
 type Obstacle struct {
 	ID            string  // Unique instance ID (e.g. from PreSpawnObstacle)
 	X, Y          float64 // Grid positions
+	Z             float64
 	Archetype     *ObstacleArchetype
 	Health        int
+	MaxHealth     int
 	CooldownTicks int
 	TickCounter   int
 	Alive         bool
@@ -21,6 +23,9 @@ func NewObstacle(id string, x, y float64, config *ObstacleArchetype) *Obstacle {
 	hp := 0 // Default indestructible
 	if config != nil {
 		hp = config.Health
+		if config.Timber > 0 {
+			hp = config.Timber
+		}
 	}
 
 	return &Obstacle{
@@ -29,6 +34,7 @@ func NewObstacle(id string, x, y float64, config *ObstacleArchetype) *Obstacle {
 		Y:             y,
 		Archetype:     config,
 		Health:        hp,
+		MaxHealth:     hp,
 		CooldownTicks: 0,
 		Alive:         true,
 		EffectTimers:  make(map[ActorInterface]int),
@@ -52,6 +58,14 @@ func (o *Obstacle) Update() {
 			// Cleanup old timers? Maybe not strictly necessary if map is small
 		}
 	}
+}
+
+func (o *Obstacle) ReduceTimber(amount int) {
+	o.TakeDamage(amount)
+}
+
+func (o *Obstacle) TimberLeft() int {
+	return o.Health
 }
 
 func (o *Obstacle) TakeDamage(amount int) {

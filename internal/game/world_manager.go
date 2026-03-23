@@ -167,6 +167,9 @@ func (wm *WorldManager) LoadMapLevel() {
 		}
 	}
 
+	// Seed procedural resources (Minerals)
+	g.currentMapType.SeedMinerals(int64(g.mapLevel) + time.Now().UnixNano())
+
 	g.playTime = 0
 	g.characters = make([]*Character, 0)
 	g.obstacles = make([]*Obstacle, 0)
@@ -211,18 +214,26 @@ func (wm *WorldManager) LoadMapLevel() {
 	if g.World != nil {
 		g.World.Items = make([]*ItemInstance, 0)
 		if g.Registries != nil && g.Registries.Objects != nil {
+			spawnedUnique := make(map[string]bool)
 			for _, o := range g.currentMapType.Objects {
 				if cfg, ok := g.Registries.Objects.Objects[o.ID]; ok {
+					if cfg.Unique && spawnedUnique[cfg.ID] {
+						continue // skip duplicates of unique items
+					}
 					// Ensure items are not overlapping obstacles
 					safeX, safeY := findSafePosition(o.X, o.Y, engine.Circle{Radius: 0.5}, g.obstacles)
 					it := &ItemInstance{
 						ID:       fmt.Sprintf("%s_%d", cfg.ID, rand.Int()),
 						Config:   cfg,
+						Resistance: cfg.Resistance,
 						X:        safeX,
 						Y:        safeY,
 						Pickable: true,
 					}
 					g.World.Items = append(g.World.Items, it)
+					if cfg.Unique {
+						spawnedUnique[cfg.ID] = true
+					}
 				}
 			}
 		}
@@ -257,7 +268,7 @@ func (wm *WorldManager) LoadMapLevel() {
 			tpY := g.playableCharacter.Y + (rand.Float64()*40 - 20)
 			if tpX > -5 && tpX < 5 { tpX += 10 }
 			if tpY > -5 && tpY < 5 { tpY += 10 }
-			vip := NewCharacter(tpX, tpY, vipConfig, g.mapLevel*2, false)
+			vip := NewCharacter(tpX, tpY, vipConfig, g.mapLevel*2, false, g.Registries.Objects)
 			vip.MaxHealth *= g.mapLevel * 2
 			vip.Health = vip.MaxHealth
 			vip.BaseAttack += g.mapLevel * 2
@@ -300,7 +311,7 @@ func (wm *WorldManager) LoadMapLevel() {
 			g.currentMapType.TargetPoint = engine.Point{X: g.playableCharacter.X + offX, Y: g.playableCharacter.Y + offY}
 		}
 		if config, ok := g.archetypeRegistry.Archetypes["magi_male"]; ok {
-			escort := NewCharacter(g.playableCharacter.X+2, g.playableCharacter.Y+2, config, g.mapLevel, false)
+			escort := NewCharacter(g.playableCharacter.X+2, g.playableCharacter.Y+2, config, g.mapLevel, false, g.Registries.Objects)
 			escort.LoadEquipment(g.Registries.Objects)
 			escort.MustSurvive = true
 			g.characters = append([]*Character{escort}, g.characters...)
@@ -351,7 +362,7 @@ func (wm *WorldManager) LoadMapLevel() {
 				g.playableCharacter.X, g.playableCharacter.Y = ps.X, ps.Y
 				continue
 			}
-			npc := NewCharacter(ps.X, ps.Y, config, g.mapLevel, false)
+			npc := NewCharacter(ps.X, ps.Y, config, g.mapLevel, false, g.Registries.Objects)
 			npc.Alignment, npc.MustSurvive, npc.IsTarget = ps.Alignment, ps.MustSurvive, ps.IsTarget
 			if ps.Name != "" { npc.Name = ps.Name }
 			if ps.State == "dead" { npc.Health, npc.State = 0, ActorDead }
@@ -461,7 +472,7 @@ func (wm *WorldManager) spawnNPCNearPosition(x, y float64, sc *SpawnConfig) {
 		}
 		if len(variants) > 0 { npcConfig = variants[rand.Intn(len(variants))] }
 	}
-	npc := NewCharacter(x, y, npcConfig, g.mapLevel, false)
+	npc := NewCharacter(x, y, npcConfig, g.mapLevel, false, g.Registries.Objects)
 	npc.Alignment = sc.Alignment
 	for i := 0; i < 10; i++ {
 		collides := false
@@ -489,7 +500,7 @@ func (wm *WorldManager) spawnNPCAtMapEdges(sc *SpawnConfig) {
 		if len(variants) > 0 { npcConfig = variants[rand.Intn(len(variants))] }
 	}
 	angle := rand.Float64() * 2 * math.Pi
-	npc := NewCharacter(g.playableCharacter.X+math.Cos(angle)*30, g.playableCharacter.Y+math.Sin(angle)*30, npcConfig, g.mapLevel, false)
+	npc := NewCharacter(g.playableCharacter.X+math.Cos(angle)*30, g.playableCharacter.Y+math.Sin(angle)*30, npcConfig, g.mapLevel, false, g.Registries.Objects)
 	npc.Alignment = sc.Alignment
 	for i := 0; i < 10; i++ {
 		collides := false

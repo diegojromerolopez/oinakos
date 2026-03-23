@@ -11,16 +11,7 @@ import (
 func TestSaveLoad(t *testing.T) {
 	g := NewGame(nil, &engine.MockGraphics{}, "data/maps/test_save.yaml", "", "", &MockInputManager{}, &MockAudioManager{}, false, "0.1-test")
 	// Add NPC and Obstacle to test persistence
-	n := NewCharacter(10, 20, &EntityConfig{ID: "orc", XP: 10, Stats: struct {
-		HealthMin            int     `yaml:"health_min"`
-		HealthMax            int     `yaml:"health_max"`
-		Speed                float64 `yaml:"speed"`
-		BaseAttack           int     `yaml:"base_attack"`
-		BaseDefense          int     `yaml:"base_defense"`
-		AttackCooldown       int     `yaml:"attack_cooldown"`
-		AttackRange               float64 `yaml:"attack_range"`
-		ProjectileSpeed           float64 `yaml:"projectile_speed"`
-	}{HealthMin: 100, HealthMax: 100}}, 1, false)
+	n := NewCharacter(10, 20, &EntityConfig{ID: "orc", XP: 10, Stats: EntityStats{HealthMin: 100, HealthMax: 100}}, 1, false, nil)
 	g.World.Characters = []*Character{n}
 	g.characters = []*Character{n}
 	
@@ -190,6 +181,15 @@ func TestLoad_Errors(t *testing.T) {
 	err = g.Load(emptyPath)
 	if err != nil {
 		t.Errorf("Loading empty file should not fail, got: %v", err)
+	}
+
+	// 4. Map template instead of save
+	templatePath := filepath.Join(saveDir, "template.yaml")
+	os.WriteFile(templatePath, []byte("floor_tile: grass.png"), 0644)
+	defer os.Remove(templatePath)
+	err = g.Load(templatePath)
+	if err == nil || !strings.Contains(err.Error(), "map template") {
+		t.Errorf("Expected error loading map template, got: %v", err)
 	}
 }
 

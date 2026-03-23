@@ -3,6 +3,8 @@ description: A legendary blade with a faint glow.
 weight: 15.0
 type: weapon
 slot: weapon
+unique: true
+resistance: 450
 value: 1000
 combat:
   name: Tizon
@@ -11,7 +13,6 @@ combat:
   damage:
     min: 15
     max: 25
-  weight: 15.0
 footprint:
   - x: -2.28
     y: -2.34

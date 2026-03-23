@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image/color"
 	"math"
+	"strings"
 	"oinakos/internal/engine"
 	"oinakos/internal/game"
 
@@ -65,6 +66,10 @@ func (m *MapEditor) drawEditor(screen *ebiten.Image) {
 		if floorImg != nil {
 			m.Renderer.DrawTileMap(eImg, offsetX, offsetY, func(x, y int) engine.Image {
 				return floorImg
+			}, func(x, y int) float64 {
+				if m.MapData.Map.Heightmap == nil { return 0 }
+				key := fmt.Sprintf("%d,%d", x, y)
+				return m.MapData.Map.Heightmap[key]
 			})
 		}
 	}
@@ -97,7 +102,7 @@ func (m *MapEditor) drawEditor(screen *ebiten.Image) {
 			}
 		}
 		if arch != nil {
-			npc := game.NewCharacter(npcData.X, npcData.Y, arch, 1, false)
+			npc := game.NewCharacter(npcData.X, npcData.Y, arch, 1, false, nil)
 			npc.Draw(eImg, m.Graphics, m.Graphics, nil, offsetX, offsetY)
 			if m.Selection != nil && m.Selection.ID == fmt.Sprintf("npc_%d", i) {
 				ix, iy := engine.CartesianToIso(npcData.X, npcData.Y)
@@ -139,7 +144,26 @@ func (m *MapEditor) drawEditor(screen *ebiten.Image) {
 	}
 
 	m.Graphics.DebugPrintAt(eImg, "MAP EDITOR - "+m.InName, sidebarWidth+20, 20, colorText)
-	if m.PendingItem != nil {
+	if m.ElevationMode {
+		m.Graphics.DebugPrintAt(eImg, "ELEVATION MODE: "+strings.ToUpper(m.ElevationTool), screenWidth/2-100, 20, colorSelect)
+		if m.ElevationP1 != nil {
+			m.Graphics.DebugPrintAt(eImg, fmt.Sprintf("P1: (%d,%d)", int(m.ElevationP1.X), int(m.ElevationP1.Y)), screenWidth/2-100, 40, colorSelect)
+		}
+		mx, my := m.Input.MousePosition()
+		worldX := float64(mx) - (sidebarWidth + (screenWidth-2*sidebarWidth)/2) + m.CamX
+		worldY := float64(my) - (screenHeight / 2) + m.CamY
+		cx, cy := engine.IsoToCartesian(worldX, worldY)
+		gridX := int(math.Floor(cx))
+		gridY := int(math.Floor(cy))
+		
+		key := fmt.Sprintf("%d,%d", gridX, gridY)
+		var z float64
+		if m.MapData.Map.Heightmap != nil {
+			z = m.MapData.Map.Heightmap[key]
+		}
+		m.Graphics.DebugPrintAt(eImg, fmt.Sprintf("Hover: (%d,%d) Z: %.1f", gridX, gridY, z), screenWidth/2-100, 60, colorSelect)
+		m.Graphics.DebugPrintAt(eImg, "Controls: [B] Brush  [F] Flatten  [S] Slope", screenWidth/2-100, 80, colorText)
+	} else if m.PendingItem != nil {
 		m.Graphics.DebugPrintAt(eImg, "PLACING: "+m.PendingItem.ID, screenWidth/2-50, 50, colorSelect)
 	}
 }

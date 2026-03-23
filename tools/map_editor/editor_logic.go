@@ -216,3 +216,89 @@ func (m *MapEditor) syncToSaveData() {
 	}
 	m.saveMap()
 }
+
+func (m *MapEditor) handleElevationClick(mx, my int, increase bool) {
+	worldX := float64(mx) - (sidebarWidth + (screenWidth-2*sidebarWidth)/2) + m.CamX
+	worldY := float64(my) - (screenHeight / 2) + m.CamY
+	cx, cy := engine.IsoToCartesian(worldX, worldY)
+	
+	gridX := int(math.Floor(cx))
+	gridY := int(math.Floor(cy))
+	key := fmt.Sprintf("%d,%d", gridX, gridY)
+
+	if m.MapData.Map.Heightmap == nil {
+		m.MapData.Map.Heightmap = make(map[string]float64)
+	}
+
+	if m.ElevationTool == "brush" {
+		val := m.MapData.Map.Heightmap[key]
+		if increase {
+			val += 0.5
+		} else {
+			val -= 0.5
+		}
+		if val == 0 {
+			delete(m.MapData.Map.Heightmap, key)
+		} else {
+			m.MapData.Map.Heightmap[key] = val
+		}
+	} else if m.ElevationTool == "flatten" || m.ElevationTool == "slope" {
+		pt := engine.Point{X: float64(gridX), Y: float64(gridY)}
+		if increase {
+			if m.ElevationP1 == nil {
+				m.ElevationP1 = &pt
+			} else {
+				p2 := pt
+				if m.ElevationTool == "flatten" {
+					p1Key := fmt.Sprintf("%d,%d", int(m.ElevationP1.X), int(m.ElevationP1.Y))
+					targetZ := m.MapData.Map.Heightmap[p1Key]
+					
+					minX := int(math.Min(m.ElevationP1.X, p2.X))
+					maxX := int(math.Max(m.ElevationP1.X, p2.X))
+					minY := int(math.Min(m.ElevationP1.Y, p2.Y))
+					maxY := int(math.Max(m.ElevationP1.Y, p2.Y))
+					
+					for y := minY; y <= maxY; y++ {
+						for x := minX; x <= maxX; x++ {
+							k := fmt.Sprintf("%d,%d", x, y)
+							if targetZ == 0 {
+								delete(m.MapData.Map.Heightmap, k)
+							} else {
+								m.MapData.Map.Heightmap[k] = targetZ
+							}
+						}
+					}
+				} else if m.ElevationTool == "slope" {
+					p1Key := fmt.Sprintf("%d,%d", int(m.ElevationP1.X), int(m.ElevationP1.Y))
+					z1 := m.MapData.Map.Heightmap[p1Key]
+					p2Key := fmt.Sprintf("%d,%d", int(p2.X), int(p2.Y))
+					z2 := m.MapData.Map.Heightmap[p2Key]
+					
+					steps := math.Max(math.Abs(p2.X-m.ElevationP1.X), math.Abs(p2.Y-m.ElevationP1.Y))
+					if steps > 0 {
+						dx := (p2.X - m.ElevationP1.X) / steps
+						dy := (p2.Y - m.ElevationP1.Y) / steps
+						dz := (z2 - z1) / steps
+						
+						for i := 0; i <= int(steps); i++ {
+							currX := int(math.Round(m.ElevationP1.X + float64(i)*dx))
+							currY := int(math.Round(m.ElevationP1.Y + float64(i)*dy))
+							currZ := z1 + float64(i)*dz
+							
+							k := fmt.Sprintf("%d,%d", currX, currY)
+							if currZ == 0 {
+								delete(m.MapData.Map.Heightmap, k)
+							} else {
+								m.MapData.Map.Heightmap[k] = currZ
+							}
+						}
+					}
+				}
+				m.ElevationP1 = nil
+			}
+		} else {
+			m.ElevationP1 = nil
+		}
+	}
+	m.saveMap()
+}

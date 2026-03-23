@@ -2,43 +2,54 @@ package game
 
 import "image"
 
+type ItemInstanceSaveData struct {
+	ID         string  `yaml:"id"`
+	Resistance int     `yaml:"resistance,omitempty"`
+	X          float64 `yaml:"x,omitempty"`
+	Y          float64 `yaml:"y,omitempty"`
+}
+
 type PlayerSaveData struct {
-	ArchetypeID string         `yaml:"archetype_id"`
-	X           float64        `yaml:"x"`
-	Y           float64        `yaml:"y"`
-	Health      int            `yaml:"health"`
-	MaxHealth   int            `yaml:"max_health"`
-	XP          int            `yaml:"xp"`
-	Level       int            `yaml:"level"`
-	Kills       int            `yaml:"kills"`
-	MapKills    map[string]int `yaml:"map_kills"`
-	BaseAttack  int            `yaml:"base_attack"`
-	BaseDefense int            `yaml:"base_defense"`
-	Weapon      *Weapon           `yaml:"weapon"`
-	Inventory   []string          `yaml:"inventory,omitempty"`
-	Slots       map[string]string `yaml:"slots,omitempty"`
-	Trauma      PhysicalTrauma    `yaml:"trauma,omitempty"`
+	ArchetypeID string                           `yaml:"archetype_id"`
+	X           float64                          `yaml:"x"`
+	Y           float64                          `yaml:"y"`
+	Health      int                              `yaml:"health"`
+	MaxHealth   int                              `yaml:"max_health"`
+	XP          int                              `yaml:"xp"`
+	Level       int                              `yaml:"level"`
+	Kills       int                              `yaml:"kills"`
+	MapKills    map[string]int                   `yaml:"map_kills"`
+	BaseAttack  int                              `yaml:"base_attack"`
+	BaseDefense int                              `yaml:"base_defense"`
+	BaseProtection int                           `yaml:"base_protection"`
+	Energy      float64                          `yaml:"energy"`
+	Weapon      *Weapon                          `yaml:"weapon"`
+	Inventory   []ItemInstanceSaveData           `yaml:"inventory,omitempty"`
+	Slots       map[string]ItemInstanceSaveData  `yaml:"slots,omitempty"`
+	Trauma      PhysicalTrauma                   `yaml:"trauma,omitempty"`
 }
 
 type NPCSaveData struct {
-	ArchetypeID string            `yaml:"archetype_id,omitempty"`
-	NPCID       string            `yaml:"npc_id,omitempty"`
-	X           float64           `yaml:"x"`
-	Y           float64           `yaml:"y"`
-	Health      int               `yaml:"health"`
-	MaxHealth   int               `yaml:"max_health"`
-	Level       int               `yaml:"level"`
-	Behavior    string            `yaml:"behavior"`
-	Name        string            `yaml:"name,omitempty"`
-	Alignment   Alignment         `yaml:"alignment,omitempty"`
-	Group       string            `yaml:"group,omitempty"`
-	LeaderID    string            `yaml:"leader_id,omitempty"`
-	MustSurvive bool              `yaml:"must_survive,omitempty"`
-	BaseAttack  int               `yaml:"base_attack,omitempty"`
-	BaseDefense int               `yaml:"base_defense,omitempty"`
-	Inventory   []string          `yaml:"inventory,omitempty"`
-	Slots       map[string]string `yaml:"slots,omitempty"`
-	Trauma      PhysicalTrauma    `yaml:"trauma,omitempty"`
+	ArchetypeID string                           `yaml:"archetype_id,omitempty"`
+	NPCID       string                           `yaml:"npc_id,omitempty"`
+	X           float64                          `yaml:"x"`
+	Y           float64                          `yaml:"y"`
+	Health      int                              `yaml:"health"`
+	MaxHealth   int                              `yaml:"max_health"`
+	Level       int                              `yaml:"level"`
+	Behavior    string                           `yaml:"behavior"`
+	Name        string                           `yaml:"name,omitempty"`
+	Alignment   Alignment                        `yaml:"alignment,omitempty"`
+	Group       string                           `yaml:"group,omitempty"`
+	LeaderID    string                           `yaml:"leader_id,omitempty"`
+	MustSurvive bool                             `yaml:"must_survive,omitempty"`
+	BaseAttack  int                              `yaml:"base_attack,omitempty"`
+	BaseDefense int                              `yaml:"base_defense,omitempty"`
+	BaseProtection int                           `yaml:"base_protection,omitempty"`
+	Energy      float64                          `yaml:"energy,omitempty"`
+	Inventory   []ItemInstanceSaveData           `yaml:"inventory,omitempty"`
+	Slots       map[string]ItemInstanceSaveData  `yaml:"slots,omitempty"`
+	Trauma      PhysicalTrauma                   `yaml:"trauma,omitempty"`
 }
 
 type ObstacleSaveData struct {
@@ -51,11 +62,7 @@ type ObstacleSaveData struct {
 	Disabled      bool     `yaml:"disabled,omitempty"`
 }
 
-type ItemSaveData struct {
-	ID   string  `yaml:"id"`
-	X    float64 `yaml:"x"`
-	Y    float64 `yaml:"y"`
-}
+type ItemSaveData = ItemInstanceSaveData
 
 type SaveData struct {
 	Map struct {
@@ -77,6 +84,7 @@ type SaveData struct {
 		FloorTile  string       `yaml:"floor_tile,omitempty"`
 		FloorZones []*FloorZone `yaml:"floor_zones,omitempty"`
 		ExploredTiles []image.Point `yaml:"explored_tiles,omitempty"`
+		Heightmap     map[string]float64 `yaml:"heightmap,omitempty"`
 	} `yaml:"map"`
 	Player    PlayerSaveData     `yaml:"player"`
 	Characters []NPCSaveData      `yaml:"characters"`

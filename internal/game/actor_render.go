@@ -40,7 +40,27 @@ func DrawActorGetSprite(a *Actor) engine.Image {
 		if img := a.Config.PickAttackImage(a.Tick / cooldown); img != nil {
 			drawSprite = img
 		}
-	} else if a.State == ActorCrouching {
+	} else if a.State == ActorChopping {
+		if a.Config.ChoppingImage != nil {
+			drawSprite = a.Config.ChoppingImage
+		} else {
+			// Fallback to attack image
+			cooldown := 30
+			if img := a.Config.PickAttackImage(a.Tick / cooldown); img != nil {
+				drawSprite = img
+			}
+		}
+	} else if a.State == ActorDigging {
+		if a.Config.DiggingImage != nil {
+			drawSprite = a.Config.DiggingImage
+		} else {
+			// Fallback to attack image
+			cooldown := 30
+			if img := a.Config.PickAttackImage(a.Tick / cooldown); img != nil {
+				drawSprite = img
+			}
+		}
+	} else if a.State == ActorCrouching || a.State == ActorResting {
 		if img := a.Config.CrouchImage; img != nil {
 			return img
 		}
@@ -52,7 +72,7 @@ func DrawActorGetSprite(a *Actor) engine.Image {
 
 // DrawActorGetOptions returns the DrawImageOptions for an actor.
 func DrawActorGetOptions(a *Actor, offsetX, offsetY float64, isPlayableCharacter bool) *engine.DrawImageOptions {
-	isoX, isoY := engine.CartesianToIso(a.X, a.Y)
+	isoX, isoY := engine.CartesianToIsoZ(a.X, a.Y, a.Z)
 	drawSprite := DrawActorGetSprite(a)
 	if drawSprite == nil {
 		return engine.NewDrawImageOptions()
@@ -108,6 +128,19 @@ func DrawActorGetOptions(a *Actor, offsetX, offsetY float64, isPlayableCharacter
 			}
 		}
 
+		if flip < 0 {
+			tx += lungeAmt
+		} else {
+			tx -= lungeAmt
+		}
+	} else if a.State == ActorChopping || a.State == ActorDigging {
+		// Similar to attack lunge
+		lungeAmt := 0.0
+		if a.Tick < 15 {
+			lungeAmt = (float64(a.Tick) / 15.0) * 5.0
+		} else {
+			lungeAmt = (float64(30-a.Tick) / 15.0) * 5.0
+		}
 		if flip < 0 {
 			tx += lungeAmt
 		} else {
@@ -184,7 +217,7 @@ func DrawActorUI(g *Game, a *Actor, screen engine.Image, textRenderer engine.Tex
 		return
 	}
 
-	isoX, isoY := engine.CartesianToIso(a.X, a.Y)
+	isoX, isoY := engine.CartesianToIsoZ(a.X, a.Y, a.Z)
 
 	// If occluded, draw the alignment indicator (solid) on top
 	if a.IsOccluded {
@@ -224,29 +257,37 @@ func DrawActorUI(g *Game, a *Actor, screen engine.Image, textRenderer engine.Tex
 		}
 	}
 
-	// UI Elements (Health bar for NPCs, Names)
-	if !isPlayableCharacter {
-		// Health Bar for NPCs
-		barWidth := 40.0
-		barHeight := 4.0
-		bx := isoX + offsetX - barWidth/2
-		
-		// Use sprite height if available for positioning
-		h := 160.0 // Default 160x160
-		if img := a.Config.StaticImage; img != nil {
-			_, ih := img.Size()
-			h = float64(ih)
-		}
-		by := isoY + offsetY - h*0.9
+	// UI Elements (Health and Energy bars for characters, Names)
+	barWidth := 40.0
+	barHeight := 3.0
+	bx := isoX + offsetX - barWidth/2
+	
+	// Use sprite height if available for positioning
+	h := 160.0 // Default 160x160
+	if a.Config != nil && a.Config.StaticImage != nil {
+		_, ih := a.Config.StaticImage.Size()
+		h = float64(ih)
+	}
+	by := isoY + offsetY - h*0.9
 
-		if vectorRenderer != nil {
-			vectorRenderer.DrawFilledRect(screen, float32(bx), float32(by), float32(barWidth), float32(barHeight), color.RGBA{100, 0, 0, 255}, false)
-			if a.MaxHealth > 0 {
-				hpFrac := float32(a.Health) / float32(a.MaxHealth)
-				if hpFrac > 0 {
-					vectorRenderer.DrawFilledRect(screen, float32(bx), float32(by), float32(barWidth)*hpFrac, float32(barHeight), color.RGBA{0, 255, 0, 255}, false)
-				}
+	if vectorRenderer != nil {
+		// 1. Health Bar
+		vectorRenderer.DrawFilledRect(screen, float32(bx), float32(by), float32(barWidth), float32(barHeight), color.RGBA{80, 0, 0, 255}, false)
+		if a.MaxHealth > 0 {
+			hpFrac := float32(a.Health) / float32(a.MaxHealth)
+			if hpFrac > 1 { hpFrac = 1 }
+			if hpFrac > 0 {
+				vectorRenderer.DrawFilledRect(screen, float32(bx), float32(by), float32(barWidth)*hpFrac, float32(barHeight), color.RGBA{0, 255, 0, 255}, false)
 			}
+		}
+
+		// 2. Energy Bar (just below health)
+		ebY := by + barHeight + 1
+		vectorRenderer.DrawFilledRect(screen, float32(bx), float32(ebY), float32(barWidth), float32(barHeight-1), color.RGBA{0, 0, 80, 255}, false)
+		enFrac := float32(a.Energy) / 100.0 // Max energy is implicitly 100
+		if enFrac > 1 { enFrac = 1 }
+		if enFrac > 0 {
+			vectorRenderer.DrawFilledRect(screen, float32(bx), float32(ebY), float32(barWidth)*enFrac, float32(barHeight-1), color.RGBA{0, 150, 255, 255}, false)
 		}
 	}
 

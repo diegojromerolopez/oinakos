@@ -79,6 +79,12 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 	if data.Map.FloorTile != "" { g.currentMapType.FloorTile = data.Map.FloorTile }
 	if len(data.Map.FloorZones) > 0 { g.currentMapType.FloorZones = data.Map.FloorZones }
 
+	if data.Map.Heightmap != nil {
+		g.currentMapType.Heightmap = data.Map.Heightmap
+	} else if g.currentMapType.Heightmap == nil {
+		g.currentMapType.Heightmap = make(map[string]float64)
+	}
+
 	g.ExploredTiles = make(map[image.Point]bool)
 	for _, pt := range data.Map.ExploredTiles {
 		g.ExploredTiles[pt] = true
@@ -104,16 +110,24 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 	
 	// Load inventory
 	g.playableCharacter.Inventory = nil
-	for _, objID := range data.Player.Inventory {
-		if obj, ok := g.Registries.Objects.Objects[objID]; ok {
-			g.playableCharacter.Inventory = append(g.playableCharacter.Inventory, obj)
+	for _, itemData := range data.Player.Inventory {
+		if config, ok := g.Registries.Objects.Objects[itemData.ID]; ok {
+			instance := NewItemInstance(itemData.ID, config, g.playableCharacter.X, g.playableCharacter.Y)
+			if itemData.Resistance > 0 {
+				instance.Resistance = itemData.Resistance
+			}
+			g.playableCharacter.Inventory = append(g.playableCharacter.Inventory, instance)
 		}
 	}
 	// Load slots
-	g.playableCharacter.Slots = make(map[string]*ObjectConfig)
-	for slot, objID := range data.Player.Slots {
-		if obj, ok := g.Registries.Objects.Objects[objID]; ok {
-			g.playableCharacter.Slots[slot] = obj
+	g.playableCharacter.Slots = make(map[string]*ItemInstance)
+	for slot, itemData := range data.Player.Slots {
+		if config, ok := g.Registries.Objects.Objects[itemData.ID]; ok {
+			instance := NewItemInstance(itemData.ID, config, g.playableCharacter.X, g.playableCharacter.Y)
+			if itemData.Resistance > 0 {
+				instance.Resistance = itemData.Resistance
+			}
+			g.playableCharacter.Slots[slot] = instance
 		}
 	}
 	g.playableCharacter.UpdateEffects()
@@ -121,37 +135,22 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 	g.playableCharacter.MaxHealth = data.Player.MaxHealth
 	g.playableCharacter.BaseAttack = data.Player.BaseAttack
 	g.playableCharacter.BaseDefense = data.Player.BaseDefense
+	g.playableCharacter.BaseProtection = data.Player.BaseProtection
+	g.playableCharacter.Energy = data.Player.Energy
 	if data.Player.Weapon != nil {
 		g.playableCharacter.Weapon = data.Player.Weapon
 	}
 
-	// Load NPC inventory
-	for i := range g.characters {
-		if i < len(data.Characters) {
-			npc := g.characters[i]
-			npcData := data.Characters[i]
-			npc.Inventory = nil
-			for _, objID := range npcData.Inventory {
-				if obj, ok := g.Registries.Objects.Objects[objID]; ok {
-					npc.Inventory = append(npc.Inventory, obj)
-				}
-			}
-			// Load slots
-			npc.Slots = make(map[string]*ObjectConfig)
-			for slot, objID := range npcData.Slots {
-				if obj, ok := g.Registries.Objects.Objects[objID]; ok {
-					npc.Slots[slot] = obj
-				}
-			}
-			npc.UpdateEffects()
-		}
-	}
 
 	// Load floor items
 	g.World.Items = nil
 	for _, itemData := range data.Items {
 		if config, ok := g.Registries.Objects.Objects[itemData.ID]; ok {
-			g.World.Items = append(g.World.Items, NewItemInstance(itemData.ID, config, itemData.X, itemData.Y))
+			instance := NewItemInstance(itemData.ID, config, itemData.X, itemData.Y)
+			if itemData.Resistance > 0 {
+				instance.Resistance = itemData.Resistance
+			}
+			g.World.Items = append(g.World.Items, instance)
 		}
 	}
 
@@ -186,12 +185,14 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 			log.Printf("Warning: saved NPC/Archetype ID %s not found in any registry", nData.ArchetypeID)
 			continue
 		}
-		n := NewCharacter(nData.X, nData.Y, config, nData.Level, false)
+		n := NewCharacter(nData.X, nData.Y, config, nData.Level, false, g.Registries.Objects)
 		n.Health = nData.Health
 		n.MaxHealth = nData.MaxHealth
 		if nData.Name != "" { n.Name = nData.Name }
 		if nData.BaseAttack > 0 { n.BaseAttack = nData.BaseAttack }
 		if nData.BaseDefense > 0 { n.BaseDefense = nData.BaseDefense }
+		if nData.BaseProtection > 0 { n.BaseProtection = nData.BaseProtection }
+		n.Energy = nData.Energy
 
 		switch nData.Behavior {
 		case "wander": n.Behavior = BehaviorWander
@@ -207,8 +208,30 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 		if nData.LeaderID != "" { n.LeaderID = nData.LeaderID }
 		if nData.MustSurvive { n.MustSurvive = nData.MustSurvive }
 
+		// Load inventory and slots
+		n.Inventory = nil
+		for _, itemData := range nData.Inventory {
+			if config, ok := g.Registries.Objects.Objects[itemData.ID]; ok {
+				instance := NewItemInstance(itemData.ID, config, n.X, n.Y)
+				if itemData.Resistance > 0 {
+					instance.Resistance = itemData.Resistance
+				}
+				n.Inventory = append(n.Inventory, instance)
+			}
+		}
+		n.Slots = make(map[string]*ItemInstance)
+		for slot, itemData := range nData.Slots {
+			if config, ok := g.Registries.Objects.Objects[itemData.ID]; ok {
+				instance := NewItemInstance(itemData.ID, config, n.X, n.Y)
+				if itemData.Resistance > 0 {
+					instance.Resistance = itemData.Resistance
+				}
+				n.Slots[slot] = instance
+			}
+		}
+		
 		if n.Health <= 0 { n.State = ActorDead }
-		n.LoadEquipment(g.Registries.Objects)
+		n.UpdateEffects()
 		g.characters = append(g.characters, n)
 	}
 

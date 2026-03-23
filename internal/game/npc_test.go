@@ -74,23 +74,14 @@ func TestNewCharacter(t *testing.T) {
 	arch := &EntityConfig{
 		ID:   "orc",
 		Name: "Orc",
-		Stats: struct {
-			HealthMin       int     `yaml:"health_min"`
-			HealthMax       int     `yaml:"health_max"`
-			Speed           float64 `yaml:"speed"`
-			BaseAttack      int     `yaml:"base_attack"`
-			BaseDefense     int     `yaml:"base_defense"`
-			AttackCooldown  int     `yaml:"attack_cooldown"`
-			AttackRange          float64 `yaml:"attack_range"`
-			ProjectileSpeed      float64 `yaml:"projectile_speed"`
-		}{
+		Stats: EntityStats{
 			HealthMin:   50,
 			HealthMax:   50,
 			BaseAttack:  10,
 			BaseDefense: 5,
 		},
 	}
-	n := NewCharacter(10, 20, arch, 1, false)
+	n := NewCharacter(10, 20, arch, 1, false, nil)
 	if n.X != 10 || n.Y != 20 {
 		t.Errorf("Position: got (%v, %v), want (10, 20)", n.X, n.Y)
 	}
@@ -100,7 +91,7 @@ func TestNewCharacter(t *testing.T) {
 }
 
 func TestNPCCollisionCircle(t *testing.T) {
-	n := NewCharacter(10, 10, nil, 1, false)
+	n := NewCharacter(10, 10, nil, 1, false, nil)
 	c := n.GetCollisionCircle()
 	if c.Radius <= 0 {
 		t.Error("NPC Collision circle should have radius > 0")
@@ -109,7 +100,7 @@ func TestNPCCollisionCircle(t *testing.T) {
 
 func TestNPCAllyFollowing(t *testing.T) {
 	ctx := NewTestContext()
-	n := NewCharacter(0, 0, nil, 1, false)
+	n := NewCharacter(0, 0, nil, 1, false, nil)
 	n.Alignment = AlignmentAlly
 	n.Behavior = BehaviorWander // Fix flakiness: avoid default random behavior clearing TargetActor
 	mc := &Character{Actor: Actor{X: 10, Y: 10, State: ActorIdle}, IsPlayerControlled: true}
@@ -128,7 +119,7 @@ func TestNPCAllyFollowing(t *testing.T) {
 }
 
 func TestNPCCollision(t *testing.T) {
-	n := NewCharacter(10, 10, nil, 1, false)
+	n := NewCharacter(10, 10, nil, 1, false, nil)
 	obs := []*Obstacle{NewObstacle("test_npc_collider", 10.5, 10.5, nil)}
 	if !n.checkCollisionAt(10.5, 10.5, obs) {
 		t.Error("Expected collision at 10.5, 10.5")
@@ -137,11 +128,11 @@ func TestNPCCollision(t *testing.T) {
 
 func TestNPCUpdate_Behaviors(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewCharacter(10, 10, nil, 1, true)
+	mc := NewCharacter(10, 10, nil, 1, true, nil)
 	mc.Health = 100
 	ctx.World.PlayableCharacter = mc
 
-	n := NewCharacter(0, 0, nil, 1, false)
+	n := NewCharacter(0, 0, nil, 1, false, nil)
 	n.Health = 100
 	n.Speed = 1.0
 	ctx.World.Characters = []*Character{n}
@@ -189,10 +180,10 @@ func TestNPCUpdate_Behaviors(t *testing.T) {
 	// 4. BehaviorNpcFighter (targets nearest living NPC except self)
 	n.Behavior = BehaviorNpcFighter
 	n.TargetActor = nil
-	targetNPC := NewCharacter(5, 5, nil, 1, false)
+	targetNPC := NewCharacter(5, 5, nil, 1, false, nil)
 	targetNPC.Health = 100
 	targetNPC.Alignment = AlignmentAlly
-	deadNPC := NewCharacter(2, 2, nil, 1, false)
+	deadNPC := NewCharacter(2, 2, nil, 1, false, nil)
 	deadNPC.Health = 0
 	deadNPC.State = ActorDead
 	ctx.World.Characters = []*Character{n, deadNPC, targetNPC}
@@ -230,19 +221,10 @@ func TestNPCUpdate_Behaviors(t *testing.T) {
 func TestNPC_MeleeAttack(t *testing.T) {
 	rand.Seed(1) // Ensure deterministic attack rolls so hit guarantees do not flip on the 5% margin within CI
 	ctx := NewTestContext()
-	mc := NewCharacter(0.5, 0, nil, 1, true) // Very close
+	mc := NewCharacter(0.5, 0, nil, 1, true, nil) // Very close
 	ctx.World.PlayableCharacter = mc
 
-	arch := &EntityConfig{Stats: struct {
-		HealthMin            int     `yaml:"health_min"`
-		HealthMax            int     `yaml:"health_max"`
-		Speed                float64 `yaml:"speed"`
-		BaseAttack           int     `yaml:"base_attack"`
-		BaseDefense          int     `yaml:"base_defense"`
-		AttackCooldown       int     `yaml:"attack_cooldown"`
-		AttackRange               float64 `yaml:"attack_range"`
-		ProjectileSpeed           float64 `yaml:"projectile_speed"`
-	}{
+	arch := &EntityConfig{Stats: EntityStats{
 		HealthMin:      50,
 		HealthMax:      50,
 		BaseAttack:     1000, // Guarantee hit
@@ -251,7 +233,7 @@ func TestNPC_MeleeAttack(t *testing.T) {
 		AttackCooldown: 60,
 		Speed:          1.0,
 	}, Behavior: "hunter"}
-	n := NewCharacter(0, 0, arch, 1, false)
+	n := NewCharacter(0, 0, arch, 1, false, nil)
 	n.TargetActor = &mc.Actor
 	n.Weapon = &Weapon{Name: "TestWeapon", Damage: Damage{Min: 10, Max: 10}}
 	n.AttackTimer = 60 // Ready to attack
@@ -276,7 +258,7 @@ func TestNPC_MeleeAttack(t *testing.T) {
 
 	// Test NPC vs NPC attack
 	n.TargetActor = nil
-	targetNPC := NewCharacter(0.5, 0, nil, 1, false)
+	targetNPC := NewCharacter(0.5, 0, nil, 1, false, nil)
 	targetNPC.Alignment = AlignmentAlly
 	n.TargetActor = &targetNPC.Actor
 	n.AttackTimer = 60
@@ -297,32 +279,24 @@ func TestNPC_MeleeAttack(t *testing.T) {
 
 func TestNPC_RangedAttack(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewCharacter(4, 0, nil, 1, true) // Within ranged attack
+	mc := NewCharacter(4, 0, nil, 1, true, nil) // Within ranged attack
 	mc.Health = 100
 	ctx.World.PlayableCharacter = mc
 
-	arch := &EntityConfig{Stats: struct {
-		HealthMin       int     `yaml:"health_min"`
-		HealthMax       int     `yaml:"health_max"`
-		Speed           float64 `yaml:"speed"`
-		BaseAttack      int     `yaml:"base_attack"`
-		BaseDefense     int     `yaml:"base_defense"`
-		AttackCooldown  int     `yaml:"attack_cooldown"`
-		AttackRange          float64 `yaml:"attack_range"`
-		ProjectileSpeed      float64 `yaml:"projectile_speed"`
-	}{
+	arch := &EntityConfig{Stats: EntityStats{
 		AttackRange:    5.0, // Ranged!
 		AttackCooldown: 60,
 		Speed:          1.0,
 	}, Behavior: "hunter"}
-	n := NewCharacter(0, 0, arch, 1, false)
+	n := NewCharacter(0, 0, arch, 1, false, nil)
 	n.Health = 100
 	n.TargetActor = &mc.Actor
-	n.Slots = make(map[string]*ObjectConfig)
-	n.Slots["weapon"] = &ObjectConfig{
+	n.Slots = make(map[string]*ItemInstance)
+	weaponConfig := &ObjectConfig{
 		Slot: "weapon",
 		Combat: &Weapon{Name: "Bow", Type: "ranged", MaxDistance: "5.0", Damage: Damage{Min: 3, Max: 6}},
 	}
+	n.Slots["weapon"] = NewItemInstance("bow", weaponConfig, 0, 0)
 	n.UpdateEffects()
 	n.AttackTimer = 60 // Ready to attack
 
@@ -369,7 +343,7 @@ func TestNPCDraw_AttackAndDeadBehavior(t *testing.T) {
 		StaticImage: staticImg,
 		AttackImage: attackImg,
 		CorpseImage: corpseImg,
-	}, 1, false)
+	}, 1, false, nil)
 
 	// 1. Attack WITH image
 	n.State = ActorAttacking
@@ -382,7 +356,7 @@ func TestNPCDraw_AttackAndDeadBehavior(t *testing.T) {
 	// 2. Attack WITHOUT image (should fallback to static)
 	n2 := NewCharacter(0, 0, &EntityConfig{
 		StaticImage: staticImg,
-	}, 1, false)
+	}, 1, false, nil)
 	n2.State = ActorAttacking
 	track2 := &trackingImage{}
 	n2.Draw(track2, nil, nil, nil, 0, 0)
@@ -394,7 +368,7 @@ func TestNPCDraw_AttackAndDeadBehavior(t *testing.T) {
 	n3 := NewCharacter(0, 0, &EntityConfig{
 		StaticImage: staticImg,
 		CorpseImage: corpseImg,
-	}, 1, false)
+	}, 1, false, nil)
 	n3.State = ActorDead
 	track3 := &trackingImage{}
 	n3.Draw(track3, nil, nil, nil, 0, 0)
@@ -405,7 +379,7 @@ func TestNPCDraw_AttackAndDeadBehavior(t *testing.T) {
 	// 4. Dead WITHOUT image (should draw nothing)
 	n4 := NewCharacter(0, 0, &EntityConfig{
 		StaticImage: staticImg,
-	}, 1, false)
+	}, 1, false, nil)
 	n4.State = ActorDead
 	track4 := &trackingImage{}
 	n4.Draw(track4, nil, nil, nil, 0, 0)

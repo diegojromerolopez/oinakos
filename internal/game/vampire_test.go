@@ -42,10 +42,10 @@ func TestVampireConversion(t *testing.T) {
 	ctx.Registries.Archetypes.Archetypes["vampire_male"] = vampArch
 	ctx.Registries.Archetypes.Archetypes["peasant_male"] = humanArch
 
-	vampire := NewCharacter(0, 0, vampArch, 1, false)
+	vampire := NewCharacter(0, 0, vampArch, 1, false, nil)
 	vampire.Alignment = AlignmentEnemy
 
-	victim := NewCharacter(1, 1, humanArch, 1, false)
+	victim := NewCharacter(1, 1, humanArch, 1, false, nil)
 	victim.Alignment = AlignmentNeutral
 	victim.Health = 1
 

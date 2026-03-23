@@ -102,16 +102,7 @@ func TestHeroFlagOverride(t *testing.T) {
 	heroConfig := &EntityConfig{
 		ID: "conde_olinos",
 		Name: "Conde Olinos",
-		Stats: struct {
-			HealthMin            int     `yaml:"health_min"`
-			HealthMax            int     `yaml:"health_max"`
-			Speed                float64 `yaml:"speed"`
-			BaseAttack           int     `yaml:"base_attack"`
-			BaseDefense          int     `yaml:"base_defense"`
-			AttackCooldown       int     `yaml:"attack_cooldown"`
-			AttackRange          float64 `yaml:"attack_range"`
-			ProjectileSpeed      float64 `yaml:"projectile_speed"`
-		}{
+		Stats: EntityStats{
 			HealthMin: 500,
 			Speed:     0.05,
 		},

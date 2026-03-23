@@ -6,7 +6,7 @@ slot: body
 value: 500
 effects:
   protection:
-    increase: 8
+    increase: 45
   speed:
     increase: -0.015
 footprint:

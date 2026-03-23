@@ -1,0 +1,148 @@
+name: Venburgo
+map:
+  id: venburgo
+  width_px: 5120
+  height_px: 5120
+  level: 1
+  play_time: 0
+  floor_tile: grass.png
+player:
+  x: 0
+  y: 15
+  health: 100
+  max_health: 100
+  xp: 0
+  level: 1
+  kills: 0
+  base_attack: 10
+  base_defense: 5
+floor_zones:
+- name: Town Square
+  tile: paved_ground.png
+  priority: 10
+  perimeter:
+  - x: -10
+    y: -10
+  - x: 10
+    y: -10
+  - x: 10
+    y: 10
+  - x: -10
+    y: 10
+- name: Western Blackish Soil
+  tile: mud.png
+  priority: 5
+  perimeter:
+  - x: -40
+    y: -30
+  - x: -15
+    y: -30
+  - x: -15
+    y: 30
+  - x: -40
+    y: 30
+npcs:
+- archetype_id: peasant_male
+  x: -5
+  y: 0
+  alignment: neutral
+  behavior: wander
+- archetype_id: peasant_female
+  x: 5
+  y: 5
+  alignment: neutral
+  behavior: wander
+- archetype_id: peasant_male
+  x: 2
+  y: -8
+  alignment: neutral
+  behavior: wander
+- archetype_id: peasant_female
+  x: -4
+  y: 8
+  alignment: neutral
+  behavior: wander
+- archetype_id: peasant_male
+  x: -25
+  y: 5
+  alignment: neutral
+  behavior: wander
+obstacles:
+# Center Area
+- archetype_id: well
+  x: 0
+  y: 0
+- archetype_id: smithery
+  x: 6
+  y: -6
+- archetype_id: warehouse
+  x: -6
+  y: -6
+# Derelict Houses
+- archetype_id: poor_house_1
+  x: -8
+  y: 8
+- archetype_id: poor_house_2
+  x: 8
+  y: 8
+- archetype_id: poor_house_3
+  x: -12
+  y: 0
+- archetype_id: poor_house_4
+  x: 12
+  y: 0
+- archetype_id: poor_house_5
+  x: -12
+  y: -12
+# Forest Zone (East)
+- archetype_id: tree_1
+  x: 20
+  y: -10
+- archetype_id: tree_2
+  x: 25
+  y: -5
+- archetype_id: tree_3
+  x: 22
+  y: 0
+- archetype_id: tree_4
+  x: 28
+  y: 5
+- archetype_id: tree_5
+  x: 20
+  y: 10
+- archetype_id: tree_6
+  x: 30
+  y: -2
+- archetype_id: tree_1
+  x: 26
+  y: 8
+- archetype_id: tree_2
+  x: 18
+  y: -5
+- archetype_id: tree_3
+  x: 21
+  y: 15
+- archetype_id: tree_4
+  x: 24
+  y: -15
+- archetype_id: tree_5
+  x: 32
+  y: 10
+# Mining Zone (West)
+- archetype_id: rock_1
+  x: -25
+  y: -5
+- archetype_id: rock_2
+  x: -30
+  y: 0
+- archetype_id: rock_3
+  x: -20
+  y: 10
+- archetype_id: rock_4
+  x: -28
+  y: 8
+- archetype_id: rock_5
+  x: -22
+  y: -10
+objects: []
+weather: clear

@@ -6,13 +6,17 @@ description: "The fiercely independent Paladin of Charlemagne's court. Famous fo
   \ his solo rescue of his wife Melisendra from the Saracen kingdom of Sansue\xF1\
   a."
 stats:
-  health_min: 105
-  health_max: 105
-  base_attack: 85
-  base_defense: 12
+  health_min: 220
+  health_max: 220
+  base_attack: 120
+  base_defense: 40
+  base_protection: 15
   speed: 0.09
   attack_cooldown: 25
 max_weight: 250
 equipment:
   weapon: casatrix_testarum
-inventory: []
+  body: steel_armor
+inventory:
+  - iron_helmet
+  - wooden_shield

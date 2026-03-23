@@ -83,13 +83,14 @@ func TestPlayableCharacterGetters(t *testing.T) {
 		t.Errorf("GetTotalProtection: got %d, want 0", mc.GetTotalProtection())
 	}
 
-	mc.Slots = make(map[string]*ObjectConfig)
-	mc.Slots["body"] = &ObjectConfig{
+	mc.Slots = make(map[string]*ItemInstance)
+	armorConfig := &ObjectConfig{
 		Slot: "body",
 		Effects: map[string]StatEffect{
 			"protection": {Increase: 5},
 		},
 	}
+	mc.Slots["body"] = NewItemInstance("leather_armor", armorConfig, 0, 0)
 	mc.UpdateEffects()
 	if mc.GetTotalProtection() != 5 {
 		t.Errorf("GetTotalProtection with armor: got %d, want 5", mc.GetTotalProtection())
@@ -98,7 +99,7 @@ func TestPlayableCharacterGetters(t *testing.T) {
 
 func TestPlayableCharacterCheckAttackHits(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewCharacter(0, 0, nil, 1, true)
+	mc := NewCharacter(0, 0, nil, 1, true, nil)
 	mc.Weapon = &Weapon{Name: "TestWeapon", Damage: Damage{Min: 10, Max: 10}}
 	mc.Facing = DirSE
 
@@ -109,7 +110,7 @@ func TestPlayableCharacterCheckAttackHits(t *testing.T) {
 }
 
 func TestPlayableCharacterCollisionCircle(t *testing.T) {
-	mc := NewCharacter(10, 10, nil, 1, true)
+	mc := NewCharacter(10, 10, nil, 1, true, nil)
 	c := mc.GetCollisionCircle()
 	if c.Radius <= 0 {
 		t.Error("Collision circle should have radius > 0")
@@ -117,7 +118,7 @@ func TestPlayableCharacterCollisionCircle(t *testing.T) {
 }
 
 func TestPlayableCharacterCollision(t *testing.T) {
-	mc := NewCharacter(10, 10, nil, 1, true)
+	mc := NewCharacter(10, 10, nil, 1, true, nil)
 	colliders := []*Obstacle{NewObstacle("test_mc_collider", 10.5, 10.5, nil)}
 	if !mc.checkCollisionAt(10.5, 10.5, colliders) {
 		t.Error("Expected collision at 10.5, 10.5")
@@ -129,7 +130,7 @@ func TestPlayableCharacterCollision(t *testing.T) {
 
 func TestPlayableCharacterUpdate_Full(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewCharacter(0, 0, nil, 1, true)
+	mc := NewCharacter(0, 0, nil, 1, true, nil)
 	mc.Health = mc.MaxHealth
 	ctx.World.PlayableCharacter = mc
 	mockInput := ctx.Input.(*MockInputManager)

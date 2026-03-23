@@ -14,7 +14,6 @@ func (gr *GameRenderer) drawHUD(screen engine.Image) {
 	gr.graphics.DrawFilledRect(screen, 10, 10, 350, 160, color.RGBA{0, 0, 0, 180}, false)
 
 	gr.graphics.DrawTextAt(screen, fmt.Sprintf("HP: %d/%d", g.playableCharacter.Health, g.playableCharacter.MaxHealth), 20, 20, color.White, 16)
-
 	gr.graphics.DrawFilledRect(screen, 160, 22, 200, 10, color.RGBA{100, 0, 0, 255}, false)
 
 	healthPct := float64(g.playableCharacter.Health) / float64(g.playableCharacter.MaxHealth)
@@ -30,20 +29,39 @@ func (gr *GameRenderer) drawHUD(screen engine.Image) {
 		gr.graphics.DrawFilledRect(screen, 160, 22, float32(200*healthPct), 10, healthColor, false)
 	}
 
-	gr.graphics.DrawTextAt(screen, fmt.Sprintf("LVL: %d  XP: %d", g.playableCharacter.Level, g.playableCharacter.XP), 20, 45, color.White, 14)
+	// Energy Bar
+	energyColor := color.RGBA{0, 150, 255, 255}
+	if g.playableCharacter.Energy < 20 && (g.playableCharacter.Tick/30)%2 == 0 {
+		energyColor = color.RGBA{255, 0, 0, 255} // Flash warning
+	}
+	
+	gr.graphics.DrawTextAt(screen, fmt.Sprintf("ENERGY: %d/100", int(g.playableCharacter.Energy)), 20, 35, color.White, 14)
+	if g.playableCharacter.State == ActorResting {
+		gr.graphics.DrawTextAt(screen, " (RESTING)", 110, 35, color.RGBA{100, 255, 100, 255}, 12)
+	}
+	
+	gr.graphics.DrawFilledRect(screen, 160, 37, 200, 8, color.RGBA{0, 0, 80, 255}, false)
+	energyPct := g.playableCharacter.Energy / 100.0
+	if energyPct > 0 {
+		gr.graphics.DrawFilledRect(screen, 160, 37, float32(200*energyPct), 8, energyColor, false)
+	}
+
+	gr.graphics.DrawTextAt(screen, fmt.Sprintf("LVL: %d  XP: %d", g.playableCharacter.Level, g.playableCharacter.XP), 20, 55, color.White, 14)
 	
 	objText := fmt.Sprintf("OBJ: %s", g.currentMapType.Description)
-	nextY := gr.drawWrappedText(screen, objText, 20, 60, 310, color.White, 12, 145)
+	nextY := gr.drawWrappedText(screen, objText, 20, 70, 310, color.White, 12, 145)
 
 	minutes := int(g.playTime) / 60
 	seconds := int(g.playTime) % 60
 	
 	yPos := nextY
-	if yPos < 80 { yPos = 80 }
+	if yPos < 90 { yPos = 90 }
 
 	gr.graphics.DrawTextAt(screen, fmt.Sprintf("POS %.1f,%.1f  KILLS: %d  XP: %d  LVL: %d", g.playableCharacter.X, g.playableCharacter.Y, g.playableCharacter.Kills, g.playableCharacter.XP, g.playableCharacter.Level), 20, yPos, color.White, 12)
 	yPos += 15
 	gr.graphics.DrawTextAt(screen, fmt.Sprintf("ATK: %d  DEF: %d  SHIELD: %d", g.playableCharacter.GetTotalAttack(), g.playableCharacter.GetTotalDefense(), g.playableCharacter.GetTotalProtection()), 20, yPos, color.White, 12)
+	yPos += 15
+	gr.graphics.DrawTextAt(screen, fmt.Sprintf("WEIGHT: %.1f / %.1f kg", g.playableCharacter.GetTotalWeight(), g.playableCharacter.MaxWeight), 20, yPos, color.White, 12)
 
 	weaponText := "WEAPON: Unarmed (1-2)"
 	if g.playableCharacter.Weapon != nil {

@@ -3,6 +3,8 @@ description: A standard durandal.
 weight: 1.0
 type: weapon
 slot: weapon
+unique: true
+resistance: 500
 value: 50
 combat:
   name: Durandal

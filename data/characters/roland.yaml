@@ -6,13 +6,17 @@ description: The legendary Count of the Breton March and Paladin of Charlemagne.
   of the Battle of Roncevaux, he wields the unbreakable sword Durandal and embodies
   chivalric courage.
 stats:
-  health_min: 110
-  health_max: 110
-  base_attack: 70
-  base_defense: 15
-  speed: 0.07
-  attack_cooldown: 30
-max_weight: 250
+  health_min: 300
+  health_max: 300
+  base_attack: 80
+  base_defense: 55
+  base_protection: 30
+  speed: 0.06
+  attack_cooldown: 35
+max_weight: 450
 equipment:
   weapon: durandal
-inventory: []
+  body: plate_armor
+inventory:
+  - iron_helmet
+  - wooden_shield

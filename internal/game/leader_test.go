@@ -10,15 +10,15 @@ func TestLeaderDeathConsequence(t *testing.T) {
 	leaderArch := &EntityConfig{ID: "queen_leader", Name: "Queen"}
 	followerArch := &EntityConfig{ID: "guard_follower", Name: "Guard", LeaderID: "queen_leader"}
 	
-	leader := NewCharacter(0, 0, leaderArch, 1, false)
-	follower := NewCharacter(1, 1, followerArch, 1, false)
+	leader := NewCharacter(0, 0, leaderArch, 1, false, nil)
+	follower := NewCharacter(1, 1, followerArch, 1, false, nil)
 	leader.Health = 100
 	leader.MaxHealth = 100
 	follower.Health = 100
 	follower.MaxHealth = 100
 	
 	ctx.World.Characters = []*Character{leader, follower}
-	mc := NewCharacter(10, 10, nil, 1, true)
+	mc := NewCharacter(10, 10, nil, 1, true, nil)
 	mc.Health = 100
 	mc.MaxHealth = 100
 	ctx.World.PlayableCharacter = mc
@@ -56,14 +56,14 @@ func TestTraitorTargeting(t *testing.T) {
 	leaderArch := &EntityConfig{ID: "queen", Name: "Queen"}
 	followerArch := &EntityConfig{ID: "guard", Name: "Guard", LeaderID: "queen"}
 
-	leader := NewCharacter(0, 0, leaderArch, 1, false)
+	leader := NewCharacter(0, 0, leaderArch, 1, false, nil)
 	leader.Alignment = AlignmentEnemy
 
-	peer := NewCharacter(1, 1, followerArch, 1, false)
+	peer := NewCharacter(1, 1, followerArch, 1, false, nil)
 	peer.Alignment = AlignmentEnemy
 	peer.Behavior = BehaviorNpcFighter
 
-	traitor := NewCharacter(2, 2, followerArch, 1, false)
+	traitor := NewCharacter(2, 2, followerArch, 1, false, nil)
 	traitor.Alignment = AlignmentNeutral // Switched!
 
 	leader.Health = 100
@@ -74,7 +74,7 @@ func TestTraitorTargeting(t *testing.T) {
 	traitor.MaxHealth = 100
 
 	ctx.World.Characters = []*Character{leader, peer, traitor}
-	mc := NewCharacter(10, 10, nil, 1, true)
+	mc := NewCharacter(10, 10, nil, 1, true, nil)
 	mc.Health = 100
 	mc.MaxHealth = 100
 	ctx.World.PlayableCharacter = mc

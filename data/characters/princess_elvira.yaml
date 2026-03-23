@@ -6,21 +6,21 @@ description: Daughter of the Queen, she secretly defied her mother to join Conde
   in his hunt. Trained in cursed magic and grim swordcraft, she seeks to cleanse her
   family name.
 stats:
-  health_min: 300
-  health_max: 300
-  base_attack: 22
-  base_defense: 12
-  speed: 0.04
-  attack_cooldown: 70
-  attack_range: 5.0
-  projectile_speed: 0.12
+  health_min: 450
+  health_max: 450
+  base_attack: 45
+  base_defense: 35
+  speed: 0.05
+  attack_cooldown: 55
+  attack_range: 6.0
+  projectile_speed: 0.15
 weapon:
   name: "Cursed Blast"
   type: "ranged"
   damage:
-    min: 15
-    max: 30
-  max_distance: "5.0"
+    min: 40
+    max: 80
+  max_distance: "6.0"
 max_weight: 200
 equipment:
 inventory:

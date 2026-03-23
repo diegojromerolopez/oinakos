@@ -8,7 +8,7 @@ import (
 )
 
 func TestMainCharacterDraw(t *testing.T) {
-	mc := NewCharacter(0, 0, nil, 1, true)
+	mc := NewCharacter(0, 0, nil, 1, true, nil)
 	graphics := &engine.MockGraphics{}
 	screen := graphics.NewImage(100, 100)
 
@@ -32,7 +32,7 @@ func TestMainCharacterDraw(t *testing.T) {
 }
 
 func TestNPCDraw(t *testing.T) {
-	n := NewCharacter(0, 0, nil, 1, true)
+	n := NewCharacter(0, 0, nil, 1, true, nil)
 	graphics := &engine.MockGraphics{}
 	screen := graphics.NewImage(100, 100)
 	sprite := graphics.NewImage(32, 32)

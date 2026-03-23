@@ -13,6 +13,7 @@ const (
 	LogNPC
 	LogCombatDamage
 	LogCombatRecovery
+	LogWarning
 )
 
 type LogEntry struct {

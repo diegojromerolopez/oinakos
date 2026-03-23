@@ -76,3 +76,44 @@ func TestDefaultArmor(t *testing.T) {
 		}
 	}
 }
+func TestDamage_Average(t *testing.T) {
+	d := Damage{Min: 10, Max: 20}
+	if avg := d.Average(); avg != 15.0 {
+		t.Errorf("expected 15.0, got %f", avg)
+	}
+}
+
+func TestWeapon_GetMaxDistance(t *testing.T) {
+	tests := []struct {
+		dist string
+		want float64
+	}{
+		{"touch", 2.5},
+		{"", 2.5},
+		{"10.5", 10.5},
+		{"invalid", 2.5},
+	}
+	for _, tt := range tests {
+		w := &Weapon{MaxDistance: tt.dist}
+		if got := w.GetMaxDistance(); got != tt.want {
+			t.Errorf("GetMaxDistance(%q) = %v, want %v", tt.dist, got, tt.want)
+		}
+	}
+}
+
+func TestWeapon_IsRanged(t *testing.T) {
+	wMelee := &Weapon{Type: "melee", MaxDistance: "touch"}
+	if wMelee.IsRanged() {
+		t.Error("expected melee weapon to not be ranged")
+	}
+	
+	wRanged := &Weapon{Type: "ranged", MaxDistance: "touch"}
+	if !wRanged.IsRanged() {
+		t.Error("expected weapon with type 'ranged' to be ranged")
+	}
+	
+	wLongMelee := &Weapon{Type: "melee", MaxDistance: "10"}
+	if wLongMelee.IsRanged() {
+		t.Error("expected long distance melee weapon to not be ranged (remains melee sweep)")
+	}
+}

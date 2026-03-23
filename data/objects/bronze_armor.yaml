@@ -1,0 +1,23 @@
+name: Bronze Armor
+description: An ancient style of plate armor. Stronger than basic iron, but lacks modern steel's durability.
+weight: 30.0
+type: armor
+slot: body
+resistance: 1500
+value: 350
+effects:
+  protection:
+    increase: 32
+  speed:
+    increase: -0.012
+footprint:
+  - x: -1.74
+    y: -2.01
+  - x: -0.3
+    y: -1.39
+  - x: 0.27
+    y: 0.17
+  - x: -1.33
+    y: -0.23
+  - x: -2.23
+    y: -1.45

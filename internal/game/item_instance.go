@@ -5,19 +5,26 @@ import (
 )
 
 type ItemInstance struct {
-	ID       string
-	Config   *ObjectConfig
-	X, Y     float64
-	Pickable bool
+	ID         string
+	Config     *ObjectConfig
+	Resistance int
+	X, Y, Z    float64
+	Pickable   bool
 }
 
 func NewItemInstance(id string, config *ObjectConfig, x, y float64) *ItemInstance {
+	res := 0
+	if config != nil {
+		res = config.Resistance
+	}
 	return &ItemInstance{
-		ID:       id,
-		Config:   config,
-		X:        x,
-		Y:        y,
-		Pickable: true,
+		ID:         id,
+		Config:     config,
+		Resistance: res,
+		X:          x,
+		Y:          y,
+		Z:          0,
+		Pickable:   true,
 	}
 }
 
@@ -25,7 +32,7 @@ func (it *ItemInstance) Draw(screen engine.Image, offsetX, offsetY float64) {
 	if it.Config == nil || it.Config.Sprite == nil {
 		return
 	}
-	isoX, isoY := engine.CartesianToIso(it.X, it.Y)
+	isoX, isoY := engine.CartesianToIsoZ(it.X, it.Y, it.Z)
 	
 	w, h := it.Config.Sprite.Size()
 	op := engine.NewDrawImageOptions()

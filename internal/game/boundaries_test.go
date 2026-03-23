@@ -7,7 +7,7 @@ import (
 
 func TestPlayableCharacterBoundaries(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewCharacter(0, 0, nil, 1, false)
+	mc := NewCharacter(0, 0, nil, 1, false, nil)
 	mc.Speed = 1.0
 	ctx.World.PlayableCharacter = mc
 
@@ -66,7 +66,7 @@ func TestPlayableCharacterBoundaries(t *testing.T) {
 
 func TestNPCBoundaries(t *testing.T) {
 	ctx := NewTestContext()
-	n := NewCharacter(0, 0, nil, 1, false)
+	n := NewCharacter(0, 0, nil, 1, false, nil)
 	n.Speed = 1.0
 	n.Behavior = BehaviorWander
 	ctx.World.Characters = []*Character{n}

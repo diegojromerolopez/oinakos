@@ -6,10 +6,11 @@ description: A mysterious Serbian noble who arrived in the port of Cartagena wit
   a cursed coffin. His voyage across Spain left a trail of unexplained deaths and
   whispers of the undead.
 stats:
-  health_min: 120
-  health_max: 120
-  base_attack: 50
-  base_defense: 20
+  health_min: 280
+  health_max: 280
+  base_attack: 80
+  base_defense: 45
+  base_protection: 25
   speed: 0.08
   attack_cooldown: 28
   infecting_probability: 0.8
@@ -17,9 +18,12 @@ weapon:
   name: "Vampire Claws"
   type: "melee"
   damage:
-    min: 40
-    max: 60
+    min: 60
+    max: 95
   max_distance: touch
 max_weight: 250
 equipment:
-inventory: []
+inventory:
+  - silk_robe
+  - bone_amulet
+  - ring_protection

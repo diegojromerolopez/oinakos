@@ -8,14 +8,14 @@ import (
 func TestCombatMechanics(t *testing.T) {
 	ctx := NewTestContext()
 	// Setup a controlled combat scenario
-	mc := NewCharacter(0, 0, nil, 1, true)
+	mc := NewCharacter(0, 0, nil, 1, true, nil)
 	mc.BaseAttack = 20
 	mc.BaseDefense = 5
 	mc.Health = 100
 	mc.MaxHealth = 100
 	ctx.World.PlayableCharacter = mc
 
-	npc := NewCharacter(1, 0, nil, 1, false)
+	npc := NewCharacter(1, 0, nil, 1, false, nil)
 	npc.BaseAttack = 15
 	npc.BaseDefense = 2
 	npc.Health = 50
@@ -49,7 +49,7 @@ func TestCombatMechanics(t *testing.T) {
 	}
 
 	// 3. Test XP reward on death — use a known archetype so XP logic fires
-	npc2 := NewCharacter(1, 0, &EntityConfig{ID: "orc", XP: 10}, 1, false)
+	npc2 := NewCharacter(1, 0, &EntityConfig{ID: "orc", XP: 10}, 1, false, nil)
 	npc2.Health = 1
 	mc.XP = 0
 	mc.Kills = 0
@@ -69,7 +69,7 @@ func TestCombatMechanics(t *testing.T) {
 func TestProjectileCombat(t *testing.T) {
 	ctx := NewTestContext()
 	// NPC projectile fires at player (the actual path in Projectile.Update)
-	mc := NewCharacter(0, 0, nil, 1, true)
+	mc := NewCharacter(0, 0, nil, 1, true, nil)
 	mc.Health = 100
 	ctx.World.PlayableCharacter = mc
 

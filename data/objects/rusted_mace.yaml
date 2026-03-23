@@ -11,7 +11,6 @@ combat:
   damage:
     min: 6
     max: 14
-  weight: 10.0
 footprint:
   - x: -0.41
     y: -1.59

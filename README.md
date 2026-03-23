@@ -37,7 +37,8 @@ Choose your knight before entering battle. Each character has unique stats, weap
 - **NPC Faction System**: NPCs grouped by faction (e.g., *Peasants*, *Crimson Arm*) share hive-mind alert responses within a 20-unit radius.
 - **Dynamic Palette Swapping**: GPU shaders recolor NPC unit armbands/capes at runtime using Magenta/Yellow color masks defined in YAML.
 - **Interactive Environments**: Obstacles have an `actions` system — healing wells, damaging campfires — each with optional interaction gates.
-- **Items & Inventory**: Collect weapons, armor, and lore items. Characters have weight limits and limited backpack space.
+- **Items & Inventory**: Collect weapons, armor, and lore items. Characters have weight limits and limited backpack space. Manage your burden by unloading raw materials at designated locations.
+- **Forestry & Mining**: Use an Axe to chop trees for wood, or a Pike/Pickaxe to dig the earth for stone and minerals. Terrain is deformable and reacts to your actions.
 
 ### 🧠 AI & NPC Intelligence
 
@@ -82,6 +83,14 @@ Oinakos features a logarithmic RPG progression system:
 Eleven archetypes form the spine of the enemy roster, most with distinct male and female variants:
 
 `Demon` · `Goblin` · `Lame Devil` · `Magi` · `Man-at-Arms` · `Mythical` · `Orc` · `Peasant` · `Slave` · `Trasgo`
+
+### 🏗️ Logistics & Industry
+
+To survive the long journey, you must manage your resources efficiently:
+
+- **Warehouses & Smitheries**: These buildings serve as drop-off points. Stand near them and press **E** to unload heavy raw materials (`wood`, `lumber`, `ore`).
+- **Weight Limit**: Carrying too much raw material will slow you down. Unloading at a warehouse instantly clears your backpack and restores your mobility.
+- **Auto-Equip**: Pressing **C** or **V** will automatically search your backpack for the required tool and equip it to your primary hand.
 
 ---
 
@@ -160,12 +169,18 @@ The WASM distribution is optimised into just **two files** (`index.html` and `oi
 | Key | Action |
 | :--- | :--- |
 | **WASD / Arrow Keys** | Move character |
-| **SPACE** | Attack |
+| **SPACE** | Attack / Interact with Wells |
+| **C** | **Chop Trees** (Auto-equips Axe from inventory) |
+| **V** | **Dig Ground** (Auto-equips Pike/Pickaxe from inventory) |
+| **I** | **Toggle Inventory & Equipment** Menu |
+| **R** | **Toggle Resting** (Regain stamina/energy) |
+| **E** | **Unload Materials** (Near Warehouse or Smithery) |
 | **Q** | Quicksave |
-| **ESC** | Open game menu (Resume / Load / Quit) |
-| **ENTER** | Confirm selection / Restart on game over |
+| **ESC** | Open game menu / Close Dialogue |
+| **ENTER** | Confirm selection / Advance Dialogue |
 | **TAB** | Toggle collision boundary debug view |
 | **Mouse** | Navigate menus |
+| **BACKSPACE** | Close Dialogue |
 
 ---
 

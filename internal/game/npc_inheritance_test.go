@@ -69,16 +69,7 @@ gender: male
 	// 2. Add the base archetype manually
 	archReg.Archetypes["man_at_arms_male"] = &EntityConfig{
 		ID: "man_at_arms_male",
-		Stats: struct {
-			HealthMin       int     `yaml:"health_min"`
-			HealthMax       int     `yaml:"health_max"`
-			Speed           float64 `yaml:"speed"`
-			BaseAttack      int     `yaml:"base_attack"`
-			BaseDefense     int     `yaml:"base_defense"`
-			AttackCooldown  int     `yaml:"attack_cooldown"`
-			AttackRange     float64 `yaml:"attack_range"`
-			ProjectileSpeed float64 `yaml:"projectile_speed"`
-		}{HealthMin: 100},
+		Stats: EntityStats{HealthMin: 100},
 	}
 
 	// 3. Load the NPC from YAML

@@ -1,0 +1,14 @@
+name: Large Lumber
+description: A heavy stacked pile of solid lumber.
+weight: 2.0
+type: material
+value: 5
+footprint:
+- x: -5.0
+  y: -5.0
+- x: 5.0
+  y: -5.0
+- x: 5.0
+  y: 5.0
+- x: -5.0
+  y: 5.0

@@ -12,3 +12,5 @@ stats:
   base_defense: 18
 max_weight: 180
 xp: 24
+equipment:
+  body: iron_armor

@@ -238,7 +238,7 @@ func (gr *GameRenderer) drawSettingsScreen(screen engine.Image) {
 	tw, _ := gr.graphics.MeasureText(title, 40)
 	gr.graphics.DrawTextAt(screen, title, (g.width-int(tw))/2, 100, color.RGBA{218, 165, 32, 255}, 40)
 
-	rows := []string{"Font Style", "Sound Effects", "Fog of War", "AI Provider", "Simulation Mode", "Talking Frequency", "Save and Back"}
+	rows := []string{"Font Style", "Sound Effects", "Fog of War", "AI Provider", "Simulation Mode", "Talking Frequency", "Keymap", "Save and Back"}
 	for i, row := range rows {
 		var clr color.Color = color.White
 		prefix := "  "
@@ -267,7 +267,7 @@ func (gr *GameRenderer) drawSettingsScreen(screen engine.Image) {
 		}
 
 		lw, _ := gr.graphics.MeasureText(label, 24)
-		gr.graphics.DrawTextAt(screen, label, (g.width-int(lw))/2, 250+i*60, clr, 24)
+		gr.graphics.DrawTextAt(screen, label, (g.width-int(lw))/2, 230+i*55, clr, 24)
 	}
 
 	hint := "UP/DOWN to navigate, LEFT/RIGHT to change value, ENTER to confirm."
@@ -277,6 +277,37 @@ func (gr *GameRenderer) drawSettingsScreen(screen engine.Image) {
 	yamlHint := "Edit API keys in ~/.oinakos/settings.yml"
 	yhw, _ := gr.graphics.MeasureText(yamlHint, 12)
 	gr.graphics.DrawTextAt(screen, yamlHint, (g.width-int(yhw))/2, g.height-90, color.RGBA{150, 150, 150, 255}, 12)
+}
+
+func (gr *GameRenderer) drawKeymapScreen(screen engine.Image) {
+	g := gr.game
+	gr.graphics.DrawFilledRect(screen, 0, 0, float32(g.width), float32(g.height), color.Black, false)
+
+	title := "CHARACTER KEYMAP"
+	tw, _ := gr.graphics.MeasureText(title, 40)
+	gr.graphics.DrawTextAt(screen, title, (g.width-int(tw))/2, 100, color.RGBA{218, 165, 32, 255}, 40)
+
+	keys := []struct {
+		Key    string
+		Action string
+	}{
+		{"SPACE", "Attack enemies / Interact with Wells"},
+		{"C", "Chop Trees (Auto-equips Axe from inventory)"},
+		{"V", "Dig Ground (Auto-equips Pike from inventory)"},
+		{"I", "Toggle Inventory & Equipment Menu"},
+		{"R", "Toggle Resting State (Regain stamina/energy)"},
+		{"TAB", "Toggle Debug Boundaries (Collision View)"},
+		{"ESC", "Menu / Back / Pause"},
+	}
+
+	for i, k := range keys {
+		gr.graphics.DrawTextAt(screen, k.Key, 150, 220+i*50, color.RGBA{255, 255, 0, 255}, 20)
+		gr.graphics.DrawTextAt(screen, ": "+k.Action, 250, 220+i*50, color.White, 18)
+	}
+
+	hint := "Press ESC or ENTER to return to Settings"
+	hw, _ := gr.graphics.MeasureText(hint, 16)
+	gr.graphics.DrawTextAt(screen, hint, (g.width-int(hw))/2, g.height-100, color.RGBA{136, 136, 136, 255}, 16)
 }
 
 func (gr *GameRenderer) drawPauseMenu(screen engine.Image) {
@@ -404,26 +435,36 @@ func (gr *GameRenderer) drawInventoryScreen(screen engine.Image) {
 	// Transparent background (very faint)
 	gr.graphics.DrawFilledRect(screen, 0, 0, float32(g.width), float32(g.height), color.RGBA{0, 0, 0, 50}, false)
 	
-	dialogW, dialogH := 800, 500
+	dialogW, dialogH := 900, 600
 	dialogX := (g.width - dialogW) / 2
 	dialogY := (g.height - dialogH) / 2
 	
 	// Dialog background
-	gr.graphics.DrawFilledRect(screen, float32(dialogX), float32(dialogY), float32(dialogW), float32(dialogH), color.RGBA{30, 30, 30, 230}, false)
+	gr.graphics.DrawFilledRect(screen, float32(dialogX-2), float32(dialogY-2), float32(dialogW+4), float32(dialogH+4), color.RGBA{218, 165, 32, 255}, false)
+	gr.graphics.DrawFilledRect(screen, float32(dialogX), float32(dialogY), float32(dialogW), float32(dialogH), color.RGBA{15, 15, 15, 245}, false)
 	
 	title := "INVENTORY & EQUIPMENT"
-	tw, _ := gr.graphics.MeasureText(title, 32)
-	gr.graphics.DrawTextAt(screen, title, dialogX+(dialogW-int(tw))/2, dialogY+40, color.RGBA{218, 165, 32, 255}, 32)
+	tw, _ := gr.graphics.MeasureText(title, 36)
+	gr.graphics.DrawTextAt(screen, title, dialogX+(dialogW-int(tw))/2, dialogY+45, color.RGBA{218, 165, 32, 255}, 36)
 	
 	// Weight
 	pc := g.playableCharacter
-	weightStr := fmt.Sprintf("Weight: %.1f / %.1f", pc.GetTotalWeight(), pc.MaxWeight)
+	weightStr := fmt.Sprintf("Weight: %.1f / %.1f kg", pc.GetTotalWeight(), pc.MaxWeight)
 	ww, _ := gr.graphics.MeasureText(weightStr, 16)
-	gr.graphics.DrawTextAt(screen, weightStr, dialogX+dialogW-int(ww)-30, dialogY+40, color.White, 16)
+	gr.graphics.DrawTextAt(screen, weightStr, dialogX+dialogW-int(ww)-40, dialogY+45, color.White, 16)
+
+	// Traumas (Listed vertically below weight if any exist)
+	traumas := pc.GetActiveTraumas()
+	if len(traumas) > 0 {
+		gr.graphics.DrawTextAt(screen, "TRAUMAS:", dialogX+dialogW-int(ww)-30, dialogY+70, color.RGBA{200, 50, 50, 255}, 12)
+		for i, t := range traumas {
+			gr.graphics.DrawTextAt(screen, "- "+t, dialogX+dialogW-int(ww)-30, dialogY+90+i*18, color.RGBA{220, 100, 100, 255}, 11)
+		}
+	}
 	
 	// Paper Doll Layout (Left side of the dialog)
-	dollCenterX := dialogX + 200
-	dollCenterY := dialogY + 250
+	dollCenterX := dialogX + 220
+	dollCenterY := dialogY + 300
 	
 	slots := []struct {
 		id    string
@@ -431,27 +472,26 @@ func (gr *GameRenderer) drawInventoryScreen(screen engine.Image) {
 		x     int
 		y     int
 	}{
-		{"head", "Head", dollCenterX, dollCenterY - 120},
-		{"shield", "Left Arm", dollCenterX - 100, dollCenterY - 30},
-		{"body", "Torso", dollCenterX, dollCenterY - 30},
-		{"weapon", "Right Arm", dollCenterX + 100, dollCenterY - 30},
-		{"ring1", "Left Ring", dollCenterX - 100, dollCenterY + 40},
-		{"ring2", "Right Ring", dollCenterX + 100, dollCenterY + 40},
-		{"legs", "Legs/Feet", dollCenterX, dollCenterY + 90},
+		{"head", "Head", dollCenterX, dollCenterY - 140},
+		{"shield", "Left Arm", dollCenterX - 110, dollCenterY - 40},
+		{"body", "Torso", dollCenterX, dollCenterY - 40},
+		{"weapon", "Right Arm", dollCenterX + 110, dollCenterY - 40},
+		{"ring1", "Left Ring", dollCenterX - 110, dollCenterY + 50},
+		{"ring2", "Right Ring", dollCenterX + 110, dollCenterY + 50},
+		{"legs", "Legs/Feet", dollCenterX, dollCenterY + 110},
 	}
 	
 	for _, slot := range slots {
 		sx, sy := slot.x, slot.y
 		
 		// Slot Box
-		gr.graphics.DrawFilledRect(screen, float32(sx-40), float32(sy-25), 80, 50, color.RGBA{50, 50, 50, 255}, false)
-		gr.graphics.DrawTextAt(screen, slot.label, sx-35, sy-28, color.Gray16{0xAAAA}, 12)
+		gr.graphics.DrawTextAt(screen, slot.label, sx-40, sy-35, color.Gray16{0xAAAA}, 14)
 		
-		obj, hasObj := pc.Slots[slot.id]
-		if hasObj && obj != nil {
+		it, hasIt := pc.Slots[slot.id]
+		if hasIt && it != nil && it.Config != nil {
 			// Draw Item Sprite
-			if obj.Sprite != nil {
-				sw, sh := obj.Sprite.Size()
+			if it.Config.Sprite != nil {
+				sw, sh := it.Config.Sprite.Size()
 				op := engine.NewDrawImageOptions()
 				
 				// Scale to fit roughly 32x32 within the box
@@ -465,20 +505,26 @@ func (gr *GameRenderer) drawInventoryScreen(screen engine.Image) {
 				tx := float64(sx) - (float64(sw)*scale)/2
 				ty := float64(sy) - (float64(sh)*scale)/2 - 5
 				op.GeoM.Translate(tx, ty)
-				screen.DrawImage(obj.Sprite, op)
+				screen.DrawImage(it.Config.Sprite, op)
 			}
 
 			// Ensure names fit
-			nameStr := obj.Name
-			if len(nameStr) > 12 {
-				nameStr = nameStr[:10] + ".."
+			nameStr := it.Config.Name
+			if len(nameStr) > 15 {
+				nameStr = nameStr[:13] + ".."
 			}
-			nw, _ := gr.graphics.MeasureText(nameStr, 12)
-			gr.graphics.DrawTextAt(screen, nameStr, sx-int(nw)/2, sy+18, color.White, 12)
+			nw, _ := gr.graphics.MeasureText(nameStr, 14)
+			gr.graphics.DrawTextAt(screen, nameStr, sx-int(nw)/2, sy+20, color.RGBA{218, 165, 32, 255}, 14)
 			
-			// Drop 'X' Button for equipment
-			gr.graphics.DrawFilledRect(screen, float32(sx+25), float32(sy-20), 12, 12, color.RGBA{200, 50, 50, 255}, false)
-			gr.graphics.DrawTextAt(screen, "X", sx+27, sy-10, color.White, 12)
+			// Draw Resistance if applicable
+			if it.Config.Resistance > 0 {
+				resStr := fmt.Sprintf("%d/%d", it.Resistance, it.Config.Resistance)
+				rw, _ := gr.graphics.MeasureText(resStr, 12)
+				gr.graphics.DrawTextAt(screen, resStr, sx-int(rw)/2, sy+38, color.RGBA{200, 200, 100, 255}, 12)
+			}
+			
+			// Drop 'X' Label for equipment (No red square)
+			gr.graphics.DrawTextAt(screen, "[X]", sx+30, sy-15, color.RGBA{200, 50, 50, 255}, 14)
 		} else {
 			em, _ := gr.graphics.MeasureText("Empty", 14)
 			gr.graphics.DrawTextAt(screen, "Empty", sx-int(em)/2, sy+5, color.RGBA{100, 100, 100, 255}, 14)
@@ -497,14 +543,14 @@ func (gr *GameRenderer) drawInventoryScreen(screen engine.Image) {
 		ew, _ := gr.graphics.MeasureText(emptyMsg, 16)
 		gr.graphics.DrawTextAt(screen, emptyMsg, listStartX+(listW-int(ew))/2, listStartY+50, color.Gray16{0x8888}, 16)
 	} else {
-		for i, obj := range pc.Inventory {
+		for i, it := range pc.Inventory {
+			if it == nil || it.Config == nil { continue }
 			itemY := listStartY + 20 + i*40
 			
-			gr.graphics.DrawFilledRect(screen, float32(listStartX), float32(itemY), float32(listW), 35, color.RGBA{50, 50, 50, 255}, false)
 			
 			// Draw Item Icon
-			if obj.Sprite != nil {
-				sw, sh := obj.Sprite.Size()
+			if it.Config.Sprite != nil {
+				sw, sh := it.Config.Sprite.Size()
 				op := engine.NewDrawImageOptions()
 				scale := 24.0 / float64(sh)
 				if float64(sw) > float64(sh) {
@@ -514,38 +560,41 @@ func (gr *GameRenderer) drawInventoryScreen(screen engine.Image) {
 				tx := float64(listStartX) + 5 + (24.0 - float64(sw)*scale)/2
 				ty := float64(itemY) + 5 + (24.0 - float64(sh)*scale)/2
 				op.GeoM.Translate(tx, ty)
-				screen.DrawImage(obj.Sprite, op)
+				screen.DrawImage(it.Config.Sprite, op)
 			}
 
-			nameStr := obj.Name
-			gr.graphics.DrawTextAt(screen, nameStr, listStartX+40, itemY+22, color.White, 14)
+			nameStr := it.Config.Name
+			gr.graphics.DrawTextAt(screen, nameStr, listStartX+50, itemY+22, color.RGBA{218, 165, 32, 255}, 18)
 			
-			descStr := obj.Description
-			if len(descStr) > 25 {
-				descStr = descStr[:22] + "..."
+			descStr := it.Config.Description
+			if len(descStr) > 35 {
+				descStr = descStr[:32] + "..."
 			}
-			gr.graphics.DrawTextAt(screen, descStr, listStartX+180, itemY+20, color.RGBA{150, 150, 150, 255}, 11)
+			gr.graphics.DrawTextAt(screen, descStr, listStartX+220, itemY+23, color.RGBA{180, 180, 180, 255}, 13)
 			
-			// Drop 'X' Button for inventory
-			gr.graphics.DrawFilledRect(screen, float32(listStartX+listW-30), float32(itemY+10), 15, 15, color.RGBA{200, 50, 50, 255}, false)
-			gr.graphics.DrawTextAt(screen, "X", listStartX+listW-26, itemY+22, color.White, 12)
+			// Show durability next to description
+			if it.Config.Resistance > 0 {
+				durStr := fmt.Sprintf("Dur: %d/%d", it.Resistance, it.Config.Resistance)
+				gr.graphics.DrawTextAt(screen, durStr, listStartX+450, itemY+23, color.RGBA{200, 200, 100, 255}, 13)
+			}
+			
+			// Drop 'X' Button for inventory (No red square)
+			gr.graphics.DrawTextAt(screen, "[X]", listStartX+listW-35, itemY+25, color.RGBA{200, 50, 50, 255}, 16)
 
 			// Read 'R' Button for readable items
-			if obj.Content != "" {
-				gr.graphics.DrawFilledRect(screen, float32(listStartX+listW-50), float32(itemY+10), 15, 15, color.RGBA{50, 50, 200, 255}, false)
-				gr.graphics.DrawTextAt(screen, "R", listStartX+listW-46, itemY+22, color.White, 12)
+			if it.Config.Content != "" {
+				gr.graphics.DrawTextAt(screen, "[R]", listStartX+listW-75, itemY+25, color.RGBA{0, 150, 255, 255}, 16)
 			}
 		}
 	}
 	
 	// Close Button
-	closeW, closeH := 100, 30
+	closeW := 100
 	closeX := dialogX + (dialogW - closeW) / 2
 	closeY := dialogY + dialogH - 50
 	
-	gr.graphics.DrawFilledRect(screen, float32(closeX), float32(closeY), float32(closeW), float32(closeH), color.RGBA{80, 80, 80, 255}, false)
-	cw, _ := gr.graphics.MeasureText("Close", 16)
-	gr.graphics.DrawTextAt(screen, "Close", closeX+(closeW-int(cw))/2, closeY+20, color.White, 16)
+	cw, _ := gr.graphics.MeasureText("[CLOSE]", 20)
+	gr.graphics.DrawTextAt(screen, "[CLOSE]", closeX+(closeW-int(cw))/2, closeY+22, color.RGBA{218, 165, 32, 255}, 20)
 
 	if g.ActiveBook != nil {
 		gr.drawBookOverlay(screen)
@@ -568,11 +617,11 @@ func (gr *GameRenderer) drawBookOverlay(screen engine.Image) {
 	gr.graphics.DrawFilledRect(screen, float32(dialogX), float32(dialogY), float32(dialogW), float32(dialogH), color.RGBA{20, 20, 25, 255}, false)
 
 	// Title
-	tw, _ := gr.graphics.MeasureText(book.Name, 24)
-	gr.graphics.DrawTextAt(screen, book.Name, dialogX+(dialogW-int(tw))/2, dialogY+40, color.RGBA{218, 165, 32, 255}, 24)
+	tw, _ := gr.graphics.MeasureText(book.Config.Name, 24)
+	gr.graphics.DrawTextAt(screen, book.Config.Name, dialogX+(dialogW-int(tw))/2, dialogY+40, color.RGBA{218, 165, 32, 255}, 24)
 
 	// Content
-	gr.drawWrappedText(screen, book.Content, dialogX+40, dialogY+80, dialogW-80, color.White, 16, dialogY+dialogH-60)
+	gr.drawWrappedText(screen, book.Config.Content, dialogX+40, dialogY+80, dialogW-80, color.White, 16, dialogY+dialogH-60)
 
 	// Exit Hint
 	exitMsg := "[Click or ESC to close]"

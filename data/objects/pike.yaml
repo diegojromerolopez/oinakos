@@ -1,0 +1,22 @@
+name: Pike
+description: A heavy pointed tool used for excavation and mining.
+weight: 8.0
+type: weapon
+slot: weapon
+value: 50
+combat:
+  name: Pike
+  type: melee
+  max_distance: close
+  damage:
+    min: 4
+    max: 12
+footprint:
+- x: -0.47
+  y: -0.47
+- x: 0.47
+  y: -0.47
+- x: 0.47
+  y: 0.47
+- x: -0.47
+  y: 0.47

@@ -1,0 +1,14 @@
+name: Gold Ore
+description: A small glittering specimen of gold ore. Very heavy but extremely valuable.
+weight: 8.0
+type: material
+value: 100
+footprint:
+- x: -0.16
+  y: -0.16
+- x: 0.16
+  y: -0.16
+- x: 0.16
+  y: 0.16
+- x: -0.16
+  y: 0.16

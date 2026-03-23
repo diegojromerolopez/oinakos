@@ -1,0 +1,23 @@
+name: Iron Armor
+description: High-quality iron plates. Standard equipment for a serious warrior.
+weight: 35.0
+type: armor
+slot: body
+resistance: 2000
+value: 550
+effects:
+  protection:
+    increase: 40
+  speed:
+    increase: -0.015
+footprint:
+  - x: -1.74
+    y: -2.01
+  - x: -0.3
+    y: -1.39
+  - x: 0.27
+    y: 0.17
+  - x: -1.33
+    y: -0.23
+  - x: -2.23
+    y: -1.45

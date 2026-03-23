@@ -46,9 +46,6 @@ func forEachYAML(assets fs.FS, baseDir string, callback func(fpath string, data 
 }
 
 func LoadPlayableCharacterConfig(assets fs.FS) (*EntityConfig, error) {
-	if assets == nil {
-		return &EntityConfig{}, nil
-	}
 	const configPath = "data/characters/oinakos.yaml"
 	localPath := filepath.Join("oinakos", configPath)
 
@@ -59,7 +56,7 @@ func LoadPlayableCharacterConfig(assets fs.FS) (*EntityConfig, error) {
 	if _, errStat := os.Stat(localPath); errStat == nil {
 		data, err = os.ReadFile(localPath)
 	}
-	if data == nil {
+	if data == nil && assets != nil {
 		data, err = fs.ReadFile(assets, configPath)
 	}
 	if err != nil {

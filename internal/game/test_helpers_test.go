@@ -1,6 +1,7 @@
 package game
 
 import (
+	"image"
 	"oinakos/internal/engine"
 )
 
@@ -44,6 +45,46 @@ func (m *GenericMockInput) Wheel() (float64, float64) { return 0, 0 }
 func (m *GenericMockInput) AppendInputChars(r []rune) []rune { return r }
 func (m *GenericMockInput) AppendJustPressedKeys(k []engine.Key) []engine.Key { return k }
 func (m *GenericMockInput) SetCursorMode(mode engine.CursorMode) {}
+
+func setupTestGame() *Game {
+	archetypeRegistry := NewArchetypeRegistry()
+	characterRegistry := NewCharacterRegistry()
+	obstacleRegistry := NewObstacleRegistry()
+	objectRegistry := NewObjectRegistry()
+
+	g := &Game{
+		World: &World{
+			Items:         []*ItemInstance{},
+			Characters:    []*Character{},
+			Obstacles:     []*Obstacle{},
+			FloatingTexts: []*FloatingText{},
+			ExploredTiles: make(map[image.Point]bool),
+		},
+		ExploredTiles: make(map[image.Point]bool),
+		currentMapType: MapType{MapWidth: 500, MapHeight: 500},
+		camera: engine.NewCamera(800, 600),
+		mapTypeRegistry: NewMapTypeRegistry(),
+		archetypeRegistry: archetypeRegistry,
+		characterRegistry: characterRegistry,
+		obstacleRegistry: obstacleRegistry,
+		Registries: &RegistryContainer{
+			Archetypes: archetypeRegistry,
+			Characters: characterRegistry,
+			Obstacles:  obstacleRegistry,
+			Objects:    objectRegistry,
+		},
+	}
+	g.World.Game = g
+	g.World.CurrentMapType = &g.currentMapType
+	g.obstacles = g.World.Obstacles
+	pConfig := &EntityConfig{
+		MaxItems: 10,
+		MaxWeight: 100,
+	}
+	g.playableCharacter = NewCharacter(0, 0, pConfig, 1, true, objectRegistry)
+	g.World.PlayableCharacter = g.playableCharacter
+	return g
+}
 
 func init() {
 	isTestingEnvironment = true

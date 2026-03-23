@@ -14,5 +14,5 @@ stats:
 xp: 20
 max_weight: 150
 equipment:
-  ring1: ring_power
+  body: iron_armor
 inventory: []

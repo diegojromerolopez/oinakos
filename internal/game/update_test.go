@@ -70,7 +70,7 @@ height_px: 1000
 
 func TestPlayableCharacterUpdate_Detailed(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewCharacter(0, 0, nil, 1, true)
+	mc := NewCharacter(0, 0, nil, 1, true, nil)
 	mc.Weapon = WeaponTizon
 	ctx.World.PlayableCharacter = mc
 
@@ -151,11 +151,11 @@ height_px: 1000
 
 func TestNPCUpdate_Detailed(t *testing.T) {
 	ctx := NewTestContext()
-	n := NewCharacter(0, 0, nil, 1, false)
+	n := NewCharacter(0, 0, nil, 1, false, nil)
 	n.Health = 100
 	n.Weapon = WeaponTizon
 	n.Speed = 1.0 // Manually set speed since Archetype is nil
-	mc := NewCharacter(10, 10, nil, 1, true)
+	mc := NewCharacter(10, 10, nil, 1, true, nil)
 	mc.Health = 100
 	ctx.World.PlayableCharacter = mc
 	ctx.World.Characters = []*Character{n}
@@ -169,7 +169,7 @@ func TestNPCUpdate_Detailed(t *testing.T) {
 	}
 
 	// Test fighter behavior with other NPCs
-	otherNpc := NewCharacter(5, 5, nil, 1, false)
+	otherNpc := NewCharacter(5, 5, nil, 1, false, nil)
 	otherNpc.Alignment = AlignmentAlly // Different alignment from n (Enemy)
 	ctx.World.Characters = []*Character{otherNpc, n}        // allNPCs includes self
 	n.Behavior = BehaviorNpcFighter
@@ -193,7 +193,7 @@ func TestNPCUpdate_Detailed(t *testing.T) {
 }
 
 func TestCollisionDetailed(t *testing.T) {
-	mc := NewCharacter(0, 0, nil, 1, true)
+	mc := NewCharacter(0, 0, nil, 1, true, nil)
 	obs := []*Obstacle{NewObstacle("test_obs_1", 1, 0, &ObstacleArchetype{ID: "test", Footprint: []FootprintPoint{{-1, -1}, {1, -1}, {1, 1}, {-1, 1}}})}
 
 	// Test collision detection
@@ -205,7 +205,7 @@ func TestCollisionDetailed(t *testing.T) {
 func TestNoSlidingMovement(t *testing.T) {
 	ctx := NewTestContext()
 	// Place character at 0,0
-	mc := NewCharacter(0, 0, nil, 1, true)
+	mc := NewCharacter(0, 0, nil, 1, true, nil)
 	mc.Speed = 1.0
 	ctx.World.PlayableCharacter = mc
 
@@ -245,10 +245,10 @@ func TestNoSlidingMovement(t *testing.T) {
 
 func TestNPCHitBranch_Detailed(t *testing.T) {
 	ctx := NewTestContext()
-	n := NewCharacter(0, 0, nil, 1, false)
+	n := NewCharacter(0, 0, nil, 1, false, nil)
 	n.Health = 100
 	n.Weapon = WeaponTizon
-	mc := NewCharacter(1, 0, nil, 1, true)
+	mc := NewCharacter(1, 0, nil, 1, true, nil)
 	mc.Health = 100
 	ctx.World.PlayableCharacter = mc
 	ctx.World.Characters = []*Character{n}
@@ -264,7 +264,7 @@ func TestNPCHitBranch_Detailed(t *testing.T) {
 
 func TestPlayableCharacterTakeDamageDetailed(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewCharacter(0, 0, nil, 1, true)
+	mc := NewCharacter(0, 0, nil, 1, true, nil)
 	mc.Health = 100
 	mc.MaxHealth = 100
 	mc.TakeDamage(150, nil, ctx)
@@ -296,14 +296,14 @@ func TestObstacleUpdate_Detailed(t *testing.T) {
 func TestProjectileUpdate_Detailed(t *testing.T) {
 	ctx := NewTestContext()
 	p := NewProjectile(0, 0, 1, 0, 1.0, 10, true, 100.0)
-	mc := NewCharacter(0, 0, nil, 1, true)
+	mc := NewCharacter(0, 0, nil, 1, true, nil)
 	ctx.World.PlayableCharacter = mc
 
 	// Update until it hits nothing or expires
 	p.Update(ctx)
 
 	// Update with entities
-	targetMc := NewCharacter(2, 0, nil, 1, true)
+	targetMc := NewCharacter(2, 0, nil, 1, true, nil)
 	ctx.World.PlayableCharacter = targetMc
 	obstacles := []*Obstacle{NewObstacle("test_obs_3", 5, 0, &ObstacleArchetype{ID: "test", Footprint: []FootprintPoint{{-0.5, -0.5}, {0.5, -0.5}, {0.5, 0.5}, {-0.5, 0.5}}})}
 	ctx.World.Obstacles = obstacles
@@ -354,7 +354,7 @@ spawn_frequency: 0
 	g.isCharacterSelect = false
 
 	// Spawn a boss (VIP)
-	boss := NewCharacter(5, 5, nil, 10, false)
+	boss := NewCharacter(5, 5, nil, 10, false, nil)
 	g.characters = []*Character{boss}
 
 	if err := g.Update(); err != nil {
@@ -391,17 +391,8 @@ difficulty: 1
 
 	npc := NewCharacter(0, 0, &EntityConfig{
 		ID: "test_npc",
-		Stats: struct {
-			HealthMin       int     `yaml:"health_min"`
-			HealthMax       int     `yaml:"health_max"`
-			Speed           float64 `yaml:"speed"`
-			BaseAttack      int     `yaml:"base_attack"`
-			BaseDefense     int     `yaml:"base_defense"`
-			AttackCooldown  int     `yaml:"attack_cooldown"`
-			AttackRange     float64 `yaml:"attack_range"`
-			ProjectileSpeed float64 `yaml:"projectile_speed"`
-		}{HealthMin: 5, HealthMax: 5, BaseDefense: 0},
-	}, 1, false)
+		Stats: EntityStats{HealthMin: 5, HealthMax: 5, BaseDefense: 0},
+	}, 1, false, nil)
 
 	npc.Health = 5
 	g.characters = []*Character{npc}

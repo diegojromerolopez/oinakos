@@ -40,7 +40,7 @@ func TestObjectLifecycle(t *testing.T) {
 	
 	// Setup character
 	config := &EntityConfig{ID: "hero", MaxWeight: 10.0}
-	char := NewCharacter(0, 0, config, 1, true)
+	char := NewCharacter(0, 0, config, 1, true, nil)
 	g.playableCharacter = char
 	g.World.PlayableCharacter = char
 	

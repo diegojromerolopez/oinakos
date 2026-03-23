@@ -58,25 +58,45 @@ func (m *MapEditor) updateEditor() error {
 	}
 
 	if mx >= sidebarWidth && mx <= screenWidth-sidebarWidth {
-		if m.Input.IsMouseButtonJustPressed(engine.MouseButtonLeft) {
-			found := m.pickAt(mx, my)
-			if found != -1 { m.selectElement(found); m.PendingItem = nil } else {
-				if m.PendingItem != nil { m.placeItem(mx, my) } else { m.deselect() }
+		if m.Input.IsKeyJustPressed(engine.KeyE) {
+			m.ElevationMode = !m.ElevationMode
+			if m.ElevationMode && m.ElevationTool == "" {
+				m.ElevationTool = "brush"
 			}
+			m.Selection = nil
+			m.PendingItem = nil
 		}
-
-		if m.Selection != nil {
-			moved := false
-			if m.Input.IsKeyJustPressed(engine.KeyUp) { m.Selection.Y -= 1.0; moved = true }
-			if m.Input.IsKeyJustPressed(engine.KeyDown) { m.Selection.Y += 1.0; moved = true }
-			if m.Input.IsKeyJustPressed(engine.KeyLeft) { m.Selection.X -= 1.0; moved = true }
-			if m.Input.IsKeyJustPressed(engine.KeyRight) { m.Selection.X += 1.0; moved = true }
-			if m.Input.IsKeyJustPressed(engine.KeyDelete) || m.Input.IsKeyJustPressed(engine.KeyBackspace) { m.removeSelection() } else if moved { m.syncToSaveData() }
+		if m.ElevationMode {
+			if m.Input.IsKeyJustPressed(engine.KeyB) { m.ElevationTool = "brush" }
+			if m.Input.IsKeyJustPressed(engine.KeyF) { m.ElevationTool = "flatten" }
+			if m.Input.IsKeyJustPressed(engine.KeyS) { m.ElevationTool = "slope" }
+			
+			if m.Input.IsMouseButtonJustPressed(engine.MouseButtonLeft) {
+				m.handleElevationClick(mx, my, true)
+			} else if m.Input.IsMouseButtonJustPressed(engine.MouseButtonRight) {
+				m.handleElevationClick(mx, my, false)
+			}
 		} else {
-			if m.Input.IsKeyPressed(engine.KeyUp) { m.CamY -= 5 }
-			if m.Input.IsKeyPressed(engine.KeyDown) { m.CamY += 5 }
-			if m.Input.IsKeyPressed(engine.KeyLeft) { m.CamX -= 5 }
-			if m.Input.IsKeyPressed(engine.KeyRight) { m.CamX += 5 }
+			if m.Input.IsMouseButtonJustPressed(engine.MouseButtonLeft) {
+				found := m.pickAt(mx, my)
+				if found != -1 { m.selectElement(found); m.PendingItem = nil } else {
+					if m.PendingItem != nil { m.placeItem(mx, my) } else { m.deselect() }
+				}
+			}
+
+			if m.Selection != nil {
+				moved := false
+				if m.Input.IsKeyJustPressed(engine.KeyUp) { m.Selection.Y -= 1.0; moved = true }
+				if m.Input.IsKeyJustPressed(engine.KeyDown) { m.Selection.Y += 1.0; moved = true }
+				if m.Input.IsKeyJustPressed(engine.KeyLeft) { m.Selection.X -= 1.0; moved = true }
+				if m.Input.IsKeyJustPressed(engine.KeyRight) { m.Selection.X += 1.0; moved = true }
+				if m.Input.IsKeyJustPressed(engine.KeyDelete) || m.Input.IsKeyJustPressed(engine.KeyBackspace) { m.removeSelection() } else if moved { m.syncToSaveData() }
+			} else {
+				if m.Input.IsKeyPressed(engine.KeyUp) { m.CamY -= 5 }
+				if m.Input.IsKeyPressed(engine.KeyDown) { m.CamY += 5 }
+				if m.Input.IsKeyPressed(engine.KeyLeft) { m.CamX -= 5 }
+				if m.Input.IsKeyPressed(engine.KeyRight) { m.CamX += 5 }
+			}
 		}
 	}
 

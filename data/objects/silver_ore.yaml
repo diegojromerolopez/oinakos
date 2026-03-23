@@ -1,0 +1,14 @@
+name: Silver Ore
+description: Unrefined silver ore. Heavy and lustrous.
+weight: 6.0
+type: material
+value: 50
+footprint:
+- x: -0.16
+  y: -0.16
+- x: 0.16
+  y: -0.16
+- x: 0.16
+  y: 0.16
+- x: -0.16
+  y: 0.16

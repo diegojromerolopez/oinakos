@@ -20,7 +20,6 @@ type Weapon struct {
 	Type        string  `yaml:"type"`         // "ranged" or "melee"
 	MaxDistance string  `yaml:"max_distance"` // "touch" or pixel distance
 	Damage      Damage  `yaml:"damage"`
-	Weight      float64 `yaml:"weight,omitempty"`
 	Bonus       int     `yaml:"-"`
 }
 
@@ -75,16 +74,16 @@ func (w *Weapon) RollDamage() int {
 
 func (w *Weapon) GetMaxDistance() float64 {
 	if w.MaxDistance == "touch" || w.MaxDistance == "" {
-		return 1.4 // Default melee range
+		return 2.5 // Melee range must be > combined collision radii (1.875)
 	}
 	dist, err := strconv.ParseFloat(w.MaxDistance, 64)
 	if err != nil {
-		return 1.4
+		return 2.5
 	}
 	return dist
 }
 
 func (w *Weapon) IsRanged() bool {
-	return w.Type == "ranged" || w.GetMaxDistance() >= 2.0
+	return w.Type == "ranged"
 }
 

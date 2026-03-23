@@ -3,6 +3,7 @@ description: A heavy, jagged axe favored by orc warriors.
 weight: 6.0
 type: weapon
 slot: weapon
+resistance: 120
 value: 20
 combat:
   name: Orcish Axe
@@ -11,13 +12,12 @@ combat:
   damage:
     min: 4
     max: 8
-  weight: 6.0
 footprint:
-- x: -22.0
-  y: -21.984
-- x: 7.953
-  y: -21.984
-- x: 7.953
-  y: 7.969
-- x: -22.0
-  y: 7.969
+- x: -0.69
+  y: -0.69
+- x: 0.25
+  y: -0.69
+- x: 0.25
+  y: 0.25
+- x: -0.69
+  y: 0.25

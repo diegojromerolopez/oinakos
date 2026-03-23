@@ -3,6 +3,7 @@ description: A sturdy blade of common iron.
 weight: 4.0
 type: weapon
 slot: weapon
+resistance: 180
 value: 50
 combat:
   name: Iron Sword

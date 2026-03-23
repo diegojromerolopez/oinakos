@@ -95,7 +95,7 @@ func (g *Game) TryPickup(a *Actor, it *ItemInstance) bool {
 
 	// Success
 	it.Pickable = false // Mark as unpickable immediately to prevent race conditions
-	a.Inventory = append(a.Inventory, it.Config)
+	a.Inventory = append(a.Inventory, it)
 	a.UpdateEffects()
 	
 	// Set animation state
@@ -119,54 +119,50 @@ func (g *Game) TryPickup(a *Actor, it *ItemInstance) bool {
 func (g *Game) DropAllItems(a *Actor) {
 	radius := 1.0
 
-	dropObject := func(obj *ObjectConfig) {
-		if obj == nil {
+	dropObject := func(it *ItemInstance) {
+		if it == nil || it.Config == nil {
 			return
 		}
 		safeX, safeY := findSafePosition(a.X+(rand.Float64()*radius-radius/2.0), a.Y+(rand.Float64()*radius-radius/2.0), engine.Circle{Radius: 0.5}, g.obstacles)
-		it := &ItemInstance{
-			ID:       fmt.Sprintf("%s_%d", obj.ID, rand.Int()),
-			Config:   obj,
-			X:        safeX,
-			Y:        safeY,
-			Pickable: true,
-		}
+		
+		it.X = safeX
+		it.Y = safeY
+		it.Pickable = true
+		
 		if g.World != nil {
 			g.World.Items = append(g.World.Items, it)
 		}
 	}
 
-	for slot, obj := range a.Slots {
-		if obj != nil {
-			dropObject(obj)
+	for slot, it := range a.Slots {
+		if it != nil {
+			dropObject(it)
 			a.Slots[slot] = nil
 		}
 	}
 	a.UpdateEffects()
 
-	for _, obj := range a.Inventory {
-		if obj != nil {
-			dropObject(obj)
+	for _, it := range a.Inventory {
+		if it != nil {
+			dropObject(it)
 		}
 	}
 	a.Inventory = nil
 }
 
 func (g *Game) DropEquippedItem(a *Actor, slot string) bool {
-	obj, ok := a.Slots[slot]
-	if !ok || obj == nil {
+	it, ok := a.Slots[slot]
+	if !ok || it == nil {
 		return false
 	}
 	
 	radius := 1.0
 	safeX, safeY := findSafePosition(a.X+(rand.Float64()*radius-radius/2.0), a.Y+(rand.Float64()*radius-radius/2.0), engine.Circle{Radius: 0.5}, g.obstacles)
-	it := &ItemInstance{
-		ID:       fmt.Sprintf("%s_%d", obj.ID, rand.Int()),
-		Config:   obj,
-		X:        safeX,
-		Y:        safeY,
-		Pickable: true,
-	}
+	
+	it.X = safeX
+	it.Y = safeY
+	it.Pickable = true
+	
 	if g.World != nil {
 		g.World.Items = append(g.World.Items, it)
 	}
@@ -175,7 +171,7 @@ func (g *Game) DropEquippedItem(a *Actor, slot string) bool {
 	a.UpdateEffects()
 
 	if a == &g.playableCharacter.Actor {
-		g.AddFloatingText(fmt.Sprintf("Dropped %s", obj.Name), a.X, a.Y, color.RGBA{150, 150, 150, 255})
+		g.AddFloatingText(fmt.Sprintf("Dropped %s", it.Config.Name), a.X, a.Y, color.RGBA{150, 150, 150, 255})
 	}
 
 	return true
@@ -186,11 +182,11 @@ func (g *Game) TryDrop(a *Actor, index int) bool {
 		return false
 	}
 	
-	obj := a.Inventory[index]
+	it := a.Inventory[index]
 	
 	// Check if equipped
 	for slot, equipped := range a.Slots {
-		if equipped == obj {
+		if equipped == it {
 			delete(a.Slots, slot)
 			break
 		}
@@ -204,20 +200,23 @@ func (g *Game) TryDrop(a *Actor, index int) bool {
 	offsetX := (rand.Float64() - 0.5) * 0.5
 	offsetY := (rand.Float64() - 0.5) * 0.5
 	safeX, safeY := findSafePosition(a.X+offsetX, a.Y+offsetY, engine.Circle{Radius: 0.5}, g.obstacles)
-	it := NewItemInstance(obj.ID, obj, safeX, safeY)
+	
+	it.X = safeX
+	it.Y = safeY
+	it.Pickable = true
 	g.World.Items = append(g.World.Items, it)
 	
 	if a == &g.playableCharacter.Actor {
-		g.AddFloatingText(fmt.Sprintf("Dropped %s", obj.Name), a.X, a.Y, ColorHarm)
+		g.AddFloatingText(fmt.Sprintf("Dropped %s", it.Config.Name), a.X, a.Y, ColorHarm)
 	}
 	
 	return true
 }
 
-func (g *Game) DropSpecificItem(a *Actor, obj *ObjectConfig) bool {
+func (g *Game) DropSpecificItem(a *Actor, it *ItemInstance) bool {
 	index := -1
 	for i, item := range a.Inventory {
-		if item == obj {
+		if item == it {
 			index = i
 			break
 		}
@@ -227,7 +226,7 @@ func (g *Game) DropSpecificItem(a *Actor, obj *ObjectConfig) bool {
 	}
 	// If it's not in the inventory, it might just be in a slot (although we usually add to inventory first).
 	// But TryDrop only pops from Inventory right now. So we must put it in inventory first, then drop it.
-	a.Inventory = append(a.Inventory, obj)
+	a.Inventory = append(a.Inventory, it)
 	return g.TryDrop(a, len(a.Inventory)-1)
 }
 

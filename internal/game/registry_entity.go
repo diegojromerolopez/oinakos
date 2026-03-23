@@ -10,23 +10,30 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type EntityStats struct {
+	HealthMin       int     `yaml:"health_min"`
+	HealthMax       int     `yaml:"health_max"`
+	EnergyMin       float64 `yaml:"energy_min"`
+	EnergyMax       float64 `yaml:"energy_max"`
+	Speed           float64 `yaml:"speed"`
+	BaseAttack      int     `yaml:"base_attack"`
+	BaseDefense     int     `yaml:"base_defense"`
+	BaseProtection  int     `yaml:"base_protection"`
+	AttackCooldown  int     `yaml:"attack_cooldown"`
+	AttackRange     float64 `yaml:"attack_range"`
+	ProjectileSpeed float64 `yaml:"projectile_speed"`
+}
+
 type EntityConfig struct {
 	ID          string   `yaml:"id"`
 	Name        string   `yaml:"name"`
 	Names       []string `yaml:"names"`
 	ArchetypeID string   `yaml:"archetype,omitempty"`
 	Behavior    string   `yaml:"behavior"`
-	Stats       struct {
-		HealthMin       int     `yaml:"health_min"`
-		HealthMax       int     `yaml:"health_max"`
-		Speed           float64 `yaml:"speed"`
-		BaseAttack      int     `yaml:"base_attack"`
-		BaseDefense     int     `yaml:"base_defense"`
-		AttackCooldown      int     `yaml:"attack_cooldown"`
-		AttackRange         float64 `yaml:"attack_range"`
-		ProjectileSpeed     float64 `yaml:"projectile_speed"`
-	} `yaml:"stats"`
-	Actions    *ActionConfig `yaml:"actions,omitempty"`
+	Stats       EntityStats `yaml:"stats"`
+	Health      int     `yaml:"health,omitempty"` // Specific health value (overrides range)
+	Energy      float64 `yaml:"energy,omitempty"` // Specific energy value (overrides range)
+	Actions     *ActionConfig `yaml:"actions,omitempty"`
 	Weapon      WeaponConfig  `yaml:"weapon"`
 	CollisionRadius float64      `yaml:"collision_radius,omitempty"`
 
@@ -61,6 +68,8 @@ type EntityConfig struct {
 	HitImage     engine.Image `yaml:"-"` // hit.png  (legacy / single hit frame)
 	Hit1Image    engine.Image `yaml:"-"` // hit1.png (first variant)
 	Hit2Image    engine.Image `yaml:"-"` // hit2.png (second variant, requires hit1.png)
+	ChoppingImage engine.Image `yaml:"-"` // chopping.png
+	DiggingImage  engine.Image `yaml:"-"` // digging.png
 
 
 	CachedBaseFootprint *engine.Polygon `yaml:"-"`
@@ -174,6 +183,8 @@ func (r *ArchetypeRegistry) createLoadJobs(permitList map[string]bool) []*Sprite
 		addJob("hit1.png", &config.Hit1Image)
 		addJob("hit2.png", &config.Hit2Image)
 		addJob("crouch.png", &config.CrouchImage)
+		addJob("chopping.png", &config.ChoppingImage)
+		addJob("digging.png", &config.DiggingImage)
 	}
 	return jobs
 }
@@ -375,6 +386,8 @@ func (r *CharacterRegistry) createLoadJobs(assets fs.FS, archs *ArchetypeRegistr
 			addJob("hit.png", &config.HitImage, nil)
 			addJob("hit1.png", &config.Hit1Image, nil)
 			addJob("hit2.png", &config.Hit2Image, nil)
+			addJob("chopping.png", &config.ChoppingImage, nil)
+			addJob("digging.png", &config.DiggingImage, nil)
 		}
 		sanitizeEntityConfig(config, config.ID)
 	}

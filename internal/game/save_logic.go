@@ -65,6 +65,7 @@ func (g *Game) serialize() ([]byte, error) {
 	data.Map.HeightPixels = g.currentMapType.HeightPixels
 	data.Map.Level = g.mapLevel
 	data.Map.PlayTime = g.playTime
+	data.Map.Heightmap = g.currentMapType.Heightmap
 	for pt := range g.ExploredTiles {
 		data.Map.ExploredTiles = append(data.Map.ExploredTiles, pt)
 	}
@@ -81,15 +82,18 @@ func (g *Game) serialize() ([]byte, error) {
 		MapKills:    g.playableCharacter.MapKills,
 		BaseAttack:  g.playableCharacter.BaseAttack,
 		BaseDefense: g.playableCharacter.BaseDefense,
-		Inventory:   []string{},
-		Slots:       make(map[string]string),
+		BaseProtection: g.playableCharacter.BaseProtection,
+		Energy:      g.playableCharacter.Energy,
+		Inventory:   []ItemInstanceSaveData{},
+		Slots:       make(map[string]ItemInstanceSaveData),
 	}
 	for _, item := range g.playableCharacter.Inventory {
-		data.Player.Inventory = append(data.Player.Inventory, item.ID)
+		if item == nil || item.Config == nil { continue }
+		data.Player.Inventory = append(data.Player.Inventory, ItemInstanceSaveData{ID: item.Config.ID, Resistance: item.Resistance})
 	}
 	for slot, item := range g.playableCharacter.Slots {
-		if item != nil {
-			data.Player.Slots[slot] = item.ID
+		if item != nil && item.Config != nil {
+			data.Player.Slots[slot] = ItemInstanceSaveData{ID: item.Config.ID, Resistance: item.Resistance}
 		}
 	}
 	if g.playableCharacter.Weapon != nil {
@@ -129,15 +133,18 @@ func (g *Game) serialize() ([]byte, error) {
 			MustSurvive: n.MustSurvive,
 			BaseAttack:  n.BaseAttack,
 			BaseDefense: n.BaseDefense,
-			Inventory:   []string{},
-			Slots:       make(map[string]string),
+			BaseProtection: n.BaseProtection,
+			Energy:      n.Energy,
+			Inventory:   []ItemInstanceSaveData{},
+			Slots:       make(map[string]ItemInstanceSaveData),
 		}
 		for _, item := range n.Inventory {
-			npcSave.Inventory = append(npcSave.Inventory, item.ID)
+			if item == nil || item.Config == nil { continue }
+			npcSave.Inventory = append(npcSave.Inventory, ItemInstanceSaveData{ID: item.Config.ID, Resistance: item.Resistance})
 		}
 		for slot, item := range n.Slots {
-			if item != nil {
-				npcSave.Slots[slot] = item.ID
+			if item != nil && item.Config != nil {
+				npcSave.Slots[slot] = ItemInstanceSaveData{ID: item.Config.ID, Resistance: item.Resistance}
 			}
 		}
 		if n.Config != nil {
@@ -166,10 +173,12 @@ func (g *Game) serialize() ([]byte, error) {
 	}
 
 	for _, it := range g.World.Items {
+		if it == nil { continue }
 		data.Items = append(data.Items, ItemSaveData{
-			ID: it.ID,
-			X:  it.X,
-			Y:  it.Y,
+			ID:         it.ID,
+			Resistance: it.Resistance,
+			X:          it.X,
+			Y:          it.Y,
 		})
 	}
 

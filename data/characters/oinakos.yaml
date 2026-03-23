@@ -5,14 +5,21 @@ playable: true
 description: The lead hero. A mysterious knight whose path is forged in iron and ancient
   duty.
 stats:
-  health_min: 100
-  health_max: 100
-  base_attack: 60
-  base_defense: 5
+  health_min: 200
+  health_max: 200
+  base_attack: 75
+  base_defense: 30
+  base_protection: 10
   speed: 0.07
   attack_cooldown: 30
 max_weight: 250
 equipment:
   weapon: tizon
+  body: steel_armor
+  head: steel_helmet
   ring1: ring_protection
-inventory: []
+inventory:
+  - wooden_shield
+  - steel_dagger
+  - orcish_axe
+  - pike

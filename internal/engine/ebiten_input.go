@@ -96,6 +96,12 @@ func toEbitenKey(key Key) ebiten.Key {
 	case KeyBackspace: return ebiten.KeyBackspace
 	case KeyDelete: return ebiten.KeyDelete
 	case KeyI: return ebiten.KeyI
+	case KeyE: return ebiten.KeyE
+	case KeyB: return ebiten.KeyB
+	case KeyF: return ebiten.KeyF
+	case KeyR: return ebiten.KeyR
+	case KeyC: return ebiten.KeyC
+	case KeyV: return ebiten.KeyV
 	}
 	return -1
 }
@@ -122,6 +128,12 @@ func fromEbitenKey(key ebiten.Key) Key {
 	case ebiten.KeyBackspace: return KeyBackspace
 	case ebiten.KeyDelete: return KeyDelete
 	case ebiten.KeyI: return KeyI
+	case ebiten.KeyE: return KeyE
+	case ebiten.KeyB: return KeyB
+	case ebiten.KeyF: return KeyF
+	case ebiten.KeyR: return KeyR
+	case ebiten.KeyC: return KeyC
+	case ebiten.KeyV: return KeyV
 	}
 	return -1
 }

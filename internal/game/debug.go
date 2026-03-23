@@ -11,6 +11,7 @@ import (
 var debugEnabled bool
 var debugLogger *log.Logger
 var debugFile *os.File
+var InTestMode bool
 
 // SetDebugMode toggles the global debug state and initializes/closes the debug log file.
 func SetDebugMode(enabled bool) {

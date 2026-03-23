@@ -1,0 +1,14 @@
+name: Copper Ore
+description: A raw chunk of unrefined copper. Heavy.
+weight: 3.0
+type: material
+value: 5
+footprint:
+- x: -0.16
+  y: -0.16
+- x: 0.16
+  y: -0.16
+- x: 0.16
+  y: 0.16
+- x: -0.16
+  y: 0.16

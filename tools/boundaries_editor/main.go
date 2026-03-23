@@ -183,7 +183,7 @@ func main() {
 		archReg.LoadAssets(localAssets, graphics, nil, nil)
 		for _, id := range archReg.IDs {
 			cfg := archReg.Archetypes[id]
-			npc := game.NewCharacter(0, 0, cfg, 1, false)
+			npc := game.NewCharacter(0, 0, cfg, 1, false, nil)
 			entities = append(entities, &EditorEntity{
 				ID: id, Type: "Archetype", Image: cfg.StaticImage, Footprint: &cfg.Footprint,
 				YamlPath: findArchetypeYAML(id),
@@ -200,7 +200,7 @@ func main() {
 		charReg.LoadAssets(localAssets, graphics, archReg, nil, nil)
 		for _, id := range charReg.IDs {
 			cfg := charReg.Characters[id]
-			npc := game.NewCharacter(0, 0, cfg, 1, false)
+			npc := game.NewCharacter(0, 0, cfg, 1, false, nil)
 			charType := "NPC"
 			if cfg.Playable {
 				charType = "Character"

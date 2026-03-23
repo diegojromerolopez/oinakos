@@ -1,0 +1,26 @@
+name: Steel Helmet
+description: A gleaming steel helmet with a closed visor. Offers ultimate protection for the head.
+weight: 6.0
+type: armor
+slot: head
+value: 300
+effects:
+  protection:
+    increase: 12
+  defense:
+    increase: 8
+footprint:
+  - x: -1.58
+    y: -1.98
+  - x: -0.42
+    y: -1.27
+  - x: 0.14
+    y: -0.2
+  - x: -0.64
+    y: 0.08
+  - x: -1.41
+    y: -0.72
+  - x: -1.86
+    y: -1.52
+  - x: -1.78
+    y: -1.78

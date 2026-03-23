@@ -6,19 +6,19 @@ description: A crude, human-shaped automaton made from wood and sticks built in 
   1500s. A large wooden chest forms its torso, revealing visible clockwork machinery
   whirring inside.
 stats:
-  health_min: 150
-  health_max: 200
+  health_min: 400
+  health_max: 400
   speed: 0.05
-  base_attack: 15
-  base_defense: 30
-  attack_cooldown: 90
-  attack_range: 0.8
+  base_attack: 60
+  base_defense: 75
+  attack_cooldown: 80
+  attack_range: 1.0
 weapon:
   name: "Clockwork Claws"
   type: "melee"
   damage:
-    min: 15
-    max: 25
+    min: 40
+    max: 80
   max_distance: touch
 max_weight: 250
 equipment:

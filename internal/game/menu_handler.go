@@ -28,6 +28,10 @@ func (mh *MenuHandler) Update() error {
 		return mh.updateSettingsScreen()
 	}
 
+	if g.isKeymapScreen {
+		return mh.updateKeymapScreen()
+	}
+
 	if g.isCharacterSelect {
 		return mh.updateCharacterSelect()
 	}
@@ -80,7 +84,7 @@ func (mh *MenuHandler) updateInventoryScreen() error {
 	if g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft) {
 		mx, my := g.input.MousePosition()
 		
-		dialogW, dialogH := 800, 500
+		dialogW, dialogH := 900, 600
 		dialogX := (g.width - dialogW) / 2
 		dialogY := (g.height - dialogH) / 2
 		
@@ -94,26 +98,26 @@ func (mh *MenuHandler) updateInventoryScreen() error {
 		}
 
 		// 2. Paper Doll Slots
-		dollCenterX := dialogX + 200
-		dollCenterY := dialogY + 250
+		dollCenterX := dialogX + 220
+		dollCenterY := dialogY + 300
 		slots := []struct {
 			id string
 			x  int
 			y  int
 		}{
-			{"head", dollCenterX, dollCenterY - 120},
-			{"shield", dollCenterX - 100, dollCenterY - 30},
-			{"body", dollCenterX, dollCenterY - 30},
-			{"weapon", dollCenterX + 100, dollCenterY - 30},
-			{"ring1", dollCenterX - 100, dollCenterY + 40},
-			{"ring2", dollCenterX + 100, dollCenterY + 40},
-			{"legs", dollCenterX, dollCenterY + 90},
+			{"head", dollCenterX, dollCenterY - 140},
+			{"shield", dollCenterX - 110, dollCenterY - 40},
+			{"body", dollCenterX, dollCenterY - 40},
+			{"weapon", dollCenterX + 110, dollCenterY - 40},
+			{"ring1", dollCenterX - 110, dollCenterY + 50},
+			{"ring2", dollCenterX + 110, dollCenterY + 50},
+			{"legs", dollCenterX, dollCenterY + 110},
 		}
 
 		pc := g.playableCharacter
 		for _, s := range slots {
-			// Button is drawn at: sx+25, sy-20, 12x12
-			btnX, btnY, btnW, btnH := s.x+25, s.y-20, 12, 12
+			// [X] Label hitbox: sx+30, sy-15 size 30x20
+			btnX, btnY, btnW, btnH := s.x+30, s.y-25, 30, 25
 			if mx >= btnX && mx <= btnX+btnW && my >= btnY && my <= btnY+btnH {
 				if _, hasObj := pc.Slots[s.id]; hasObj {
 					g.DropEquippedItem(&pc.Actor, s.id)
@@ -131,20 +135,20 @@ func (mh *MenuHandler) updateInventoryScreen() error {
 			itemY := listStartY + 20 + i*40
 			item := pc.Inventory[i]
 			
-			// Drop button (X) at listStartX+listW-30
-			btnX, btnY, btnW, btnH := listStartX+listW-30, itemY+10, 15, 15
+			// Drop button [X] at listStartX+listW-35, it's 16pt text. Use approx 35x25 hitbox
+			btnX, btnY, btnW, btnH := listStartX+listW-40, itemY+5, 40, 25
 			if mx >= btnX && mx <= btnX+btnW && my >= btnY && my <= btnY+btnH {
 				g.TryDrop(&pc.Actor, i)
 				return nil // Handled click
 			}
 
-			// Read button (R) at listStartX+listW-50 if it has content
-			if item.Content != "" {
-				rBtnX, rBtnY, rBtnW, rBtnH := listStartX+listW-50, itemY+10, 15, 15
+			// Read button [R] at listStartX+listW-75. Use approx 35x25 hitbox
+			if item.Config != nil && item.Config.Content != "" {
+				rBtnX, rBtnY, rBtnW, rBtnH := listStartX+listW-80, itemY+5, 40, 25
 				if mx >= rBtnX && mx <= rBtnX+rBtnW && my >= rBtnY && my <= rBtnY+rBtnH {
 					g.ActiveBook = item
-					if item.Consumable {
-						pc.Actor.ApplyPermanentEffects(item)
+					if item.Config.Consumable {
+						pc.Actor.ApplyPermanentEffects(item.Config)
 						// Remove from inventory
 						pc.Inventory = append(pc.Inventory[:i], pc.Inventory[i+1:]...)
 						pc.Actor.UpdateEffects()
@@ -155,6 +159,15 @@ func (mh *MenuHandler) updateInventoryScreen() error {
 		}
 	}
 
+	return nil
+}
+
+func (mh *MenuHandler) updateKeymapScreen() error {
+	g := mh.game
+	if g.input.IsKeyJustPressed(engine.KeyEscape) || g.input.IsKeyJustPressed(engine.KeyEnter) {
+		g.isKeymapScreen = false
+		g.isSettingsScreen = true
+	}
 	return nil
 }
 

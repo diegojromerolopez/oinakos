@@ -3,10 +3,11 @@ description: Simple armor made of cured leather. Offers basic protection without
 weight: 8.0
 type: armor
 slot: body
+resistance: 300
 value: 40
 effects:
   protection:
-    increase: 2
+    increase: 12
 footprint:
   - x: -1.53
     y: -2.22

@@ -300,6 +300,8 @@ type ObjectConfig struct {
 	Type        string                `yaml:"type"`
 	Category    string                `yaml:"category,omitempty"` // e.g. "magic"
 	Value       int                   `yaml:"value"`
+	Unique      bool                  `yaml:"unique,omitempty"`
+	Resistance  int                   `yaml:"resistance,omitempty"`
 	Content     string                `yaml:"content,omitempty"`
 	Consumable  bool                  `yaml:"consumable,omitempty"`
 	Combat      *Weapon               `yaml:"combat,omitempty"`

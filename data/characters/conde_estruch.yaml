@@ -6,14 +6,18 @@ description: The 'Dracula of Catalonia'. Wilfred Estruch was a 12th-century knig
   who returned from death as a vampire to terrorize Llers Castle. A powerful blood-drinking
   noble.
 stats:
-  health_min: 90
-  health_max: 90
-  base_attack: 80
-  base_defense: 5
+  health_min: 200
+  health_max: 200
+  base_attack: 110
+  base_defense: 30
+  base_protection: 20
   speed: 0.08
   attack_cooldown: 25
   infecting_probability: 0.9
 max_weight: 250
 equipment:
   weapon: klyku
-inventory: []
+  body: steel_armor
+inventory:
+  - silk_robe
+  - silver_pendant

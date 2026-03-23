@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"image/color"
 	"io/fs"
 	"log"
@@ -8,6 +9,7 @@ import (
 	"time"
 	"runtime"
 	"sort"
+	"strings"
 
 	"oinakos/internal/engine"
 	"sync/atomic"
@@ -174,6 +176,8 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 		gr.drawAboutScreen(screen)
 	} else if g.isSettingsScreen {
 		gr.drawSettingsScreen(screen)
+	} else if g.isKeymapScreen {
+		gr.drawKeymapScreen(screen)
 	} else {
 		if g.currentMapType.FloorTile != "" && g.currentMapType.FloorTile != gr.lastFloorPath {
 			gr.coordCache = make(map[string]string)
@@ -182,6 +186,8 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 
 		gr.renderer.DrawTileMap(screen, offsetX, offsetY, func(x, y int) engine.Image {
 			return gr.getTileAt(x, y)
+		}, func(x, y int) float64 {
+			return g.currentMapType.GetElevationAt(float64(x), float64(y))
 		})
 
 		// 1. Dedicated Object Pass (Floor Items)
@@ -192,7 +198,7 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 				}
 				if g.debug {
 					// Draw green silhouette
-					isoX, isoY := engine.CartesianToIso(it.X, it.Y)
+					isoX, isoY := engine.CartesianToIsoZ(it.X, it.Y, it.Z)
 					if it.Config != nil && it.Config.Sprite != nil {
 						w, h := it.Config.Sprite.Size()
 						op := engine.NewDrawImageOptions()
@@ -223,7 +229,7 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 			}
 			sw, sh := img.Size()
 
-			isoX, isoY := engine.CartesianToIso(o.X, o.Y)
+			isoX, isoY := engine.CartesianToIsoZ(o.X, o.Y, o.Z)
 			drawX := isoX + offsetX
 			drawY := isoY + offsetY
 
@@ -245,7 +251,7 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 		}
 
 		for _, n := range g.characters {
-			isoX, isoY := engine.CartesianToIso(n.X, n.Y)
+			isoX, isoY := engine.CartesianToIsoZ(n.X, n.Y, n.Z)
 			drawX := isoX + offsetX
 			drawY := isoY + offsetY
 			if drawX < -256 || drawX > float64(g.width)+256 || drawY < -256 || drawY > float64(g.height)+256 {
@@ -290,7 +296,7 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 
 		// UI Pass: Draw character and NPC UI on top (always visible)
 		for _, n := range g.characters {
-			isoX, isoY := engine.CartesianToIso(n.X, n.Y)
+			isoX, isoY := engine.CartesianToIsoZ(n.X, n.Y, n.Z)
 			drawX := isoX + offsetX
 			drawY := isoY + offsetY
 			if drawX < -256 || drawX > float64(g.width)+256 || drawY < -256 || drawY > float64(g.height)+256 {
@@ -299,6 +305,61 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 			DrawActorUI(g, &n.Actor, screen, gr.graphics, gr.graphics, offsetX, offsetY, n.IsPlayerControlled, g.debug)
 		}
 		DrawActorUI(g, &g.playableCharacter.Actor, screen, gr.graphics, gr.graphics, offsetX, offsetY, true, g.debug)
+
+		// Forestry UI Pass: Draw healthbars and tooltips over trees
+		mouseX, mouseY := g.input.MousePosition()
+		mx, my := float64(mouseX), float64(mouseY)
+
+		tr, hasText := gr.graphics.(engine.TextRenderer)
+		vr, hasVec := gr.graphics.(engine.VectorRenderer)
+
+		for _, obj := range g.obstacles {
+			if !obj.Alive || obj.Archetype == nil {
+				continue
+			}
+			if strings.Contains(strings.ToLower(string(obj.Archetype.Type)), "tree") {
+				if obj.MaxHealth <= 0 {
+					continue // Ignore things without health limits
+				}
+
+				isoX, isoY := obj.GetIsoPos()
+				drawX := isoX + offsetX
+				drawY := isoY + offsetY
+
+				// Check screen boundaries
+				if drawX < -256 || drawX > float64(g.width)+256 || drawY < -256 || drawY > float64(g.height)+256 {
+					continue
+				}
+
+				// Simple Bounding box hover for tall trees
+				isHovered := mx >= drawX-40 && mx <= drawX+40 && my >= drawY-140 && my <= drawY
+
+				if obj.Health < obj.MaxHealth || isHovered {
+					barW := 40.0
+					barH := 4.0
+					barX := drawX - barW/2
+					barY := drawY - 140.0
+
+					healthRatio := float64(obj.Health) / float64(obj.MaxHealth)
+					if healthRatio < 0 {
+						healthRatio = 0
+					}
+
+					if hasVec {
+						// Healthbar BG (Dark Red)
+						vr.DrawFilledRect(screen, float32(barX), float32(barY), float32(barW), float32(barH), color.RGBA{150, 0, 0, 255}, false)
+						// Healthbar FG (Bright Green)
+						vr.DrawFilledRect(screen, float32(barX), float32(barY), float32(barW*healthRatio), float32(barH), color.RGBA{0, 255, 0, 255}, false)
+					}
+
+					// Text
+					if isHovered && hasText {
+						textStr := fmt.Sprintf("Timber: %d/%d", obj.Health, obj.MaxHealth)
+						tr.DrawTextAt(screen, textStr, int(barX-10), int(barY-5), color.RGBA{255, 255, 255, 255}, 12.0)
+					}
+				}
+			}
+		}
 
 		if g.debug || g.showBoundaries {
 			gr.drawDebug(screen, offsetX, offsetY)

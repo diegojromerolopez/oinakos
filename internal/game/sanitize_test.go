@@ -25,16 +25,7 @@ func TestSanitizeEntityConfig(t *testing.T) {
 			name: "invalid health and speed",
 			input: EntityConfig{
 				ID: "orc",
-				Stats: struct {
-					HealthMin       int     `yaml:"health_min"`
-					HealthMax       int     `yaml:"health_max"`
-					Speed           float64 `yaml:"speed"`
-					BaseAttack      int     `yaml:"base_attack"`
-					BaseDefense     int     `yaml:"base_defense"`
-					AttackCooldown  int     `yaml:"attack_cooldown"`
-					AttackRange          float64 `yaml:"attack_range"`
-					ProjectileSpeed      float64 `yaml:"projectile_speed"`
-				}{
+				Stats: EntityStats{
 					HealthMin: -5,
 					HealthMax: -10,
 					Speed:     -1.0,
@@ -49,16 +40,7 @@ func TestSanitizeEntityConfig(t *testing.T) {
 			name: "speed too high",
 			input: EntityConfig{
 				ID: "hero",
-				Stats: struct {
-					HealthMin       int     `yaml:"health_min"`
-					HealthMax       int     `yaml:"health_max"`
-					Speed           float64 `yaml:"speed"`
-					BaseAttack      int     `yaml:"base_attack"`
-					BaseDefense     int     `yaml:"base_defense"`
-					AttackCooldown  int     `yaml:"attack_cooldown"`
-					AttackRange          float64 `yaml:"attack_range"`
-					ProjectileSpeed      float64 `yaml:"projectile_speed"`
-				}{
+				Stats: EntityStats{
 					HealthMin: 100,
 					HealthMax: 100,
 					Speed:     5.0,
