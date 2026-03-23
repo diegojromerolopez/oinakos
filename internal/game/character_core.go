@@ -118,10 +118,11 @@ func NewCharacter(x, y float64, config *EntityConfig, level int, isPlayer bool, 
 	c.Slots = make(map[string]*ItemInstance)
 	c.Inventory = make([]*ItemInstance, 0)
 	c.AttackCooldown = config.Stats.AttackCooldown
-	c.Weapon = config.Weapon.Resolve(objReg) 
-	if c.Weapon == nil {
-		c.Weapon = WeaponFists
+	c.BaseWeapon = config.Weapon.Resolve(objReg) 
+	if c.BaseWeapon == nil {
+		c.BaseWeapon = WeaponFists
 	}
+	c.Weapon = c.BaseWeapon
 	c.Health = c.calculateStat(c.Health, c.Level)
 	c.MaxHealth = c.Health
 	c.BaseAttack = c.calculateStat(c.BaseAttack, c.Level)

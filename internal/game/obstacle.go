@@ -11,6 +11,7 @@ type Obstacle struct {
 	Archetype     *ObstacleArchetype
 	Health        int
 	MaxHealth     int
+	WeightLeft    float64
 	CooldownTicks int
 	TickCounter   int
 	Alive         bool
@@ -21,10 +22,19 @@ type Obstacle struct {
 
 func NewObstacle(id string, x, y float64, config *ObstacleArchetype) *Obstacle {
 	hp := 0 // Default indestructible
+	weight := 0.0
 	if config != nil {
 		hp = config.Health
 		if config.Timber > 0 {
 			hp = config.Timber
+		}
+		weight = config.Weight
+		if weight <= 0 && config.Timber > 0 {
+			weight = float64(config.Timber)
+		}
+		// If it's a resource/tree, set health to weight units if not explicitly set
+		if weight > 0 && hp == 0 {
+			hp = int(weight)
 		}
 	}
 
@@ -35,6 +45,7 @@ func NewObstacle(id string, x, y float64, config *ObstacleArchetype) *Obstacle {
 		Archetype:     config,
 		Health:        hp,
 		MaxHealth:     hp,
+		WeightLeft:    weight,
 		CooldownTicks: 0,
 		Alive:         true,
 		EffectTimers:  make(map[ActorInterface]int),
@@ -60,13 +71,6 @@ func (o *Obstacle) Update() {
 	}
 }
 
-func (o *Obstacle) ReduceTimber(amount int) {
-	o.TakeDamage(amount)
-}
-
-func (o *Obstacle) TimberLeft() int {
-	return o.Health
-}
 
 func (o *Obstacle) TakeDamage(amount int) {
 	if !o.Alive {

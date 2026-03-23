@@ -161,6 +161,15 @@ func (g *Game) Update() error {
 	if g.input.IsKeyJustPressed(engine.KeyE) { g.tryUnloading() }
 	if g.input.IsKeyJustPressed(engine.KeyQ) { g.performQuicksave() }
 
+	if g.World != nil {
+		g.World.Obstacles = g.obstacles
+		g.World.Characters = g.characters
+		g.World.Projectiles = g.projectiles
+		g.World.PlayableCharacter = g.playableCharacter
+		g.World.CurrentMapType = &g.currentMapType
+		g.World.PlayTime = g.playTime
+	}
+
 	ctx := &SystemContext{
 		World:      g.World,
 		Input:      g.input,
@@ -182,12 +191,10 @@ func (g *Game) Update() error {
 		p.Update(ctx)
 		if p.Alive { activeProjectiles = append(activeProjectiles, p) }
 	}
-	g.World.Projectiles = activeProjectiles
-	g.projectiles = g.World.Projectiles
+	g.projectiles = activeProjectiles
 
 	if !g.isPaused && !g.isGameOver {
 		g.playTime += 1.0 / 60.0
-		g.World.PlayTime = g.playTime
 		if g.saveMessageTimer > 0 { g.saveMessageTimer-- }
 	}
 
@@ -217,8 +224,7 @@ func (g *Game) Update() error {
 	}
 	g.obstacles = aliveObstacles
 
-	ctx.World.Characters = g.characters
-	for _, n := range ctx.World.Characters {
+	for _, n := range g.characters {
 		n.CurrentTile = g.currentMapType.GetTileAt(n.X, n.Y)
 		n.Update(ctx)
 		if n.MustSurvive && !n.IsAlive() {

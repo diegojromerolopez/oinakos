@@ -107,7 +107,13 @@ func (c *Character) updatePlayer(ctx *SystemContext) {
 						}
 					}
 				}
-				if isAxeEquipped { c.State, c.Tick = ActorChopping, 0; return } else if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s: I don't have an axe!", c.Name), LogNPC) }
+				if isAxeEquipped { 
+					c.State, c.Tick = ActorChopping, 0
+					c.CheckAttackHits(ctx) // Instant feedback / hit on first frame
+					return 
+				} else if ctx.Log != nil { 
+					ctx.Log(fmt.Sprintf("%s: I need an axe to chop wood! (Check inventory)", c.Name), LogWarning) 
+				}
 			}
 			if ctx.Input.IsKeyJustPressed(engine.KeyV) {
 				isPikeEquipped := c.Weapon != nil && (strings.Contains(strings.ToLower(c.Weapon.Name), "pike") || strings.Contains(strings.ToLower(c.Weapon.Name), "pickaxe"))

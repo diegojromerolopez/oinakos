@@ -3,23 +3,67 @@ package game
 import (
 	"fmt"
 	"image/color"
+	"log"
 	"math"
 	"math/rand"
 	"strings"
+	"oinakos/internal/engine"
 )
 
 func (c *Character) CheckAttackHits(ctx *SystemContext) {
 	attackDist := 2.5
 	if c.Config != nil && c.Config.Stats.AttackRange > 0 { attackDist = c.Config.Stats.AttackRange }
 	if c.Weapon != nil { attackDist = c.Weapon.GetMaxDistance() }
+	if c.State == ActorChopping || c.State == ActorDigging {
+		attackDist = 5.0
+	}
 	atX, atY := c.X, c.Y
 	switch c.Facing {
-	case DirSE: atX += attackDist * 0.7; atY += attackDist * 0.35
-	case DirSW: atX -= attackDist * 0.35; atY += attackDist * 0.7
-	case DirNE: atX += attackDist * 0.7; atY -= attackDist * 0.35
-	case DirNW: atX -= attackDist * 0.35; atY -= attackDist * 0.7
+	case DirSE: atX += attackDist
+	case DirSW: atY += attackDist
+	case DirNE: atY -= attackDist
+	case DirNW: atX -= attackDist
 	}
-	
+
+	// [DEBUG] Logging for harvesting actions - ONLY for player to avoid log spam
+	if c.IsPlayerControlled && (c.State == ActorChopping || c.State == ActorDigging) && ctx.Log != nil {
+		nearestMatchDist := 999.0
+		nearestMatchName := "None"
+		nx, ny := 0.0, 0.0
+		
+		matchType := "tree"
+		if c.State == ActorDigging { matchType = "dig-spot" }
+
+		totalObstacles := len(ctx.World.Obstacles)
+		for _, o := range ctx.World.Obstacles {
+			if o.Archetype == nil { continue }
+			isTree := (o.Archetype.Type == TypeTree) || strings.Contains(strings.ToLower(o.ID), "tree") || strings.Contains(strings.ToLower(o.Archetype.Name), "tree")
+			if (c.State == ActorChopping && isTree) || (c.State == ActorDigging && !isTree) {
+				dist := math.Sqrt(math.Pow(c.X-o.X, 2) + math.Pow(c.Y-o.Y, 2))
+				if dist < nearestMatchDist {
+					nearestMatchDist = dist
+					nearestMatchName = o.Archetype.Name
+					nx, ny = o.X, o.Y
+				}
+			}
+		}
+		msg := fmt.Sprintf("[DEBUG] %s: Player(%.2f, %.2f) | Obstacles in World: %d | Nearest %s: %s at (%.2f, %.2f) dist=%.2f",
+			c.State.String(), c.X, c.Y, totalObstacles, matchType, nearestMatchName, nx, ny, nearestMatchDist)
+		ctx.Log(msg, LogNPC)
+		log.Printf("%s", msg)
+	}
+
+	// Define the hit area. For harvesting, we use a generous 360-degree circle around the player.
+	// For normal attacks, we use a directional area to reward proper positioning.
+	var hitCircle engine.Circle
+	var avgX, avgY float64
+	if c.State == ActorChopping || c.State == ActorDigging {
+		hitCircle = engine.Circle{X: c.X, Y: c.Y, Radius: attackDist}
+	} else {
+		avgX, avgY = (c.X+atX)*0.5, (c.Y+atY)*0.5
+		hitCircle = engine.Circle{X: avgX, Y: avgY, Radius: attackDist * 0.75}
+	}
+
 	targets := ctx.World.Characters
 	if ctx.World.PlayableCharacter != nil {
 		found := false
@@ -30,29 +74,116 @@ func (c *Character) CheckAttackHits(ctx *SystemContext) {
 	hitSomething := false
 	for _, target := range targets {
 		if target == c || !target.IsAlive() || (target.Alignment == c.Alignment && !c.IsPlayerControlled) { continue }
-		if math.Sqrt(math.Pow(atX-target.X, 2) + math.Pow(atY-target.Y, 2)) < attackDist*1.2 { c.hitCharacter(&target.Actor, ctx); hitSomething = true }
+		
+		// Use directional check for characters unless harvesting
+		checkX, checkY := avgX, avgY
+		if c.State == ActorChopping || c.State == ActorDigging { checkX, checkY = c.X, c.Y }
+		
+		if math.Sqrt(math.Pow(checkX-target.X, 2) + math.Pow(checkY-target.Y, 2)) < hitCircle.Radius { 
+			c.hitCharacter(&target.Actor, ctx); hitSomething = true 
+		}
 	}
-	
+
+	// Harvesting / Obstacle logic
+	// If harvesting, we only want to hit the SINGLE NEAREST obstacle.
+	var bestTarget *Obstacle
+	bestDist := 999.0
+
 	for _, o := range ctx.World.Obstacles {
 		if !o.Alive || o.Archetype == nil || !o.Archetype.Destructible { continue }
-		if math.Sqrt(math.Pow(atX-o.X, 2) + math.Pow(atY-o.Y, 2)) < attackDist*1.5 {
+		
+		distToCenter := math.Sqrt(math.Pow(c.X-o.X, 2) + math.Pow(c.Y-o.Y, 2))
+		inRange := engine.CheckCirclePolygonCollision(hitCircle, o.GetFootprint()) || distToCenter <= 3.0
+
+		if !inRange { continue }
+
+		if c.State == ActorChopping || c.State == ActorDigging {
+			// Check if it's the right type for the action
+			isTree := (o.Archetype.Type == TypeTree) || strings.Contains(strings.ToLower(o.ID), "tree") || strings.Contains(strings.ToLower(o.Archetype.Name), "tree")
+			isCorrectType := (c.State == ActorChopping && isTree) || (c.State == ActorDigging && !isTree)
+			
+			if isCorrectType && distToCenter < bestDist {
+				bestDist = distToCenter
+				bestTarget = o
+			}
+		} else {
+			// Normal attack: hit EVERYTHING in range
 			power := c.rollDamage()
-			if strings.Contains(strings.ToLower(string(o.Archetype.Type)), "tree") {
-				if c.State == ActorChopping && c.Weapon != nil && strings.Contains(strings.ToLower(c.Weapon.Name), "axe") {
-					chopPower := power * 5
-					if ctx.Audio != nil { ctx.Audio.PlayRandomSound("footstep_wood") }
-					if woodConfig := ctx.Registries.Objects.Objects["wood"]; woodConfig != nil {
-						dropX, dropY := o.X + (rand.Float64()*1.0 - 0.5), o.Y + (rand.Float64()*1.0 - 0.5)
-						ctx.World.Items, ctx.World.FloatingTexts = append(ctx.World.Items, NewItemInstance("wood", woodConfig, dropX, dropY)), append(ctx.World.FloatingTexts, &FloatingText{ Text: "+Wood", X: dropX, Y: dropY, Life: 40, Color: color.RGBA{139, 69, 19, 255} })
+			if power > 0 {
+				o.TakeDamage(power)
+				c.DegradeWeapon(ctx)
+				ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{ Text: fmt.Sprintf("-%d", power), X: o.X, Y: o.Y, Life: 45, Color: ColorHarm })
+				hitSomething = true
+			}
+		}
+	}
+
+	// Apply harvesting to the single best target found
+	if bestTarget != nil {
+		o := bestTarget
+		power := c.rollDamage()
+		isTree := (o.Archetype.Type == TypeTree) || strings.Contains(strings.ToLower(o.ID), "tree") || strings.Contains(strings.ToLower(o.Archetype.Name), "tree")
+		hasAxe := c.Weapon != nil && strings.Contains(strings.ToLower(c.Weapon.Name), "axe")
+
+		if isTree && hasAxe && (c.State == ActorChopping || c.State == ActorAttacking) {
+			// Harvesting logic based on total mass (weight)
+			chopPower := power
+			if c.State == ActorChopping { chopPower *= 5 }
+			
+			if ctx.Audio != nil { ctx.Audio.PlayRandomSound("footstep_wood") }
+			
+			// Account for loss (leaves, branches, sawdust) - random 0-50% of the force
+			randLoss := rand.Float64() * (float64(chopPower) * 0.5)
+			o.WeightLeft -= (float64(chopPower) + randLoss)
+			if o.WeightLeft < 0 { o.WeightLeft = 0 }
+			
+			// Spawning manageable logs (5-25 units each)
+			if woodConfig := ctx.Registries.Objects.Objects["wood"]; woodConfig != nil && o.WeightLeft > 0 {
+				probability := float64(chopPower) / 100.0
+				if rand.Float64() < probability || o.WeightLeft <= 30.0 {
+					numLogs := 1 + rand.Intn(3)
+					if c.State == ActorChopping { numLogs += 1 }
+					
+					var totalLogWeight float64
+					for i := 0; i < numLogs && o.WeightLeft > 0; i++ {
+						w := 5.0 + rand.Float64()*20.0
+						if w > o.WeightLeft { w = o.WeightLeft }
+						
+						dropX := o.X + (rand.Float64()*1.2 - 0.6)
+						dropY := o.Y + (rand.Float64()*1.2 - 0.6)
+						
+						item := NewItemInstance(fmt.Sprintf("wood_%d", rand.Int()), woodConfig, dropX, dropY)
+						item.Weight = w
+						ctx.World.Items = append(ctx.World.Items, item)
+						
+						o.WeightLeft -= w
+						totalLogWeight += w
 					}
-					o.ReduceTimber(chopPower)
-					c.DegradeWeapon(ctx)
-					ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{ Text: fmt.Sprintf("-%d", chopPower), X: o.X, Y: o.Y, Life: 45, Color: ColorHarm })
-					if o.TimberLeft() <= 0 { if stumpArch, ok := ctx.Registries.Obstacles.Archetypes["stump"]; ok { o.Archetype, o.Health, o.MaxHealth, o.Alive = stumpArch, stumpArch.Health, stumpArch.Health, true } }
-					hitSomething = true
+					
+					if totalLogWeight > 0 {
+						ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{ Text: fmt.Sprintf("+%.1f mass", totalLogWeight), X: o.X, Y: o.Y - 1, Life: 60, Color: ColorHeal })
+					}
 				}
-			} else if power > 0 {
-				o.TakeDamage(power); c.DegradeWeapon(ctx); ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{ Text: fmt.Sprintf("-%d", power), X: o.X, Y: o.Y, Life: 45, Color: ColorHarm })
+			}
+			
+			c.DegradeWeapon(ctx)
+			ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{ Text: fmt.Sprintf("%.1f mass rem", o.WeightLeft), X: o.X, Y: o.Y, Life: 45, Color: ColorHarm })
+			
+			if o.WeightLeft <= 0 {
+				if stumpArch, ok := ctx.Registries.Obstacles.Archetypes["stump"]; ok {
+					o.Archetype, o.Health, o.MaxHealth, o.Alive = stumpArch, stumpArch.Health, stumpArch.Health, true
+				} else { o.Alive = false }
+				DebugLog("Tree Fell! Mass reservoir depleted.")
+			}
+			hitSomething = true
+		} else if !isTree && c.State == ActorDigging {
+			// This part is handled by the digging logic below if no obstacle is hit, 
+			// but if an obstacle IS hit while digging (and it's not a tree), we handle it here if it's destructive.
+			// Currently most stones are Obstacles.
+			if power > 0 {
+				o.TakeDamage(power)
+				c.DegradeWeapon(ctx)
+				ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{ Text: fmt.Sprintf("-%d", power), X: o.X, Y: o.Y, Life: 45, Color: ColorHarm })
 				hitSomething = true
 			}
 		}

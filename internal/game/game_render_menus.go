@@ -238,7 +238,7 @@ func (gr *GameRenderer) drawSettingsScreen(screen engine.Image) {
 	tw, _ := gr.graphics.MeasureText(title, 40)
 	gr.graphics.DrawTextAt(screen, title, (g.width-int(tw))/2, 100, color.RGBA{218, 165, 32, 255}, 40)
 
-	rows := []string{"Font Style", "Sound Effects", "Fog of War", "AI Provider", "Simulation Mode", "Talking Frequency", "Keymap", "Save and Back"}
+	rows := []string{"Font Style", "Sound Effects", "Fog of War", "AI Provider", "Simulation Mode", "Talking Frequency", "Measurement Units", "Keymap", "Save and Back"}
 	for i, row := range rows {
 		var clr color.Color = color.White
 		prefix := "  "
@@ -264,10 +264,12 @@ func (gr *GameRenderer) drawSettingsScreen(screen engine.Image) {
 			label += fmt.Sprintf(": [%s]", val)
 		} else if i == 5 {
 			label += fmt.Sprintf(": [%s]", strings.ToUpper(g.settings.TalkingFrequency))
+		} else if i == 6 {
+			label += fmt.Sprintf(": [%s]", strings.ToUpper(g.settings.Units))
 		}
 
-		lw, _ := gr.graphics.MeasureText(label, 24)
-		gr.graphics.DrawTextAt(screen, label, (g.width-int(lw))/2, 230+i*55, clr, 24)
+		lw, _ := gr.graphics.MeasureText(label, 18)
+		gr.graphics.DrawTextAt(screen, label, (g.width-int(lw))/2, 200+i*40, clr, 18)
 	}
 
 	hint := "UP/DOWN to navigate, LEFT/RIGHT to change value, ENTER to confirm."
@@ -449,9 +451,9 @@ func (gr *GameRenderer) drawInventoryScreen(screen engine.Image) {
 	
 	// Weight
 	pc := g.playableCharacter
-	weightStr := fmt.Sprintf("Weight: %.1f / %.1f kg", pc.GetTotalWeight(), pc.MaxWeight)
-	ww, _ := gr.graphics.MeasureText(weightStr, 16)
-	gr.graphics.DrawTextAt(screen, weightStr, dialogX+dialogW-int(ww)-40, dialogY+45, color.White, 16)
+	weightStr := fmt.Sprintf("Weight: %s / %s", g.settings.FormatWeight(pc.GetTotalWeight()), g.settings.FormatWeight(pc.MaxWeight))
+	ww, _ := gr.graphics.MeasureText(weightStr, 14)
+	gr.graphics.DrawTextAt(screen, weightStr, dialogX+dialogW-int(ww)-40, dialogY+45, color.White, 14)
 
 	// Traumas (Listed vertically below weight if any exist)
 	traumas := pc.GetActiveTraumas()

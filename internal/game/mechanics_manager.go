@@ -142,6 +142,8 @@ func (mm *MechanicsManager) CheckWinConditions(ctx *SystemContext) bool {
 		for _, kills := range world.PlayableCharacter.MapKills { if kills > 0 { /* handle game over externally */ break } }
 	case ObjDestroyBuilding:
 		if world.CurrentMapType.TargetObstacle != nil && !world.CurrentMapType.TargetObstacle.Alive { mapWon = true }
+	case ObjSandbox:
+		mapWon = false
 	}
 	return mapWon
 }

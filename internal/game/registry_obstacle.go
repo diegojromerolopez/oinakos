@@ -18,6 +18,7 @@ type ObstacleArchetype struct {
 	Description    string                 `yaml:"description"`
 	Health         int                    `yaml:"health"`        // Base health (ignored if Destructible is false)
 	Timber         int                    `yaml:"timber"`        // Available timber resources for harvesting
+	Weight         float64                `yaml:"weight"`        // Total resource weight (game units)
 	CooldownTime   float64                `yaml:"cooldown_time"` // Base cooldown in minutes
 	Footprint      []FootprintPoint       `yaml:"footprint"`
 	FrameCount     int                    `yaml:"frame_count"`     // Total number of frames

@@ -8,19 +8,23 @@ type ItemInstance struct {
 	ID         string
 	Config     *ObjectConfig
 	Resistance int
+	Weight     float64
 	X, Y, Z    float64
 	Pickable   bool
 }
 
 func NewItemInstance(id string, config *ObjectConfig, x, y float64) *ItemInstance {
 	res := 0
+	weight := 0.0
 	if config != nil {
 		res = config.Resistance
+		weight = config.Weight
 	}
 	return &ItemInstance{
 		ID:         id,
 		Config:     config,
 		Resistance: res,
+		Weight:     weight,
 		X:          x,
 		Y:          y,
 		Z:          0,

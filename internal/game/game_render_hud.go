@@ -57,11 +57,11 @@ func (gr *GameRenderer) drawHUD(screen engine.Image) {
 	yPos := nextY
 	if yPos < 90 { yPos = 90 }
 
-	gr.graphics.DrawTextAt(screen, fmt.Sprintf("POS %.1f,%.1f  KILLS: %d  XP: %d  LVL: %d", g.playableCharacter.X, g.playableCharacter.Y, g.playableCharacter.Kills, g.playableCharacter.XP, g.playableCharacter.Level), 20, yPos, color.White, 12)
+	gr.graphics.DrawTextAt(screen, fmt.Sprintf("POS %s, %s  KILLS: %d", g.settings.FormatDistance(g.playableCharacter.X), g.settings.FormatDistance(g.playableCharacter.Y), g.playableCharacter.Kills), 20, yPos, color.White, 12)
 	yPos += 15
 	gr.graphics.DrawTextAt(screen, fmt.Sprintf("ATK: %d  DEF: %d  SHIELD: %d", g.playableCharacter.GetTotalAttack(), g.playableCharacter.GetTotalDefense(), g.playableCharacter.GetTotalProtection()), 20, yPos, color.White, 12)
 	yPos += 15
-	gr.graphics.DrawTextAt(screen, fmt.Sprintf("WEIGHT: %.1f / %.1f kg", g.playableCharacter.GetTotalWeight(), g.playableCharacter.MaxWeight), 20, yPos, color.White, 12)
+	gr.graphics.DrawTextAt(screen, fmt.Sprintf("WEIGHT: %s / %s", g.settings.FormatWeight(g.playableCharacter.GetTotalWeight()), g.settings.FormatWeight(g.playableCharacter.MaxWeight)), 20, yPos, color.White, 12)
 
 	weaponText := "WEAPON: Unarmed (1-2)"
 	if g.playableCharacter.Weapon != nil {

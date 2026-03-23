@@ -49,8 +49,8 @@ func TestCharacterActions_Woodcutting(t *testing.T) {
 		t.Errorf("Tree did not take damage from chopping")
 	}
 	
-	if len(ctx.World.Items) == 0 {
-		t.Errorf("Wood was not dropped from chopping tree")
+	if len(ctx.World.Items) == 0 && len(mc.Inventory) == 0 {
+		t.Errorf("Wood was not dropped from chopping tree (not in world nor in inventory)")
 	}
 }
 
@@ -76,9 +76,93 @@ func TestCharacterActions_Digging(t *testing.T) {
 	// Set target direction for digging
 	mc.CheckAttackHits(sysCtx)
 	
-	elevation := ctx.World.CurrentMapType.GetElevationAt(mc.X+1, mc.Y)
+	// Range is now 5.0 for harvesting actions
+	targetX := mc.X + 5.0
+	elevation := ctx.World.CurrentMapType.GetElevationAt(targetX, mc.Y)
 	if elevation >= 0 {
-		t.Errorf("Digging did not reduce elevation. got %f", elevation)
+		t.Errorf("Digging did not reduce elevation at target. got %f", elevation)
+	}
+}
+
+func TestCharacterActions_GenerousWoodcutting(t *testing.T) {
+	ctx := setupTestGame()
+	mc := ctx.playableCharacter
+	mc.X, mc.Y = 0, 0
+	mc.Facing = DirSE // +X
+	
+	// Create an axe
+	axe := &ObjectConfig{
+		ID: "axe",
+		Name: "Bronze Axe",
+		Combat: &Weapon{Name: "Bronze Axe", Damage: Damage{Min: 10, Max: 10}},
+	}
+	ctx.Registries.Objects.Objects["axe"] = axe
+	mc.Weapon = axe.Combat
+	mc.State = ActorChopping
+	
+	// Create wood object config for drops
+	ctx.Registries.Objects.Objects["wood"] = &ObjectConfig{ID: "wood", Name: "Wood"}
+	
+	// Create a tree FURTHER AWAY (e.g. 4.5 units)
+	// With range 5.0, hitCircle center is at 2.5, radius is 3.75.
+	// It covers up to 2.5 + 3.75 = 6.25 units.
+	treeDist := 4.5
+	treeArch := &ObstacleArchetype{
+		ID: "tree_oak",
+		Type: "tree",
+		Destructible: true,
+		Health: 100,
+	}
+	tree := &Obstacle{
+		X: treeDist, Y: 0,
+		Archetype: treeArch,
+		Alive: true,
+		Health: 100,
+	}
+	ctx.World.Obstacles = []*Obstacle{tree}
+	
+	sysCtx := NewTestContext()
+	sysCtx.World = ctx.World
+	sysCtx.Registries = ctx.Registries
+	
+	mc.CheckAttackHits(sysCtx)
+	
+	if tree.Health == 100 {
+		t.Errorf("Tree at distance %.1f was NOT hit despite generous range limits", treeDist)
+	}
+	
+	if len(ctx.World.Items) == 0 && len(mc.Inventory) == 0 {
+		t.Errorf("No wood generated (neither dropped nor in inventory) for tree at distance %.1f", treeDist)
+	}
+}
+
+func TestCharacterActions_GenerousDigging(t *testing.T) {
+	ctx := setupTestGame()
+	mc := ctx.playableCharacter
+	mc.X, mc.Y = 0, 0
+	mc.Facing = DirSW // +Y
+	
+	pike := &ObjectConfig{
+		ID: "pike",
+		Name: "Iron Pike",
+		Combat: &Weapon{Name: "Iron Pike"},
+	}
+	ctx.Registries.Objects.Objects["pike"] = pike
+	mc.Weapon = pike.Combat
+	mc.State = ActorDigging
+	
+	sysCtx := NewTestContext()
+	sysCtx.World = ctx.World
+	sysCtx.Registries = ctx.Registries
+	
+	// CheckAttackHits should now use a range of 5.0
+	mc.CheckAttackHits(sysCtx)
+	
+	// DirSW is +Y, so it should dig at (0, 5)
+	targetY := mc.Y + 5.0
+	elevation := ctx.World.CurrentMapType.GetElevationAt(mc.X, targetY)
+	if elevation >= 0 {
+		t.Errorf("Digging at distance 5.0 did not reduce elevation. got %f", elevation)
 	}
 }
 

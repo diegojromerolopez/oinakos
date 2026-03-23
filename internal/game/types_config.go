@@ -44,6 +44,7 @@ const (
 	ObjProtectNPC
 	ObjPacifist
 	ObjDestroyBuilding
+	ObjSandbox
 )
 
 func (t ObjectiveType) String() string {
@@ -66,6 +67,8 @@ func (t ObjectiveType) String() string {
 		return "pacifist"
 	case ObjDestroyBuilding:
 		return "destroy_building"
+	case ObjSandbox:
+		return "sandbox"
 	}
 	return "unknown"
 }
@@ -100,6 +103,9 @@ func (t *ObjectiveType) UnmarshalYAML(value *yaml.Node) error {
 			return nil
 		case "destroy_building":
 			*t = ObjDestroyBuilding
+			return nil
+		case "sandbox":
+			*t = ObjSandbox
 			return nil
 		}
 	}

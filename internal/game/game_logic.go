@@ -41,15 +41,19 @@ func (g *Game) logRealtimePosition() {
 	if isIllegal { status = "ILLEGAL POSITION (INSIDE BUILDING)" }
 	nearestDist := 999.0
 	nearestName := "None"
+	nearestX, nearestY := 0.0, 0.0
 	for _, o := range g.obstacles {
 		dist := math.Sqrt(math.Pow(g.playableCharacter.X-o.X, 2) + math.Pow(g.playableCharacter.Y-o.Y, 2))
 		if dist < nearestDist {
 			nearestDist = dist
-			if o.Archetype != nil { nearestName = o.Archetype.Name }
+			if o.Archetype != nil {
+				nearestName = o.Archetype.Name
+				nearestX, nearestY = o.X, o.Y
+			}
 		}
 	}
-	DebugLog("[REALTIME] Player Pos: X=%.2f, Y=%.2f | Status: %s | Nearest: %s (Dist: %.2f)",
-		g.playableCharacter.X, g.playableCharacter.Y, status, nearestName, nearestDist)
+	DebugLog("[REALTIME] Player Pos: X=%.2f, Y=%.2f | Status: %s | Nearest: %s (Dist: %.2f) at (%.2f, %.2f)",
+		g.playableCharacter.X, g.playableCharacter.Y, status, nearestName, nearestDist, nearestX, nearestY)
 }
 
 func (g *Game) ensurePlayerNotStuck() {

@@ -74,8 +74,8 @@ func (g *Game) TryPickup(a *Actor, it *ItemInstance) bool {
 		return false
 	}
 
-	if a.GetTotalWeight()+it.Config.Weight > a.MaxWeight {
-		fmt.Printf("DEBUG TryPickup fails due to weight: weight %f + %f > max %f\n", a.GetTotalWeight(), it.Config.Weight, a.MaxWeight)
+	if a.GetTotalWeight()+it.Weight > a.MaxWeight {
+		fmt.Printf("DEBUG TryPickup fails due to weight: weight %f + %f > max %f\n", a.GetTotalWeight(), it.Weight, a.MaxWeight)
 		if g.playableCharacter != nil && a == &g.playableCharacter.Actor {
 			g.AddFloatingText("Too heavy!", a.X, a.Y, ColorHarm)
 		}

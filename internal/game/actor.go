@@ -25,6 +25,22 @@ const (
 	ActorDigging   // Gathering ore/excavating
 )
 
+func (s ActorState) String() string {
+	switch s {
+	case ActorIdle:          return "Idle"
+	case ActorWalking:       return "Walking"
+	case ActorAttacking:     return "Attacking"
+	case ActorDead:          return "Dead"
+	case ActorDrinking:      return "Drinking"
+	case ActorCrouching:     return "Crouching"
+	case ActorIncapacitated: return "Incapacitated"
+	case ActorResting:       return "Resting"
+	case ActorChopping:      return "Chopping"
+	case ActorDigging:       return "Digging"
+	default:                 return "Unknown"
+	}
+}
+
 // Backward-compatible aliases for PlayableCharacterState
 type PlayableCharacterState = ActorState
 
@@ -121,6 +137,7 @@ type Actor struct {
 	BaseProtection     int
 	Speed              float64
 	Weapon             *Weapon
+	BaseWeapon         *Weapon
 	Alignment          Alignment
 	LastAIDecisionTick int
 	Group              string
@@ -262,14 +279,6 @@ func (a *Actor) UpdateEffects() {
 		}
 	}
 
-	// Sync Active Weapon
-	if it, ok := a.Slots["weapon"]; ok && it != nil && it.Config != nil && it.Config.Combat != nil {
-		a.Weapon = it.Config.Combat
-	} else {
-		// Fallback to default fists
-		a.Weapon = WeaponFists
-	}
-
 	// Apply effects from Trauma
 	if a.Trauma.LeftArmLost {
 		a.AttackBonus -= 5
@@ -293,7 +302,7 @@ func (a *Actor) UpdateEffects() {
 			a.Weapon = weaponItem.Config.Combat
 		}
 	} else {
-		a.Weapon = nil
+		a.Weapon = a.BaseWeapon
 	}
 }
 
@@ -402,17 +411,21 @@ func (a *Actor) GetTotalWeight() float64 {
 	}
 	// 2. Inventory (backpack)
 	for _, item := range a.Inventory {
-		if item != nil && item.Config != nil {
-			total += item.Config.Weight
+		if item != nil {
+			total += item.Weight
 		}
 	}
 	// 3. Equipped items
 	for _, item := range a.Slots {
-		if item != nil && item.Config != nil {
-			total += item.Config.Weight
+		if item != nil {
+			total += item.Weight
 		}
 	}
 	return total
+}
+
+func (a *Actor) CanCarry(weight float64) bool {
+	return a.GetTotalWeight()+weight <= a.MaxWeight
 }
 
 func (a *Actor) SharedUpdate(ctx *SystemContext) {

@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"io/fs"
 	"log"
 	"os"
@@ -47,12 +48,16 @@ type Settings struct {
 	// Advanced
 	AIModelOverride string `yaml:"ai_model_override"`
 	AIBaseURL       string `yaml:"ai_base_url"`
+
+	// Units
+	Units string `yaml:"units"` // venburguian | si | imperial
 }
 
 var FrequencyOptions = []string{"never", "rare", "infrequent", "half the time", "frequent", "always"}
 var FontOptions = []string{"medieval", "modern_antiqua", "uncial_antiqua", "glass_antiqua", "kings", "eagle_lake", "default"}
 var FogOfWarOptions = []string{"none", "vision", "exploration"}
 var AIProviderOptions = []string{"none", "openai", "claude", "gemini", "mistral", "huggingface", "ollama", "webgpu"}
+var UnitsOptions = []string{"venburguian", "si", "imperial"}
 
 func SetFontOptions(fonts []string) {
 	FontOptions = fonts
@@ -66,6 +71,7 @@ func DefaultSettings() *Settings {
 		FogOfWar:         "none",
 		AIProvider:       "none",
 		AISimulationMode: false,
+		Units:            "venburguian",
 	}
 }
 
@@ -93,6 +99,38 @@ func (s *Settings) getFrequencyProb(freq string) float64 {
 		return 1.0
 	default:
 		return 0.1
+	}
+}
+
+func (s *Settings) FormatWeight(w float64) string {
+	switch s.Units {
+	case "si":
+		return fmt.Sprintf("%.2f kg", w)
+	case "imperial":
+		return fmt.Sprintf("%.2f lb", w*2.20462)
+	case "venburguian":
+		return fmt.Sprintf("%.2f lib", w/0.329) // Roman Pound (Libra)
+	default:
+		return fmt.Sprintf("%.2f", w)
+	}
+}
+
+func (s *Settings) FormatDistance(d float64) string {
+	switch s.Units {
+	case "si":
+		return fmt.Sprintf("%.2f m", d*0.296)
+	case "imperial":
+		return fmt.Sprintf("%.2f ft", d*0.971)
+	case "venburguian":
+		if d >= 5000 {
+			return fmt.Sprintf("%.1f millia", d/5000.0)
+		}
+		if d >= 5 {
+			return fmt.Sprintf("%.1f passus", d/5.0)
+		}
+		return fmt.Sprintf("%.1f pedes", d)
+	default:
+		return fmt.Sprintf("%.2f units", d)
 	}
 }
 
