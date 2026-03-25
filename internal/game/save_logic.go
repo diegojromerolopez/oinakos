@@ -71,7 +71,7 @@ func (g *Game) serialize() ([]byte, error) {
 	}
 
 	data.Player = PlayerSaveData{
-		ArchetypeID: g.playableCharacter.Config.ID,
+		Archetype: g.playableCharacter.Config.ID,
 		X:           g.playableCharacter.X,
 		Y:           g.playableCharacter.Y,
 		Health:      g.playableCharacter.Health,
@@ -151,7 +151,7 @@ func (g *Game) serialize() ([]byte, error) {
 			if n.Config.Unique {
 				npcSave.NPCID = n.Config.ID
 			} else {
-				npcSave.ArchetypeID = n.Config.ID
+				npcSave.Archetype = n.Config.ID
 			}
 		}
 		data.Characters = append(data.Characters, npcSave)
@@ -164,7 +164,7 @@ func (g *Game) serialize() ([]byte, error) {
 		xVal, yVal := o.X, o.Y
 		data.Obstacles = append(data.Obstacles, ObstacleSaveData{
 			ID:            o.ID,
-			ArchetypeID:   o.Archetype.ID,
+			Archetype:   o.Archetype.ID,
 			X:             &xVal,
 			Y:             &yVal,
 			Health:        o.Health,

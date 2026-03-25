@@ -85,7 +85,7 @@ func BuildWorldContext(g *Game, focusNPC *Character) string {
 			ctx := NPCContext{
 				Name:             n.Name,
 				Description:      n.Config.Description,
-				Archetype:        n.Config.ArchetypeID,
+				Archetype:        n.Config.Archetype,
 				HealthPct:        int(float64(n.Health) / float64(n.MaxHealth) * 100),
 				Alignment:        fmt.Sprint(n.Alignment),
 				DistanceToPlayer: dist,
@@ -105,7 +105,7 @@ func BuildWorldContext(g *Game, focusNPC *Character) string {
 		ctx := NPCContext{
 			Name:             nearestNPC.Name,
 			Description:      nearestNPC.Config.Description,
-			Archetype:        nearestNPC.Config.ArchetypeID,
+			Archetype:        nearestNPC.Config.Archetype,
 			HealthPct:        int(float64(nearestNPC.Health) / float64(nearestNPC.MaxHealth) * 100),
 			Alignment:        fmt.Sprint(nearestNPC.Alignment),
 			DistanceToPlayer: minDist,

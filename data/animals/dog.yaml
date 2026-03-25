@@ -1,0 +1,19 @@
+id: dog
+name: Dog
+behavior: wander
+stats:
+  health_min: 30
+  health_max: 40
+  speed: 0.045
+  base_attack: 8
+  base_defense: 3
+  attack_cooldown: 45
+weapon:
+  name: "Bite"
+  type: "melee"
+  damage:
+    min: 5
+    max: 15
+  max_distance: touch
+meat: 1
+xp: 8

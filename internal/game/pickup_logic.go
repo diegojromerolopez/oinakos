@@ -148,6 +148,25 @@ func (g *Game) DropAllItems(a *Actor) {
 		}
 	}
 	a.Inventory = nil
+
+	// Drop meat if this is an animal/entity with meat
+	if a.Config != nil && a.Config.Meat > 0 {
+		if meatConfig, ok := g.Registries.Objects.Objects["raw_meat"]; ok {
+			for i := 0; i < a.Config.Meat; i++ {
+				// Each piece of meat is around 2-5 units
+				w := 2.0 + rand.Float64()*3.0
+				dropX := a.X + (rand.Float64()*radius - radius/2.0)
+				dropY := a.Y + (rand.Float64()*radius - radius/2.0)
+				safeX, safeY := findSafePosition(dropX, dropY, engine.Circle{Radius: 0.5}, g.obstacles)
+				
+				item := NewItemInstance(fmt.Sprintf("meat_%s_%d", a.Config.ID, rand.Int()), meatConfig, safeX, safeY)
+				item.Weight = w
+				if g.World != nil {
+					g.World.Items = append(g.World.Items, item)
+				}
+			}
+		}
+	}
 }
 
 func (g *Game) DropEquippedItem(a *Actor, slot string) bool {

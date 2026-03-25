@@ -1,0 +1,19 @@
+id: chicken
+name: Chicken
+behavior: wander
+stats:
+  health_min: 8
+  health_max: 12
+  speed: 0.05
+  base_attack: 1
+  base_defense: 0
+  attack_cooldown: 30
+weapon:
+  name: "Claws"
+  type: "melee"
+  damage:
+    min: 1
+    max: 5
+  max_distance: touch
+meat: 1
+xp: 1

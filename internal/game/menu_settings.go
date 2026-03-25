@@ -6,7 +6,14 @@ import (
 
 func (mh *MenuHandler) updateSettingsScreen() error {
 	g := mh.game
-	nRows := 9 // Font, Audio, Fog, AI Provider, AI Sim, Talking, Units, Keymap, Save & Back
+
+	showAIModel := g.settings.AIProvider != "none"
+	rows := []string{"Font Style", "Sound Effects", "Fog of War", "AI Provider"}
+	if showAIModel {
+		rows = append(rows, "AI Model")
+	}
+	rows = append(rows, "Simulation Mode", "Talking Frequency", "Measurement Units", "Keymap", "Save and Back")
+	nRows := len(rows)
 
 	// 1. Mouse Detection (Prioritize mouse for selection/hover)
 	mx, my := g.input.MousePosition()
@@ -41,7 +48,9 @@ func (mh *MenuHandler) updateSettingsScreen() error {
 	}
 
 	// 3. Row-Specific Logic
-	if g.settingsMenuIndex == 0 { // Font
+	currentRow := rows[g.settingsMenuIndex]
+	switch currentRow {
+	case "Font Style":
 		if g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) {
 			g.settingsFontIndex--
 			if g.settingsFontIndex < 0 {
@@ -50,8 +59,7 @@ func (mh *MenuHandler) updateSettingsScreen() error {
 			g.settings.Font = FontOptions[g.settingsFontIndex]
 			g.UpdateFont()
 		}
-		// Cycle on Right Arrow OR Click
-		if g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) || (mouseClicked && hoverIdx == 0) {
+		if g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) || (mouseClicked && hoverIdx == g.settingsMenuIndex) {
 			g.settingsFontIndex++
 			if g.settingsFontIndex >= len(FontOptions) {
 				g.settingsFontIndex = 0
@@ -59,7 +67,7 @@ func (mh *MenuHandler) updateSettingsScreen() error {
 			g.settings.Font = FontOptions[g.settingsFontIndex]
 			g.UpdateFont()
 		}
-	} else if g.settingsMenuIndex == 1 { // Audio
+	case "Sound Effects":
 		if g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) {
 			g.settingsAudioIndex--
 			if g.settingsAudioIndex < 0 {
@@ -70,7 +78,7 @@ func (mh *MenuHandler) updateSettingsScreen() error {
 				g.audio.SetProbability(g.settings.GetSoundProbability())
 			}
 		}
-		if g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) || (mouseClicked && hoverIdx == 1) {
+		if g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) || (mouseClicked && hoverIdx == g.settingsMenuIndex) {
 			g.settingsAudioIndex++
 			if g.settingsAudioIndex >= len(FrequencyOptions) {
 				g.settingsAudioIndex = 0
@@ -80,7 +88,7 @@ func (mh *MenuHandler) updateSettingsScreen() error {
 				g.audio.SetProbability(g.settings.GetSoundProbability())
 			}
 		}
-	} else if g.settingsMenuIndex == 2 { // Fog of War
+	case "Fog of War":
 		if g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) {
 			g.settingsFogIndex--
 			if g.settingsFogIndex < 0 {
@@ -88,18 +96,19 @@ func (mh *MenuHandler) updateSettingsScreen() error {
 			}
 			g.settings.FogOfWar = FogOfWarOptions[g.settingsFogIndex]
 		}
-		if g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) || (mouseClicked && hoverIdx == 2) {
+		if g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) || (mouseClicked && hoverIdx == g.settingsMenuIndex) {
 			g.settingsFogIndex++
 			if g.settingsFogIndex >= len(FogOfWarOptions) {
 				g.settingsFogIndex = 0
 			}
 			g.settings.FogOfWar = FogOfWarOptions[g.settingsFogIndex]
 		}
-	} else if g.settingsMenuIndex == 3 { // AI Provider
+	case "AI Provider":
 		options := AIProviderOptions
 		if g.isWasm() {
 			options = []string{"none", "webgpu"}
 		}
+		oldProvider := g.settings.AIProvider
 		if g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) {
 			found := -1
 			for i, opt := range options {
@@ -113,7 +122,7 @@ func (mh *MenuHandler) updateSettingsScreen() error {
 			if found < 0 { found = len(options) - 1 }
 			g.settings.AIProvider = options[found]
 		}
-		if g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) || (mouseClicked && hoverIdx == 3) {
+		if g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) || (mouseClicked && hoverIdx == g.settingsMenuIndex) {
 			found := -1
 			for i, opt := range options {
 				if opt == g.settings.AIProvider {
@@ -126,12 +135,38 @@ func (mh *MenuHandler) updateSettingsScreen() error {
 			if found >= len(options) { found = 0 }
 			g.settings.AIProvider = options[found]
 		}
-	} else if g.settingsMenuIndex == 4 { // AI Simulation Mode
+		if g.settings.AIProvider != oldProvider {
+			g.initAIManager() // Re-fetch models
+		}
+	case "AI Model":
+		if len(g.availableModels) > 0 {
+			currentModel := g.getAIModelForCurrentProvider()
+			found := -1
+			for i, m := range g.availableModels {
+				if m == currentModel {
+					found = i
+					break
+				}
+			}
+			if g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) {
+				if found == -1 { found = 0 }
+				found--
+				if found < 0 { found = len(g.availableModels) - 1 }
+				g.setAIModelForCurrentProvider(g.availableModels[found])
+			}
+			if g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) || (mouseClicked && hoverIdx == g.settingsMenuIndex) {
+				if found == -1 { found = 0 }
+				found++
+				if found >= len(g.availableModels) { found = 0 }
+				g.setAIModelForCurrentProvider(g.availableModels[found])
+			}
+		}
+	case "Simulation Mode":
 		if g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) ||
-			g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) || (mouseClicked && hoverIdx == 4) {
+			g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) || (mouseClicked && hoverIdx == g.settingsMenuIndex) {
 			g.settings.AISimulationMode = !g.settings.AISimulationMode
 		}
-	} else if g.settingsMenuIndex == 5 { // Talking Frequency
+	case "Talking Frequency":
 		if g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) {
 			found := -1
 			for i, opt := range FrequencyOptions {
@@ -145,7 +180,7 @@ func (mh *MenuHandler) updateSettingsScreen() error {
 			if found < 0 { found = len(FrequencyOptions) - 1 }
 			g.settings.TalkingFrequency = FrequencyOptions[found]
 		}
-		if g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) || (mouseClicked && hoverIdx == 5) {
+		if g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) || (mouseClicked && hoverIdx == g.settingsMenuIndex) {
 			found := -1
 			for i, opt := range FrequencyOptions {
 				if opt == g.settings.TalkingFrequency {
@@ -158,7 +193,7 @@ func (mh *MenuHandler) updateSettingsScreen() error {
 			if found >= len(FrequencyOptions) { found = 0 }
 			g.settings.TalkingFrequency = FrequencyOptions[found]
 		}
-	} else if g.settingsMenuIndex == 6 { // Units
+	case "Measurement Units":
 		if g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) {
 			found := -1
 			for i, opt := range UnitsOptions {
@@ -172,7 +207,7 @@ func (mh *MenuHandler) updateSettingsScreen() error {
 			if found < 0 { found = len(UnitsOptions) - 1 }
 			g.settings.Units = UnitsOptions[found]
 		}
-		if g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) || (mouseClicked && hoverIdx == 6) {
+		if g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) || (mouseClicked && hoverIdx == g.settingsMenuIndex) {
 			found := -1
 			for i, opt := range UnitsOptions {
 				if opt == g.settings.Units {
@@ -185,27 +220,26 @@ func (mh *MenuHandler) updateSettingsScreen() error {
 			if found >= len(UnitsOptions) { found = 0 }
 			g.settings.Units = UnitsOptions[found]
 		}
-	} else if g.settingsMenuIndex == 7 { // Keymap
-		if g.input.IsKeyJustPressed(engine.KeyEnter) || (mouseClicked && hoverIdx == 7) {
+	case "Keymap":
+		if g.input.IsKeyJustPressed(engine.KeyEnter) || (mouseClicked && hoverIdx == g.settingsMenuIndex) {
 			g.isKeymapScreen = true
 			g.isSettingsScreen = false
 			return nil
 		}
-	}
-
-	// 4. Global Confirmation / Back
-	if g.input.IsKeyJustPressed(engine.KeyEnter) || (mouseClicked && hoverIdx == 8) {
-		g.settings.Save()
-		g.UpdateFont()
-		if g.audio != nil {
-			g.audio.SetProbability(g.settings.GetSoundProbability())
-		}
-		g.isSettingsScreen = false
-		if g.isSettingsFromPause {
-			g.isMenuOpen = true
-			g.isSettingsFromPause = false
-		} else {
-			g.isMainMenu = true
+	case "Save and Back":
+		if g.input.IsKeyJustPressed(engine.KeyEnter) || (mouseClicked && hoverIdx == g.settingsMenuIndex) {
+			g.settings.Save()
+			g.UpdateFont()
+			if g.audio != nil {
+				g.audio.SetProbability(g.settings.GetSoundProbability())
+			}
+			g.isSettingsScreen = false
+			if g.isSettingsFromPause {
+				g.isMenuOpen = true
+				g.isSettingsFromPause = false
+			} else {
+				g.isMainMenu = true
+			}
 		}
 	}
 

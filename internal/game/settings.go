@@ -35,7 +35,7 @@ type Settings struct {
 	Font           string `yaml:"font"`
 	FogOfWar       string `yaml:"fog_of_war"` // none | vision | exploration
 
-	AIProvider        string `yaml:"ai_provider"`        // none | openai | claude | gemini | mistral | huggingface | ollama
+	AIProvider        string `yaml:"ai_provider"`        // none | openai | claude | gemini | mistral | huggingface | ollama (local) | ollama | webgpu
 	AISimulationMode  bool   `yaml:"ai_simulation_mode"`  // If true, the player character is also AI-controlled
 
 	// API Keys
@@ -45,8 +45,17 @@ type Settings struct {
 	MistralApiKey    string `yaml:"mistral_api_key"`
 	HuggingFaceApiKey string `yaml:"huggingface_api_key"`
 
+	// Models
+	OpenAIModel      string `yaml:"openai_model"`
+	ClaudeModel      string `yaml:"claude_model"`
+	GeminiModel      string `yaml:"gemini_model"`
+	MistralModel     string `yaml:"mistral_model"`
+	HuggingFaceModel string `yaml:"huggingface_model"`
+	OllamaModel      string `yaml:"ollama_model"`
+	OllamaLocalModel string `yaml:"ollama_local_model"`
+	WebGPUModel      string `yaml:"webgpu_model"`
+
 	// Advanced
-	AIModelOverride string `yaml:"ai_model_override"`
 	AIBaseURL       string `yaml:"ai_base_url"`
 
 	// Units
@@ -56,7 +65,7 @@ type Settings struct {
 var FrequencyOptions = []string{"never", "rare", "infrequent", "half the time", "frequent", "always"}
 var FontOptions = []string{"medieval", "modern_antiqua", "uncial_antiqua", "glass_antiqua", "kings", "eagle_lake", "default"}
 var FogOfWarOptions = []string{"none", "vision", "exploration"}
-var AIProviderOptions = []string{"none", "openai", "claude", "gemini", "mistral", "huggingface", "ollama", "webgpu"}
+var AIProviderOptions = []string{"none", "openai", "claude", "gemini", "mistral", "huggingface", "ollama (local)", "ollama (service)"}
 var UnitsOptions = []string{"venburguian", "si", "imperial"}
 
 func SetFontOptions(fonts []string) {
@@ -72,7 +81,39 @@ func DefaultSettings() *Settings {
 		AIProvider:       "none",
 		AISimulationMode: false,
 		Units:            "venburguian",
+
+		OpenAIModel:      "gpt-4o-mini",
+		ClaudeModel:      "claude-3-5-sonnet-20240620",
+		GeminiModel:      "gemini-1.5-flash",
+		MistralModel:     "mistral-small-latest",
+		HuggingFaceModel: "meta-llama/Llama-3.1-8B-Instruct",
+		OllamaModel:      "llama3",
+		OllamaLocalModel: "llama3",
+		WebGPUModel:      "tiny-llama-1.1b",
 	}
+}
+
+func (s *Settings) GetDefaultModel(provider string) string {
+	d := DefaultSettings()
+	switch provider {
+	case "openai":
+		return d.OpenAIModel
+	case "claude":
+		return d.ClaudeModel
+	case "gemini":
+		return d.GeminiModel
+	case "ollama (local)":
+		return d.OllamaLocalModel
+	case "ollama (service)":
+		return d.OllamaModel
+	case "mistral":
+		return d.MistralModel
+	case "huggingface":
+		return d.HuggingFaceModel
+	case "webgpu":
+		return d.WebGPUModel
+	}
+	return ""
 }
 
 func (s *Settings) GetSoundProbability() float64 {
@@ -178,19 +219,19 @@ func getSettingsPath() string {
 }
 
 func LoadSettings() *Settings {
+	s := DefaultSettings()
 	data, err := loadSettingsData()
 	if err != nil {
-		return DefaultSettings()
+		return s
 	}
 
-	var s Settings
-	err = yaml.Unmarshal(data, &s)
+	err = yaml.Unmarshal(data, s)
 	if err != nil {
 		log.Printf("Warning: failed to unmarshal settings: %v", err)
 		return DefaultSettings()
 	}
 
-	return &s
+	return s
 }
 
 func (s *Settings) Save() error {

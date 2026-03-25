@@ -129,11 +129,11 @@ func (m *MapEditor) placeItem(mx, my int) {
 
 	if m.PendingItem.Type == "obstacle" {
 		m.MapData.Obstacles = append(m.MapData.Obstacles, game.ObstacleSaveData{
-			ArchetypeID: m.PendingItem.ID, X: &cx, Y: &cy,
+			Archetype: m.PendingItem.ID, X: &cx, Y: &cy,
 		})
 	} else {
 		m.MapData.Characters = append(m.MapData.Characters, game.NPCSaveData{
-			ArchetypeID: m.PendingItem.ID, X: cx, Y: cy, Level: 1, Behavior: "wander",
+			Archetype: m.PendingItem.ID, X: cx, Y: cy, Level: 1, Behavior: "wander",
 		})
 	}
 	m.saveMap()
@@ -161,12 +161,12 @@ func (m *MapEditor) selectElement(val int) {
 	if isNPC {
 		data := m.MapData.Characters[idx]
 		m.Selection = &MapElement{
-			ID: fmt.Sprintf("npc_%d", idx), X: data.X, Y: data.Y, Item: m.findItem(data.ArchetypeID, "npc"),
+			ID: fmt.Sprintf("npc_%d", idx), X: data.X, Y: data.Y, Item: m.findItem(data.Archetype, "npc"),
 		}
 	} else {
 		data := m.MapData.Obstacles[idx]
 		m.Selection = &MapElement{
-			ID: fmt.Sprintf("obs_%d", idx), X: *data.X, Y: *data.Y, Item: m.findItem(data.ArchetypeID, "obstacle"),
+			ID: fmt.Sprintf("obs_%d", idx), X: *data.X, Y: *data.Y, Item: m.findItem(data.Archetype, "obstacle"),
 		}
 	}
 }

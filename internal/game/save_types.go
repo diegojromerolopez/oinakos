@@ -10,7 +10,7 @@ type ItemInstanceSaveData struct {
 }
 
 type PlayerSaveData struct {
-	ArchetypeID string                           `yaml:"archetype_id"`
+	Archetype string                           `yaml:"archetype"`
 	X           float64                          `yaml:"x"`
 	Y           float64                          `yaml:"y"`
 	Health      int                              `yaml:"health"`
@@ -30,7 +30,7 @@ type PlayerSaveData struct {
 }
 
 type NPCSaveData struct {
-	ArchetypeID string                           `yaml:"archetype_id,omitempty"`
+	Archetype string                           `yaml:"archetype,omitempty"`
 	NPCID       string                           `yaml:"npc_id,omitempty"`
 	X           float64                          `yaml:"x"`
 	Y           float64                          `yaml:"y"`
@@ -54,7 +54,7 @@ type NPCSaveData struct {
 
 type ObstacleSaveData struct {
 	ID            string   `yaml:"id,omitempty"`
-	ArchetypeID   string   `yaml:"archetype_id"`
+	Archetype   string   `yaml:"archetype"`
 	X             *float64 `yaml:"x,omitempty"`
 	Y             *float64 `yaml:"y,omitempty"`
 	Health        int      `yaml:"health,omitempty"`

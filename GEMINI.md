@@ -72,7 +72,7 @@ All game content is defined in YAML under `data/` and loaded at startup:
 
 ### NPC Audio Fallback Chain
 1. Check `assets/audio/npcs/<npc_id>/` for WAV files → use NPC-specific audio.
-2. Else fall back to `assets/audio/archetypes/<archetype_id>/` (the archetype's voice).
+2. Else fall back to `assets/audio/archetypes/<archetype>/` (the archetype's voice).
 3. Player character audio always uses `PlayableCharacter` as the key prefix.
 
 ---
@@ -117,7 +117,7 @@ All game content is defined in YAML under `data/` and loaded at startup:
 - **Native**: Saves to `oinakos/saves/` beside the binary. Supports multiple named saves + load dialog.
 - **WASM**: Persists to browser `localStorage` under key `quicksave`. Auto-resumes on page load.
 - **Platform bridge**: `persistence_native.go` vs `persistence_js.go`, split via Go build tags.
-- **Character identity** is stored as `player.archetype_id` in the save file and looked up in `PlayableCharacterRegistry` on load — `PlayableCharacter` is then set automatically from the registry.
+- **Character identity** is stored as `player.archetype` in the save file and looked up in `PlayableCharacterRegistry` on load — `PlayableCharacter` is then set automatically from the registry.
 
 ---
 

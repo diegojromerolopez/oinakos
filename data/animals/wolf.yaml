@@ -1,0 +1,19 @@
+id: wolf
+name: Wolf
+behavior: wander
+stats:
+  health_min: 40
+  health_max: 60
+  speed: 0.04
+  base_attack: 12
+  base_defense: 5
+  attack_cooldown: 55
+weapon:
+  name: "Bite"
+  type: "melee"
+  damage:
+    min: 10
+    max: 25
+  max_distance: touch
+meat: 2
+xp: 15

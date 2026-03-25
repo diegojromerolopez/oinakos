@@ -146,7 +146,6 @@ type Inhabitant struct {
 	ID          string    `yaml:"id,omitempty"` // For internal mapping if needed
 	Name        string    `yaml:"name,omitempty"`
 	Archetype   string    `yaml:"archetype,omitempty"`
-	ArchetypeID string    `yaml:"archetype_id,omitempty"`
 	NPC         string    `yaml:"npc,omitempty"`
 	NPCID       string    `yaml:"npc_id,omitempty"`
 	X           float64   `yaml:"x"`
@@ -160,7 +159,6 @@ type Inhabitant struct {
 type PreSpawnObstacle struct {
 	ID          string   `yaml:"id"`
 	Archetype   string   `yaml:"archetype"`
-	ArchetypeID string   `yaml:"archetype_id,omitempty"`
 	Actions    *ActionConfig `yaml:"actions,omitempty"`
 	Weapon      WeaponConfig  `yaml:"weapon"`
 	CollisionRadius float64      `yaml:"collision_radius,omitempty"`

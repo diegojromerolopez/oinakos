@@ -14,7 +14,7 @@ player:
   xp: 0
   level: 5
 npcs:
-- archetype_id: demon_male
+- archetype: demon_male
   x: 5
   y: 5
   health: 300

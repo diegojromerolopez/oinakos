@@ -78,7 +78,7 @@ func (m *MapEditor) drawEditor(screen *ebiten.Image) {
 		if obsData.X == nil || obsData.Y == nil { continue }
 		var arch *game.ObstacleArchetype
 		for _, item := range m.Library {
-			if item.ID == obsData.ArchetypeID {
+			if item.ID == obsData.Archetype {
 				arch = item.Archetype.(*game.ObstacleArchetype)
 				break
 			}
@@ -96,7 +96,7 @@ func (m *MapEditor) drawEditor(screen *ebiten.Image) {
 	for i, npcData := range m.MapData.Characters {
 		var arch *game.Archetype
 		for _, item := range m.Library {
-			if item.ID == npcData.ArchetypeID {
+			if item.ID == npcData.Archetype {
 				arch = item.Archetype.(*game.Archetype)
 				break
 			}

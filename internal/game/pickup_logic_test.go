@@ -10,13 +10,11 @@ func TestTryPickup_Success(t *testing.T) {
 	g := setupTestGame()
 	pc := g.playableCharacter
 	
-	item := &ItemInstance{
-		Config: &ObjectConfig{
-			Name:   "Test Item",
-			Weight: 5,
-		},
-		Pickable: true,
-	}
+	item := NewItemInstance("test_item", &ObjectConfig{
+		Name:   "Test Item",
+		Weight: 5,
+	}, 0, 0)
+	item.Pickable = true
 	
 	success := g.TryPickup(&pc.Actor, item)
 	
@@ -36,8 +34,10 @@ func TestTryPickup_FullInventory(t *testing.T) {
 	pc := g.playableCharacter
 	pc.Config.MaxItems = 1
 	
-	item1 := &ItemInstance{Config: &ObjectConfig{Name: "Item 1", Weight: 1}, Pickable: true}
-	item2 := &ItemInstance{Config: &ObjectConfig{Name: "Item 2", Weight: 1}, Pickable: true}
+	item1 := NewItemInstance("item1", &ObjectConfig{Name: "Item 1", Weight: 1}, 0, 0)
+	item1.Pickable = true
+	item2 := NewItemInstance("item2", &ObjectConfig{Name: "Item 2", Weight: 1}, 0, 0)
+	item2.Pickable = true
 	
 	g.TryPickup(&pc.Actor, item1)
 	success := g.TryPickup(&pc.Actor, item2)
@@ -55,13 +55,11 @@ func TestTryPickup_TooHeavy(t *testing.T) {
 	pc := g.playableCharacter
 	pc.MaxWeight = 10
 	
-	item := &ItemInstance{
-		Config: &ObjectConfig{
-			Name:   "Heavy Item",
-			Weight: 20,
-		},
-		Pickable: true,
-	}
+	item := NewItemInstance("heavy_item", &ObjectConfig{
+		Name:   "Heavy Item",
+		Weight: 20,
+	}, 0, 0)
+	item.Pickable = true
 	
 	success := g.TryPickup(&pc.Actor, item)
 	

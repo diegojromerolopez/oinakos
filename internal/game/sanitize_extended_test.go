@@ -203,28 +203,28 @@ func TestSanitizePlayerSaveData(t *testing.T) {
 
 func TestSanitizeNPCSaveData(t *testing.T) {
 	// Negative health → clamped to 0
-	n := NPCSaveData{ArchetypeID: "orc", Health: -5, MaxHealth: 10, Level: 1}
+	n := NPCSaveData{Archetype: "orc", Health: -5, MaxHealth: 10, Level: 1}
 	sanitizeNPCSaveData(&n, 0, "test")
 	if n.Health != 0 {
 		t.Errorf("Health: got %d, want 0", n.Health)
 	}
 
 	// Zero max_health with health > 0 → max_health set to health
-	n2 := NPCSaveData{ArchetypeID: "orc", Health: 8, MaxHealth: 0, Level: 1}
+	n2 := NPCSaveData{Archetype: "orc", Health: 8, MaxHealth: 0, Level: 1}
 	sanitizeNPCSaveData(&n2, 1, "test")
 	if n2.MaxHealth != 8 {
 		t.Errorf("MaxHealth: got %d, want 8", n2.MaxHealth)
 	}
 
 	// Zero max_health with health == 0 → max_health clamped to 1
-	n3 := NPCSaveData{ArchetypeID: "orc", Health: 0, MaxHealth: 0, Level: 1}
+	n3 := NPCSaveData{Archetype: "orc", Health: 0, MaxHealth: 0, Level: 1}
 	sanitizeNPCSaveData(&n3, 2, "test")
 	if n3.MaxHealth != 1 {
 		t.Errorf("MaxHealth: got %d, want 1", n3.MaxHealth)
 	}
 
 	// Zero level → clamped to 1
-	n4 := NPCSaveData{ArchetypeID: "orc", Health: 5, MaxHealth: 10, Level: 0}
+	n4 := NPCSaveData{Archetype: "orc", Health: 5, MaxHealth: 10, Level: 0}
 	sanitizeNPCSaveData(&n4, 3, "test")
 	if n4.Level != 1 {
 		t.Errorf("Level: got %d, want 1", n4.Level)

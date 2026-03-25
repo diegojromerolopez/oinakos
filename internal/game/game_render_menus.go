@@ -238,7 +238,13 @@ func (gr *GameRenderer) drawSettingsScreen(screen engine.Image) {
 	tw, _ := gr.graphics.MeasureText(title, 40)
 	gr.graphics.DrawTextAt(screen, title, (g.width-int(tw))/2, 100, color.RGBA{218, 165, 32, 255}, 40)
 
-	rows := []string{"Font Style", "Sound Effects", "Fog of War", "AI Provider", "Simulation Mode", "Talking Frequency", "Measurement Units", "Keymap", "Save and Back"}
+	rows := []string{"Font Style", "Sound Effects", "Fog of War", "AI Provider"}
+	showAIModel := g.settings.AIProvider != "none"
+	if showAIModel {
+		rows = append(rows, "AI Model")
+	}
+	rows = append(rows, "Simulation Mode", "Talking Frequency", "Measurement Units", "Keymap", "Save and Back")
+
 	for i, row := range rows {
 		var clr color.Color = color.White
 		prefix := "  "
@@ -248,23 +254,34 @@ func (gr *GameRenderer) drawSettingsScreen(screen engine.Image) {
 		}
 
 		label := prefix + row
-		if i == 0 {
+		switch row {
+		case "Font Style":
 			label += fmt.Sprintf(": [%s]", strings.ToUpper(FontOptions[g.settingsFontIndex]))
-		} else if i == 1 {
+		case "Sound Effects":
 			label += fmt.Sprintf(": [%s]", strings.ToUpper(FrequencyOptions[g.settingsAudioIndex]))
-		} else if i == 2 {
+		case "Fog of War":
 			label += fmt.Sprintf(": [%s]", strings.ToUpper(FogOfWarOptions[g.settingsFogIndex]))
-		} else if i == 3 {
+		case "AI Provider":
 			label += fmt.Sprintf(": [%s]", strings.ToUpper(g.settings.AIProvider))
-		} else if i == 4 {
+		case "AI Model":
+			model := g.getAIModelForCurrentProvider()
+			if model == "" {
+				model = "AUTO"
+			}
+			if g.isFetchingModels {
+				label += ": [FETCHING...]"
+			} else {
+				label += fmt.Sprintf(": [%s]", strings.ToUpper(model))
+			}
+		case "Simulation Mode":
 			val := "OFF"
 			if g.settings.AISimulationMode {
 				val = "ON"
 			}
 			label += fmt.Sprintf(": [%s]", val)
-		} else if i == 5 {
+		case "Talking Frequency":
 			label += fmt.Sprintf(": [%s]", strings.ToUpper(g.settings.TalkingFrequency))
-		} else if i == 6 {
+		case "Measurement Units":
 			label += fmt.Sprintf(": [%s]", strings.ToUpper(g.settings.Units))
 		}
 

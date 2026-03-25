@@ -44,8 +44,8 @@ func (wm *WorldManager) LoadMapAssets() {
 		}
 		configs[conf.ID] = conf
 		characterFilter[conf.ID] = true
-		if conf.ArchetypeID != "" {
-			if arch, ok := g.archetypeRegistry.Archetypes[conf.ArchetypeID]; ok {
+		if conf.Archetype != "" {
+			if arch, ok := g.archetypeRegistry.Archetypes[conf.Archetype]; ok {
 				configs[arch.ID] = arch
 			}
 		}
@@ -346,7 +346,8 @@ func (wm *WorldManager) LoadMapLevel() {
 		}
 	}
 
-	allInhabs := append(g.currentMapType.Inhabitants, g.currentMapType.Characters...)
+	allInhabs := append(g.currentMapType.Inhabitants, g.currentMapType.Fauna...)
+	allInhabs = append(allInhabs, g.currentMapType.Characters...)
 	for _, ps := range allInhabs {
 		var config *EntityConfig
 		var ok bool
@@ -354,7 +355,6 @@ func (wm *WorldManager) LoadMapLevel() {
 		if ps.NPCID != "" { id = ps.NPCID }
 		if id != "" { config, ok = g.characterRegistry.Characters[id] } else {
 			arch := ps.Archetype
-			if ps.ArchetypeID != "" { arch = ps.ArchetypeID }
 			if arch != "" { config, ok = g.archetypeRegistry.Archetypes[arch]; id = arch }
 		}
 		if ok {
@@ -376,9 +376,6 @@ func (wm *WorldManager) LoadMapLevel() {
 			continue
 		}
 		arch := po.Archetype
-		if po.ArchetypeID != "" {
-			arch = po.ArchetypeID
-		}
 		if config, ok := g.obstacleRegistry.Archetypes[arch]; ok {
 			px, py := 0.0, 0.0
 			if po.X != nil {
@@ -468,7 +465,7 @@ func (wm *WorldManager) spawnNPCNearPosition(x, y float64, sc *SpawnConfig) {
 	if rand.Float64() < 0.05 {
 		var variants []*EntityConfig
 		for _, v := range g.characterRegistry.Characters {
-			if v.ArchetypeID == sc.Archetype && !v.Unique { variants = append(variants, v) }
+			if v.Archetype == sc.Archetype && !v.Unique { variants = append(variants, v) }
 		}
 		if len(variants) > 0 { npcConfig = variants[rand.Intn(len(variants))] }
 	}
@@ -495,7 +492,7 @@ func (wm *WorldManager) spawnNPCAtMapEdges(sc *SpawnConfig) {
 	if rand.Float64() < 0.05 {
 		var variants []*EntityConfig
 		for _, v := range g.characterRegistry.Characters {
-			if v.ArchetypeID == sc.Archetype && !v.Unique { variants = append(variants, v) }
+			if v.Archetype == sc.Archetype && !v.Unique { variants = append(variants, v) }
 		}
 		if len(variants) > 0 { npcConfig = variants[rand.Intn(len(variants))] }
 	}

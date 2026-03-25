@@ -76,7 +76,7 @@ func TestLoadMapLevel_InhabitantsAndObstacles(t *testing.T) {
 	g := NewGame(mockFS, &engine.MockGraphics{}, "", "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
 
 	g.archetypeRegistry.Archetypes["orc"] = &EntityConfig{ID: "orc"}
-	g.characterRegistry.Characters["unique_orc"] = &EntityConfig{ID: "unique_orc", ArchetypeID: "orc"}
+	g.characterRegistry.Characters["unique_orc"] = &EntityConfig{ID: "unique_orc", Archetype: "orc"}
 	g.obstacleRegistry.Archetypes["rock"] = &ObstacleArchetype{ID: "rock"}
 	g.Registries = &RegistryContainer{
 		Objects: NewObjectRegistry(),

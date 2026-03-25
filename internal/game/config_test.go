@@ -65,7 +65,7 @@ func TestEntityConfig_Inheritance(t *testing.T) {
 
 	npcConfig := &EntityConfig{
 		ID:          "red_orc",
-		ArchetypeID: "orc_male",
+		Archetype: "orc_male",
 	}
 
 	// Manual simulation of the inheritance logic in config.go

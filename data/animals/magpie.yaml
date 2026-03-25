@@ -1,0 +1,19 @@
+id: magpie
+name: Magpie
+behavior: wander
+stats:
+  health_min: 12
+  health_max: 20
+  speed: 0.06
+  base_attack: 2
+  base_defense: 1
+  attack_cooldown: 40
+weapon:
+  name: "Pike"
+  type: "melee"
+  damage:
+    min: 2
+    max: 8
+  max_distance: touch
+meat: 0
+xp: 3

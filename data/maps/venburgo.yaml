@@ -41,107 +41,158 @@ floor_zones:
     y: 30
   - x: -40
     y: 30
-npcs:
-- archetype_id: peasant_male
+inhabitants:
+- archetype: peasant_male
   x: -5
   y: 0
   alignment: neutral
   behavior: wander
-- archetype_id: peasant_female
+- archetype: peasant_female
   x: 5
   y: 5
   alignment: neutral
   behavior: wander
-- archetype_id: peasant_male
+- archetype: peasant_male
   x: 2
   y: -8
   alignment: neutral
   behavior: wander
-- archetype_id: peasant_female
+- archetype: peasant_female
   x: -4
   y: 8
   alignment: neutral
   behavior: wander
-- archetype_id: peasant_male
+- archetype: peasant_male
   x: -25
   y: 5
   alignment: neutral
   behavior: wander
+fauna:
+- archetype: cow
+  x: 2
+  y: 17
+  alignment: neutral
+  behavior: wander
+- archetype: cow
+  x: -4
+  y: 19
+  alignment: neutral
+  behavior: wander
+- archetype: cow
+  x: 4
+  y: 22
+  alignment: neutral
+  behavior: wander
+- archetype: pig
+  x: 3
+  y: 14
+  alignment: neutral
+  behavior: wander
+- archetype: pig
+  x: -1
+  y: 18
+  alignment: neutral
+  behavior: wander
+- archetype: pig
+  x: 6
+  y: 16
+  alignment: neutral
+  behavior: wander
+- archetype: dog
+  x: -2
+  y: 13
+  alignment: neutral
+  behavior: wander
+- archetype: chicken
+  x: -3
+  y: 16
+  alignment: neutral
+  behavior: wander
+- archetype: horse
+  x: -5
+  y: 12
+  alignment: neutral
+  behavior: wander
+- archetype: magpie
+  x: 0
+  y: 20
+  alignment: neutral
+  behavior: wander
 obstacles:
 # Center Area
-- archetype_id: well
+- archetype: well
   x: 0
   y: 0
-- archetype_id: smithery
+- archetype: smithery
   x: 6
   y: -6
-- archetype_id: warehouse
+- archetype: warehouse
   x: -6
   y: -6
 # Derelict Houses
-- archetype_id: poor_house_1
+- archetype: poor_house_1
   x: -8
   y: 8
-- archetype_id: poor_house_2
+- archetype: poor_house_2
   x: 8
   y: 8
-- archetype_id: poor_house_3
+- archetype: poor_house_3
   x: -12
   y: 0
-- archetype_id: poor_house_4
+- archetype: poor_house_4
   x: 12
   y: 0
-- archetype_id: poor_house_5
+- archetype: poor_house_5
   x: -12
   y: -12
 # Forest Zone (East)
-- archetype_id: tree_1
+- archetype: tree_1
   x: 20
   y: -10
-- archetype_id: tree_2
+- archetype: tree_2
   x: 25
   y: -5
-- archetype_id: tree_3
+- archetype: tree_3
   x: 22
   y: 0
-- archetype_id: tree_4
+- archetype: tree_4
   x: 28
   y: 5
-- archetype_id: tree_5
+- archetype: tree_5
   x: 20
   y: 10
-- archetype_id: tree_6
+- archetype: tree_6
   x: 30
   y: -2
-- archetype_id: tree_1
+- archetype: tree_1
   x: 26
   y: 8
-- archetype_id: tree_2
+- archetype: tree_2
   x: 18
   y: -5
-- archetype_id: tree_3
+- archetype: tree_3
   x: 21
   y: 15
-- archetype_id: tree_4
+- archetype: tree_4
   x: 24
   y: -15
-- archetype_id: tree_5
+- archetype: tree_5
   x: 32
   y: 10
 # Mining Zone (West)
-- archetype_id: rock_1
+- archetype: rock_1
   x: -25
   y: -5
-- archetype_id: rock_2
+- archetype: rock_2
   x: -30
   y: 0
-- archetype_id: rock_3
+- archetype: rock_3
   x: -20
   y: 10
-- archetype_id: rock_4
+- archetype: rock_4
   x: -28
   y: 8
-- archetype_id: rock_5
+- archetype: rock_5
   x: -22
   y: -10
 objects: []

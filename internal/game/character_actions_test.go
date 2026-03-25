@@ -32,8 +32,8 @@ func TestCharacterActions_Woodcutting(t *testing.T) {
 		Archetype: treeArch,
 		Alive: true,
 		Health: 100,
+		WeightLeft: 100,
 	}
-	tree.Health = 100
 	ctx.World.Obstacles = []*Obstacle{tree}
 	
 	// Create wood object config for drops
@@ -45,8 +45,8 @@ func TestCharacterActions_Woodcutting(t *testing.T) {
 	
 	mc.CheckAttackHits(sysCtx)
 	
-	if tree.Health == 100 {
-		t.Errorf("Tree did not take damage from chopping")
+	if tree.WeightLeft == 100 && tree.Health == 100 {
+		t.Errorf("Tree did not take damage or mass reduction from chopping")
 	}
 	
 	if len(ctx.World.Items) == 0 && len(mc.Inventory) == 0 {
@@ -118,6 +118,7 @@ func TestCharacterActions_GenerousWoodcutting(t *testing.T) {
 		Archetype: treeArch,
 		Alive: true,
 		Health: 100,
+		WeightLeft: 100,
 	}
 	ctx.World.Obstacles = []*Obstacle{tree}
 	
@@ -127,7 +128,7 @@ func TestCharacterActions_GenerousWoodcutting(t *testing.T) {
 	
 	mc.CheckAttackHits(sysCtx)
 	
-	if tree.Health == 100 {
+	if tree.WeightLeft == 100 && tree.Health == 100 {
 		t.Errorf("Tree at distance %.1f was NOT hit despite generous range limits", treeDist)
 	}
 	

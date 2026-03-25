@@ -57,9 +57,10 @@ func (c *Character) updateAI(ctx *SystemContext) {
 		c.AIDecisionPending = true
 	}
 
-	if c.Tick%30 == 0 { c.TargetItem = c.findLootTarget(ctx.World.Items) }
+	canLoot := c.MaxWeight > 0 && (c.Config == nil || !c.Config.IsAnimal)
+	if c.Tick%30 == 0 && canLoot { c.TargetItem = c.findLootTarget(ctx.World.Items) }
 
-	if c.TargetItem != nil && c.TargetItem.Pickable {
+	if c.TargetItem != nil && c.TargetItem.Pickable && canLoot {
 		dx, dy := c.TargetItem.X-c.X, c.TargetItem.Y-c.Y
 		if math.Sqrt(dx*dx+dy*dy) < 1.5 {
 			if ctx.World.Game != nil && ctx.World.Game.TryPickup(&c.Actor, c.TargetItem) {

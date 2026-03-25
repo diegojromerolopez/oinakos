@@ -28,7 +28,7 @@ type EntityConfig struct {
 	ID          string   `yaml:"id"`
 	Name        string   `yaml:"name"`
 	Names       []string `yaml:"names"`
-	ArchetypeID string   `yaml:"archetype,omitempty"`
+	Archetype   string   `yaml:"archetype,omitempty"`
 	Behavior    string   `yaml:"behavior"`
 	Stats       EntityStats `yaml:"stats"`
 	Health      int     `yaml:"health,omitempty"` // Specific health value (overrides range)
@@ -72,6 +72,8 @@ type EntityConfig struct {
 	DiggingImage  engine.Image `yaml:"-"` // digging.png
 
 
+	Meat           int              `yaml:"meat,omitempty"` // Amount of meat dropped on death
+	IsAnimal       bool             `yaml:"is_animal,omitempty"`
 	CachedBaseFootprint *engine.Polygon `yaml:"-"`
 
 	Dialogues *DialogueRoot `yaml:"dialogues,omitempty"`
@@ -197,45 +199,59 @@ func (r *ArchetypeRegistry) LoadAll(assets fs.FS) error {
 	if assets == nil {
 		return nil
 	}
-	const baseDir = "data/archetypes"
-	return forEachYAML(assets, baseDir, func(fpath string, data []byte) error {
-		cleanRelPath := fpath
-		if strings.HasPrefix(fpath, "oinakos"+string(filepath.Separator)) {
-			cleanRelPath = fpath[len("oinakos"+string(filepath.Separator)):]
-		}
+	baseDirs := []string{"data/archetypes", "data/animals"}
+	for _, baseDir := range baseDirs {
+		err := forEachYAML(assets, baseDir, func(fpath string, data []byte) error {
+			cleanRelPath := fpath
+			if strings.HasPrefix(fpath, "oinakos"+string(filepath.Separator)) {
+				cleanRelPath = fpath[len("oinakos"+string(filepath.Separator)):]
+			}
 
-		relPath, err := filepath.Rel(baseDir, cleanRelPath)
+			relPath, err := filepath.Rel(baseDir, cleanRelPath)
+			if err != nil {
+				return nil
+			}
+			subDir := filepath.Dir(relPath)
+			if subDir == "." {
+				subDir = ""
+			}
+
+			var config Archetype
+			if err := yaml.Unmarshal(data, &config); err != nil {
+				log.Printf("Warning: failed to unmarshal %s: %v", fpath, err)
+				return nil
+			}
+
+			variantName := filepath.Base(fpath[:len(fpath)-len(filepath.Ext(fpath))])
+			if config.ID == "" {
+				config.ID = variantName
+			}
+
+			sanitizeEntityConfig(&config, fpath)
+			
+			// Map asset and audio directories based on baseDir
+			category := "archetypes"
+			if baseDir == "data/animals" {
+				category = "animals"
+				config.IsAnimal = true
+			}
+			
+			config.AssetDir = path.Join("assets/images", category, subDir, variantName)
+			config.AudioDir = path.Join("assets/audio", category, subDir, variantName)
+
+			// config.Weapon is now auto-loaded by YAML
+
+			config.SoundID = config.ID
+
+			r.Archetypes[config.ID] = &config
+			r.IDs = append(r.IDs, config.ID)
+			return nil
+		})
 		if err != nil {
-			return nil
+			log.Printf("Warning: error loading from %s: %v", baseDir, err)
 		}
-		subDir := filepath.Dir(relPath)
-		if subDir == "." {
-			subDir = ""
-		}
-
-		var config Archetype
-		if err := yaml.Unmarshal(data, &config); err != nil {
-			log.Printf("Warning: failed to unmarshal %s: %v", fpath, err)
-			return nil
-		}
-
-		variantName := filepath.Base(fpath[:len(fpath)-len(filepath.Ext(fpath))])
-		if config.ID == "" {
-			config.ID = variantName
-		}
-
-		sanitizeEntityConfig(&config, fpath)
-		config.AssetDir = path.Join("assets/images/archetypes", subDir, variantName)
-		config.AudioDir = path.Join("assets/audio/archetypes", subDir, variantName)
-
-		// config.Weapon is now auto-loaded by YAML
-
-		config.SoundID = config.ID
-
-		r.Archetypes[config.ID] = &config
-		r.IDs = append(r.IDs, config.ID)
-		return nil
-	})
+	}
+	return nil
 }
 
 type CharacterRegistry struct {
@@ -312,9 +328,9 @@ func (r *CharacterRegistry) createLoadJobs(assets fs.FS, archs *ArchetypeRegistr
 			continue
 		}
 		// Fallback to archetype logic for non-playable characters
-		lookupID := config.ArchetypeID
-		if config.Gender != "" && !strings.Contains(config.ArchetypeID, config.Gender) {
-			fullID := config.ArchetypeID + "_" + config.Gender
+		lookupID := config.Archetype
+		if config.Gender != "" && !strings.Contains(config.Archetype, config.Gender) {
+			fullID := config.Archetype + "_" + config.Gender
 			if _, exists := archs.Archetypes[fullID]; exists {
 				lookupID = fullID
 			}

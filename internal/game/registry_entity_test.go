@@ -46,7 +46,7 @@ func TestCharacterRegistry_CreateLoadJobs(t *testing.T) {
 	charReg := NewCharacterRegistry()
 	charReg.Characters["hero"] = &EntityConfig{
 		ID:          "hero",
-		ArchetypeID: "man",
+		Archetype: "man",
 		AssetDir:    "assets/images/characters/hero",
 		AudioDir:    "assets/audio/characters/hero",
 		Playable:    true,

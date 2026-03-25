@@ -90,14 +90,14 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 		g.ExploredTiles[pt] = true
 	}
 
-	if data.Player.ArchetypeID != "" {
-		if config, ok := g.characterRegistry.Characters[data.Player.ArchetypeID]; ok {
+	if data.Player.Archetype != "" {
+		if config, ok := g.characterRegistry.Characters[data.Player.Archetype]; ok {
 			g.playableCharacter.Config = config
 			g.playableCharacter.Name = config.Name
 			g.isCharacterSelect = false
 			g.isMainMenu = false
 		} else {
-			log.Printf("Warning: saved character archetype ID %s not found in registry", data.Player.ArchetypeID)
+			log.Printf("Warning: saved character archetype ID %s not found in registry", data.Player.Archetype)
 		}
 	}
 
@@ -175,14 +175,14 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 	g.characters = nil
 	for i, nData := range data.Characters {
 		sanitizeNPCSaveData(&nData, i, fpath)
-		id := nData.ArchetypeID
+		id := nData.Archetype
 		if id == "" { id = nData.NPCID }
 
 		config, ok := g.archetypeRegistry.Archetypes[id]
 		if !ok { config, ok = g.characterRegistry.Characters[id] }
 
 		if !ok {
-			log.Printf("Warning: saved NPC/Archetype ID %s not found in any registry", nData.ArchetypeID)
+			log.Printf("Warning: saved NPC/Archetype ID %s not found in any registry", nData.Archetype)
 			continue
 		}
 		n := NewCharacter(nData.X, nData.Y, config, nData.Level, false, g.Registries.Objects)
@@ -252,7 +252,7 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 		}
 		if oData.Disabled { continue }
 
-		archID := oData.ArchetypeID
+		archID := oData.Archetype
 		if archID == "" && base != nil { archID = base.Archetype }
 
 		config, ok := g.obstacleRegistry.Archetypes[archID]

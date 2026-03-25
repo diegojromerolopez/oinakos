@@ -20,7 +20,7 @@ func TestWorldManager_LoadMapAssets(t *testing.T) {
 	}
 	
 	g.characters = []*Character{
-		NewCharacter(0, 0, &EntityConfig{ID: "orc_warrior", ArchetypeID: "orc"}, 1, false, nil),
+		NewCharacter(0, 0, &EntityConfig{ID: "orc_warrior", Archetype: "orc"}, 1, false, nil),
 	}
 	
 	// Should not panic and should at least process jobs

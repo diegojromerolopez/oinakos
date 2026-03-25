@@ -1,0 +1,19 @@
+id: pig
+name: Pig
+behavior: wander
+stats:
+  health_min: 50
+  health_max: 70
+  speed: 0.022
+  base_attack: 4
+  base_defense: 1
+  attack_cooldown: 90
+weapon:
+  name: "Bite"
+  type: "melee"
+  damage:
+    min: 4
+    max: 12
+  max_distance: touch
+meat: 3
+xp: 4

@@ -76,7 +76,7 @@ gender: male
 	configs := map[string]*EntityConfig{}
 	configs["crimson_guard"] = &EntityConfig{
 		ID:          "crimson_guard",
-		ArchetypeID: "man_at_arms",
+		Archetype: "man_at_arms",
 		Gender:      "male",
 		AudioDir:    "assets/audio/npcs/crimson_guard",
 	}
@@ -102,7 +102,7 @@ gender: male
 	// TEST 2: Inherited audio (no local wav)
 	npc2 := &EntityConfig{
 		ID:          "golden_guard",
-		ArchetypeID: "man_at_arms",
+		Archetype: "man_at_arms",
 		Gender:      "male",
 		AudioDir:    "assets/audio/npcs/golden_guard", // Empty in mock FS
 	}
@@ -122,7 +122,7 @@ func TestNPC_GenderFallback(t *testing.T) {
 	npcReg := NewCharacterRegistry()
 	npcReg.Characters["virculus"] = &EntityConfig{
 		ID:          "virculus",
-		ArchetypeID: "virculus",
+		Archetype: "virculus",
 		Gender:      "none",
 	}
 

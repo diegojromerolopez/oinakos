@@ -1,0 +1,19 @@
+id: horse
+name: Horse
+behavior: wander
+stats:
+  health_min: 100
+  health_max: 140
+  speed: 0.05
+  base_attack: 10
+  base_defense: 4
+  attack_cooldown: 80
+weapon:
+  name: "Kick"
+  type: "melee"
+  damage:
+    min: 15
+    max: 40
+  max_distance: touch
+meat: 6
+xp: 10

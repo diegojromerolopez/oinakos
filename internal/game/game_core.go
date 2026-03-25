@@ -118,6 +118,9 @@ type Game struct {
 	Graphics  engine.Graphics
 	silhouetteBuffer engine.Image
 
+	availableModels   []string
+	isFetchingModels  bool
+
 	CurrentWeather   WeatherType
 	WeatherIntensity float64
 	particles        []*Particle

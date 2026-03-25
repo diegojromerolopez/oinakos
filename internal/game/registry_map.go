@@ -31,6 +31,7 @@ type MapType struct {
 	WidthPixels     int                `yaml:"width_px"`
 	HeightPixels    int                `yaml:"height_px"`
 	Inhabitants     []Inhabitant       `yaml:"inhabitants"`
+	Fauna           []Inhabitant       `yaml:"fauna,omitempty"`
 	Characters      []Inhabitant       `yaml:"characters,omitempty"`
 	Spawns          []SpawnConfig      `yaml:"spawns"`
 	Obstacles       []PreSpawnObstacle `yaml:"obstacles"`
