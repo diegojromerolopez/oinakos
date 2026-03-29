@@ -12,14 +12,7 @@ const (
 	WinMenuQuit     = 1
 )
 
-type WeatherType int
 
-const (
-	WeatherClear WeatherType = iota
-	WeatherRain
-	WeatherSnow
-	WeatherStorm
-)
 
 type Game struct {
 	width, height     int
@@ -47,6 +40,8 @@ type Game struct {
 	ActiveBook        *ItemInstance // True if currently reading a book
 	isCampaignSelect  bool      // True if showing campaign picker
 	campaignMenuIndex int       // Index of selected campaign
+	keymapSelectedIndex int     // For remapping
+	remappingAction   string    // Current action being remapped
 	initialMapTypeID  string
 	debug             bool
 
@@ -113,6 +108,9 @@ type Game struct {
 	LogScrollOffset int
 	IsDraggingLog   bool
 	LogUIState      DialogueUIState
+	
+	ActiveTrader    *Character
+	isTradeOpen     bool
 
 	aiManager *AIManager
 	Graphics  engine.Graphics
@@ -121,8 +119,7 @@ type Game struct {
 	availableModels   []string
 	isFetchingModels  bool
 
-	CurrentWeather   WeatherType
-	WeatherIntensity float64
+	pinnedCharacter  *Character
 	particles        []*Particle
 }
 
@@ -142,4 +139,18 @@ func (g *Game) UpdateFont() {
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
 	return g.width, g.height
+}
+
+func (g *Game) GetContext() *SystemContext {
+	return &SystemContext{
+		World:      g.World,
+		Input:      g.input,
+		Audio:      g.audio,
+		Registries: g.Registries,
+		Log:        g.LogEvent,
+		AIManager:  g.aiManager,
+		Weather:    g.World.State.Weather,
+		Intensity:  g.World.State.Intensity,
+		Settings:   g.settings,
+	}
 }

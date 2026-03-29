@@ -2,16 +2,154 @@ package game
 
 import (
 	"fmt"
+	"math"
 	"oinakos/internal/engine"
 
 	"gopkg.in/yaml.v3"
+	"log"
+	"math/rand"
 )
+
+type IntInterval struct {
+	Min, Max int
+	Mean     float64 `yaml:"mean,omitempty"`
+	SD       float64 `yaml:"sd,omitempty"`
+	Mode     string  `yaml:"mode,omitempty"` // "uniform" or "normal"
+}
+
+func (i *IntInterval) UnmarshalYAML(value *yaml.Node) error {
+	var val int
+	if err := value.Decode(&val); err == nil {
+		i.Min, i.Max = val, val
+		return nil
+	}
+	var list []int
+	if err := value.Decode(&list); err == nil && len(list) == 2 {
+		i.Min, i.Max = list[0], list[1]
+		return nil
+	}
+	var m struct {
+		Min  int     `yaml:"min"`
+		Max  int     `yaml:"max"`
+		Mean float64 `yaml:"mean"`
+		SD   float64 `yaml:"sd"`
+		Mode string  `yaml:"mode"`
+	}
+	if err := value.Decode(&m); err == nil {
+		i.Min, i.Max, i.Mode, i.Mean, i.SD = m.Min, m.Max, m.Mode, m.Mean, m.SD
+		return nil
+	}
+	return fmt.Errorf("invalid int interval: %v", value.Value)
+}
+
+func (i IntInterval) Roll() int {
+	if i.Min >= i.Max && i.Mode != "normal" {
+		return i.Min
+	}
+	if i.Mode == "normal" {
+		if i.Mean == 0 && i.SD == 0 && i.Min != i.Max {
+			log.Printf("Warning: IntInterval Normal mode requires explicit mean and sd. Falling back to default.")
+			mean := float64(i.Min+i.Max) / 2.0
+			sd := float64(i.Max-i.Min) / 6.0
+			res := rand.NormFloat64()*sd + mean
+			return int(math.Round(res))
+		}
+		res := rand.NormFloat64()*i.SD + i.Mean
+		if i.Max > i.Min {
+			if res < float64(i.Min) { res = float64(i.Min) }
+			if res > float64(i.Max) { res = float64(i.Max) }
+		}
+		return int(math.Round(res))
+	}
+	return i.Min + rand.Intn(i.Max-i.Min+1)
+}
+
+func (i IntInterval) String() string {
+	if i.Min == i.Max {
+		return fmt.Sprintf("%d", i.Min)
+	}
+	return fmt.Sprintf("%d-%d", i.Min, i.Max)
+}
+
+func (i IntInterval) IsZero() bool {
+	return i.Min == 0 && i.Max == 0 && i.Mode == ""
+}
+
+type FloatInterval struct {
+	Min, Max float64
+	Mean     float64 `yaml:"mean,omitempty"`
+	SD       float64 `yaml:"sd,omitempty"`
+	Mode     string  `yaml:"mode,omitempty"`
+}
+
+func (i *FloatInterval) UnmarshalYAML(value *yaml.Node) error {
+	var val float64
+	if err := value.Decode(&val); err == nil {
+		i.Min, i.Max = val, val
+		return nil
+	}
+	var list []float64
+	if err := value.Decode(&list); err == nil && len(list) == 2 {
+		i.Min, i.Max = list[0], list[1]
+		return nil
+	}
+	var m struct {
+		Min  float64 `yaml:"min"`
+		Max  float64 `yaml:"max"`
+		Mean float64 `yaml:"mean"`
+		SD   float64 `yaml:"sd"`
+		Mode string  `yaml:"mode"`
+	}
+	if err := value.Decode(&m); err == nil {
+		i.Min, i.Max, i.Mode, i.Mean, i.SD = m.Min, m.Max, m.Mode, m.Mean, m.SD
+		return nil
+	}
+	return fmt.Errorf("invalid float interval: %v", value.Value)
+}
+
+func (i FloatInterval) String() string {
+	if i.Min == i.Max {
+		if i.Mode == "normal" && i.Mean != 0 {
+			return fmt.Sprintf("~%.2f", i.Mean)
+		}
+		return fmt.Sprintf("%.2f", i.Min)
+	}
+	return fmt.Sprintf("%.2f-%.2f", i.Min, i.Max)
+}
+
+func (i FloatInterval) Roll() float64 {
+	if i.Min >= i.Max && i.Mode != "normal" {
+		return i.Min
+	}
+	if i.Mode == "normal" {
+		mean := i.Mean
+		sd := i.SD
+		if mean == 0 && sd == 0 {
+			mean = (i.Min + i.Max) / 2.0
+			sd = (i.Max - i.Min) / 6.0
+		}
+		res := rand.NormFloat64()*sd + mean
+		if i.Max > i.Min {
+			if res < i.Min { res = i.Min }
+			if res > i.Max { res = i.Max }
+		}
+		return res
+	}
+	return i.Min + rand.Float64()*(i.Max-i.Min)
+}
+
+func (i FloatInterval) IsZero() bool {
+	return i.Min == 0 && i.Max == 0
+}
 
 type ObstacleActionType string
 
 const (
-	ActionHarm ObstacleActionType = "harm"
-	ActionHeal ObstacleActionType = "heal"
+	ActionHarm      ObstacleActionType = "harm"
+	ActionHeal      ObstacleActionType = "heal"
+	ActionBath      ObstacleActionType = "bath"
+	ActionAlleviate ObstacleActionType = "alleviate"
+	ActionSoiling   ObstacleActionType = "soiling"
 )
 
 type ObstacleActionConfig struct {
@@ -45,6 +183,7 @@ const (
 	ObjPacifist
 	ObjDestroyBuilding
 	ObjSandbox
+	ObjSimulation
 )
 
 func (t ObjectiveType) String() string {
@@ -69,6 +208,8 @@ func (t ObjectiveType) String() string {
 		return "destroy_building"
 	case ObjSandbox:
 		return "sandbox"
+	case ObjSimulation:
+		return "simulation"
 	}
 	return "unknown"
 }
@@ -106,6 +247,9 @@ func (t *ObjectiveType) UnmarshalYAML(value *yaml.Node) error {
 			return nil
 		case "sandbox":
 			*t = ObjSandbox
+			return nil
+		case "simulation":
+			*t = ObjSimulation
 			return nil
 		}
 	}
@@ -152,6 +296,7 @@ type Inhabitant struct {
 	Y           float64   `yaml:"y"`
 	State       string    `yaml:"state,omitempty"` // e.g. "dead", empty means alive
 	Alignment   Alignment `yaml:"alignment"`
+	Behavior    string    `yaml:"behavior,omitempty"` // "wander", "hauler", "lumberjack", etc.
 	MustSurvive bool      `yaml:"must_survive,omitempty"`
 	IsTarget    bool      `yaml:"is_target,omitempty"`
 }
@@ -223,6 +368,8 @@ type FloorZone struct {
 	Tile      string           `yaml:"tile"`
 	Priority  int              `yaml:"priority"`
 	Perimeter []FootprintPoint `yaml:"perimeter"`
+	Type      string           `yaml:"type,omitempty"`      // "stockpile", "farm", etc.
+	Accepts   []string         `yaml:"accepts,omitempty"`   // ["wood", "meat", "food", "raw_meat"]
 	Polygon   engine.Polygon   `yaml:"-"`
 
 	MinX float64 `yaml:"-"`
@@ -266,6 +413,13 @@ func (fz *FloorZone) Contains(x, y float64) bool {
 	return poly.Contains(x, y)
 }
 
+func (fz *FloorZone) DistanceTo(x, y float64) float64 {
+	fz.GetPolygon() // Ensure AABB
+	cx, cy := (fz.MinX+fz.MaxX)*0.5, (fz.MinY+fz.MaxY)*0.5
+	dx, dy := x-cx, y-cy
+	return math.Sqrt(dx*dx + dy*dy)
+}
+
 type ActionConfig struct {
 	OnKill []KillAction `yaml:"on_kill"`
 }
@@ -296,6 +450,24 @@ type StatEffect struct {
 	Increase float64 `yaml:"increase"`
 }
 
+type AbilityEffect struct {
+	StunChance            float64 `yaml:"stun_chance,omitempty"`
+	Duration              float64 `yaml:"duration,omitempty"`
+	KnockbackDistance     float64 `yaml:"knockback_distance,omitempty"`
+	ArmorBreakPercentage  float64 `yaml:"armor_break_percentage,omitempty"`
+	PierceTargets         int     `yaml:"pierce_targets,omitempty"`
+	PoisonDamagePerSecond int     `yaml:"poison_damage_per_second,omitempty"`
+	Probability           float64 `yaml:"probability,omitempty"`
+}
+
+type Ability struct {
+	Damage          string          `yaml:"damage,omitempty"`           // melee/ranged formula e.g. "melee_attack * 1.0"
+	Yield           string          `yaml:"yield,omitempty"`            // productive formula e.g. "herbalism * 1.0"
+	RequiredWeapon  string          `yaml:"required_weapon,omitempty"`
+	ParentAttribute string          `yaml:"parent_attribute,omitempty"` // Fallback attribute for success check
+	Effects         []AbilityEffect `yaml:"effects"`
+}
+
 type ObjectConfig struct {
 	ID          string                `yaml:"id"`
 	Name        string                `yaml:"name"`
@@ -311,6 +483,13 @@ type ObjectConfig struct {
 	Combat      *Weapon               `yaml:"combat,omitempty"`
 	Slot        string                `yaml:"slot,omitempty"` // e.g. "head", "body", "shield", "weapon", "ring"
 	Effects     map[string]StatEffect `yaml:"effects,omitempty"`
+	Hunger      float64               `yaml:"hunger,omitempty"`
+	Thirst      float64               `yaml:"thirst,omitempty"`
+	Fatigue     float64               `yaml:"fatigue,omitempty"`
+	Energy      float64               `yaml:"energy,omitempty"` // Legacy support
+	ClearSick   bool                  `yaml:"clear_sick,omitempty"`
+	MaxHours    float64               `yaml:"max_hours,omitempty"` // Maximum shelf life in hours
+	IsAlcoholic bool                  `yaml:"is_alcoholic,omitempty"`
 
 	// Run-time loaded assets
 	AssetDir  string           `yaml:"-"`

@@ -1,0 +1,10 @@
+id: wine_bottle
+name: Bottle of Wine
+type: consumable
+weight: 1.5
+value: 50
+description: A dark bottle filled with vintage local wine.
+energy: 30
+primary_color: "#722F37"
+sprite: wine_bottle.png
+is_alcoholic: true

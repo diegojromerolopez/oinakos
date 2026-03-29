@@ -1,0 +1,94 @@
+id: baby_female
+name: Baby
+gender: female
+names:
+- Sanchita
+- Urraquita
+- "Elviri\xF1a"
+- Teresita
+behavior: wander
+group: Peasants
+state:
+  health_points: 100
+  hunger: 0.0
+  thirst: 0.0
+  fatigue: 0.0
+  sanity: 100.0
+  pain: 0.0
+  arousal: 0.0
+  hygiene: 70.0
+  miccionate: 0.0
+  defecate: 0.0
+  age:
+    current: 0.5
+    rate: 1.0
+    max: 100
+attributes:
+  strength:
+    min: 1
+    max: 3
+    mode: normal
+    mean: 2.0
+    sd: 0.33
+  health:
+    min: 5
+    max: 10
+    mode: normal
+    mean: 7.5
+    sd: 0.83
+  dexterity:
+    min: 1
+    max: 2
+    mode: normal
+    mean: 1.5
+    sd: 0.17
+  intellect:
+    min: 1
+    max: 5
+    mode: normal
+    mean: 3.0
+    sd: 0.67
+  wisdom:
+    min: 1
+    max: 5
+    mode: normal
+    mean: 3.0
+    sd: 0.67
+stats:
+  speed:
+    min: 0.005
+    max: 0.005
+    mode: normal
+    mean: 0.01
+    sd: 0.0
+  health_points_min:
+    min: 5
+    max: 5
+    mode: normal
+    mean: 5.0
+    sd: 0.0
+  health_points_max:
+    min: 10
+    max: 10
+    mode: normal
+    mean: 10.0
+    sd: 0.0
+  max_weight:
+    min: 5
+    max: 5
+    mode: normal
+    mean: 5.0
+    sd: 0.0
+abilities:
+  rest:
+    yield: nourishment * 0.4
+    parent_attribute: health
+  eat:
+    yield: nourishment * 1.5
+    parent_attribute: health
+  drink:
+    yield: nourishment * 1.2
+    parent_attribute: health
+  punch:
+    damage: melee_attack * 0.1
+    parent_attribute: strength

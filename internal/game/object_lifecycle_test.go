@@ -39,7 +39,7 @@ func TestObjectLifecycle(t *testing.T) {
 	g.Registries.Objects.Objects[sword.ID] = sword
 	
 	// Setup character
-	config := &EntityConfig{ID: "hero", MaxWeight: 10.0}
+	config := &EntityConfig{ID: "hero", Stats: EntityStatsConfig{MaxWeight: FloatInterval{Min: 10.0, Max: 10.0}}}
 	char := NewCharacter(0, 0, config, 1, true, nil)
 	g.playableCharacter = char
 	g.World.PlayableCharacter = char

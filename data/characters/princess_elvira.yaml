@@ -5,23 +5,127 @@ playable: true
 description: Daughter of the Queen, she secretly defied her mother to join Conde Olinos
   in his hunt. Trained in cursed magic and grim swordcraft, she seeks to cleanse her
   family name.
+state:
+  health_points: 100
+  hunger: 0.0
+  thirst: 0.0
+  fatigue: 0.0
+  sanity: 100.0
+  pain: 0.0
+  arousal: 0.0
+  hygiene: 70.0
+  miccionate: 0.0
+  defecate: 0.0
+  age:
+    current: 21
+    rate: 1.0
+    max: 100
+attributes:
+  strength: 100
+  health: 100
+  dexterity: 65
+  intellect: 50
+  wisdom: 50
 stats:
-  health_min: 450
-  health_max: 450
-  base_attack: 45
-  base_defense: 35
   speed: 0.05
   attack_cooldown: 55
   attack_range: 6.0
   projectile_speed: 0.15
+  max_weight: 200
+abilities:
+  punch:
+    damage: melee_attack * 1.0
+    parent_attribute: strength
+  slap:
+    damage: melee_attack * 0.4
+    parent_attribute: dexterity
+    effects:
+    - stun_chance: 0.2
+      duration: 1.0
+  kick:
+    damage: melee_attack * 1.3
+    parent_attribute: strength
+    effects:
+    - knockback_distance: 2.0
+  rest:
+    yield: nourishment * 0.25
+    parent_attribute: health
+  eat:
+    yield: nourishment * 1.0
+    parent_attribute: health
+  drink:
+    yield: nourishment * 0.8
+    parent_attribute: health
+  slash:
+    damage: melee_attack * 1.5
+    parent_attribute: dexterity
+    required_weapon: sword
+    effects:
+    - armor_break_percentage: 0.2
+      duration: 3.0
+  heavy_strike:
+    damage: melee_attack * 1.8
+    parent_attribute: strength
+    required_weapon: sword
+    effects:
+    - armor_break_percentage: 0.3
+      duration: 3.0
+  knockout:
+    damage: melee_attack * 0.3
+    parent_attribute: strength
+    effects:
+    - stun_chance: 0.85
+      duration: 10.0
+  grapple:
+    damage: melee_attack * 0.1
+    parent_attribute: strength
+    effects:
+    - immobilise: true
+  shoot_arrow:
+    damage: ranged_attack * 1.2
+    parent_attribute: dexterity
+    required_weapon: bow
+  power_shot:
+    damage: ranged_attack * 1.7
+    parent_attribute: dexterity
+    required_weapon: bow
+    effects:
+    - pierce_targets: 2
+  throw:
+    damage: ranged_attack * 0.8
+    parent_attribute: strength
+  chop:
+    damage: melee_attack * 1.0
+    yield: survivalism * 1.0
+    parent_attribute: strength
+    required_weapon: axe
+  dig:
+    damage: melee_attack * 1.0
+    yield: survivalism * 1.0
+    parent_attribute: strength
+    required_weapon: pike
+  butcher:
+    yield: survivalism * 0.5
+    parent_attribute: strength
+  build:
+    yield: crafting * 1.0
+    parent_attribute: strength
+  haul:
+    yield: strength * 0.01
+    parent_attribute: strength
+  stash:
+    yield: strength * 0.005
+    parent_attribute: strength
+  intimidate:
+    yield: culture * 1.0
+    parent_attribute: strength
 weapon:
-  name: "Cursed Blast"
-  type: "ranged"
+  name: Cursed Blast
+  type: ranged
   damage:
     min: 40
     max: 80
-  max_distance: "6.0"
-max_weight: 200
-equipment:
+  max_distance: '6.0'
+equipment: null
 inventory:
-  - book_lore
+- book_lore

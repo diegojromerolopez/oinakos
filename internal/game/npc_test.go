@@ -12,18 +12,31 @@ func TestNPCCalculateStat(t *testing.T) {
 	if res := n.Actor.calculateStat(10, 1); res != 10 {
 		t.Errorf("calculateStat(10, 1): got %d, want 10", res)
 	}
-	if res := n.Actor.calculateStat(10, 10); res != 43 {
-		t.Errorf("calculateStat(10, 10): got %d, want 43", res)
+	if res := n.Actor.calculateStat(10, 10); res != 35 {
+		t.Errorf("calculateStat(10, 10): got %d, want 35", res)
 	}
 }
 
 func TestNPCGetters(t *testing.T) {
-	n := &Character{Actor: Actor{BaseAttack: 10, BaseDefense: 5}}
+	n := &Character{Actor: Actor{
+		Level: 1,
+		Config: &EntityConfig{
+			Attributes: PrimaryAttributeConfig{
+				Strength: IntInterval{Min: 5, Max: 5}, Dexterity: IntInterval{Min: 2, Max: 2}, Health: IntInterval{Min: 1, Max: 1},
+			},
+		},
+		PrimaryAttributes: PrimaryAttributes{
+			Strength: 5, Dexterity: 2, Health: 1,
+		},
+		AgeTicks: 25.0 * float64(TicksPerYear),
+	}}
+	n.SyncStats(NewObjectRegistry())
+
 	if n.GetTotalAttack() != 10 {
 		t.Errorf("GetTotalAttack: got %d, want 10", n.GetTotalAttack())
 	}
-	if n.GetTotalDefense() != 5 {
-		t.Errorf("GetTotalDefense: got %d, want 5", n.GetTotalDefense())
+	if n.GetTotalDefense() != 4 {
+		t.Errorf("GetTotalDefense: got %d, want 4", n.GetTotalDefense())
 	}
 	if n.GetTotalProtection() != 0 {
 		t.Errorf("GetTotalProtection: got %d, want 0", n.GetTotalProtection())
@@ -32,18 +45,24 @@ func TestNPCGetters(t *testing.T) {
 
 func TestNPCTakeDamage(t *testing.T) {
 	ctx := NewTestContext()
-	n := &Character{Actor: Actor{Health: 100, MaxHealth: 100, Config: &EntityConfig{ID: "test"}}}
+	n := &Character{Actor: Actor{
+		TemporalState: TemporalState{
+			HealthPoints:    100,
+			MaxHealthPoints: 100,
+		},
+		Config: &EntityConfig{ID: "test"},
+	}}
 	n.TakeDamage(10, nil, ctx)
-	if n.Health != 90 {
-		t.Errorf("Health after damage: got %d, want 90", n.Health)
+	if n.TemporalState.HealthPoints != 90 {
+		t.Errorf("Health after damage: got %d, want 90", n.TemporalState.HealthPoints)
 	}
 	if !n.IsAlive() {
 		t.Error("NPC should still be alive")
 	}
 
 	n.TakeDamage(90, nil, ctx)
-	if n.Health != 0 || n.State != ActorIncapacitated {
-		t.Errorf("Health after fatal damage: got %d, state=%v, want 0, state=ActorIncapacitated", n.Health, n.State)
+	if n.TemporalState.HealthPoints != 0 || n.State != ActorIncapacitated {
+		t.Errorf("Health after fatal damage: got %d, state=%v, want 0, state=ActorIncapacitated", n.TemporalState.HealthPoints, n.State)
 	}
 	if !n.IsAlive() {
 		t.Error("NPC should still be 'alive' (incapacitated) at 0 HP")
@@ -51,8 +70,8 @@ func TestNPCTakeDamage(t *testing.T) {
 
 	// Damage reaching death threshold (-10% of 100 = -10)
 	n.TakeDamage(10, nil, ctx)
-	if n.Health != -10 || n.State != ActorDead {
-		t.Errorf("Health after irremediable damage: got %d, state=%v, want -10, state=ActorDead", n.Health, n.State)
+	if n.TemporalState.HealthPoints != -10 || n.State != ActorDead {
+		t.Errorf("Health after irremediable damage: got %d, state=%v, want -10, state=ActorDead", n.TemporalState.HealthPoints, n.State)
 	}
 	if n.IsAlive() {
 		t.Error("NPC should be truly dead at -10 HP")
@@ -74,11 +93,17 @@ func TestNewCharacter(t *testing.T) {
 	arch := &EntityConfig{
 		ID:   "orc",
 		Name: "Orc",
-		Stats: EntityStats{
-			HealthMin:   50,
-			HealthMax:   50,
-			BaseAttack:  10,
-			BaseDefense: 5,
+		Attributes: PrimaryAttributeConfig{
+			Strength:  IntInterval{Min: 5, Max: 5},
+			Dexterity: IntInterval{Min: 2, Max: 2},
+			Health:    IntInterval{Min: 2, Max: 2},
+			Intellect: IntInterval{Min: 2, Max: 2},
+			Wisdom:    IntInterval{Min: 2, Max: 2},
+		},
+		Stats: EntityStatsConfig{
+			HealthMin: IntInterval{Min: 100, Max: 100},
+			Speed:     FloatInterval{Min: 0.5, Max: 0.5},
+			Age:       AgeConfig{Current: FloatInterval{Mean: 25.0, SD: 0.0, Mode: "normal"}, Rate: 1.0},
 		},
 	}
 	n := NewCharacter(10, 20, arch, 1, false, nil)
@@ -119,8 +144,13 @@ func TestNPCAllyFollowing(t *testing.T) {
 }
 
 func TestNPCCollision(t *testing.T) {
-	n := NewCharacter(10, 10, nil, 1, false, nil)
-	obs := []*Obstacle{NewObstacle("test_npc_collider", 10.5, 10.5, nil)}
+	arch := &EntityConfig{ID: "test_npc"}
+	n := NewCharacter(10, 10, arch, 1, false, nil)
+	n.AgeTicks = 25.0 * float64(TicksPerYear)
+	n.SyncStats(nil)
+	// Must provide non-nil archetype with Passable=false for collision to work
+	colArch := &ObstacleArchetype{ID: "collider", Passable: false}
+	obs := []*Obstacle{NewObstacle("test_npc_collider", 10.5, 10.5, colArch)}
 	if !n.checkCollisionAt(10.5, 10.5, obs) {
 		t.Error("Expected collision at 10.5, 10.5")
 	}
@@ -129,11 +159,11 @@ func TestNPCCollision(t *testing.T) {
 func TestNPCUpdate_Behaviors(t *testing.T) {
 	ctx := NewTestContext()
 	mc := NewCharacter(10, 10, nil, 1, true, nil)
-	mc.Health = 100
+	mc.TemporalState.HealthPoints = 100
 	ctx.World.PlayableCharacter = mc
 
 	n := NewCharacter(0, 0, nil, 1, false, nil)
-	n.Health = 100
+	n.TemporalState.HealthPoints = 100
 	n.Speed = 1.0
 	ctx.World.Characters = []*Character{n}
 
@@ -181,10 +211,10 @@ func TestNPCUpdate_Behaviors(t *testing.T) {
 	n.Behavior = BehaviorNpcFighter
 	n.TargetActor = nil
 	targetNPC := NewCharacter(5, 5, nil, 1, false, nil)
-	targetNPC.Health = 100
+	targetNPC.TemporalState.HealthPoints = 100
 	targetNPC.Alignment = AlignmentAlly
 	deadNPC := NewCharacter(2, 2, nil, 1, false, nil)
-	deadNPC.Health = 0
+	deadNPC.TemporalState.HealthPoints = 0
 	deadNPC.State = ActorDead
 	ctx.World.Characters = []*Character{n, deadNPC, targetNPC}
 	n.X, n.Y = 0, 0
@@ -198,9 +228,9 @@ func TestNPCUpdate_Behaviors(t *testing.T) {
 	n.TargetActor = nil
 	ctx.World.PlayableCharacter = mc // RESTORE PLAYER
 	mc.X, mc.Y = 20, 20             // Far
-	mc.Health = 100
+	mc.TemporalState.HealthPoints = 100
 	targetNPC.X, targetNPC.Y = 5, 5 // Near
-	targetNPC.Health = 100
+	targetNPC.TemporalState.HealthPoints = 100
 	n.X, n.Y = 0, 0
 	n.Update(ctx)
 	if n.TargetActor != &targetNPC.Actor {
@@ -224,14 +254,13 @@ func TestNPC_MeleeAttack(t *testing.T) {
 	mc := NewCharacter(0.5, 0, nil, 1, true, nil) // Very close
 	ctx.World.PlayableCharacter = mc
 
-	arch := &EntityConfig{Stats: EntityStats{
-		HealthMin:      50,
-		HealthMax:      50,
-		BaseAttack:     1000, // Guarantee hit
-		BaseDefense:    5,
-		AttackRange:    1.0,
-		AttackCooldown: 60,
-		Speed:          1.0,
+	arch := &EntityConfig{Stats: EntityStatsConfig{
+		HealthMin:      IntInterval{Min: 50, Max: 50},
+		BaseAttack:     IntInterval{Min: 1000, Max: 1000},
+		BaseDefense:    IntInterval{Min: 5, Max: 5},
+		AttackRange:    FloatInterval{Min: 1.0, Max: 1.0},
+		AttackCooldown: IntInterval{Min: 60, Max: 60},
+		Speed:          FloatInterval{Min: 1.0, Max: 1.0},
 	}, Behavior: "hunter"}
 	n := NewCharacter(0, 0, arch, 1, false, nil)
 	n.TargetActor = &mc.Actor
@@ -240,11 +269,11 @@ func TestNPC_MeleeAttack(t *testing.T) {
 	ctx.World.Characters = []*Character{n}
 
 	// Loop until a hit connects (due to built-in 5% miss chance RNG)
-	startHealth := mc.Health
+	startHealth := mc.TemporalState.HealthPoints
 	for i := 0; i < 100; i++ {
 		n.AttackTimer = 60
 		n.Update(ctx)
-		if mc.Health < startHealth {
+		if mc.TemporalState.HealthPoints < startHealth {
 			break
 		}
 	}
@@ -252,7 +281,7 @@ func TestNPC_MeleeAttack(t *testing.T) {
 	if n.State != ActorAttacking {
 		t.Error("NPC should transition to Attacking state")
 	}
-	if mc.Health >= startHealth {
+	if mc.TemporalState.HealthPoints >= startHealth {
 		t.Error("MC should have taken damage from guaranteed hit test after multiple attempts")
 	}
 
@@ -263,16 +292,16 @@ func TestNPC_MeleeAttack(t *testing.T) {
 	n.TargetActor = &targetNPC.Actor
 	n.AttackTimer = 60
 	ctx.World.Characters = []*Character{n, targetNPC}
-	startNpcHealth := targetNPC.Health
+	startNpcHealth := targetNPC.TemporalState.HealthPoints
 	for i := 0; i < 100; i++ {
 		n.AttackTimer = 60
 		n.Update(ctx)
-		if targetNPC.Health < startNpcHealth {
+		if targetNPC.TemporalState.HealthPoints < startNpcHealth {
 			break
 		}
 	}
 
-	if targetNPC.Health >= startNpcHealth {
+	if targetNPC.TemporalState.HealthPoints >= startNpcHealth {
 		t.Error("Target NPC should have taken damage after multiple attempts")
 	}
 }
@@ -280,16 +309,19 @@ func TestNPC_MeleeAttack(t *testing.T) {
 func TestNPC_RangedAttack(t *testing.T) {
 	ctx := NewTestContext()
 	mc := NewCharacter(4, 0, nil, 1, true, nil) // Within ranged attack
-	mc.Health = 100
+	mc.TemporalState.HealthPoints = 100
 	ctx.World.PlayableCharacter = mc
 
-	arch := &EntityConfig{Stats: EntityStats{
-		AttackRange:    5.0, // Ranged!
-		AttackCooldown: 60,
-		Speed:          1.0,
-	}, Behavior: "hunter"}
+	arch := &EntityConfig{
+		Attributes: PrimaryAttributeConfig{
+			Strength: IntInterval{Min: 100, Max: 100}, Dexterity: IntInterval{Min: 100, Max: 100}, Health: IntInterval{Min: 100, Max: 100}, Intellect: IntInterval{Min: 100, Max: 100}, Wisdom: IntInterval{Min: 100, Max: 100},
+		},
+		Stats: EntityStatsConfig{
+			AttackRange:    FloatInterval{Min: 5.0, Max: 5.0},
+			AttackCooldown: IntInterval{Min: 60, Max: 60},
+		}, Behavior: "hunter"}
 	n := NewCharacter(0, 0, arch, 1, false, nil)
-	n.Health = 100
+	n.TemporalState.HealthPoints = 100
 	n.TargetActor = &mc.Actor
 	n.Slots = make(map[string]*ItemInstance)
 	weaponConfig := &ObjectConfig{
@@ -348,7 +380,7 @@ func TestNPCDraw_AttackAndDeadBehavior(t *testing.T) {
 	// 1. Attack WITH image
 	n.State = ActorAttacking
 	track1 := &trackingImage{}
-	n.Draw(track1, nil, nil, nil, 0, 0)
+	n.Draw(track1, nil, nil, nil, 0, 0, true)
 	if len(track1.drawnImages) != 1 || track1.drawnImages[0] != attackImg {
 		t.Error("NPCDraw: failed to use AttackImage during attack")
 	}
@@ -359,7 +391,7 @@ func TestNPCDraw_AttackAndDeadBehavior(t *testing.T) {
 	}, 1, false, nil)
 	n2.State = ActorAttacking
 	track2 := &trackingImage{}
-	n2.Draw(track2, nil, nil, nil, 0, 0)
+	n2.Draw(track2, nil, nil, nil, 0, 0, true)
 	if len(track2.drawnImages) != 1 || track2.drawnImages[0] != staticImg {
 		t.Error("NPCDraw: failed to fallback to StaticImage when AttackImage is missing")
 	}
@@ -371,7 +403,7 @@ func TestNPCDraw_AttackAndDeadBehavior(t *testing.T) {
 	}, 1, false, nil)
 	n3.State = ActorDead
 	track3 := &trackingImage{}
-	n3.Draw(track3, nil, nil, nil, 0, 0)
+	n3.Draw(track3, nil, nil, nil, 0, 0, true)
 	if len(track3.drawnImages) != 1 || track3.drawnImages[0] != corpseImg {
 		t.Error("NPCDraw: failed to use CorpseImage during death")
 	}
@@ -382,7 +414,7 @@ func TestNPCDraw_AttackAndDeadBehavior(t *testing.T) {
 	}, 1, false, nil)
 	n4.State = ActorDead
 	track4 := &trackingImage{}
-	n4.Draw(track4, nil, nil, nil, 0, 0)
+	n4.Draw(track4, nil, nil, nil, 0, 0, true)
 	if len(track4.drawnImages) != 0 {
 		t.Error("NPCDraw: should not draw anything when CorpseImage is missing")
 	}

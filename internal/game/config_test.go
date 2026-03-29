@@ -59,7 +59,13 @@ func TestEntityConfig_Inheritance(t *testing.T) {
 	arch := &EntityConfig{
 		ID:       "orc_male",
 		Behavior: "hunter",
-		Stats: EntityStats{HealthMin: 30, HealthMax: 50, BaseAttack: 8, BaseDefense: 4, BaseProtection: 4, Speed: 0.03},
+		Stats: EntityStatsConfig{
+			HealthMin: IntInterval{Min: 30, Max: 50}, 
+			BaseAttack: IntInterval{Min: 8, Max: 8}, 
+			BaseDefense: IntInterval{Min: 4, Max: 4}, 
+			BaseProtection: IntInterval{Min: 4, Max: 4}, 
+			Speed: FloatInterval{Min: 0.03, Max: 0.03},
+		},
 		XP: 11,
 	}
 
@@ -69,8 +75,8 @@ func TestEntityConfig_Inheritance(t *testing.T) {
 	}
 
 	// Manual simulation of the inheritance logic in config.go
-	if npcConfig.Stats.HealthMin == 0 {
-		npcConfig.Stats = arch.Stats
+	if npcConfig.Stats.HealthMin.IsZero() {
+		npcConfig.Stats.HealthMin = arch.Stats.HealthMin
 	}
 	if npcConfig.Behavior == "" {
 		npcConfig.Behavior = arch.Behavior
@@ -79,8 +85,11 @@ func TestEntityConfig_Inheritance(t *testing.T) {
 		npcConfig.XP = arch.XP
 	}
 
-	if npcConfig.Stats.HealthMin != 30 {
-		t.Errorf("Expected health_min 30, got %d", npcConfig.Stats.HealthMin)
+	if npcConfig.Stats.HealthMin.IsZero() {
+		t.Error("npc should have inherited health_min from archetype")
+	}
+	if npcConfig.Stats.HealthMin.Min != 30 {
+		t.Errorf("Expected health_min 30, got %d", npcConfig.Stats.HealthMin.Min)
 	}
 	if npcConfig.XP != 11 {
 		t.Errorf("Expected XP 11, got %d", npcConfig.XP)

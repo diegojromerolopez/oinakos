@@ -1,0 +1,10 @@
+id: turnip
+name: Turnip
+type: consumable
+max_hours: 168
+weight: 0.4
+value: 8
+description: A root vegetable that keeps well.
+hunger: 15
+primary_color: "#E6E6FA"
+sprite: turnip_item.png

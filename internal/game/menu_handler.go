@@ -60,6 +60,10 @@ func (mh *MenuHandler) Update() error {
 		return mh.updateInventoryScreen()
 	}
 
+	if g.isTradeOpen {
+		return mh.updateTradeScreen()
+	}
+
 	return nil
 }
 
@@ -79,6 +83,24 @@ func (mh *MenuHandler) updateInventoryScreen() error {
 	if g.input.IsKeyJustPressed(engine.KeyEscape) {
 		g.isInventoryOpen = false
 		return nil
+	}
+
+	if g.input.IsKeyJustPressed(g.settings.GetKey("eat")) {
+		pc := g.playableCharacter
+		for i, item := range pc.Inventory {
+			if item != nil && item.Config != nil && item.Config.Type == "consumable" {
+				ctx := &SystemContext{
+					World: g.World, Input: g.input, Audio: g.audio, Registries: g.Registries, 
+					Log: g.LogEvent, AIManager: g.aiManager, Weather: g.World.State.Weather, Intensity: g.World.State.Intensity, Settings: g.settings,
+				}
+				if pc.Actor.ConsumeItem(item, ctx) {
+					pc.Inventory = append(pc.Inventory[:i], pc.Inventory[i+1:]...)
+					pc.Actor.UpdateEffects()
+					if g.audio != nil { g.audio.PlayRandomSound("pickup") }
+					return nil
+				}
+			}
+		}
 	}
 
 	if g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft) {
@@ -156,6 +178,30 @@ func (mh *MenuHandler) updateInventoryScreen() error {
 					return nil // Handled click
 				}
 			}
+
+			// Eat button [E] at listStartX+listW-115.
+			if item.Config != nil && item.Config.Type == "consumable" {
+				uBtnX, uBtnY, uBtnW, uBtnH := listStartX+listW-120, itemY+5, 40, 25
+				if mx >= uBtnX && mx <= uBtnX+uBtnW && my >= uBtnY && my <= uBtnY+uBtnH {
+					ctx := &SystemContext{
+						World:      g.World,
+						Input:      g.input,
+						Audio:      g.audio,
+						Registries: g.Registries,
+						Log:        g.LogEvent,
+						AIManager:  g.aiManager,
+						Weather:    g.World.State.Weather,
+						Intensity:  g.World.State.Intensity,
+					}
+					if pc.Actor.ConsumeItem(item, ctx) {
+						// Remove from inventory
+						pc.Inventory = append(pc.Inventory[:i], pc.Inventory[i+1:]...)
+						pc.Actor.UpdateEffects()
+						if g.audio != nil { g.audio.PlayRandomSound("pickup") }
+					}
+					return nil // Handled click
+				}
+			}
 		}
 	}
 
@@ -164,9 +210,63 @@ func (mh *MenuHandler) updateInventoryScreen() error {
 
 func (mh *MenuHandler) updateKeymapScreen() error {
 	g := mh.game
-	if g.input.IsKeyJustPressed(engine.KeyEscape) || g.input.IsKeyJustPressed(engine.KeyEnter) {
+
+	// If remapping an action, wait for any keypress
+	if g.remappingAction != "" {
+		keys := []engine.Key{}
+		keys = g.input.AppendJustPressedKeys(keys)
+		if len(keys) > 0 {
+			newKey := keys[0]
+			if newKey != engine.KeyEscape {
+				g.settings.Keymap[g.remappingAction] = KeyToName(newKey)
+				g.settings.Save()
+			}
+			g.remappingAction = ""
+		}
+		return nil
+	}
+
+	if g.input.IsKeyJustPressed(engine.KeyEscape) {
 		g.isKeymapScreen = false
 		g.isSettingsScreen = true
+		return nil
+	}
+
+	if g.input.IsKeyJustPressed(engine.KeyW) || g.input.IsKeyJustPressed(engine.KeyUp) {
+		g.keymapSelectedIndex--
+		if g.keymapSelectedIndex < 0 { g.keymapSelectedIndex = len(RemappableActions) - 1 }
+	}
+	if g.input.IsKeyJustPressed(engine.KeyS) || g.input.IsKeyJustPressed(engine.KeyDown) {
+		g.keymapSelectedIndex++
+		if g.keymapSelectedIndex >= len(RemappableActions) { g.keymapSelectedIndex = 0 }
+	}
+
+	if g.input.IsKeyJustPressed(engine.KeyEnter) || g.input.IsKeyJustPressed(engine.KeySpace) {
+		g.remappingAction = RemappableActions[g.keymapSelectedIndex].ID
+	}
+
+	return nil
+}
+
+func (mh *MenuHandler) updateDialogueScreen() error {
+	g := mh.game
+	if g.ActiveDialogue == nil { return nil }
+	
+	if g.input.IsKeyJustPressed(engine.KeyW) || g.input.IsKeyJustPressed(engine.KeyUp) {
+		g.ActiveDialogue.SelectedChoice--
+		if g.ActiveDialogue.SelectedChoice < 0 {
+			g.ActiveDialogue.SelectedChoice = len(g.ActiveDialogue.Choices) - 1
+		}
+	}
+	if g.input.IsKeyJustPressed(engine.KeyS) || g.input.IsKeyJustPressed(engine.KeyDown) {
+		g.ActiveDialogue.SelectedChoice++
+		if g.ActiveDialogue.SelectedChoice >= len(g.ActiveDialogue.Choices) {
+			g.ActiveDialogue.SelectedChoice = 0
+		}
+	}
+	if g.input.IsKeyJustPressed(engine.KeyEnter) { g.AdvanceDialogue() }
+	if g.input.IsKeyJustPressed(engine.KeyEscape) || g.input.IsKeyJustPressed(engine.KeyBackspace) {
+		g.CloseDialogue()
 	}
 	return nil
 }

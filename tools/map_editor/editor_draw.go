@@ -103,7 +103,7 @@ func (m *MapEditor) drawEditor(screen *ebiten.Image) {
 		}
 		if arch != nil {
 			npc := game.NewCharacter(npcData.X, npcData.Y, arch, 1, false, nil)
-			npc.Draw(eImg, m.Graphics, m.Graphics, nil, offsetX, offsetY)
+			npc.Draw(eImg, m.Graphics, m.Graphics, nil, offsetX, offsetY, true)
 			if m.Selection != nil && m.Selection.ID == fmt.Sprintf("npc_%d", i) {
 				ix, iy := engine.CartesianToIso(npcData.X, npcData.Y)
 				m.drawOutlineRect(eImg, float32(ix+offsetX-20), float32(iy+offsetY-20), 40, 40)

@@ -11,11 +11,11 @@ import (
 func TestSaveLoad(t *testing.T) {
 	g := NewGame(nil, &engine.MockGraphics{}, "data/maps/test_save.yaml", "", "", &MockInputManager{}, &MockAudioManager{}, false, "0.1-test")
 	// Add NPC and Obstacle to test persistence
-	n := NewCharacter(10, 20, &EntityConfig{ID: "orc", XP: 10, Stats: EntityStats{HealthMin: 100, HealthMax: 100}}, 1, false, nil)
+	n := NewCharacter(10, 20, &EntityConfig{ID: "orc", XP: 10, Stats: EntityStatsConfig{HealthMin: IntInterval{Min: 100, Max: 100}, HealthMax: IntInterval{Min: 100, Max: 100}}}, 1, false, nil)
 	g.World.Characters = []*Character{n}
 	g.characters = []*Character{n}
 	
-	obs := NewObstacle("test_building", 30, 40, &ObstacleArchetype{ID: "test_arch", Health: 100})
+	obs := NewObstacle("test_building", 30, 40, &ObstacleArchetype{ID: "test_arch", HealthPoints: 100})
 	g.World.Obstacles = []*Obstacle{obs}
 	g.obstacles = []*Obstacle{obs}
 
@@ -45,8 +45,8 @@ func TestSaveLoad(t *testing.T) {
 	if g2.playableCharacter.XP != g.playableCharacter.XP {
 		t.Errorf("XP mismatch: expected %d, got %d", g.playableCharacter.XP, g2.playableCharacter.XP)
 	}
-	if g2.playableCharacter.Health != g.playableCharacter.Health {
-		t.Errorf("Health mismatch: expected %d, got %d", g.playableCharacter.Health, g2.playableCharacter.Health)
+	if g2.playableCharacter.TemporalState.HealthPoints != g.playableCharacter.TemporalState.HealthPoints {
+		t.Errorf("Health mismatch: expected %d, got %d", g.playableCharacter.TemporalState.HealthPoints, g2.playableCharacter.TemporalState.HealthPoints)
 	}
 	if g2.playTime != g.playTime {
 		t.Errorf("PlayTime mismatch: expected %f, got %f", g.playTime, g2.playTime)

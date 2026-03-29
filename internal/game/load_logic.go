@@ -103,10 +103,11 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 
 	g.playableCharacter.X = data.Player.X
 	g.playableCharacter.Y = data.Player.Y
-	g.playableCharacter.Health = data.Player.Health
+	g.playableCharacter.TemporalState.HealthPoints = data.Player.HealthPoints
 	g.playableCharacter.XP = data.Player.XP
 	g.playableCharacter.Level = data.Player.Level
 	g.playableCharacter.Kills = data.Player.Kills
+	g.playableCharacter.SelectedModel = data.Player.SelectedModel
 	
 	// Load inventory
 	g.playableCharacter.Inventory = nil
@@ -132,14 +133,32 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 	}
 	g.playableCharacter.UpdateEffects()
 
-	g.playableCharacter.MaxHealth = data.Player.MaxHealth
+	g.playableCharacter.TemporalState.MaxHealthPoints = data.Player.MaxHealthPoints
 	g.playableCharacter.BaseAttack = data.Player.BaseAttack
 	g.playableCharacter.BaseDefense = data.Player.BaseDefense
 	g.playableCharacter.BaseProtection = data.Player.BaseProtection
-	g.playableCharacter.Energy = data.Player.Energy
+	g.playableCharacter.PrimaryAttributes.Strength = data.Player.Strength
+	g.playableCharacter.PrimaryAttributes.Dexterity = data.Player.Dexterity
+	g.playableCharacter.PrimaryAttributes.Health = data.Player.Health
+	g.playableCharacter.PrimaryAttributes.Intellect = data.Player.Intellect
+	g.playableCharacter.PrimaryAttributes.Wisdom = data.Player.Wisdom
+	g.playableCharacter.Submission = data.Player.Submission
+	if g.playableCharacter.Submission == nil { g.playableCharacter.Submission = make(map[string]float64) }
+	
+	// Hunger, Thirst, Fatigue (with fallback for old saves)
+	g.playableCharacter.TemporalState.Hunger = data.Player.Hunger
+	g.playableCharacter.TemporalState.Thirst = data.Player.Thirst
+	g.playableCharacter.TemporalState.Fatigue = data.Player.Fatigue
+	if g.playableCharacter.TemporalState.Hunger == 0 && g.playableCharacter.TemporalState.Thirst == 0 && g.playableCharacter.TemporalState.Fatigue == 0 {
+		g.playableCharacter.TemporalState.Hunger = 100
+		g.playableCharacter.TemporalState.Thirst = 100
+		g.playableCharacter.TemporalState.Fatigue = 100
+	}
+
 	if data.Player.Weapon != nil {
 		g.playableCharacter.Weapon = data.Player.Weapon
 	}
+	g.playableCharacter.Denarii = data.Player.Denarii
 
 
 	// Load floor items
@@ -160,7 +179,7 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 	}
 
 
-	if g.playableCharacter.Health > 0 {
+	if g.playableCharacter.TemporalState.HealthPoints > 0 {
 		g.playableCharacter.State = ActorIdle
 		g.isGameOver = false
 	} else {
@@ -186,13 +205,31 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 			continue
 		}
 		n := NewCharacter(nData.X, nData.Y, config, nData.Level, false, g.Registries.Objects)
-		n.Health = nData.Health
-		n.MaxHealth = nData.MaxHealth
+		n.TemporalState.HealthPoints = nData.HealthPoints
+		n.TemporalState.MaxHealthPoints = nData.MaxHealthPoints
 		if nData.Name != "" { n.Name = nData.Name }
 		if nData.BaseAttack > 0 { n.BaseAttack = nData.BaseAttack }
 		if nData.BaseDefense > 0 { n.BaseDefense = nData.BaseDefense }
 		if nData.BaseProtection > 0 { n.BaseProtection = nData.BaseProtection }
-		n.Energy = nData.Energy
+		if nData.Strength > 0 { n.PrimaryAttributes.Strength = nData.Strength }
+		if nData.Dexterity > 0 { n.PrimaryAttributes.Dexterity = nData.Dexterity }
+		if nData.Health > 0 { n.PrimaryAttributes.Health = nData.Health }
+		if nData.Intellect > 0 { n.PrimaryAttributes.Intellect = nData.Intellect }
+		if nData.Wisdom > 0 { n.PrimaryAttributes.Wisdom = nData.Wisdom }
+		n.Submission = nData.Submission
+		if n.Submission == nil { n.Submission = make(map[string]float64) }
+		
+		n.TemporalState.Hunger = nData.Hunger
+		n.TemporalState.Thirst = nData.Thirst
+		n.TemporalState.Fatigue = nData.Fatigue
+		if n.TemporalState.Hunger == 0 && n.TemporalState.Thirst == 0 && n.TemporalState.Fatigue == 0 {
+			n.TemporalState.Hunger = 100
+			n.TemporalState.Thirst = 100
+			n.TemporalState.Fatigue = 100
+		}
+
+		n.Denarii = nData.Denarii
+		n.SelectedModel = nData.SelectedModel
 
 		switch nData.Behavior {
 		case "wander": n.Behavior = BehaviorWander
@@ -201,6 +238,9 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 		case "fighter": n.Behavior = BehaviorNpcFighter
 		case "chaotic": n.Behavior = BehaviorChaotic
 		case "escort": n.Behavior = BehaviorEscort
+		case "trader": n.Behavior = BehaviorTrader
+		case "hauler": n.Behavior = BehaviorHauler
+		case "lumberjack": n.Behavior = BehaviorLumberjack
 		}
 
 		if nData.Alignment != 0 { n.Alignment = nData.Alignment }
@@ -230,7 +270,7 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 			}
 		}
 		
-		if n.Health <= 0 { n.State = ActorDead }
+		if n.TemporalState.HealthPoints <= 0 { n.State = ActorDead }
 		n.UpdateEffects()
 		g.characters = append(g.characters, n)
 	}
@@ -263,9 +303,9 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 		if oData.Y != nil { py = *oData.Y } else if base != nil && base.Y != nil { py = *base.Y }
 
 		o := NewObstacle(oData.ID, px, py, config)
-		if oData.Health > 0 || oData.X != nil { o.Health = oData.Health } else if config.Health > 0 { o.Health = config.Health }
+		if oData.HealthPoints > 0 || oData.X != nil { o.HealthPoints = oData.HealthPoints } else if config.HealthPoints > 0 { o.HealthPoints = config.HealthPoints }
 		o.CooldownTicks = oData.CooldownTicks
-		if o.Health <= 0 && config.Health > 0 { o.Alive = false }
+		if o.HealthPoints <= 0 && config.HealthPoints > 0 { o.Alive = false }
 		g.obstacles = append(g.obstacles, o)
 	}
 

@@ -41,6 +41,59 @@ floor_zones:
     y: 30
   - x: -40
     y: 30
+- name: Wood Stockpile
+  type: stockpile
+  accepts: ["wood", "log"]
+  tile: mud.png
+  priority: 15
+  perimeter:
+  - x: 40
+    y: 0
+  - x: 45
+    y: 0
+  - x: 45
+    y: 5
+  - x: 40
+    y: 5
+- name: North River
+  type: river
+  tile: water.png
+  priority: 2
+  perimeter:
+  - x: -60
+    y: -50
+  - x: 60
+    y: -50
+  - x: 60
+    y: -40
+  - x: -60
+    y: -40
+- name: East Farm
+  type: farm_field
+  tile: mud.png
+  priority: 5
+  perimeter:
+  - x: 30
+    y: -30
+  - x: 50
+    y: -30
+  - x: 50
+    y: -10
+  - x: 30
+    y: -10
+- name: West Farm
+  type: farm_field
+  tile: mud.png
+  priority: 5
+  perimeter:
+  - x: -50
+    y: 10
+  - x: -30
+    y: 10
+  - x: -30
+    y: 30
+  - x: -50
+    y: 30
 inhabitants:
 - archetype: peasant_male
   x: -5
@@ -67,6 +120,50 @@ inhabitants:
   y: 5
   alignment: neutral
   behavior: wander
+- name: Silvanus
+  archetype: peasant_male
+  x: 42
+  y: 2
+  alignment: neutral
+  behavior: lumberjack
+- archetype: smith_merchant
+  x: 6
+  y: -4
+  alignment: neutral
+  behavior: trader
+- archetype: butcher_merchant
+  x: -6
+  y: 8
+  alignment: neutral
+  behavior: trader
+- archetype: baker_merchant
+  x: -2
+  y: -5
+  alignment: neutral
+  behavior: trader
+- name: Agricola
+  archetype: peasant_male
+  x: 40
+  y: -20
+  alignment: neutral
+  behavior: farmer
+- name: Rusticus
+  archetype: peasant_male
+  x: -40
+  y: 20
+  alignment: neutral
+  behavior: farmer
+- name: Colonus
+  archetype: peasant_male
+  x: -42
+  y: 22
+  alignment: neutral
+  behavior: farmer
+- archetype: farmer_merchant
+  x: 0
+  y: 17
+  alignment: neutral
+  behavior: trader
 fauna:
 - archetype: cow
   x: 2
@@ -123,12 +220,21 @@ obstacles:
 - archetype: well
   x: 0
   y: 0
+- archetype: personal_chest
+  x: 1
+  y: 16
 - archetype: smithery
   x: 6
   y: -6
 - archetype: warehouse
   x: -6
   y: -6
+- archetype: butchery
+  x: -6
+  y: 6
+- archetype: bakery
+  x: 6
+  y: 6
 # Derelict Houses
 - archetype: poor_house_1
   x: -8
@@ -152,6 +258,18 @@ obstacles:
 - archetype: tree_2
   x: 25
   y: -5
+- id: tree_oak_1
+  archetype: tree_oak
+  x: 42
+  y: -8
+- id: tree_oak_2
+  archetype: tree_oak
+  x: 45
+  y: -10
+- id: tree_oak_3
+  archetype: tree_oak
+  x: 39
+  y: -12
 - archetype: tree_3
   x: 22
   y: 0

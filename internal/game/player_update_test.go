@@ -41,12 +41,12 @@ func TestPlayerUpdate_Comprehensive(t *testing.T) {
 	ctx.World.Obstacles = []*Obstacle{well}
 	
 	mc.X, mc.Y = 0.5, 0.5
-	mc.Health = 50
-	mc.MaxHealth = 100
+	mc.TemporalState.HealthPoints = 50
+	mc.TemporalState.MaxHealthPoints = 100
 	input.PressedKeys[engine.KeySpace] = true
 	mc.updatePlayer(ctx)
-	if mc.Health != 60 {
-		t.Errorf("Healing failed: got %d, want 60", mc.Health)
+	if mc.TemporalState.HealthPoints != 60 {
+		t.Errorf("Healing failed: got %d, want 60", mc.TemporalState.HealthPoints)
 	}
 	if mc.State != ActorDrinking {
 		t.Errorf("Expected ActorDrinking state, got %v", mc.State)

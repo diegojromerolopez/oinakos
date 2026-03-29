@@ -1,0 +1,11 @@
+id: olive
+name: Olive
+type: consumable
+description: A small, salty olive. Very nutritious.
+weight: 0.1
+image: assets/images/objects/olive.png
+effects:
+  energy:
+    increase: 4.0
+  health:
+    increase: 2.0

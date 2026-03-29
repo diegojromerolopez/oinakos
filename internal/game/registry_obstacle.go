@@ -16,7 +16,7 @@ type ObstacleArchetype struct {
 	Type           ObstacleType           `yaml:"type"`
 	Destructible   bool                   `yaml:"destructible"` // If false, cannot be damaged
 	Description    string                 `yaml:"description"`
-	Health         int                    `yaml:"health"`        // Base health (ignored if Destructible is false)
+	HealthPoints   int                    `yaml:"health"`        // Base health (ignored if Destructible is false)
 	Timber         int                    `yaml:"timber"`        // Available timber resources for harvesting
 	Weight         float64                `yaml:"weight"`        // Total resource weight (game units)
 	CooldownTime   float64                `yaml:"cooldown_time"` // Base cooldown in minutes
@@ -26,7 +26,18 @@ type ObstacleArchetype struct {
 	AnimationSpeed int                    `yaml:"animation_speed"` // Ticks per frame
 	Scale          float64                `yaml:"scale,omitempty"`  // Scaling factor for rendering (default 1.0)
 	Actions        []ObstacleActionConfig `yaml:"actions,omitempty"`
-	Image          engine.Image           `yaml:"-"`
+
+	IsCrop         bool   `yaml:"is_crop"`
+	PlantSeason    string `yaml:"plant_season"`   // e.g. "SPRING"
+	HarvestSeason  string `yaml:"harvest_season"` // e.g. "AUTUMN"
+	GrowthDuration int    `yaml:"growth_duration"`
+	Yield          string `yaml:"yield"`           // Object ID to drop when harvested
+
+	// Environmental Hazard System
+	Passable       bool   `yaml:"passable"`  // If true, characters can walk over it
+	IsHazard       bool   `yaml:"is_hazard"` // If true, it can affect actor states (hygiene, health)
+
+	Image engine.Image `yaml:"-"`
 }
 
 func (a *ObstacleArchetype) IsWell() bool {

@@ -23,6 +23,10 @@ func NewObjectRegistry() *ObjectRegistry {
 	}
 }
 
+func (r *ObjectRegistry) Get(id string) *ObjectConfig {
+	return r.Objects[id]
+}
+
 func (r *ObjectRegistry) LoadAll(assets fs.FS) error {
 	if assets == nil {
 		return nil

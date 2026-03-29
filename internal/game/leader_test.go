@@ -12,15 +12,15 @@ func TestLeaderDeathConsequence(t *testing.T) {
 	
 	leader := NewCharacter(0, 0, leaderArch, 1, false, nil)
 	follower := NewCharacter(1, 1, followerArch, 1, false, nil)
-	leader.Health = 100
-	leader.MaxHealth = 100
-	follower.Health = 100
-	follower.MaxHealth = 100
+	leader.TemporalState.HealthPoints = 100
+	leader.TemporalState.MaxHealthPoints = 100
+	follower.TemporalState.HealthPoints = 100
+	follower.TemporalState.MaxHealthPoints = 100
 	
 	ctx.World.Characters = []*Character{leader, follower}
 	mc := NewCharacter(10, 10, nil, 1, true, nil)
-	mc.Health = 100
-	mc.MaxHealth = 100
+	mc.TemporalState.HealthPoints = 100
+	mc.TemporalState.MaxHealthPoints = 100
 	ctx.World.PlayableCharacter = mc
 	
 	// Initial state
@@ -35,7 +35,7 @@ func TestLeaderDeathConsequence(t *testing.T) {
 	}
 	
 	// Kill leader (irremediably)
-	leader.Health = -10
+	leader.TemporalState.HealthPoints = -10
 	leader.State = ActorDead
 	
 	// Update follower after leader death
@@ -66,17 +66,17 @@ func TestTraitorTargeting(t *testing.T) {
 	traitor := NewCharacter(2, 2, followerArch, 1, false, nil)
 	traitor.Alignment = AlignmentNeutral // Switched!
 
-	leader.Health = 100
-	leader.MaxHealth = 100
-	peer.Health = 100
-	peer.MaxHealth = 100
-	traitor.Health = 100
-	traitor.MaxHealth = 100
+	leader.TemporalState.HealthPoints = 100
+	leader.TemporalState.MaxHealthPoints = 100
+	peer.TemporalState.HealthPoints = 100
+	peer.TemporalState.MaxHealthPoints = 100
+	traitor.TemporalState.HealthPoints = 100
+	traitor.TemporalState.MaxHealthPoints = 100
 
 	ctx.World.Characters = []*Character{leader, peer, traitor}
 	mc := NewCharacter(10, 10, nil, 1, true, nil)
-	mc.Health = 100
-	mc.MaxHealth = 100
+	mc.TemporalState.HealthPoints = 100
+	mc.TemporalState.MaxHealthPoints = 100
 	ctx.World.PlayableCharacter = mc
 
 	// Peer should normally ignore Neutral NPCs if they weren't traitors,

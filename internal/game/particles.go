@@ -20,9 +20,11 @@ type Particle struct {
 	Type    ParticleType
 }
 
-func (g *Game) updateWeather() {
+func (g *Game) updateWeatherVFX() {
+	if g.World == nil { return }
+	s := &g.World.State
 	if g.audio != nil {
-		switch g.CurrentWeather {
+		switch s.Weather {
 		case WeatherRain:
 			g.audio.PlayAmbientLoop("ambient/rain")
 			g.audio.StopAmbientLoop("ambient/storm")
@@ -35,7 +37,7 @@ func (g *Game) updateWeather() {
 		}
 	}
 
-	if g.CurrentWeather == WeatherClear {
+	if s.Weather == WeatherClear || s.Weather == WeatherFog {
 		if len(g.particles) > 0 {
 			g.particles = g.particles[:0]
 		}
@@ -43,12 +45,12 @@ func (g *Game) updateWeather() {
 	}
 
 	// Spawn particles
-	spawnRate := int(g.WeatherIntensity * 8)
-	if g.CurrentWeather == WeatherRain || g.CurrentWeather == WeatherStorm {
+	spawnRate := int(s.Intensity * 8)
+	if s.Weather == WeatherRain || s.Weather == WeatherStorm {
 		for i := 0; i < spawnRate; i++ {
 			g.spawnParticle(ParticleRain)
 		}
-	} else if g.CurrentWeather == WeatherSnow {
+	} else if s.Weather == WeatherSnow {
 		if g.Tick%4 == 0 {
 			for i := 0; i < spawnRate/2+1; i++ {
 				g.spawnParticle(ParticleSnow)

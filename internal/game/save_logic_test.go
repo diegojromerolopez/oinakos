@@ -187,18 +187,20 @@ func TestGame_LoadAdvanced(t *testing.T) {
 	
 	data.Player = PlayerSaveData{
 		Archetype: "conde_olinos",
-		X: 50, Y: 50, Health: 80, MaxHealth: 100, Level: 1,
-		Inventory: []ItemInstanceSaveData{{ID: "sword_iron", Resistance: 50}},
-		Slots: map[string]ItemInstanceSaveData{"weapon": {ID: "sword_iron", Resistance: 50}},
+		X: 50, Y: 50, 
+		TemporalState: TemporalState{HealthPoints: 80, MaxHealthPoints: 100},
+		Level: 1,
+		Inventory: []ItemInstanceSaveData{{ID: "sword_iron", Resistance: 50, X: 0, Y: 0}},
+		Slots: map[string]ItemInstanceSaveData{"weapon": {ID: "sword_iron", Resistance: 50, X: 0, Y: 0}},
 	}
 	data.Characters = []NPCSaveData{
-		{Archetype: "orc_male", X: 10, Y: 10, Health: 50, MaxHealth: 50, Level: 1, Behavior: "wander"},
-		{NPCID: "unique_npc", X: 20, Y: 20, Health: 100, MaxHealth: 100, Level: 1, Behavior: "hunter", Alignment: AlignmentEnemy},
-		{Archetype: "orc_male", X: 30, Y: 30, Health: 0, MaxHealth: 50, Level: 1, Behavior: "patrol"}, // Dead NPC
+		{Archetype: "orc_male", X: 10, Y: 10, TemporalState: TemporalState{HealthPoints: 50, MaxHealthPoints: 50}, Level: 1, Behavior: "wander"},
+		{NPCID: "unique_npc", X: 20, Y: 20, TemporalState: TemporalState{HealthPoints: 100, MaxHealthPoints: 100}, Level: 1, Behavior: "hunter", Alignment: AlignmentEnemy},
+		{Archetype: "orc_male", X: 30, Y: 30, TemporalState: TemporalState{HealthPoints: 0, MaxHealthPoints: 50}, Level: 1, Behavior: "patrol"}, // Dead NPC
 	}
 	data.Obstacles = []ObstacleSaveData{
-		{ID: "tree_1", Archetype: "tree_oak", X: ptr(5.0), Y: ptr(5.0), Health: 100},
-		{ID: "broken_tree", Archetype: "tree_oak", Health: 0}, // Broken obstacle
+		{ID: "tree_1", Archetype: "tree_oak", X: ptr(5.0), Y: ptr(5.0), HealthPoints: 100},
+		{ID: "broken_tree", Archetype: "tree_oak", HealthPoints: 0}, // Broken obstacle
 	}
 	data.Items = []ItemInstanceSaveData{
 		{ID: "gold_ore_1", X: 2, Y: 2},
@@ -212,7 +214,7 @@ func TestGame_LoadAdvanced(t *testing.T) {
 	g.characterRegistry.Characters["conde_olinos"] = &EntityConfig{ID: "conde_olinos", Name: "Conde"}
 	g.characterRegistry.Characters["unique_npc"] = &EntityConfig{ID: "unique_npc", Name: "Unique"}
 	g.archetypeRegistry.Archetypes["orc_male"] = &Archetype{ID: "orc_male"}
-	g.obstacleRegistry.Archetypes["tree_oak"] = &ObstacleArchetype{ID: "tree_oak", Health: 100}
+	g.obstacleRegistry.Archetypes["tree_oak"] = &ObstacleArchetype{ID: "tree_oak", HealthPoints: 100}
 	g.Registries.Objects.Objects["sword_iron"] = &ObjectConfig{ID: "sword_iron"}
 	g.Registries.Objects.Objects["gold_ore_1"] = &ObjectConfig{ID: "gold_ore_1"}
 	

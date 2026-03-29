@@ -57,11 +57,15 @@ func (mh *MenuHandler) updateCharacterSelect() error {
 			config := g.characterRegistry.Characters[charID]
 			g.initialHeroID = charID
 			g.playableCharacter.Config = config
-			g.playableCharacter.Health = config.Stats.HealthMin
-			g.playableCharacter.MaxHealth = config.Stats.HealthMin
-			g.playableCharacter.Speed = config.Stats.Speed
-			g.playableCharacter.BaseAttack = config.Stats.BaseAttack
-			g.playableCharacter.BaseDefense = config.Stats.BaseDefense
+			rolledStats := config.Stats.Roll()
+			rolledAttrs := config.Attributes.Roll()
+			g.playableCharacter.RawStats = rolledStats
+			g.playableCharacter.PrimaryAttributes = rolledAttrs
+			g.playableCharacter.TemporalState.MaxHealthPoints = rolledStats.HealthMin
+			g.playableCharacter.TemporalState.HealthPoints = rolledStats.HealthMin
+			g.playableCharacter.Speed = rolledStats.Speed
+			g.playableCharacter.BaseAttack = rolledStats.BaseAttack
+			g.playableCharacter.BaseDefense = rolledStats.BaseDefense
 			g.playableCharacter.Weapon = config.Weapon.Resolve(g.Registries.Objects)
 			g.playableCharacter.Name = config.Name
 

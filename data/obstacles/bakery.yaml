@@ -1,0 +1,12 @@
+id: bakery
+name: Bakery
+type: building
+description: A building where bread is baked and sold.
+image: assets/images/obstacles/bakery.png
+health: 1000
+destructible: false
+footprint:
+  - {x: 0, y: 0}
+  - {x: 2, y: 0}
+  - {x: 2, y: 2}
+  - {x: 0, y: 2}

@@ -5,6 +5,7 @@ import (
 	"image/color"
 	"io/fs"
 	"log"
+	"math"
 	"path"
 	"time"
 	"runtime"
@@ -263,7 +264,7 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 			tasks = append(tasks, drawTask{
 				y: sortY,
 				draw: func() {
-					DrawActor(&npc.Actor, screen, gr.graphics, gr.graphics, gr.PaletteShader, offsetX, offsetY, npc.IsPlayerControlled)
+					DrawActor(&npc.Actor, screen, gr.graphics, gr.graphics, gr.PaletteShader, offsetX, offsetY, npc.IsPlayerControlled, g.settings.AdultMode)
 				},
 			})
 		}
@@ -272,7 +273,7 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 		tasks = append(tasks, drawTask{
 			y: mcSortY,
 			draw: func() {
-				DrawActor(&g.playableCharacter.Actor, screen, gr.graphics, gr.graphics, gr.PaletteShader, offsetX, offsetY, true)
+				DrawActor(&g.playableCharacter.Actor, screen, gr.graphics, gr.graphics, gr.PaletteShader, offsetX, offsetY, true, g.settings.AdultMode)
 			},
 		})
 
@@ -318,7 +319,7 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 				continue
 			}
 			if strings.Contains(strings.ToLower(string(obj.Archetype.Type)), "tree") {
-				if obj.MaxHealth <= 0 {
+				if obj.MaxHealthPoints <= 0 {
 					continue // Ignore things without health limits
 				}
 
@@ -334,13 +335,13 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 				// Simple Bounding box hover for tall trees
 				isHovered := mx >= drawX-40 && mx <= drawX+40 && my >= drawY-140 && my <= drawY
 
-				if obj.Health < obj.MaxHealth || isHovered {
+				if obj.HealthPoints < obj.MaxHealthPoints || isHovered {
 					barW := 40.0
 					barH := 4.0
 					barX := drawX - barW/2
 					barY := drawY - 140.0
 
-					healthRatio := float64(obj.Health) / float64(obj.MaxHealth)
+					healthRatio := float64(obj.HealthPoints) / float64(obj.MaxHealthPoints)
 					if healthRatio < 0 {
 						healthRatio = 0
 					}
@@ -354,7 +355,7 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 
 					// Text
 					if isHovered && hasText {
-						textStr := fmt.Sprintf("Timber: %d/%d", obj.Health, obj.MaxHealth)
+						textStr := fmt.Sprintf("Timber: %d/%d", obj.HealthPoints, obj.MaxHealthPoints)
 						tr.DrawTextAt(screen, textStr, int(barX-10), int(barY-5), color.RGBA{255, 255, 255, 255}, 12.0)
 					}
 				}
@@ -379,8 +380,11 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 			gr.drawPauseMenu(screen)
 		} else if g.isInventoryOpen {
 			gr.drawInventoryScreen(screen)
+		} else if g.isTradeOpen {
+			gr.drawTradeScreen(screen)
 		} else {
 			gr.drawFog(screen)
+			gr.drawTimeOverlay(screen)
 			gr.drawWeather(screen)
 			gr.drawHUD(screen)
 			gr.drawDialogueBox(screen)
@@ -411,12 +415,12 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 
 func (gr *GameRenderer) drawWeather(screen engine.Image) {
 	g := gr.game
-	if g.CurrentWeather == WeatherClear {
+	if g.World == nil || g.World.State.Weather == WeatherClear {
 		return
 	}
 
 	// 1. World Overlay (Tint)
-	if g.CurrentWeather == WeatherRain || g.CurrentWeather == WeatherStorm {
+	if g.World.State.Weather == WeatherRain || g.World.State.Weather == WeatherStorm {
 		// Slight grey/blue tint
 		gr.emptyImage.Fill(color.NRGBA{50, 50, 80, 40}) // Semi-transparent tint
 		op := engine.NewDrawImageOptions()
@@ -425,7 +429,7 @@ func (gr *GameRenderer) drawWeather(screen engine.Image) {
 	}
 
 	// 2. Lightning Flash
-	if g.CurrentWeather == WeatherStorm && g.Tick%600 < 5 {
+	if g.World.State.Weather == WeatherStorm && g.Tick%600 < 5 {
 		// Flash for 5 frames every 10 seconds approx
 		alpha := uint8(100 - (g.Tick%600)*20)
 		gr.emptyImage.Fill(color.NRGBA{255, 255, 255, alpha})
@@ -452,4 +456,22 @@ func (gr *GameRenderer) drawWeather(screen engine.Image) {
 		}
 		screen.DrawImage(gr.emptyImage, op)
 	}
+}
+
+func (gr *GameRenderer) drawTimeOverlay(screen engine.Image) {
+	g := gr.game
+	if g.World == nil { return }
+	hour := g.World.State.Hour
+	
+	// Light Level (0.0 to 0.7 max darkness)
+	// Darkest at 00:00, Brightest at 12:00
+	// 0.35 * (1 + cos(H * pi / 12)) => 0 at noon, 0.7 at midnight
+	lightLevel := 0.35 * (1.0 + math.Cos(float64(hour)*math.Pi/12.0))
+	alpha := uint8(lightLevel * 255)
+	
+	// Color of overlay: Deep blue/purple for night
+	gr.emptyImage.Fill(color.NRGBA{10, 10, 40, alpha})
+	op := engine.NewDrawImageOptions()
+	op.Scale(float64(g.width)/3, float64(g.height)/3)
+	screen.DrawImage(gr.emptyImage, op)
 }

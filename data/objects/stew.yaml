@@ -1,0 +1,12 @@
+id: stew
+name: Hearty Stew
+type: consumable
+max_hours: 24
+weight: 0.8
+value: 80
+description: A warm, rich stew made with vegetables and chunks of meat.
+hunger: 60
+thirst: 20
+fatigue: 10
+primary_color: "#8B4513"
+sprite: stew_bowl.png

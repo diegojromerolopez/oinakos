@@ -14,4 +14,5 @@ type SystemContext struct {
 	AIManager  *AIManager
 	Weather    WeatherType
 	Intensity  float64
+	Settings   *Settings
 }

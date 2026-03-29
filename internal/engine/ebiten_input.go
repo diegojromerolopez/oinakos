@@ -102,6 +102,7 @@ func toEbitenKey(key Key) ebiten.Key {
 	case KeyR: return ebiten.KeyR
 	case KeyC: return ebiten.KeyC
 	case KeyV: return ebiten.KeyV
+	case KeyT: return ebiten.KeyT
 	}
 	return -1
 }
@@ -134,6 +135,7 @@ func fromEbitenKey(key ebiten.Key) Key {
 	case ebiten.KeyR: return KeyR
 	case ebiten.KeyC: return KeyC
 	case ebiten.KeyV: return KeyV
+	case ebiten.KeyT: return KeyT
 	}
 	return -1
 }

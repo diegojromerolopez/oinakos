@@ -8,19 +8,25 @@ import (
 func TestPlayableCharacterStats(t *testing.T) {
 	mc := &Character{
 		Actor: Actor{
-			BaseAttack:  10,
-			BaseDefense: 5,
-			Level:       1,
+			Level: 1,
+			Config: &EntityConfig{
+				Attributes: PrimaryAttributeConfig{Strength: IntInterval{Min: 5, Max: 5}},
+				Stats:      EntityStatsConfig{HealthMin: IntInterval{Min: 10, Max: 10}},
+			},
+			PrimaryAttributes: PrimaryAttributes{Strength: 5},
+			AgeTicks:          25.0 * float64(TicksPerYear),
 		},
 	}
+	mc.SyncStats(NewObjectRegistry())
 
 	if att := mc.GetTotalAttack(); att != 10 {
 		t.Errorf("GetTotalAttack(Level 1): got %d, want 10", att)
 	}
 
 	mc.Level = 10
-	if att := mc.GetTotalAttack(); att != 43 {
-		t.Errorf("GetTotalAttack(Level 10): got %d, want 43", att)
+	// 10 * 1.15^9 = 10 * 3.5178 = 35
+	if att := mc.GetTotalAttack(); att != 35 {
+		t.Errorf("GetTotalAttack(Level 10): got %d, want 35", att)
 	}
 }
 
@@ -51,14 +57,20 @@ func TestPlayableCharacterXPAndLevelUp(t *testing.T) {
 
 func TestPlayableCharacterTakeDamage(t *testing.T) {
 	ctx := NewTestContext()
-	mc := &Character{Actor: Actor{Health: 100, MaxHealth: 100, Config: &EntityConfig{ID: "player"}}}
+	mc := &Character{Actor: Actor{
+		TemporalState: TemporalState{
+			HealthPoints:    100,
+			MaxHealthPoints: 100,
+		},
+		Config: &EntityConfig{ID: "player"},
+	}}
 	mc.TakeDamage(20, nil, ctx)
-	if mc.Health != 80 {
-		t.Errorf("Health after damage: got %d, want 80", mc.Health)
+	if mc.TemporalState.HealthPoints != 80 {
+		t.Errorf("Health after damage: got %d, want 80", mc.TemporalState.HealthPoints)
 	}
 	mc.TakeDamage(80, nil, ctx)
-	if mc.Health != 0 || mc.State != ActorIncapacitated {
-		t.Errorf("Health after fatal damage: got %d, state=%v, want 0, state=ActorIncapacitated", mc.Health, mc.State)
+	if mc.TemporalState.HealthPoints != 0 || mc.State != ActorIncapacitated {
+		t.Errorf("Health after fatal damage: got %d, state=%v, want 0, state=ActorIncapacitated", mc.TemporalState.HealthPoints, mc.State)
 	}
 	if !mc.IsAlive() {
 		t.Error("Character should still be 'alive' (incapacitated) at 0 HP")
@@ -66,8 +78,8 @@ func TestPlayableCharacterTakeDamage(t *testing.T) {
 
 	// Death threshold (-10% of 100 = -10)
 	mc.TakeDamage(10, nil, ctx)
-	if mc.Health != -10 || mc.State != ActorDead {
-		t.Errorf("Health after irremediable damage: got %d, state=%v, want -10, state=ActorDead", mc.Health, mc.State)
+	if mc.TemporalState.HealthPoints != -10 || mc.State != ActorDead {
+		t.Errorf("Health after irremediable damage: got %d, state=%v, want -10, state=ActorDead", mc.TemporalState.HealthPoints, mc.State)
 	}
 	if mc.IsAlive() {
 		t.Error("Character should be truly dead at -10 HP")
@@ -106,7 +118,7 @@ func TestPlayableCharacterCheckAttackHits(t *testing.T) {
 	npc := &Character{Actor: Actor{X: 1, Y: 0.5, State: ActorIdle}}
 	ctx.World.Characters = []*Character{npc}
 	ctx.World.PlayableCharacter = mc
-	mc.CheckAttackHits(ctx)
+	mc.CheckAttackHits(ctx, "")
 }
 
 func TestPlayableCharacterCollisionCircle(t *testing.T) {
@@ -119,7 +131,7 @@ func TestPlayableCharacterCollisionCircle(t *testing.T) {
 
 func TestPlayableCharacterCollision(t *testing.T) {
 	mc := NewCharacter(10, 10, nil, 1, true, nil)
-	colliders := []*Obstacle{NewObstacle("test_mc_collider", 10.5, 10.5, nil)}
+	colliders := []*Obstacle{NewObstacle("test_mc_collider", 10.5, 10.5, &ObstacleArchetype{Passable: false})}
 	if !mc.checkCollisionAt(10.5, 10.5, colliders) {
 		t.Error("Expected collision at 10.5, 10.5")
 	}
@@ -131,7 +143,7 @@ func TestPlayableCharacterCollision(t *testing.T) {
 func TestPlayableCharacterUpdate_Full(t *testing.T) {
 	ctx := NewTestContext()
 	mc := NewCharacter(0, 0, nil, 1, true, nil)
-	mc.Health = mc.MaxHealth
+	mc.TemporalState.HealthPoints = mc.TemporalState.MaxHealthPoints
 	ctx.World.PlayableCharacter = mc
 	mockInput := ctx.Input.(*MockInputManager)
 
@@ -145,6 +157,7 @@ func TestPlayableCharacterUpdate_Full(t *testing.T) {
 	// Update drinking
 	mc.State = ActorDrinking
 	mc.Tick = 0
+	mc.TemporalState.Thirst = 50.0
 	mc.Update(ctx)
 	if mc.State != ActorDrinking {
 		t.Error("Should stay drinking")

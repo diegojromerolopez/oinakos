@@ -188,6 +188,9 @@ obstacles:
 - archetype: well
   x: 0
   y: 0
+- archetype: personal_chest
+  x: 2
+  y: 3
 - archetype: house_1
   x: -6
   y: -10

@@ -87,7 +87,7 @@ obstacles:
 		g := NewGame(mockFS, &engine.MockGraphics{}, "building", "", "", NewMockInputManager(), NewMockAudioManager(), false, "0.1-test")
 		g.isMainMenu = false
 		g.isCharacterSelect = false
-		targetObstacle := NewObstacle("target_building", 0, 0, &ObstacleArchetype{ID: "house", Health: 500})
+		targetObstacle := NewObstacle("target_building", 0, 0, &ObstacleArchetype{ID: "house", HealthPoints: 500})
 		targetObstacle.Alive = true
 		g.obstacles = []*Obstacle{targetObstacle}
 		g.currentMapType.TargetObstacle = targetObstacle

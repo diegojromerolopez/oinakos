@@ -1,0 +1,10 @@
+id: medicine
+name: Medicinal Herbs
+type: consumable
+weight: 0.1
+value: 120
+description: A mixture of bitter herbs known to cure the autumn flu.
+clear_sick: true
+fatigue: 50
+primary_color: "#228B22"
+sprite: herbs.png

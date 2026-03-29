@@ -1,0 +1,10 @@
+id: bread
+name: Fresh Bread
+type: consumable
+max_hours: 48
+weight: 0.3
+value: 15
+description: A simple loaf of crusty, fresh bread.
+hunger: 25
+primary_color: "#F4A460"
+sprite: bread.png

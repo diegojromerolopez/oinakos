@@ -2,12 +2,16 @@ package game
 
 import (
 	"fmt"
+	"image/color"
 	"math"
 
 	"oinakos/internal/engine"
 )
 
 func (g *Game) LogEvent(text string, category LogCategory) {
+	if len(g.EventLog) > 0 && g.EventLog[len(g.EventLog)-1].Text == text {
+		return
+	}
 	entry := LogEntry{Text: text, Category: category}
 	if g.playableCharacter != nil { entry.Ticks = g.playableCharacter.Tick }
 	g.EventLog = append(g.EventLog, entry)
@@ -16,34 +20,48 @@ func (g *Game) LogEvent(text string, category LogCategory) {
 }
 
 func (g *Game) handleDialogueInput() {
-	if g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft) {
+	talkKey := g.settings.GetKey("talk")
+	if g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft) || g.input.IsKeyJustPressed(talkKey) {
 		mx, my := g.input.MousePosition()
-		if mx >= g.width-110 && mx <= g.width-10 && my >= 20 && my <= 50 {
-			g.isMenuOpen = true
-			return
-		}
-
-		isDialogue := g.ActiveDialogue != nil
-		boxH := 300
-		if isDialogue && g.ActiveDialogue.UIState == DialogueMaximized { boxH = 600 } else if !isDialogue { boxH = 60 }
 		
-		bx, by := 10, g.height-boxH-10
-		boxW := g.width - 20
-		if mx >= bx && mx <= bx+boxW-20 && my >= by && my <= by+boxH {
-			g.ToggleDialogueSize()
-			return
+		// If clicking on fixed UI elements
+		if g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft) {
+			if mx >= g.width-110 && mx <= g.width-10 && my >= 20 && my <= 50 {
+				g.isMenuOpen = true
+				return
+			}
+
+			isDialogue := g.ActiveDialogue != nil
+			boxH := 300
+			if isDialogue && g.ActiveDialogue.UIState == DialogueMaximized { boxH = 600 } else if !isDialogue { boxH = 60 }
+			
+			bx, by := 10, g.height-boxH-10
+			boxW := g.width - 20
+			if mx >= bx && mx <= bx+boxW-20 && my >= by && my <= by+boxH {
+				g.ToggleDialogueSize()
+				return
+			}
 		}
 
-		offX, offY := g.camera.GetOffsets(g.width, g.height)
-		isoX := float64(mx) - offX
-		isoY := float64(my) - offY
-		cartX, cartY := engine.IsoToCartesian(isoX, isoY)
+		// Check for NPCs to talk to (Keyboard interaction only now, or via pinned menu)
+		if g.input.IsKeyJustPressed(talkKey) {
+			// Keyboard interaction (nearest NPC)
+			var bestNPC *Character
+			bestDist := 2.5 // Max interaction distance
+			pc := g.playableCharacter
 
-		for _, n := range g.characters {
-			if !n.IsAlive() || n.Alignment == AlignmentEnemy { continue }
-			if n.GetCollisionCircle().Contains(cartX, cartY) {
-				g.InitiateDialogue(n)
-				break
+			for _, n := range g.characters {
+				if !n.IsAlive() || n.Alignment == AlignmentEnemy || n.Config == nil || n.Config.Dialogues == nil { continue }
+				dist := math.Sqrt(math.Pow(n.X-pc.X, 2) + math.Pow(n.Y-pc.Y, 2))
+				if dist < bestDist {
+					bestDist = dist
+					bestNPC = n
+				}
+			}
+
+			if bestNPC != nil {
+				g.InitiateDialogue(bestNPC)
+				return
 			}
 		}
 	}
@@ -53,25 +71,41 @@ func (g *Game) handleLogScrolling() {
 	mx, my := g.input.MousePosition()
 	isDialogue := g.ActiveDialogue != nil
 	boxH := 300
-	if isDialogue && g.ActiveDialogue.UIState == DialogueMaximized { boxH = 600 } else if !isDialogue { boxH = 60 }
+	maxLogEntries := 4
+	if isDialogue {
+		if g.ActiveDialogue.UIState == DialogueMaximized {
+			boxH = 650
+			maxLogEntries = 12
+		} else {
+			boxH = 350
+			maxLogEntries = 5
+		}
+	} else {
+		if g.LogUIState == DialogueMaximized {
+			boxH = 300
+			maxLogEntries = 15
+		} else {
+			boxH = 85
+			maxLogEntries = 3
+		}
+	}
 	
 	bx, by := 10, g.height-boxH-10
 	boxW := g.width - 20
 	sbX, sbTrackY, sbTrackH := bx+boxW-10, by+5, boxH-10
+	if isDialogue { sbTrackY = by + 25; sbTrackH = maxLogEntries * 15 + 10 }
 
 	if g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft) {
-		if mx >= sbX-5 && mx <= sbX+10 && my >= sbTrackY && my <= sbTrackY+sbTrackH { g.IsDraggingLog = true }
+		if mx >= sbX-5 && mx <= sbX+10 && my >= int(sbTrackY) && my <= int(sbTrackY+sbTrackH) { g.IsDraggingLog = true }
 	}
 
 	if g.IsDraggingLog {
 		if !g.input.IsMouseButtonPressed(engine.MouseButtonLeft) {
 			g.IsDraggingLog = false
 		} else {
-			ratio := 1.0 - float32(my-sbTrackY)/float32(sbTrackH)
+			ratio := 1.0 - float32(my-int(sbTrackY))/float32(sbTrackH)
 			if ratio < 0 { ratio = 0 } else if ratio > 1 { ratio = 1 }
 			
-			maxLogEntries := 2
-			if isDialogue { maxLogEntries = 1 }
 			maxOffset := len(g.EventLog) - maxLogEntries
 			if maxOffset < 0 { maxOffset = 0 }
 			g.LogScrollOffset = int(float32(maxOffset) * ratio)
@@ -83,7 +117,7 @@ func (g *Game) handleLogScrolling() {
 		if mx >= bx && mx <= bx+boxW && my >= by && my <= by+boxH {
 			g.LogScrollOffset -= int(wheelY)
 			if g.LogScrollOffset < 0 { g.LogScrollOffset = 0 }
-			maxScroll := len(g.EventLog) - 1
+			maxScroll := len(g.EventLog) - maxLogEntries
 			if maxScroll < 0 { maxScroll = 0 }
 			if g.LogScrollOffset > maxScroll { g.LogScrollOffset = maxScroll }
 		}
@@ -128,6 +162,22 @@ func (g *Game) InitiateDialogue(npc *Character) {
 	if start.Next != "" {
 		if node, ok := dr.Nodes[start.Next]; ok { g.ActiveDialogue.Choices = node.Choices }
 	}
+	
+	if npc.Behavior == BehaviorTrader {
+		g.ActiveTrader = npc
+		g.isTradeOpen = true
+	}
+
+	// 1. Give a sentiment boost for talking!
+	// Cooldown: 18000 ticks = 5 minutes in-game
+	cooldown := 18000
+	if g.Tick - npc.LastTalkTick > cooldown {
+		npc.ModifySentiment(g.playableCharacter.Name, 5.0)
+		npc.AddMemory(g.Tick, "conversation", g.playableCharacter.Name, 5.0)
+		npc.LastTalkTick = g.Tick
+		g.AddFloatingText("❤", npc.X, npc.Y+1.0, color.RGBA{255, 100, 100, 255})
+	}
+
 	g.LogEvent(fmt.Sprintf("%s: %s", npc.Name, start.Text), LogNPC)
 }
 

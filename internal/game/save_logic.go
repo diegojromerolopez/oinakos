@@ -74,18 +74,22 @@ func (g *Game) serialize() ([]byte, error) {
 		Archetype: g.playableCharacter.Config.ID,
 		X:           g.playableCharacter.X,
 		Y:           g.playableCharacter.Y,
-		Health:      g.playableCharacter.Health,
-		MaxHealth:   g.playableCharacter.MaxHealth,
+		TemporalState: g.playableCharacter.TemporalState,
 		XP:          g.playableCharacter.XP,
 		Level:       g.playableCharacter.Level,
 		Kills:       g.playableCharacter.Kills,
 		MapKills:    g.playableCharacter.MapKills,
+		
+		PrimaryAttributes: g.playableCharacter.PrimaryAttributes,
+
 		BaseAttack:  g.playableCharacter.BaseAttack,
 		BaseDefense: g.playableCharacter.BaseDefense,
 		BaseProtection: g.playableCharacter.BaseProtection,
-		Energy:      g.playableCharacter.Energy,
+		Submission:     g.playableCharacter.Submission,
+		Denarii:     g.playableCharacter.Denarii,
 		Inventory:   []ItemInstanceSaveData{},
 		Slots:       make(map[string]ItemInstanceSaveData),
+		SelectedModel: g.playableCharacter.SelectedModel,
 	}
 	for _, item := range g.playableCharacter.Inventory {
 		if item == nil || item.Config == nil { continue }
@@ -122,8 +126,7 @@ func (g *Game) serialize() ([]byte, error) {
 		npcSave := NPCSaveData{
 			X:           n.X,
 			Y:           n.Y,
-			Health:      n.Health,
-			MaxHealth:   n.MaxHealth,
+			TemporalState: n.TemporalState,
 			Level:       n.Level,
 			Behavior:    behaviorStr,
 			Name:        n.Name,
@@ -131,10 +134,15 @@ func (g *Game) serialize() ([]byte, error) {
 			Group:       n.Group,
 			LeaderID:    n.LeaderID,
 			MustSurvive: n.MustSurvive,
+
+			PrimaryAttributes: n.PrimaryAttributes,
+
 			BaseAttack:  n.BaseAttack,
 			BaseDefense: n.BaseDefense,
 			BaseProtection: n.BaseProtection,
-			Energy:      n.Energy,
+			Submission:     n.Submission,
+			Denarii:     n.Denarii,
+			SelectedModel: n.SelectedModel,
 			Inventory:   []ItemInstanceSaveData{},
 			Slots:       make(map[string]ItemInstanceSaveData),
 		}
@@ -167,7 +175,7 @@ func (g *Game) serialize() ([]byte, error) {
 			Archetype:   o.Archetype.ID,
 			X:             &xVal,
 			Y:             &yVal,
-			Health:        o.Health,
+			HealthPoints:  o.HealthPoints,
 			CooldownTicks: o.CooldownTicks,
 		})
 	}

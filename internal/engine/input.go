@@ -31,6 +31,7 @@ const (
 	KeyR
 	KeyC
 	KeyV
+	KeyT
 )
 
 // Input defines an interface for all input operations to allow mocking.

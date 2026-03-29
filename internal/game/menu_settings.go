@@ -12,7 +12,7 @@ func (mh *MenuHandler) updateSettingsScreen() error {
 	if showAIModel {
 		rows = append(rows, "AI Model")
 	}
-	rows = append(rows, "Simulation Mode", "Talking Frequency", "Measurement Units", "Keymap", "Save and Back")
+	rows = append(rows, "Time Pace", "Simulation Mode", "Talking Frequency", "Measurement Units", "Keymap", "Save and Back")
 	nRows := len(rows)
 
 	// 1. Mouse Detection (Prioritize mouse for selection/hover)
@@ -160,6 +160,27 @@ func (mh *MenuHandler) updateSettingsScreen() error {
 				if found >= len(g.availableModels) { found = 0 }
 				g.setAIModelForCurrentProvider(g.availableModels[found])
 			}
+		}
+	case "Time Pace":
+		if g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) {
+			found := -1
+			for i, opt := range TimePaceOptions {
+				if opt == g.settings.TimePace { found = i; break }
+			}
+			if found == -1 { found = 0 }
+			found--
+			if found < 0 { found = len(TimePaceOptions) - 1 }
+			g.settings.TimePace = TimePaceOptions[found]
+		}
+		if g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) || (mouseClicked && hoverIdx == g.settingsMenuIndex) {
+			found := -1
+			for i, opt := range TimePaceOptions {
+				if opt == g.settings.TimePace { found = i; break }
+			}
+			if found == -1 { found = 0 }
+			found++
+			if found >= len(TimePaceOptions) { found = 0 }
+			g.settings.TimePace = TimePaceOptions[found]
 		}
 	case "Simulation Mode":
 		if g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) ||

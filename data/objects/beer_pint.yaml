@@ -1,0 +1,11 @@
+id: beer_pint
+name: Pint of Beer
+type: consumable
+weight: 1.0
+value: 15
+description: A large pint of locally brewed beer.
+thirst: 20
+energy: 10
+primary_color: "#F28E1C"
+sprite: beer_pint.png
+is_alcoholic: true

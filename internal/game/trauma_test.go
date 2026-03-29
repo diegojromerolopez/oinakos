@@ -7,16 +7,18 @@ import (
 func TestTrauma_IncapacitationThreshold(t *testing.T) {
 	ctx := NewTestContext()
 	c := &Character{Actor: Actor{
-		Health:    100,
-		MaxHealth: 100,
-		Config:    &EntityConfig{ID: "hero"},
+		TemporalState: TemporalState{
+			HealthPoints:    100,
+			MaxHealthPoints: 100,
+			Hunger:          100.0,
+			Thirst:          100.0,
+			Fatigue:         100.0,
+		},
+		Config: &EntityConfig{ID: "hero"},
 	}}
 
 	// Damage to 5 HP (should still be active)
 	c.TakeDamage(95, nil, ctx)
-	if c.State != ActorIdle && c.State != ActorWalking {
-		// Idle or Walking is fine, just not Incapacitated
-	}
 	if c.IsIncapacitated() {
 		t.Errorf("Expected actor to be active at 5 HP, got %v", c.State)
 	}
@@ -34,25 +36,29 @@ func TestTrauma_IncapacitationThreshold(t *testing.T) {
 func TestTrauma_BleedOutAndDeath(t *testing.T) {
 	ctx := NewTestContext()
 	c := &Character{Actor: Actor{
-		Health:    0,
-		MaxHealth: 100,
-		State:     ActorIncapacitated,
-		Config:    &EntityConfig{ID: "hero"},
+		TemporalState: TemporalState{
+			HealthPoints:    0,
+			MaxHealthPoints: 100,
+			Hunger:          0.0,
+			Thirst:          0.0,
+			Fatigue:         0.0,
+		},
+		State:  ActorIncapacitated,
+		Config: &EntityConfig{ID: "hero"},
 	}}
 
-	// 10% of 100 is 10. Death threshold is -10 HP.
 	// Hour simulation (3600 ticks)
 	for i := 0; i < 3600; i++ {
 		c.Tick++
 		c.SharedUpdate(ctx)
 	}
 
-	if c.Health != -1 {
-		t.Errorf("Expected -1 HP after one game hour, got %d", c.Health)
+	if c.TemporalState.HealthPoints != -1 {
+		t.Errorf("Expected -1 HP after one game hour, got %d", c.TemporalState.HealthPoints)
 	}
 
 	// Fast forward to death (-10 HP)
-	c.Health = -10
+	c.TemporalState.HealthPoints = -10
 	c.SharedUpdate(ctx)
 
 	if !c.IsTrulyDead() {
@@ -66,18 +72,23 @@ func TestTrauma_BleedOutAndDeath(t *testing.T) {
 func TestTrauma_DeterministicLimbLoss(t *testing.T) {
 	ctx := NewTestContext()
 	c := &Character{Actor: Actor{
-		Health:    9,  // < 10% of 100
-		MaxHealth: 100,
-		Config:    &EntityConfig{ID: "hero"},
+		TemporalState: TemporalState{
+			HealthPoints:    9, // < 10% of 100
+			MaxHealthPoints: 100,
+			Hunger:          100.0,
+			Thirst:          100.0,
+			Fatigue:         100.0,
+		},
+		Config: &EntityConfig{ID: "hero"},
 	}}
 
 	// Any hit at < 10% health should cause a trauma
 	c.TakeDamage(1, nil, ctx)
-	
-	hasTrauma := c.Trauma.LeftArmLost || c.Trauma.RightArmLost || 
-				 c.Trauma.LeftLegLost || c.Trauma.RightLegLost || 
-				 c.Trauma.EyesLost > 0 || c.Trauma.BurnedAlive || 
-				 c.Trauma.SpineBroken
+
+	hasTrauma := c.Trauma.LeftArmLost || c.Trauma.RightArmLost ||
+		c.Trauma.LeftLegLost || c.Trauma.RightLegLost ||
+		c.Trauma.EyesLost > 0 || c.Trauma.BurnedAlive ||
+		c.Trauma.SpineBroken
 
 	if !hasTrauma {
 		t.Error("Expected guaranteed trauma when hit at < 10% health")
@@ -87,10 +98,15 @@ func TestTrauma_DeterministicLimbLoss(t *testing.T) {
 func TestTrauma_CumulativeTrauma(t *testing.T) {
 	ctx := NewTestContext()
 	c := &Character{Actor: Actor{
-		Health:    0,
-		MaxHealth: 100,
-		State:     ActorIncapacitated,
-		Config:    &EntityConfig{ID: "hero"},
+		TemporalState: TemporalState{
+			HealthPoints:    0,
+			MaxHealthPoints: 100,
+			Hunger:          100.0,
+			Thirst:          100.0,
+			Fatigue:         100.0,
+		},
+		State:  ActorIncapacitated,
+		Config: &EntityConfig{ID: "hero"},
 	}}
 
 	// Multiple hits while incapacitated should cause multiple traumas
@@ -99,16 +115,28 @@ func TestTrauma_CumulativeTrauma(t *testing.T) {
 	}
 
 	traumaCount := 0
-	if c.Trauma.LeftArmLost { traumaCount++ }
-	if c.Trauma.RightArmLost { traumaCount++ }
-	if c.Trauma.LeftLegLost { traumaCount++ }
-	if c.Trauma.RightLegLost { traumaCount++ }
-	if c.Trauma.EyesLost > 0 { traumaCount += c.Trauma.EyesLost }
-	if c.Trauma.BurnedAlive { traumaCount++ }
-	if c.Trauma.SpineBroken { traumaCount++ }
+	if c.Trauma.LeftArmLost {
+		traumaCount++
+	}
+	if c.Trauma.RightArmLost {
+		traumaCount++
+	}
+	if c.Trauma.LeftLegLost {
+		traumaCount++
+	}
+	if c.Trauma.RightLegLost {
+		traumaCount++
+	}
+	if c.Trauma.EyesLost > 0 {
+		traumaCount += c.Trauma.EyesLost
+	}
+	if c.Trauma.BurnedAlive {
+		traumaCount++
+	}
+	if c.Trauma.SpineBroken {
+		traumaCount++
+	}
 
-	// Due to randomization, some might overlap (e.g. eyes), 
-	// but with 5 hits we expect significant trauma.
 	if traumaCount < 2 {
 		t.Errorf("Expected multiple traumas from multiple hits, got count: %d", traumaCount)
 	}
@@ -116,10 +144,15 @@ func TestTrauma_CumulativeTrauma(t *testing.T) {
 
 func TestTrauma_Recovery(t *testing.T) {
 	c := &Character{Actor: Actor{
-		Health:    -5,
-		MaxHealth: 100,
-		State:     ActorIncapacitated,
-		Config:    &EntityConfig{ID: "hero"},
+		TemporalState: TemporalState{
+			HealthPoints:    -5,
+			MaxHealthPoints: 100,
+			Hunger:          100.0,
+			Thirst:          100.0,
+			Fatigue:         100.0,
+		},
+		State:  ActorIncapacitated,
+		Config: &EntityConfig{ID: "hero"},
 	}}
 
 	// Heal to 10 HP (should stand up)

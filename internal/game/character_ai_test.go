@@ -74,15 +74,15 @@ func TestCharacterAI_Flee(t *testing.T) {
 	ctx := setupTestGame()
 	mc := ctx.playableCharacter
 	mc.X, mc.Y = 5.0, 0.0
-	mc.Health = 100
-	mc.MaxHealth = 100
+	mc.TemporalState.HealthPoints = 100
+	mc.TemporalState.MaxHealthPoints = 100
 	
 	npc := NewCharacter(0.0, 0.0, nil, 1, false, nil)
 	npc.Alignment = AlignmentEnemy
 	npc.Behavior = BehaviorFlee
 	npc.Speed = 1.0
-	npc.Health = 100
-	npc.MaxHealth = 100
+	npc.TemporalState.HealthPoints = 100
+	npc.TemporalState.MaxHealthPoints = 100
 	npc.Speed = 1.0
 	npc.TargetActor = &mc.Actor // Explicitly set target to flee from
 	
@@ -116,6 +116,9 @@ func TestCharacterAI_Looting(t *testing.T) {
 	
 	sysCtx := NewTestContext()
 	sysCtx.World = ctx.World
+	if ctx.World.PlayableCharacter != nil {
+		ctx.World.PlayableCharacter.X, ctx.World.PlayableCharacter.Y = 100, 100
+	}
 	
 	// Update multiple times to move towards item
 	for i := 0; i < 100; i++ {
@@ -133,10 +136,13 @@ func TestCharacterAI_Looting(t *testing.T) {
 func TestCharacterAI_Exhaustion(t *testing.T) {
 	ctx := setupTestGame()
 	npc := NewCharacter(0, 0, nil, 1, false, nil)
-	npc.Energy = 5.0
+	npc.TemporalState.Fatigue = 95.0
 	
 	sysCtx := NewTestContext()
 	sysCtx.World = ctx.World
+	if ctx.World.PlayableCharacter != nil {
+		ctx.World.PlayableCharacter.X, ctx.World.PlayableCharacter.Y = 100, 100
+	}
 	
 	npc.updateAI(sysCtx)
 	if npc.State != ActorResting {
@@ -148,13 +154,13 @@ func TestCharacterAI_ApplyAIDecision(t *testing.T) {
 	c := NewCharacter(0, 0, nil, 1, false, nil)
 	
 	dec := AIDecision{ChosenOption: "ATTACK the player", Reasoning: "Aggressiveness"}
-	c.ApplyAIDecision(dec)
+	c.ApplyAIDecision(nil, dec)
 	if c.Behavior != BehaviorNpcFighter {
 		t.Errorf("Expected BehaviorNpcFighter for attack, got %v", c.Behavior)
 	}
 	
 	dec = AIDecision{ChosenOption: "FLEE please", Reasoning: "Fear"}
-	c.ApplyAIDecision(dec)
+	c.ApplyAIDecision(nil, dec)
 	if c.Behavior != BehaviorFlee {
 		t.Errorf("Expected BehaviorFlee for flee, got %v", c.Behavior)
 	}

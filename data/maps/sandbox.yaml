@@ -11,6 +11,22 @@ floor_tile: grass.png
 player:
   x: 0
   y: 0
+floor_zones:
+- name: Test Farm
+  type: farm_field
+  tile: mud.png
+  perimeter:
+  - {x: -10, y: -10}
+  - {x: -5, y: -10}
+  - {x: -5, y: -5}
+  - {x: -10, y: -5}
+fauna:
+- archetype: sheep
+  x: -7
+  y: -7
+- archetype: pig
+  x: -8
+  y: -8
 inhabitants:
 - archetype: peasant_male
   name: Mayor Sandbox
@@ -59,3 +75,16 @@ objects:
 - id: gilded_pitchfork
   x: 2
   y: 0
+obstacles:
+- archetype: well
+  x: 0
+  y: 0
+- archetype: personal_chest
+  x: 1
+  y: 0
+- archetype: personal_chest
+  x: 5
+  y: 5
+- archetype: crop_wheat
+  x: -7
+  y: -6

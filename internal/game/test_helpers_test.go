@@ -21,6 +21,7 @@ func NewTestContext() *SystemContext {
 			Obstacles:  NewObstacleRegistry(),
 		},
 		Log: func(s string, c LogCategory) {},
+		Settings: DefaultSettings(),
 	}
 }
 
@@ -73,13 +74,25 @@ func setupTestGame() *Game {
 			Obstacles:  obstacleRegistry,
 			Objects:    objectRegistry,
 		},
+		settings: DefaultSettings(),
 	}
 	g.World.Game = g
 	g.World.CurrentMapType = &g.currentMapType
+	g.input = NewMockInputManager()
+	g.audio = NewMockAudioManager()
+	g.mechanicsManager = NewMechanicsManager(g)
+	g.worldManager = NewWorldManager(g)
+	g.menuHandler = NewMenuHandler(g)
 	g.obstacles = g.World.Obstacles
 	pConfig := &EntityConfig{
 		MaxItems: 10,
-		MaxWeight: 100,
+		Stats: EntityStatsConfig{
+			HealthMin: IntInterval{Min: 100, Max: 100}, HealthMax: IntInterval{Min: 100, Max: 100},
+			Speed: FloatInterval{Min: 0.1, Max: 0.1}, BaseAttack: IntInterval{Min: 10, Max: 10}, BaseDefense: IntInterval{Min: 5, Max: 5},
+		},
+		Attributes: PrimaryAttributeConfig{
+			Strength: IntInterval{Min: 100, Max: 100}, Dexterity: IntInterval{Min: 100, Max: 100}, Health: IntInterval{Min: 100, Max: 100}, Intellect: IntInterval{Min: 100, Max: 100}, Wisdom: IntInterval{Min: 100, Max: 100},
+		},
 	}
 	g.playableCharacter = NewCharacter(0, 0, pConfig, 1, true, objectRegistry)
 	g.World.PlayableCharacter = g.playableCharacter

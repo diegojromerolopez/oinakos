@@ -62,8 +62,8 @@ func TestMechanics_ProximityEffects(t *testing.T) {
 	mc := NewCharacter(0, 0, nil, 1, true, nil)
 	ctx.World.PlayableCharacter = mc
 	mc.X, mc.Y = 0, 0
-	mc.MaxHealth = 100
-	mc.Health = 50
+	mc.TemporalState.MaxHealthPoints = 100
+	mc.TemporalState.HealthPoints = 50
 	
 	// 1. Harmful Aura
 	spikeArch := &ObstacleArchetype{
@@ -76,14 +76,14 @@ func TestMechanics_ProximityEffects(t *testing.T) {
 	ctx.World.Obstacles = []*Obstacle{spikes}
 	
 	mm.UpdateProximityEffects(ctx)
-	if mc.Health != 40 {
-		t.Errorf("Expected health 40 after spike damage, got %d", mc.Health)
+	if mc.TemporalState.HealthPoints != 40 {
+		t.Errorf("Expected health 40 after spike damage, got %d", mc.TemporalState.HealthPoints)
 	}
 
 	// 2. Healing Aura with Alignment Limit
 	// Clear previous timers and obstacles for clean test
 	ctx.World.Obstacles = nil
-	mc.Health = 50
+	mc.TemporalState.HealthPoints = 50
 	
 	wellArch := &ObstacleArchetype{
 		ID: "holy_well",
@@ -95,20 +95,20 @@ func TestMechanics_ProximityEffects(t *testing.T) {
 	ctx.World.Obstacles = []*Obstacle{well}
 	
 	mm.UpdateProximityEffects(ctx)
-	if mc.Health != 55 {
-		t.Errorf("Expected health 55 after healing, got %d", mc.Health)
+	if mc.TemporalState.HealthPoints != 55 {
+		t.Errorf("Expected health 55 after healing, got %d", mc.TemporalState.HealthPoints)
 	}
 
 	// 3. Enemy should not be healed by "ally" well
 	enemynpc := NewCharacter(2, 2, nil, 1, false, nil)
 	enemynpc.Alignment = AlignmentEnemy
-	enemynpc.MaxHealth = 100
-	enemynpc.Health = 50
+	enemynpc.TemporalState.MaxHealthPoints = 100
+	enemynpc.TemporalState.HealthPoints = 50
 	ctx.World.Characters = []*Character{enemynpc}
 	
 	mm.UpdateProximityEffects(ctx)
-	if enemynpc.Health != 50 {
-		t.Errorf("Enemy should not be healed by ally-only well, got %d", enemynpc.Health)
+	if enemynpc.TemporalState.HealthPoints != 50 {
+		t.Errorf("Enemy should not be healed by ally-only well, got %d", enemynpc.TemporalState.HealthPoints)
 	}
 }
 

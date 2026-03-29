@@ -9,8 +9,8 @@ type Obstacle struct {
 	X, Y          float64 // Grid positions
 	Z             float64
 	Archetype     *ObstacleArchetype
-	Health        int
-	MaxHealth     int
+	HealthPoints  int
+	MaxHealthPoints int
 	WeightLeft    float64
 	CooldownTicks int
 	TickCounter   int
@@ -18,13 +18,21 @@ type Obstacle struct {
 	EffectTimers  map[ActorInterface]int // Track intervals for hazards/healing per entity
 
 	CachedFootprint *engine.Polygon // Optimization: obstacles don't move, cache world footprint
+
+	// Growth state for crops
+	GrowthTicks int
+	GrowthStage int // 0: Seeded, 1: Growing, 2: Mature
+
+	// Storage
+	Inventory   []*ItemInstance
+	TotalWeight float64
 }
 
 func NewObstacle(id string, x, y float64, config *ObstacleArchetype) *Obstacle {
 	hp := 0 // Default indestructible
 	weight := 0.0
 	if config != nil {
-		hp = config.Health
+		hp = config.HealthPoints
 		if config.Timber > 0 {
 			hp = config.Timber
 		}
@@ -39,16 +47,17 @@ func NewObstacle(id string, x, y float64, config *ObstacleArchetype) *Obstacle {
 	}
 
 	return &Obstacle{
-		ID:            id,
-		X:             x,
-		Y:             y,
-		Archetype:     config,
-		Health:        hp,
-		MaxHealth:     hp,
-		WeightLeft:    weight,
-		CooldownTicks: 0,
-		Alive:         true,
-		EffectTimers:  make(map[ActorInterface]int),
+		ID:              id,
+		X:               x,
+		Y:               y,
+		Archetype:       config,
+		HealthPoints:    hp,
+		MaxHealthPoints: hp,
+		WeightLeft:      weight,
+		CooldownTicks:   0,
+		Alive:           true,
+		EffectTimers:    make(map[ActorInterface]int),
+		Inventory:       make([]*ItemInstance, 0),
 	}
 }
 
@@ -69,6 +78,19 @@ func (o *Obstacle) Update() {
 			// Cleanup old timers? Maybe not strictly necessary if map is small
 		}
 	}
+
+	// Growth logic if it is a crop
+	if o.Archetype != nil && o.Archetype.IsCrop && o.GrowthStage < 2 {
+		growthLimit := o.Archetype.GrowthDuration
+		if growthLimit > 0 {
+			o.GrowthTicks++
+			if o.GrowthStage == 0 && o.GrowthTicks > growthLimit/2 {
+				o.GrowthStage = 1
+			} else if o.GrowthStage == 1 && o.GrowthTicks >= growthLimit {
+				o.GrowthStage = 2
+			}
+		}
+	}
 }
 
 
@@ -81,8 +103,8 @@ func (o *Obstacle) TakeDamage(amount int) {
 		return
 	}
 
-	o.Health -= amount
-	if o.Health <= 0 {
+	o.HealthPoints -= amount
+	if o.HealthPoints <= 0 {
 		o.Alive = false
 		DebugLog("Obstacle [%s] Destroyed at (%.2f, %.2f)", o.ID, o.X, o.Y)
 	}

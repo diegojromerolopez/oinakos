@@ -1,0 +1,12 @@
+id: butchery
+name: Butchery
+type: building
+description: A building where meat is processed and sold.
+image: assets/images/obstacles/butchery.png
+health: 1200
+destructible: false
+footprint:
+  - {x: 0, y: 0}
+  - {x: 2, y: 0}
+  - {x: 2, y: 2}
+  - {x: 0, y: 2}

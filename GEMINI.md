@@ -111,6 +111,203 @@ All game content is defined in YAML under `data/` and loaded at startup:
 
 ---
 
+## ⚔️ Entity Attribute & Ability System
+
+All entity strength, behavior, and action success is driven by **Primary Attributes**. Never hardcode flat stat values — always use the attribute formulas below.
+
+### Primary Attributes (`attributes:` in YAML)
+
+Each attribute is an integer from **0–100**, defined on the `attributes` block of every character and archetype YAML.
+
+| Attribute | Key | Role |
+| :--- | :--- | :--- |
+| **Strength** | `strength` | Melee damage, carrying capacity, chopping/digging |
+| **Dexterity** | `dexterity` | Speed, attack cooldown, ranged accuracy, milking, shearing |
+| **Health** | `health` | Max HP, endurance, nourishment absorption, resting |
+| **Intellect** | `intellect` | Cooking quality, crafting, trade negotiation, brewing |
+| **Wisdom** | `wisdom` | Foraging yield, taming, farming, prayer, leadership |
+
+### Combat Derived Stats (`stats:` block in YAML)
+
+Computed at runtime in `Actor.SyncStats()`. YAML values act as **overrides**.
+
+| Stat | Formula | Max | Notes |
+| :--- | :--- | :--- | :--- |
+| `melee_attack` | `strength * 2` | 200 | Used by all melee damage rolls |
+| `ranged_attack` | `dexterity * 2` | 200 | Used by all ranged damage rolls |
+| `defense` | `dexterity * 1.5 + health * 1.0` | 250 | Damage reduction |
+| `health_points` | `health * 10` | 1000 | Overridden by `health_min`/`health_max` in YAML |
+| `speed` | `dexterity * 0.02` | 2.0 | Units per tick |
+| `critical_chance` | `strength * 0.005` | 0.5 (50%) | Doubles damage on proc |
+| `attack_cooldown` | `stats.attack_cooldown * (1.5 - dexterity * 0.01)` | — | Min clamp: 10 ticks |
+| `max_weight` | `(strength * 1.5 + health * 0.5) / 0.329` | — | Roman **librae**. Must be inside `stats:` |
+
+### Productive / Social Derived Stats
+
+These stats power the `yield` formula of non-combat abilities. Also computed in `SyncStats()`.
+
+| Stat | Formula | Max | Used By |
+| :--- | :--- | :--- | :--- |
+| `nourishment` | `health * 2` | 200 | `eat`, `drink`, `rest` — metabolic efficiency |
+| `survivalism` | `strength * 0.5 + health * 0.5` | 100 | `chop`, `dig`, `forage`, `fish`, `hunt`, `trap`, `butcher`, `guard` |
+| `mate` | `health * 0.01` | 1.0 | `mate` — conception probability (0–1) |
+| `crafting` | `intellect * 1.2 + strength * 0.3` | 150 | `smelt`, `craft`, `repair`, `build` |
+| `herbalism` | `wisdom * 1.0 + intellect * 0.5` | 150 | `cook`, `brew`, `heal` |
+| `trading` | `intellect * 1.2 + wisdom * 0.3` | 150 | `trade`, `appraise` |
+| `harvesting` | `wisdom * 1.2 + dexterity * 0.3` | 150 | `plant`, `harvest_crop`, `water_crops` |
+| `husbandry` | `wisdom * 1.0 + dexterity * 0.5` | 150 | `milk`, `shear`, `tame`, `tend_animal`, `breed` |
+| `art` | `dexterity * 0.5 + intellect * 0.5` | 100 | `perform`, `paint`, `sculpt`, `seduce` |
+| `culture` | `intellect * 0.5 + wisdom * 0.5` | 100 | `compose`, `teach`, `pray`, `bury`, `read`, `intimidate`, `recruit` |
+
+> **`nourishment` is an entity trait, not a food property.** Food items carry a fixed `nourishment_value` in their YAML. At consumption, `hunger_restored = item.nourishment_value + entity.nourishment * 0.2`.
+
+### Action Success Resolution
+
+To check if an action (ability) succeeds, the system performs a **uniform roll 0–100**. Success if `roll ≤ effective_threshold`. For a competitive roll (e.g. two combatants), the lower roll that is still ≤ its effective threshold wins.
+
+**Situational Modifiers:**  
+`CheckAbilitySuccess(abilityID, modifier int)` accepts an integer modifier that shifts the effective threshold:
+- **Bonus** (`modifier > 0`): raises the threshold — a higher roll can still succeed.  
+  e.g. `attribute=60, bonus=+20` → success if `roll ≤ 80`.
+- **Penalty** (`modifier < 0`): lowers the threshold — only a better roll succeeds.  
+  e.g. `attribute=60, penalty=−20` → success if `roll ≤ 40`.
+- Clamped to `[0, 100]` — no modifier can make an action impossible or guaranteed.
+
+Example modifiers:
+| Situation | Modifier |
+| :--- | :--- |
+| Chopping in heavy rain | −10 |
+| Foraging at night | −20 |
+| Cooking in a fully equipped kitchen | +15 |
+| Hunting downwind | +10 |
+| Taming a previously encountered animal | +20 |
+| Intimidating someone much weaker | +30 |
+
+Priority order in `CheckAbilitySuccess(abilityID, modifier)`:
+1. **Skill value** — check `Actor.SkillValues[abilityID]` (specialized proficiency, e.g. `sword_mastery`).
+2. **Ability config** — check `Config.Abilities[abilityID].ParentAttribute` and roll against that attribute.
+3. **Hardcoded fallback** — built-in mapping for common IDs (below).
+
+**Default attribute fallbacks:**
+| Action IDs | Attribute |
+| :--- | :--- |
+| `punch`, `kick`, `heavy_strike`, `chop`, `dig`, `build`, `butcher`, `throw`, `knockout`, `grapple` | `strength` |
+| `slap`, `slash`, `shoot_arrow`, `milk`, `shear`, `sneak`, `steal`, `seduce`, `weave` | `dexterity` |
+| `rest`, `eat`, `drink`, `mate` | `health` |
+| `cook`, `craft`, `repair`, `brew`, `trade`, `smelt`, `read`, `appraise`, `intimidate`, `tan`, `lie` | `intellect` |
+| `forage`, `plant`, `harvest_crop`, `tame`, `fish`, `pray`, `guard`, `hunt`, `trap`, `tend_animal`, `breed`, `water_crops`, `bury`, `recruit`, `teach` | `wisdom` |
+
+**Competitive Rolls (character vs. character):**
+
+Used when two characters actively contest the same action — e.g. one tries to `steal` while the target resists, or one tries to `intimidate` while the other defies.
+
+1. Both characters roll 0–100 against their relevant attribute (with any applicable modifier).
+2. **Both fail** → action fails; no winner.
+3. **Only one succeeds** (roll ≤ threshold) → that character wins.
+4. **Both succeed** → the character with the **lower roll** wins (they performed more decisively).
+
+Examples:
+| Action | Attacker rolls | Defender rolls | Winner |
+|---|---|---|---|
+| `steal` (attacker dex=70) vs `guard` (defender wis=60) | – | – | Both roll; lower success wins |
+| `intimidate` (str=80) vs `lie` (target int=50) | attacker succeeds at 45 | defender fails at 62 | Attacker wins |
+| `seduce` (art=90) vs `resist` (health=80) | both succeed; attacker 20, defender 35 | – | Attacker wins (lower roll) |
+
+Implemented via `CompetitiveAttributeRoll(other *Actor, attr string)` in Go.
+
+### Abilities (`abilities:` block in YAML)
+
+Every character and archetype YAML must include an `abilities` block. Each entry defines:
+- `damage` *(combat)* — formula referencing `attack` (e.g. `"attack * 1.5"`).
+- `yield` *(productive)* — formula referencing a productive stat (e.g. `"cook_quality * 1.0"`).
+- `parent_attribute` — attribute used for the success roll if no skill value exists.
+- `required_weapon` *(optional)* — weapon type required (e.g. `sword`, `bow`).
+- `effects` *(optional)* — list of status effect objects.
+
+#### Combat Abilities
+
+| Ability | `damage` Formula | Parent Attr | Weapon | Effects |
+| :--- | :--- | :--- | :--- | :--- |
+| `punch` | `melee_attack * 1.0` | `strength` | — | — |
+| `slap` | `melee_attack * 0.6` | `dexterity` | — | stun 20% / 1 tick |
+| `kick` | `melee_attack * 1.3` | `strength` | — | knockback 2 units |
+| `slash` | `melee_attack * 1.5` | `dexterity` | sword | armor break 20% / 3s |
+| `heavy_strike` | `melee_attack * 1.8` | `strength` | sword | armor break 30% / 3s |
+| `shoot_arrow` | `ranged_attack * 1.2` | `dexterity` | bow | — |
+| `power_shot` | `ranged_attack * 1.7` | `dexterity` | bow | pierce 2 targets |
+| `throw` | `ranged_attack * 0.8` | `strength` | — | — |
+| `infect_bite` | `melee_attack * 0.8` | `strength` | — | poison 5 dmg/s / 5s (90%) |
+| `knockout` | `melee_attack * 0.3` | `strength` | — | stun 85% / 10s — deliberate non-lethal takedown |
+| `grapple` | `melee_attack * 0.1` | `strength` | — | immobilise target while held; no kill intent |
+| `chop` | `melee_attack * 1.0` | `strength` | axe | Also has `yield: survivalism * 1.0` (wood out) |
+| `dig` | `melee_attack * 1.0` | `strength` | pike | Also has `yield: survivalism * 1.0` (ore/stone out) |
+
+#### Productive / Social Abilities
+
+| Ability | `yield` Formula | Parent Attr | Notes |
+| :--- | :--- | :--- | :--- |
+| `forage` | `survivalism * 0.3` | `wisdom` | Items gathered from environment |
+| `cook` | `herbalism * 1.0` | `intellect` | Nourishment value of produced meal |
+| `rest` | `nourishment * 0.25` | `health` | HP regen per rest tick |
+| `eat` | `nourishment * 1.0` | `health` | Hunger restored when eating |
+| `drink` | `nourishment * 0.8` | `health` | Thirst restored when drinking |
+| `milk` | `husbandry * 1.0` | `wisdom` | Litres of milk per session |
+| `shear` | `husbandry * 0.5` | `wisdom` | Wool yield per shearing session |
+| `mate` | `mate * 1.0` | `health` | Conception probability (0–1) |
+| `tame` | `husbandry * 1.0` | `wisdom` | Taming success roll modifier |
+| `tend_animal` | `husbandry * 1.0` | `wisdom` | Healing and caring for sick livestock |
+| `breed` | `husbandry * 1.0` | `wisdom` | Actively managing animal reproduction |
+| `plant` | `harvesting * 0.8` | `wisdom` | Crops planted per session |
+| `harvest_crop` | `harvesting * 1.5` | `wisdom` | Yield bonus over base crop output |
+| `water_crops` | `harvesting * 0.5` | `wisdom` | Maintaining crops between plant and harvest |
+| `fish` | `survivalism * 0.5` | `wisdom` | Fish caught per session |
+| `hunt` | `survivalism * 1.0` | `wisdom` | Actively tracking and killing wild animals |
+| `trap` | `survivalism * 0.8` | `wisdom` | Setting snares for passive trapping |
+| `butcher` | `survivalism * 0.5` | `strength` | Processing dead animals into meat and hide |
+| `brew` | `herbalism * 1.0` | `intellect` | Potency of produced drink/potion |
+| `craft` | `crafting * 1.0` | `intellect` | Quality tier of crafted item |
+| `repair` | `crafting * 0.5` | `intellect` | Durability restored per repair |
+| `smelt` | `crafting * 0.8` | `intellect` | Purity of smelted metal ingot |
+| `build` | `crafting * 1.0` | `strength` | Quality and speed of constructed structure |
+| `trade` | `trading * 1.0` | `intellect` | Price negotiation modifier (%) |
+| `appraise` | `trading * 0.5` | `intellect` | Item value estimation without transaction |
+| `haul` | `strength * 0.01` | `strength` | Speed modifier while hauling goods |
+| `stash` | `strength * 0.005` | `strength` | Organizing items into stockpiles |
+| `sneak` | `dexterity * 1.0` | `dexterity` | Moving without being detected |
+| `steal` | `dexterity * 0.5` | `dexterity` | Taking items without the owner noticing |
+| `pray` | `culture * 0.3` | `wisdom` | Sanity/morale restored |
+| `guard` | `survivalism * 0.5` | `wisdom` | Alert radius modifier |
+| `heal` | `herbalism * 1.0` | `intellect` | HP restored when tending wounds |
+| `teach` | `culture * 0.5` | `wisdom` | Skill XP bonus granted to student |
+| `intimidate` | `culture * 1.0` | `strength` | Social coercion — forcing compliance |
+| `seduce` | `art * 1.0` | `dexterity` | Romantic persuasion |
+| `recruit` | `culture * 1.0` | `wisdom` | Convincing NPCs to join a faction or group |
+| `bury` | `culture * 0.3` | `wisdom` | Burying the dead — affects settlement morale |
+| `read` | `culture * 0.5` | `intellect` | Literacy — reading signs, books, quest items |
+| `perform` | `art * 1.0` | `dexterity` | Entertainment performance |
+| `compose` | `culture * 0.5` | `intellect` | Writing music, poetry, or other works |
+| `paint` | `art * 0.8` | `dexterity` | Creating visual art |
+| `sculpt` | `art * 0.8` | `strength` | Carving or moulding sculpture |
+| `tan` | `crafting * 0.8` | `intellect` | Processing raw animal hide into leather |
+| `weave` | `crafting * 0.5` | `dexterity` | Making cloth or textiles from wool or fibre |
+| `lie` | `culture * 1.0` | `intellect` | Covert deception — distinct from intimidate (overt) or trade (transactional) |
+
+**Available effect fields:**
+```yaml
+effects:
+  - stun_chance: 0.2          # Probability of stunning (0–1)
+    duration: 1.0              # Duration in seconds
+  - knockback_distance: 2.0   # Cartesian units pushed back
+  - armor_break_percentage: 0.2
+    duration: 3.0
+  - poison_damage_per_second: 5
+    duration: 5.0
+    probability: 0.9           # Chance to apply the effect
+  - pierce_targets: 2         # Projectile passes through N targets
+```
+
+---
+
 ## 💾 Persistence System
 
 - **Format**: YAML (`SaveData` struct). Extension: `.oinakos.yaml`.

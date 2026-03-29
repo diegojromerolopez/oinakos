@@ -46,8 +46,8 @@ func TestGame_Occlusion(t *testing.T) {
 func TestGame_Unloading(t *testing.T) {
 	g := setupTestGame()
 	mc := g.playableCharacter
-	mc.Health = 100
-	mc.MaxHealth = 100
+	mc.TemporalState.HealthPoints = 100
+	mc.TemporalState.MaxHealthPoints = 100
 	mc.X, mc.Y = 0, 0
 	
 	// Set dummy inventory

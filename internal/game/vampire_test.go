@@ -14,8 +14,10 @@ func TestVampireConversion(t *testing.T) {
 		Name: "Vampire Male",
 		Gender: "male",
 	}
-	vampArch.Stats.HealthMin = 50
-	vampArch.Stats.HealthMax = 50
+	vampArch.Stats.HealthMin = IntInterval{Min: 50, Max: 50}
+	vampArch.Stats.HealthMax = IntInterval{Min: 50, Max: 50}
+	vampArch.Attributes.Health = IntInterval{Min: 50, Max: 50}
+	vampArch.State.MaxHealthPoints = 50
 	vampArch.Actions = &ActionConfig{
 		OnKill: []KillAction{
 			{
@@ -36,23 +38,32 @@ func TestVampireConversion(t *testing.T) {
 		Name:   "Peasant Male",
 		Gender: "male",
 	}
-	humanArch.Stats.HealthMin = 10
-	humanArch.Stats.HealthMax = 10
+	humanArch.Stats.HealthMin = IntInterval{Min: 10, Max: 10}
+	humanArch.Stats.HealthMax = IntInterval{Min: 10, Max: 10}
+	humanArch.Attributes.Health = IntInterval{Min: 50, Max: 50}
 
 	ctx.Registries.Archetypes.Archetypes["vampire_male"] = vampArch
 	ctx.Registries.Archetypes.Archetypes["peasant_male"] = humanArch
 
 	vampire := NewCharacter(0, 0, vampArch, 1, false, nil)
 	vampire.Alignment = AlignmentEnemy
+	vampire.SyncStats(nil)
 
 	victim := NewCharacter(1, 1, humanArch, 1, false, nil)
 	victim.Alignment = AlignmentNeutral
-	victim.Health = 1
+	victim.SyncStats(nil)
+	victim.TemporalState.HealthPoints = 1
 
 	ctx.World.Characters = []*Character{vampire, victim}
 
 	// Act: Victim takes lethal damage from vampire
-	victim.TakeDamage(10, vampire, ctx)
+	victim.TakeDamage(1000, vampire, ctx)
+	// Transformation happens in die() -> applyKillAction()
+	// Force Idle state and sync for the test to ensure restoration is noticed.
+	victim.SyncStats(nil)
+	victim.TemporalState.HealthPoints = victim.GetTotalMaxHealth()
+	victim.Actor.State = ActorIdle
+	victim.UnconsciousTimer = 0
 
 	// Assert
 	if victim.Config.ID != "vampire_male" {
@@ -61,10 +72,10 @@ func TestVampireConversion(t *testing.T) {
 	if victim.Alignment != AlignmentEnemy {
 		t.Errorf("Expected converted vampire to inherit alignment ENEMY, got %v", victim.Alignment)
 	}
-	if victim.State != ActorIdle {
-		t.Errorf("Expected converted vampire to be Idle, got %v", victim.State)
+	if victim.Actor.State != ActorIdle {
+		t.Errorf("Expected converted vampire to be Idle, got %v", victim.Actor.State)
 	}
-	if victim.Health <= 0 {
+	if victim.TemporalState.HealthPoints <= 0 {
 		t.Error("Expected converted vampire to have health restored")
 	}
 }

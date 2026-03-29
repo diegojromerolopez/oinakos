@@ -18,7 +18,7 @@ func TestGameRenderer_Mega(t *testing.T) {
 	npc := NewCharacter(5, 5, &EntityConfig{Name: "Villager", Description: "A nice villager"}, 1, false, g.Registries.Objects)
 	g.characters = []*Character{npc}
 	
-	obs := NewObstacle("tree1", 2, 2, &ObstacleArchetype{ID: "tree", Name: "Oak", Type: TypeTree, Health: 100})
+	obs := NewObstacle("tree1", 2, 2, &ObstacleArchetype{ID: "tree", Name: "Oak", Type: TypeTree, HealthPoints: 100})
 	g.obstacles = []*Obstacle{obs}
 	
 	item := NewItemInstance("sword", &ObjectConfig{Name: "Iron Sword", Description: "Sharp"}, 3, 3)
@@ -111,7 +111,7 @@ func TestGameRenderer_Mega(t *testing.T) {
 	g.isInventoryOpen = false
 
 	// 13. Weather & Lighting
-	g.CurrentWeather = WeatherStorm
+	g.World.State.Weather = WeatherStorm
 	g.Tick = 0 // Flash frame
 	gr.Draw(screen)
 	

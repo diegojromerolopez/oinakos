@@ -30,7 +30,7 @@ func TestForEachYAML(t *testing.T) {
 
 func TestLoadPlayableCharacterConfig(t *testing.T) {
 	fsys := fstest.MapFS{
-		"data/characters/oinakos.yaml": &fstest.MapFile{Data: []byte("id: oinakos\nstats:\n  health_min: 100")},
+		"data/characters/oinakos.yaml": &fstest.MapFile{Data: []byte("id: oinakos\nstats:\n  health_points_min: 100\n  health_points_max: 200")},
 	}
 	
 	t.Run("read from embedded", func(t *testing.T) {
@@ -38,7 +38,7 @@ func TestLoadPlayableCharacterConfig(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to load: %v", err)
 		}
-		if conf.ID != "oinakos" || conf.Stats.HealthMin != 100 {
+		if conf.ID != "oinakos" || conf.Stats.HealthMin.Min != 100 {
 			t.Errorf("incorrect config: %+v", conf)
 		}
 	})
@@ -55,7 +55,7 @@ func TestLoadPlayableCharacterConfig(t *testing.T) {
 		localDir := filepath.Join("oinakos", "data", "characters")
 		os.MkdirAll(localDir, 0755)
 		localPath := filepath.Join(localDir, "oinakos.yaml")
-		os.WriteFile(localPath, []byte("id: oinakos_override\nstats:\n  health_min: 200"), 0644)
+		os.WriteFile(localPath, []byte("id: oinakos_override\nstats:\n  health_points_min: 200"), 0644)
 		
 		conf, err := LoadPlayableCharacterConfig(nil) // nil fsys to force check local/etc.
 		// Wait, LoadPlayableCharacterConfig(nil) returns empty conf if no data found.

@@ -1,0 +1,14 @@
+id: potion_flu
+name: Shaman's Draught
+type: consumable
+weight: 0.5
+value: 300
+description: A potent glowing liquid that cleanses the body of pathogens.
+clear_sick: true
+effects:
+  health:
+     increase: 20
+  fatigue:
+     increase: 80
+primary_color: "#9400D3"
+sprite: potion_purple.png

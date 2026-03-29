@@ -1,0 +1,9 @@
+id: wheat
+name: Wheat
+type: consumable
+weight: 0.1
+value: 5
+description: A bundle of raw wheat. Can be milled or eaten (poorly).
+hunger: 5
+primary_color: "#F5DEB3"
+sprite: wheat_item.png

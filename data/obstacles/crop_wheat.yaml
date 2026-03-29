@@ -1,0 +1,20 @@
+id: crop_wheat
+name: Wheat Field
+type: static
+destructible: true
+health: 10
+weight: 1.0
+is_crop: true
+plant_season: SPRING
+harvest_season: AUTUMN
+growth_duration: 34560 # 2 days (approx 10 mins IRT)
+yield: wheat
+frame_count: 3
+frames_per_row: 3
+animation_speed: 0
+scale: 0.8
+footprint:
+- {x: -0.4, y: -0.4}
+- {x: 0.4, y: -0.4}
+- {x: 0.4, y: 0.4}
+- {x: -0.4, y: 0.4}

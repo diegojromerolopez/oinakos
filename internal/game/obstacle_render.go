@@ -35,7 +35,11 @@ func (o *Obstacle) Draw(screen engine.Image, vectorRenderer engine.VectorRendere
 	}
 
 	currentFrame := 0
-	if o.Archetype.FrameCount > 1 && o.Archetype.AnimationSpeed > 0 {
+	if o.Archetype.IsCrop {
+		currentFrame = o.GrowthStage
+		// Safety: ensure currentFrame doesn't exceed loaded frames
+		if currentFrame >= o.Archetype.FrameCount { currentFrame = o.Archetype.FrameCount - 1 }
+	} else if o.Archetype.FrameCount > 1 && o.Archetype.AnimationSpeed > 0 {
 		currentFrame = (o.TickCounter / o.Archetype.AnimationSpeed) % o.Archetype.FrameCount
 	}
 

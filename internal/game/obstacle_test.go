@@ -6,7 +6,7 @@ func makeObstacleArchetype(health int) *ObstacleArchetype {
 	return &ObstacleArchetype{
 		ID:           "test",
 		Name:         "Test",
-		Health:       health,
+		HealthPoints:       health,
 		Destructible: true,
 		Footprint: []FootprintPoint{
 			{X: -0.25, Y: -0.25}, {X: 0.25, Y: -0.25},
@@ -20,8 +20,8 @@ func TestNewObstacle_NilArchetype(t *testing.T) {
 	if o.X != 1 || o.Y != 2 {
 		t.Errorf("Position: got (%v,%v), want (1,2)", o.X, o.Y)
 	}
-	if o.Health != 0 {
-		t.Errorf("Health should be 0 for nil archetype, got %d", o.Health)
+	if o.HealthPoints != 0 {
+		t.Errorf("Health should be 0 for nil archetype, got %d", o.HealthPoints)
 	}
 	if !o.Alive {
 		t.Error("New obstacle should be alive")
@@ -31,8 +31,8 @@ func TestNewObstacle_NilArchetype(t *testing.T) {
 func TestNewObstacle_WithArchetype(t *testing.T) {
 	arch := makeObstacleArchetype(100)
 	o := NewObstacle("test_arch", 3, 4, arch)
-	if o.Health != 100 {
-		t.Errorf("Health: got %d, want 100", o.Health)
+	if o.HealthPoints != 100 {
+		t.Errorf("HealthPoints: got %d, want 100", o.HealthPoints)
 	}
 }
 
@@ -67,8 +67,8 @@ func TestObstacleUpdate_Dead(t *testing.T) {
 func TestObstacleTakeDamage_Normal(t *testing.T) {
 	o := NewObstacle("test_dmg", 0, 0, makeObstacleArchetype(100))
 	o.TakeDamage(30)
-	if o.Health != 70 {
-		t.Errorf("Health after 30 damage: got %d, want 70", o.Health)
+	if o.HealthPoints != 70 {
+		t.Errorf("Health after 30 damage: got %d, want 70", o.HealthPoints)
 	}
 	if !o.Alive {
 		t.Error("Should still be alive")
@@ -88,7 +88,7 @@ func TestObstacleTakeDamage_Indestructible(t *testing.T) {
 	arch.Destructible = false // explicitly mark as indestructible
 	o := NewObstacle("test_indestructible", 0, 0, arch)
 	o.TakeDamage(9999)
-	if !o.Alive || o.Health != 1000 {
+	if !o.Alive || o.HealthPoints != 1000 {
 		t.Error("Indestructible obstacle should take no damage")
 	}
 }
@@ -97,7 +97,7 @@ func TestObstacleTakeDamage_AlreadyDead(t *testing.T) {
 	o := NewObstacle("test_dead_dmg", 0, 0, makeObstacleArchetype(100))
 	o.Alive = false
 	o.TakeDamage(10)
-	if o.Health != 100 {
+	if o.HealthPoints != 100 {
 		t.Error("Dead obstacle health should not change")
 	}
 }

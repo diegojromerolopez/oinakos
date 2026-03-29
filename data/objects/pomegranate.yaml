@@ -1,0 +1,12 @@
+id: pomegranate
+name: Pomegranate
+type: consumable
+max_hours: 72
+description: A fruit with many ruby-like seeds. Symbol of vitality.
+weight: 0.8
+image: assets/images/objects/pomegranate.png
+effects:
+  energy:
+    increase: 12.0
+  health:
+    increase: 10.0

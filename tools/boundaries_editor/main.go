@@ -188,7 +188,7 @@ func main() {
 				ID: id, Type: "Archetype", Image: cfg.StaticImage, Footprint: &cfg.Footprint,
 				YamlPath: findArchetypeYAML(id),
 				DrawMain: func(screen engine.Image, g engine.Graphics, ox, oy float64) {
-					npc.Draw(screen, g, g, nil, ox, oy)
+					npc.Draw(screen, g, g, nil, ox, oy, true)
 				},
 			})
 		}
@@ -209,7 +209,7 @@ func main() {
 				ID: id, Type: charType, Image: cfg.StaticImage, Footprint: &cfg.Footprint,
 				YamlPath: filepath.Join("data/characters", id+".yaml"),
 				DrawMain: func(screen engine.Image, g engine.Graphics, ox, oy float64) {
-					npc.Draw(screen, g, g, nil, ox, oy)
+					npc.Draw(screen, g, g, nil, ox, oy, true)
 				},
 			})
 		}

@@ -51,6 +51,19 @@ floor_zones:
     y: 5.0
   - x: 8.0
     y: 3.0
+- name: Village Farm
+  type: farm_field
+  tile: mud.png
+  priority: 4
+  perimeter:
+  - x: -30.0
+    y: -15.0
+  - x: -20.0
+    y: -15.0
+  - x: -20.0
+    y: -5.0
+  - x: -30.0
+    y: -5.0
 inhabitants:
 - npc_id: conde_olinos
   x: -10.0
@@ -121,6 +134,22 @@ inhabitants:
   y: -5.0
   alignment: neutral
   behavior: flee
+fauna:
+- archetype: sheep
+  x: -25.0
+  y: -10.0
+  alignment: neutral
+  behavior: wander
+- archetype: sheep
+  x: -26.0
+  y: -12.0
+  alignment: neutral
+  behavior: wander
+- archetype: ox
+  x: -22.0
+  y: -8.0
+  alignment: neutral
+  behavior: wander
 obstacles:
 - id: escape_portal
   archetype: portal_1
@@ -144,6 +173,24 @@ obstacles:
 - archetype: well
   x: -2.0
   y: -9.0
+- archetype: personal_chest
+  x: -11.0
+  y: 1.0
+- archetype: personal_chest
+  x: -9.0
+  y: 8.0
+- archetype: personal_chest
+  x: -4.0
+  y: 8.0
+- archetype: crop_wheat
+  x: -25.0
+  y: -8.0
+- archetype: crop_wheat
+  x: -24.0
+  y: -8.0
+- archetype: crop_wheat
+  x: -25.0
+  y: -7.0
 - archetype: house_1
   x: 4.0
   y: -9.0

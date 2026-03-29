@@ -1,0 +1,12 @@
+id: lemon
+name: Lemon
+type: consumable
+max_hours: 72
+description: A sour lemon, good for keeping the scurvy at bay.
+weight: 0.4
+image: assets/images/objects/lemon.png
+effects:
+  energy:
+    increase: 5.0
+  health:
+    increase: 1.0

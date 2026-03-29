@@ -1,0 +1,58 @@
+id: urbainer_male
+name: Urbainer
+description: "A person especially skilled at living, navigating, and thriving within urban environments. Adept social engineers and masters of mechanisms."
+archetype: urbainer
+gender: male
+behavior: hunter # Bodyguards / investigators
+state:
+  health_points: 100
+  hunger: 0.0
+  thirst: 0.0
+  fatigue: 0.0
+  sanity: 100.0
+  pain: 0.0
+  arousal: 0.0
+  hygiene: 70.0
+  miccionate: 0.0
+  defecate: 0.0
+  age:
+    current: 30
+    rate: 1.0
+    max: 100
+attributes:
+  strength: { min: 40, max: 60 }
+  dexterity: { min: 70, max: 90 }
+  health: { min: 50, max: 70 }
+  intellect: { min: 75, max: 95 }
+  wisdom: { min: 60, max: 80 }
+stats:
+  health_points_min: { min: 80, max: 100 }
+  health_points_max: { min: 80, max: 100 }
+  speed: { min: 0.024, max: 0.028 }
+  attack_cooldown: { min: 45, max: 55 }
+skills:
+  social: { min: 80, max: 95 }
+  mechanisms: { min: 85, max: 98 }
+  investigation: { min: 80, max: 95 }
+abilities:
+  precision_strike:
+    damage: "melee_attack * 1.8"
+    parent_attribute: "dexterity"
+    effects:
+      - stun_chance: 0.15
+        duration: 1.0
+  urban_pathing:
+     yield: "survivalism * 1.5"
+     parent_attribute: "intellect"
+weapon:
+  inline:
+    name: Sicari
+    damage_min: 8
+    damage_max: 12
+    range: 1.0
+    resistance: 80
+    slot: weapon
+    tags: ["precision", "urban"]
+xp: 80
+primary_color: "#2C3E50"
+secondary_color: "#E74C3C"

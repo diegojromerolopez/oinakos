@@ -1,0 +1,12 @@
+id: grape
+name: Grape
+type: consumable
+max_hours: 72
+description: A small bunch of sweet grapes.
+weight: 0.3
+image: assets/images/objects/grape.png
+effects:
+  energy:
+    increase: 6.0
+  health:
+    increase: 2.0

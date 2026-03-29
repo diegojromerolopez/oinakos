@@ -12,8 +12,8 @@ func TestNPCBehavior_Wander_SetsDirection(t *testing.T) {
 	ctx.World.PlayableCharacter = mc
 
 	npc := NewCharacter(0, 0, &EntityConfig{ID: "test"}, 1, false, nil)
-	npc.Health = 100
-	npc.MaxHealth = 100
+	npc.TemporalState.HealthPoints = 100
+	npc.TemporalState.MaxHealthPoints = 100
 	npc.Behavior = BehaviorWander
 	npc.Alignment = AlignmentEnemy
 	npc.Speed = 0.1 // must be non-zero
@@ -42,10 +42,10 @@ func TestNPCBehavior_Fighter_TargetsNearestNPC(t *testing.T) {
 
 	target := NewCharacter(2, 0, &EntityConfig{ID: "target"}, 1, false, nil)
 	target.Alignment = AlignmentAlly
-	fighter.Health = 100
-	fighter.MaxHealth = 100
-	target.Health = 100
-	target.MaxHealth = 100
+	fighter.TemporalState.HealthPoints = 100
+	fighter.TemporalState.MaxHealthPoints = 100
+	target.TemporalState.HealthPoints = 100
+	target.TemporalState.MaxHealthPoints = 100
 	ctx.World.Characters = []*Character{fighter, target}
 
 	for i := 0; i < 10; i++ {
@@ -68,10 +68,10 @@ func TestNPCBehavior_Chaotic_TargetsNearestActor(t *testing.T) {
 
 	farNPC := NewCharacter(20, 0, &EntityConfig{ID: "far"}, 1, false, nil)
 	farNPC.Alignment = AlignmentEnemy
-	chaotic.Health = 100
-	chaotic.MaxHealth = 100
-	farNPC.Health = 100
-	farNPC.MaxHealth = 100
+	chaotic.TemporalState.HealthPoints = 100
+	chaotic.TemporalState.MaxHealthPoints = 100
+	farNPC.TemporalState.HealthPoints = 100
+	farNPC.TemporalState.MaxHealthPoints = 100
 	ctx.World.Characters = []*Character{chaotic, farNPC}
 
 	chaotic.Update(ctx)
@@ -108,8 +108,8 @@ func TestNPCBehavior_Ally_FollowsPlayerWhenNoEnemies(t *testing.T) {
 	ally := NewCharacter(0, 0, &EntityConfig{ID: "ally"}, 1, false, nil)
 	ally.Alignment = AlignmentAlly
 	ally.Speed = 0.2 // must be non-zero
-	ally.Health = 100
-	ally.MaxHealth = 100
+	ally.TemporalState.HealthPoints = 100
+	ally.TemporalState.MaxHealthPoints = 100
 	ctx.World.Characters = []*Character{ally}
 
 	for i := 0; i < 20; i++ {
@@ -129,9 +129,20 @@ func TestNPCBehavior_ScavengeUpgrade(t *testing.T) {
 	ctx.World.Game = g
 	
 	// Create NPC with a weak weapon
-	npc := NewCharacter(0, 0, &EntityConfig{ID: "scavenger", MaxWeight: 10.0}, 1, false, nil)
-	npc.Health = 100
-	npc.MaxHealth = 100
+	config := &EntityConfig{
+		ID: "test_npc",
+		Behavior: "wander",
+		Attributes: PrimaryAttributeConfig{
+			Strength: IntInterval{Min: 50, Max: 50}, Dexterity: IntInterval{Min: 50, Max: 50}, Health: IntInterval{Min: 50, Max: 50},
+		},
+		Stats: EntityStatsConfig{
+			HealthMin: IntInterval{Min: 100, Max: 100}, HealthMax: IntInterval{Min: 100, Max: 100},
+			Speed: FloatInterval{Min: 0.1, Max: 0.1},
+		},
+	}
+	npc := NewCharacter(0, 0, config, 1, false, nil)
+	npc.TemporalState.HealthPoints = 100
+	npc.TemporalState.MaxHealthPoints = 100
 	npc.Speed = 0.2
 	weakWeapon := &ObjectConfig{
 		ID: "weak_weapon", Type: "weapon", Slot: "weapon", Weight: 2.0,

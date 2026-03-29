@@ -11,9 +11,15 @@ type NPCContext struct {
 	Description      string  `json:"description,omitempty"`
 	Archetype        string  `json:"archetype"`
 	HealthPct        int     `json:"health_pct"`
-	Alignment        string  `json:"alignment"`
-	DistanceToPlayer float64 `json:"distance_to_player"`
-	Behavior         string  `json:"behavior"`
+	Alignment        string   `json:"alignment"`
+	DistanceToPlayer float64  `json:"distance_to_player"`
+	Behavior         string   `json:"behavior"`
+	Denarii          int           `json:"denarii"`
+	Hunger           int           `json:"hunger"`
+	Thirst           int           `json:"thirst"`
+	Fatigue          int           `json:"fatigue"`
+	Inventory        []string      `json:"inventory"`
+	Memories         []MemoryEvent `json:"memories"`
 }
 
 type PlayerContext struct {
@@ -23,8 +29,10 @@ type PlayerContext struct {
 	HealthPct   int    `json:"health_pct"`
 	X           float64 `json:"x"`
 	Y           float64 `json:"y"`
-	Kills       int    `json:"kills"`
-	Level       int    `json:"level"`
+	Kills       int      `json:"kills"`
+	Level       int      `json:"level"`
+	Denarii     int      `json:"denarii"`
+	Inventory   []string `json:"inventory"`
 }
 
 type MapMission struct {
@@ -54,11 +62,13 @@ func BuildWorldContext(g *Game, focusNPC *Character) string {
 			Name:        g.playableCharacter.Name,
 			Description: g.playableCharacter.Config.Description,
 			Alignment:   fmt.Sprint(g.playableCharacter.Alignment),
-			HealthPct:   int(float64(g.playableCharacter.Health) / float64(g.playableCharacter.MaxHealth) * 100),
+			HealthPct:   int(float64(g.playableCharacter.TemporalState.HealthPoints) / float64(g.playableCharacter.TemporalState.MaxHealthPoints) * 100),
 			X:           g.playableCharacter.X,
 			Y:           g.playableCharacter.Y,
 			Kills:       g.playableCharacter.Kills,
 			Level:       g.playableCharacter.Level,
+			Denarii:     g.playableCharacter.Denarii,
+			Inventory:   g.playableCharacter.GetInventoryNames(),
 		},
 		NearbyNPCs: []NPCContext{},
 	}
@@ -86,10 +96,16 @@ func BuildWorldContext(g *Game, focusNPC *Character) string {
 				Name:             n.Name,
 				Description:      n.Config.Description,
 				Archetype:        n.Config.Archetype,
-				HealthPct:        int(float64(n.Health) / float64(n.MaxHealth) * 100),
+				HealthPct:        int(float64(n.TemporalState.HealthPoints) / float64(n.TemporalState.MaxHealthPoints) * 100),
 				Alignment:        fmt.Sprint(n.Alignment),
 				DistanceToPlayer: dist,
 				Behavior:         fmt.Sprint(n.Behavior),
+				Denarii:          n.Denarii,
+				Hunger:           int(n.TemporalState.Hunger),
+				Thirst:           int(n.TemporalState.Thirst),
+				Fatigue:          int(n.TemporalState.Fatigue),
+				Inventory:        n.GetInventoryNames(),
+				Memories:         n.Memories,
 			}
 			wc.FocusNPC = &ctx
 			continue
@@ -106,10 +122,16 @@ func BuildWorldContext(g *Game, focusNPC *Character) string {
 			Name:             nearestNPC.Name,
 			Description:      nearestNPC.Config.Description,
 			Archetype:        nearestNPC.Config.Archetype,
-			HealthPct:        int(float64(nearestNPC.Health) / float64(nearestNPC.MaxHealth) * 100),
+			HealthPct:        int(float64(nearestNPC.TemporalState.HealthPoints) / float64(nearestNPC.TemporalState.MaxHealthPoints) * 100),
 			Alignment:        fmt.Sprint(nearestNPC.Alignment),
 			DistanceToPlayer: minDist,
 			Behavior:         fmt.Sprint(nearestNPC.Behavior),
+			Denarii:          nearestNPC.Denarii,
+			Hunger:           int(nearestNPC.TemporalState.Hunger),
+			Thirst:           int(nearestNPC.TemporalState.Thirst),
+			Fatigue:          int(nearestNPC.TemporalState.Fatigue),
+			Inventory:        nearestNPC.GetInventoryNames(),
+			Memories:         nearestNPC.Memories,
 		}
 		wc.NearbyNPCs = append(wc.NearbyNPCs, ctx)
 	}

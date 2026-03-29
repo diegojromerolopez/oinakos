@@ -24,10 +24,10 @@ func TestMainCharacterDraw(t *testing.T) {
 		mc.State = s
 		mc.Facing = DirSE // Trigger flip
 		mc.Tick = 10
-		mc.Draw(screen, graphics, graphics, nil, 0, 0)
+		mc.Draw(screen, graphics, graphics, nil, 0, 0, true)
 
 		mc.Facing = DirNW // No flip
-		mc.Draw(screen, graphics, graphics, nil, 0, 0)
+		mc.Draw(screen, graphics, graphics, nil, 0, 0, true)
 	}
 }
 
@@ -47,10 +47,10 @@ func TestNPCDraw(t *testing.T) {
 	for _, s := range states {
 		n.State = s
 		n.Facing = DirSE
-		n.Draw(screen, graphics, graphics, nil, 0, 0)
+		n.Draw(screen, graphics, graphics, nil, 0, 0, true)
 
 		n.Facing = DirNW
-		n.Draw(screen, graphics, graphics, nil, 0, 0)
+		n.Draw(screen, graphics, graphics, nil, 0, 0, true)
 	}
 }
 

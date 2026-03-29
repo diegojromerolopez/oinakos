@@ -1,6 +1,7 @@
 id: raw_meat
 name: Raw Meat
 type: consumable
+max_hours: 12
 description: A piece of raw animal meat. It can be eaten for energy, but it's better cooked.
 weight: 2.0
 effects:

@@ -70,7 +70,7 @@ func (g *Game) ensurePlayerNotStuck() {
 
 func (g *Game) tryUnloading() {
 	pc := g.playableCharacter
-	if pc == nil || pc.Health <= 0 { return }
+	if pc == nil || pc.TemporalState.HealthPoints <= 0 { return }
 
 	nearWarehouse := false
 	for _, obj := range g.obstacles {

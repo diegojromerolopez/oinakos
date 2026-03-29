@@ -61,7 +61,7 @@ func TestNPC_CombatMega(t *testing.T) {
 	ctx.World.Characters = []*Character{orc}
 	
 	// Combat mechanics
-	mc.CheckAttackHits(ctx)
+	mc.CheckAttackHits(ctx, "")
 	orc.TakeDamage(10, &mc.Actor, ctx)
 	
 	// Death

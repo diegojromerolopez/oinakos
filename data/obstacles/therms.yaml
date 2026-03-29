@@ -1,0 +1,16 @@
+id: therms
+name: Roman Therms
+description: A communal bathhouse for cleansing and relaxation.
+type: building
+destructible: false
+image: obstacles/house_large.png # Fallback image
+actions:
+  - type: bath
+    amount: 100
+    requires_interaction: true
+cooldown_time: 0.1 # Real hours ~ 6 minutes
+footprint:
+  - {x: -2.0, y: -2.0}
+  - {x: 2.0, y: -2.0}
+  - {x: 2.0, y: 2.0}
+  - {x: -2.0, y: 2.0}

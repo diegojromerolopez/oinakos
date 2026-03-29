@@ -1,0 +1,12 @@
+id: fig
+name: Fig
+type: consumable
+max_hours: 72
+description: A soft, honey-sweet fig.
+weight: 0.2
+image: assets/images/objects/fig.png
+effects:
+  energy:
+    increase: 9.0
+  health:
+    increase: 3.0

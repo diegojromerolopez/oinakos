@@ -34,7 +34,7 @@ func TestProjectileLifecycle_Range(t *testing.T) {
 func TestProjectileCollision_MC(t *testing.T) {
 	ctx := NewTestContext()
 	mc := NewCharacter(2, 0, nil, 1, true, nil)
-	mc.Health = 100
+	mc.TemporalState.HealthPoints = 100
 	ctx.World.PlayableCharacter = mc
 
 	// Projectile at (0,0) moving East (+X) toward MC at (2,0)
@@ -43,8 +43,8 @@ func TestProjectileCollision_MC(t *testing.T) {
 
 	// Update 1: p moves to (1,0). No collision yet (MC is at 2,0, dist is 1.0, threshold is 0.6)
 	p.Update(ctx)
-	if !p.Alive || mc.Health != 100 {
-		t.Errorf("P should be alive at (1,0), mc health %d", mc.Health)
+	if !p.Alive || mc.TemporalState.HealthPoints != 100 {
+		t.Errorf("P should be alive at (1,0), mc health %d", mc.TemporalState.HealthPoints)
 	}
 
 	// Update 2: p moves to (2,0). Collides.
@@ -53,8 +53,8 @@ func TestProjectileCollision_MC(t *testing.T) {
 	if p.Alive {
 		t.Error("Projectile should be dead after hitting MC")
 	}
-	if mc.Health >= 100 {
-		t.Errorf("MC should have taken damage, health is %d", mc.Health)
+	if mc.TemporalState.HealthPoints >= 100 {
+		t.Errorf("MC should have taken damage, health is %d", mc.TemporalState.HealthPoints)
 	}
 }
 

@@ -121,9 +121,9 @@ func main() {
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 
 	// Set Window Icon from player character sprite
-	f, err := assets.Open("assets/images/characters/oinakos/static.png")
+	f, err := assets.Open("assets/images/characters/" + g.World.PlayableCharacter.Config.ID + "/static.png")
 	if err != nil {
-		log.Printf("Warning: failed to open icon file: %v", err)
+		log.Printf("Warning: failed to open icon file for hero %s: %v", g.World.PlayableCharacter.Config.ID, err)
 	} else {
 		defer f.Close()
 		iconImg, _, err := image.Decode(f)

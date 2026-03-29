@@ -1,0 +1,12 @@
+id: pear
+name: Pear
+type: consumable
+max_hours: 72
+description: A sweet, slightly gritty pear.
+weight: 0.6
+image: assets/images/objects/pear.png
+effects:
+  energy:
+    increase: 7.0
+  health:
+    increase: 4.0

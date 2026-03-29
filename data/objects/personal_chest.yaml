@@ -1,0 +1,10 @@
+id: personal_chest
+name: Personal Chest
+description: A heavy wooden chest for personal belongings.
+sprite: assets/images/objects/personal_chest_static.png
+type: container
+destructible: true
+max_health: 50
+is_obstacle: true
+weight_kg: 15.0
+inventory_size: 10

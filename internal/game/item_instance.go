@@ -8,7 +8,9 @@ type ItemInstance struct {
 	ID         string
 	Config     *ObjectConfig
 	Resistance int
-	Weight     float64
+	Weight     float64 `json:"weight"`
+	HoursLeft  float64 `json:"hours_left"` // Runtime hours until expiration
+	DroppedBy  string  `json:"dropped_by,omitempty"`
 	X, Y, Z    float64
 	Pickable   bool
 }
@@ -16,15 +18,18 @@ type ItemInstance struct {
 func NewItemInstance(id string, config *ObjectConfig, x, y float64) *ItemInstance {
 	res := 0
 	weight := 0.0
+	hours := 0.0
 	if config != nil {
 		res = config.Resistance
 		weight = config.Weight
+		hours = config.MaxHours
 	}
 	return &ItemInstance{
 		ID:         id,
 		Config:     config,
 		Resistance: res,
 		Weight:     weight,
+		HoursLeft:  hours,
 		X:          x,
 		Y:          y,
 		Z:          0,
@@ -62,4 +67,17 @@ func (it *ItemInstance) GetFootprint() engine.Polygon {
 		}}
 	}
 	return poly.Transformed(it.X, it.Y)
+}
+
+func (it *ItemInstance) Update(ctx *SystemContext) {
+	if it.Config == nil || it.Config.MaxHours <= 0 {
+		return
+	}
+
+	// 1 Hour = 720 ticks (DayCycle threshold in game_loop.go)
+	// it.HoursLeft -= 1.0 / 720.0
+	it.HoursLeft -= (1.0 / 720.0)
+	if it.HoursLeft < 0 {
+		it.HoursLeft = 0
+	}
 }

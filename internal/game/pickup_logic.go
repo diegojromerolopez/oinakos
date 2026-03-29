@@ -75,7 +75,6 @@ func (g *Game) TryPickup(a *Actor, it *ItemInstance) bool {
 	}
 
 	if a.GetTotalWeight()+it.Weight > a.MaxWeight {
-		fmt.Printf("DEBUG TryPickup fails due to weight: weight %f + %f > max %f\n", a.GetTotalWeight(), it.Weight, a.MaxWeight)
 		if g.playableCharacter != nil && a == &g.playableCharacter.Actor {
 			g.AddFloatingText("Too heavy!", a.X, a.Y, ColorHarm)
 		}
@@ -95,6 +94,17 @@ func (g *Game) TryPickup(a *Actor, it *ItemInstance) bool {
 
 	// Success
 	it.Pickable = false // Mark as unpickable immediately to prevent race conditions
+	
+	// Gift logic: if NPC picks up something dropped by another
+	if (g.playableCharacter == nil || a != &g.playableCharacter.Actor) && it.DroppedBy != "" && it.DroppedBy != a.Name {
+		if a.Relationships == nil { a.Relationships = make(map[string]float64) }
+		a.Relationships[it.DroppedBy] += 10.0
+		a.AddMemory(a.Tick, "gift", it.DroppedBy, 10.0)
+		if g.World != nil {
+			g.AddFloatingText("❤", a.X, a.Y, color.RGBA{255, 100, 100, 255})
+		}
+	}
+
 	a.Inventory = append(a.Inventory, it)
 	a.UpdateEffects()
 	
@@ -180,6 +190,7 @@ func (g *Game) DropEquippedItem(a *Actor, slot string) bool {
 	
 	it.X = safeX
 	it.Y = safeY
+	it.DroppedBy = a.Name
 	it.Pickable = true
 	
 	if g.World != nil {
@@ -222,6 +233,7 @@ func (g *Game) TryDrop(a *Actor, index int) bool {
 	
 	it.X = safeX
 	it.Y = safeY
+	it.DroppedBy = a.Name
 	it.Pickable = true
 	g.World.Items = append(g.World.Items, it)
 	

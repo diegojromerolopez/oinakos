@@ -1,0 +1,11 @@
+id: roast_chicken
+name: Roast Chicken
+type: consumable
+max_hours: 24
+weight: 0.6
+value: 110
+description: Golden-brown roasted chicken, seasoned with herbs.
+hunger: 75
+fatigue: 15
+primary_color: "#D2691E"
+sprite: chicken_roast.png

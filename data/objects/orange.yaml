@@ -1,0 +1,12 @@
+id: orange
+name: Orange
+type: consumable
+max_hours: 72
+description: A bright citrus fruit with a thick, aromatic rind.
+weight: 0.7
+image: assets/images/objects/orange.png
+effects:
+  energy:
+    increase: 10.0
+  health:
+    increase: 5.0

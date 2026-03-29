@@ -1,0 +1,11 @@
+id: cabbage
+name: Cabbage
+type: consumable
+max_hours: 72
+weight: 0.5
+value: 12
+description: A fresh green cabbage head.
+hunger: 20
+thirst: 5
+primary_color: "#7FFF00"
+sprite: cabbage_item.png

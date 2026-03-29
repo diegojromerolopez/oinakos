@@ -76,7 +76,7 @@ func TestGameRenderer_BasicDraw(t *testing.T) {
 	}
 
 	// Weather
-	g.CurrentWeather = WeatherRain
-	g.WeatherIntensity = 0.5
+	g.World.State.Weather = WeatherRain
+	g.World.State.Intensity = 0.5
 	gr.Draw(screen)
 }

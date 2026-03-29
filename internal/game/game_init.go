@@ -43,6 +43,9 @@ func NewGame(assets fs.FS, graphics engine.Graphics, initialMapID, initialMapTyp
 	objectRegistry := NewObjectRegistry()
 	objectRegistry.LoadAll(assets)
 
+	// Process inheritance AFTER all registries are loaded
+	characterRegistry.ProcessInheritance(archetypeRegistry)
+
 	var selectedMapType MapType
 	if m, ok := mapTypeRegistry.Types["safe_zone"]; ok {
 		selectedMapType = *m
@@ -127,15 +130,28 @@ func NewGame(assets fs.FS, graphics engine.Graphics, initialMapID, initialMapTyp
 	if g.initialHeroID != "" {
 		if config, ok := g.characterRegistry.Characters[g.initialHeroID]; ok {
 			g.playableCharacter.Config = config
-			g.playableCharacter.Health = config.Stats.HealthMin
-			g.playableCharacter.MaxHealth = config.Stats.HealthMin
-			g.playableCharacter.Speed = config.Stats.Speed
-			g.playableCharacter.BaseAttack = config.Stats.BaseAttack
-			g.playableCharacter.BaseDefense = config.Stats.BaseDefense
+			rolledStats := config.Stats.Roll()
+			rolledAttrs := config.Attributes.Roll()
+			g.playableCharacter.RawStats = rolledStats
+			g.playableCharacter.PrimaryAttributes = rolledAttrs
+			
+			// Use robust HP initialization (mirrors NewCharacter)
+			maxHP := rolledStats.HealthMin
+			if maxHP <= 0 {
+				maxHP = rolledAttrs.Health * 10
+			}
+			if maxHP < 100 { maxHP = 100 }
+
+			g.playableCharacter.TemporalState.MaxHealthPoints = maxHP
+			g.playableCharacter.TemporalState.HealthPoints = maxHP
+			
+			g.playableCharacter.Speed = rolledStats.Speed
+			g.playableCharacter.BaseAttack = rolledStats.BaseAttack
+			g.playableCharacter.BaseDefense = rolledStats.BaseDefense
 			g.playableCharacter.Weapon = config.Weapon.Resolve(g.Registries.Objects)
 			g.playableCharacter.Name = config.Name
 			g.isCharacterSelect = false
-			log.Printf("Using initial hero: %s", g.initialHeroID)
+			log.Printf("Using initial hero: %s (HP=%d)", g.initialHeroID, maxHP)
 		} else {
 			log.Printf("Warning: initial hero %s not found in registry", g.initialHeroID)
 		}

@@ -1,0 +1,209 @@
+id: barman_male
+name: Barman
+gender: male
+names:
+- Tavernier
+- Hugo
+- Barnaby
+- Cedric
+- Tomas
+behavior: trader
+group: Merchants
+state:
+  health_points: 100
+  hunger: 0.0
+  thirst: 0.0
+  fatigue: 0.0
+  sanity: 100.0
+  pain: 0.0
+  arousal: 0.0
+  hygiene: 70.0
+  miccionate: 0.0
+  defecate: 0.0
+  age:
+    current: 30
+    rate: 1.0
+    max: 100
+attributes:
+  strength:
+    min: 30
+    max: 30
+    mode: normal
+    mean: 30.0
+    sd: 0.0
+  health:
+    min: 20
+    max: 20
+    mode: normal
+    mean: 20.0
+    sd: 0.0
+  dexterity:
+    min: 40
+    max: 40
+    mode: normal
+    mean: 40.0
+    sd: 0.0
+  intellect:
+    min: 50
+    max: 50
+    mode: normal
+    mean: 50.0
+    sd: 0.0
+  wisdom:
+    min: 50
+    max: 50
+    mode: normal
+    mean: 50.0
+    sd: 0.0
+stats:
+  speed:
+    min: 0.025
+    max: 0.025
+    mode: normal
+    mean: 0.03
+    sd: 0.0
+  attack_cooldown:
+    min: 80
+    max: 80
+    mode: normal
+    mean: 80.0
+    sd: 0.0
+  health_points_min:
+    min: 25
+    max: 25
+    mode: normal
+    mean: 25.0
+    sd: 0.0
+  health_points_max:
+    min: 35
+    max: 35
+    mode: normal
+    mean: 35.0
+    sd: 0.0
+  max_weight:
+    min: 150
+    max: 150
+    mode: normal
+    mean: 150.0
+    sd: 0.0
+abilities:
+  punch:
+    damage: melee_attack * 1.0
+    parent_attribute: strength
+  slap:
+    damage: melee_attack * 0.4
+    parent_attribute: dexterity
+    effects:
+    - stun_chance: 0.2
+      duration: 1.0
+  kick:
+    damage: melee_attack * 1.3
+    parent_attribute: strength
+    effects:
+    - knockback_distance: 2.0
+  rest:
+    yield: nourishment * 0.25
+    parent_attribute: health
+  eat:
+    yield: nourishment * 1.0
+    parent_attribute: health
+  drink:
+    yield: nourishment * 0.8
+    parent_attribute: health
+  slash:
+    damage: melee_attack * 1.5
+    parent_attribute: dexterity
+    required_weapon: sword
+    effects:
+    - armor_break_percentage: 0.2
+      duration: 3.0
+  heavy_strike:
+    damage: melee_attack * 1.8
+    parent_attribute: strength
+    required_weapon: sword
+    effects:
+    - armor_break_percentage: 0.3
+      duration: 3.0
+  knockout:
+    damage: melee_attack * 0.3
+    parent_attribute: strength
+    effects:
+    - stun_chance: 0.85
+      duration: 10.0
+  grapple:
+    damage: melee_attack * 0.1
+    parent_attribute: strength
+    effects:
+    - immobilise: true
+  shoot_arrow:
+    damage: ranged_attack * 1.2
+    parent_attribute: dexterity
+    required_weapon: bow
+  power_shot:
+    damage: ranged_attack * 1.7
+    parent_attribute: dexterity
+    required_weapon: bow
+    effects:
+    - pierce_targets: 2
+  throw:
+    damage: ranged_attack * 0.8
+    parent_attribute: strength
+  chop:
+    damage: melee_attack * 1.0
+    yield: survivalism * 1.0
+    parent_attribute: strength
+    required_weapon: axe
+  dig:
+    damage: melee_attack * 1.0
+    yield: survivalism * 1.0
+    parent_attribute: strength
+    required_weapon: pike
+  butcher:
+    yield: survivalism * 0.5
+    parent_attribute: strength
+  build:
+    yield: crafting * 1.0
+    parent_attribute: strength
+  haul:
+    yield: strength * 0.01
+    parent_attribute: strength
+  stash:
+    yield: strength * 0.005
+    parent_attribute: strength
+  intimidate:
+    yield: culture * 1.0
+    parent_attribute: strength
+equipment:
+  weapon: wooden_club
+inventory:
+- wine_bottle
+- ale_mug
+- meat_stew
+denarii: 300
+xp: 10
+dialogues:
+  player_greetings:
+  - Welcome! What can I pour for you?
+  - Take a load off, friend.
+  - thirsty work, isn't it?
+  start_scenarios:
+  - weight: 0.7
+    text: Best ale in Venburgo. Only ale in Venburgo, but still the best!
+    next: drink_talk
+  - weight: 0.3
+    text: I heard a traveler say the roads are crawling with things that don't breathe...
+    next: myth_talk
+  drink_talk:
+    text: It washes away the dust of the road and the worries of the mind.
+    choices:
+    - text: Let me see your stock.
+      next: exit
+    - text: Maybe later.
+      next: exit
+  myth_talk:
+    text: But people in liquor say anything, don't they?
+    choices:
+    - text: Some myths have teeth.
+      next: exit
+    - text: Probably just shadows.
+      next: exit

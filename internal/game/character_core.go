@@ -1,8 +1,8 @@
 package game
 
 import (
-	"math"
 	"math/rand"
+	"strings"
 )
 
 // Character replaces the old NPC and PlayableCharacter structs.
@@ -22,13 +22,12 @@ type Character struct {
 	TargetActor *Actor
 	HasInitiatedDialogue bool
 	AIDecisionPending    bool
-	LastAIChoice         string
-	LastAIReasoning      string
 	TargetActorForAI     *Actor
 	TargetItem           *ItemInstance
 
 	// Control state
 	IsPlayerControlled bool
+	PendingSkill       string // Currently executing attack skill (punch, slap, etc.)
 }
 
 var characterNames = []string{
@@ -39,11 +38,25 @@ var characterNames = []string{
 func NewCharacter(x, y float64, config *EntityConfig, level int, isPlayer bool, objReg *ObjectRegistry) *Character {
 	if config == nil {
 		config = &EntityConfig{ID: "unknown", Name: "Unknown Entity"}
-		config.Stats.HealthMin = 10
-		config.Stats.HealthMax = 10
-		config.Stats.Speed = 0.1
-		config.Stats.AttackCooldown = 60
+		config.Stats.HealthMin = IntInterval{Min: 100, Max: 100}
+		config.Stats.HealthMax = IntInterval{Min: 100, Max: 100}
+		config.Stats.Speed = FloatInterval{Min: 0.1, Max: 0.1}
+		config.Stats.AttackCooldown = IntInterval{Min: 60, Max: 60}
+		config.Attributes = PrimaryAttributeConfig{
+			Strength: IntInterval{Min: 100, Max: 100}, Dexterity: IntInterval{Min: 100, Max: 100},
+			Health: IntInterval{Min: 100, Max: 100}, Intellect: IntInterval{Min: 100, Max: 100},
+			Wisdom: IntInterval{Min: 100, Max: 100},
+		}
 		config.Weapon = WeaponConfig{Inline: WeaponTizon}
+		config.Stats.MaxWeight = FloatInterval{Min: 100.0, Max: 100.0}
+		config.Stats.Age = AgeConfig{Current: FloatInterval{Mean: 25.0, SD: 5.0, Mode: "normal"}, Rate: 1.0} // Default adult age
+	}
+
+	attributes := config.Attributes.Roll()
+	stats := config.Stats.Roll()
+	skills := make(map[string]int)
+	for id, interval := range config.Skills {
+		skills[id] = interval.Roll()
 	}
 	
 	c := &Character{
@@ -51,12 +64,32 @@ func NewCharacter(x, y float64, config *EntityConfig, level int, isPlayer bool, 
 			X: x, Y: y, Config: config, State: ActorIdle, Facing: DirSE, Level: level,
 			Alignment: AlignmentEnemy, Group: config.Group, LeaderID: config.LeaderID, MustSurvive: config.MustSurvive,
 			Name: config.Name,
+			Denarii: config.Denarii,
+			PrimaryAttributes: attributes,
+			RawStats: stats,
+			SkillValues: skills,
+			IsTransexual: config.IsTransexual,
+			BaseAttack: stats.BaseAttack,
+			BaseDefense: stats.BaseDefense,
+			BaseProtection: stats.BaseProtection,
+			BaseAttackCooldown: stats.AttackCooldown,
+			Speed: stats.Speed,
+			MaxWeight: stats.MaxWeight,
 		},
 		IsPlayerControlled: isPlayer,
 	}
 
 	if isPlayer {
 		c.Alignment = AlignmentAlly
+	}
+
+	// Dynamic Model Selection
+	if len(config.Models) > 0 {
+		models := make([]string, 0, len(config.Models))
+		for k := range config.Models {
+			models = append(models, k)
+		}
+		c.SelectedModel = models[rand.Intn(len(models))]
 	}
 
 	if !isPlayer {
@@ -78,6 +111,7 @@ func NewCharacter(x, y float64, config *EntityConfig, level int, isPlayer bool, 
 		case "patrol":  c.Behavior = BehaviorPatrol
 		case "escort":  c.Behavior = BehaviorEscort
 		case "flee":    c.Behavior = BehaviorFlee
+		case "trader":  c.Behavior = BehaviorTrader
 		default:
 			if config.Unique { c.Behavior = BehaviorWander } else { c.Behavior = BehaviorKnightHunter }
 		}
@@ -90,52 +124,138 @@ func NewCharacter(x, y float64, config *EntityConfig, level int, isPlayer bool, 
 			c.PatrolStartY = c.Y
 			c.PatrolEndX = c.X + (rand.Float64()*8 - 4)
 			c.PatrolEndY = c.Y + (rand.Float64()*8 - 4)
-			c.PatrolHeading = true
+			c.PatrolHeading = !c.PatrolHeading
 		}
 	}
 
-	if config.Health > 0 {
-		c.Health = config.Health
-	} else if config.Stats.HealthMax > config.Stats.HealthMin {
-		c.Health = config.Stats.HealthMin + rand.Intn(config.Stats.HealthMax-config.Stats.HealthMin+1)
+	// Initial health values (clamped later by SyncStats)
+	if config.Stats.HealthMax.Roll() > config.Stats.HealthMin.Roll() {
+		minH := config.Stats.HealthMin.Min
+		maxH := config.Stats.HealthMax.Max
+		if maxH > minH {
+			c.TemporalState.MaxHealthPoints = minH + rand.Intn(maxH-minH+1)
+		} else {
+			c.TemporalState.MaxHealthPoints = minH
+		}
 	} else {
-		c.Health = config.Stats.HealthMin
+		c.TemporalState.MaxHealthPoints = c.PrimaryAttributes.Health * 10
+	}
+	if c.TemporalState.MaxHealthPoints < 100 { c.TemporalState.MaxHealthPoints = 100 }
+	c.TemporalState.HealthPoints = c.TemporalState.MaxHealthPoints
+	c.TemporalState.Hygiene = 100.0
+	c.TemporalState.IsConscious = true
+
+	// Set LifeStage based on config.Archetype
+	c.LifeStage = StageAdult
+	if config != nil {
+		arch := strings.ToLower(config.Archetype)
+		if strings.Contains(arch, "baby") {
+			c.LifeStage = "baby"
+		} else if strings.Contains(arch, "kid") {
+			c.LifeStage = "kid"
+		} else if strings.Contains(arch, "teenager") {
+			c.LifeStage = "teenager"
+		} else if strings.Contains(arch, "elder") {
+			c.LifeStage = "elder"
+		}
+	}
+	// Initialize age ticks
+	ageYears := stats.Age.Current
+	if config.State.Age.Current > 0 {
+		ageYears = config.State.Age.Current
+	}
+	c.AgeTicks = ageYears * float64(TicksPerYear)
+	
+	ageRate := stats.Age.Rate
+	if config.State.Age.Current > 0 {
+		// If age is specified in State, use its rate
+		ageRate = config.State.Age.Rate
+	}
+	ageMax := stats.Age.Max
+	if config.State.Age.Max > 0 {
+		ageMax = config.State.Age.Max
+	}
+
+	c.TemporalState.Age = AgeState{Current: ageYears, Rate: ageRate, Max: ageMax}
+
+	// Enforce 18+ for adults/elders
+	if c.LifeStage == StageAdult || c.LifeStage == StageElder {
+		minAgeTicks := 18.0 * float64(TicksPerYear)
+		if c.AgeTicks < minAgeTicks {
+			c.AgeTicks = minAgeTicks
+		}
 	}
 	
-	if config.Energy > 0 {
-		c.Energy = config.Energy
-	} else if config.Stats.EnergyMax > config.Stats.EnergyMin {
-		c.Energy = config.Stats.EnergyMin + rand.Float64()*(config.Stats.EnergyMax-config.Stats.EnergyMin)
-	} else if config.Stats.EnergyMin > 0 {
-		c.Energy = config.Stats.EnergyMin
+	c.TemporalState.HealthPoints = c.TemporalState.MaxHealthPoints
+
+	if !config.Stats.HungerMax.IsZero() {
+		c.TemporalState.Hunger = config.Stats.HungerMax.Roll()
 	} else {
-		c.Energy = 100.0
+		c.TemporalState.Hunger = 0.0
 	}
-	c.BaseAttack = config.Stats.BaseAttack
-	c.BaseDefense = config.Stats.BaseDefense
-	c.Speed = config.Stats.Speed
-	c.MaxWeight = config.MaxWeight
+	if !config.Stats.ThirstMax.IsZero() {
+		c.TemporalState.Thirst = config.Stats.ThirstMax.Roll()
+	} else {
+		c.TemporalState.Thirst = 0.0
+	}
+	if !config.Stats.FatigueMax.IsZero() {
+		c.TemporalState.Fatigue = config.Stats.FatigueMax.Roll()
+	} else {
+		c.TemporalState.Fatigue = 0.0
+	}
+
+	if config.State.Hunger > 0 {
+		c.TemporalState.Hunger = config.State.Hunger
+	}
+	if config.State.Thirst > 0 {
+		c.TemporalState.Thirst = config.State.Thirst
+	}
+	if config.State.Fatigue > 0 {
+		c.TemporalState.Fatigue = config.State.Fatigue
+	}
+	
+	if config.State.Hygiene > 0 {
+		c.TemporalState.Hygiene = config.State.Hygiene
+	} else {
+		c.TemporalState.Hygiene = 100.0
+	}
+	if config.State.Miccionate > 0 {
+		c.TemporalState.Miccionate = config.State.Miccionate
+	}
+	if config.State.Defecate > 0 {
+		c.TemporalState.Defecate = config.State.Defecate
+	}
+
+	c.TemporalState.Sanity = 100.0
+	c.BodyTemperature = 37.0
+	c.PreferredTemperature = 37.0
+	
+	// Centralized Primary & Derived Stats
+	c.SyncStats(objReg)
+
+	// Runtime health finalization and clamping
+	if config.State.HealthPoints > 0 {
+		c.TemporalState.HealthPoints = c.calculateStat(config.State.HealthPoints, c.Level)
+	} else if c.TemporalState.HealthPoints == 0 {
+		c.TemporalState.HealthPoints = c.TemporalState.MaxHealthPoints
+	}
+	
+	// Final clamping to ensure we don't exceed max health from attributes
+	if c.TemporalState.HealthPoints > c.TemporalState.MaxHealthPoints {
+		c.TemporalState.HealthPoints = c.TemporalState.MaxHealthPoints
+	}
+
+	c.AttackCooldown = c.BaseAttackCooldown
 	c.Slots = make(map[string]*ItemInstance)
 	c.Inventory = make([]*ItemInstance, 0)
-	c.AttackCooldown = config.Stats.AttackCooldown
-	c.BaseWeapon = config.Weapon.Resolve(objReg) 
-	if c.BaseWeapon == nil {
-		c.BaseWeapon = WeaponFists
-	}
-	c.Weapon = c.BaseWeapon
-	c.Health = c.calculateStat(c.Health, c.Level)
-	c.MaxHealth = c.Health
-	c.BaseAttack = c.calculateStat(c.BaseAttack, c.Level)
-	c.BaseDefense = c.calculateStat(c.BaseDefense, c.Level)
-	c.BaseProtection = c.calculateStat(config.Stats.BaseProtection, c.Level)
+
+	c.Submission = make(map[string]float64)
 	c.MapKills = make(map[string]int)
 
-	return c
-}
+	// Load items from config for both player and NPCs
+	c.LoadEquipment(objReg)
 
-func (c *Character) calculateStat(base int, level int) int {
-	if level <= 1 { return base }
-	return int(float64(base) * math.Pow(1.15, float64(level-1)))
+	return c
 }
 
 func (c *Character) clampToMap(mapW, mapH float64) {
@@ -144,10 +264,4 @@ func (c *Character) clampToMap(mapW, mapH float64) {
 	if c.X > halfW { c.X = halfW }
 	if c.Y < -halfH { c.Y = -halfH }
 	if c.Y > halfH { c.Y = halfH }
-}
-
-func clampInt(v, min, max int) int {
-	if v < min { return min }
-	if v > max { return max }
-	return v
 }

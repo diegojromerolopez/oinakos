@@ -1,0 +1,15 @@
+id: defecation
+name: Defecation
+type: static
+destructible: true
+description: A pile of waste that is extremely unhygienic to step on.
+health: 1
+passable: true
+is_hazard: true
+frame_count: 1
+scale: 0.8
+actions:
+  - type: soiling
+    amount: 15
+    aura: 0.5
+    requires_interaction: false

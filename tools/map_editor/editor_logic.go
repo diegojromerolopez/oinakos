@@ -101,8 +101,19 @@ func (m *MapEditor) initializeMap() {
 	}
 
 	m.MapData.Player = game.PlayerSaveData{
-		X: 0, Y: 0, Health: 100, MaxHealth: 100,
-		Level: 1, BaseAttack: 10, BaseDefense: 5,
+		X: 0, Y: 0,
+		TemporalState: game.TemporalState{
+			HealthPoints:    100,
+			MaxHealthPoints: 100,
+		},
+		Level: 1, 
+		PrimaryAttributes: game.PrimaryAttributes{
+			Strength:  50,
+			Dexterity: 50,
+			Health:    50,
+			Intellect: 50,
+			Wisdom:    50,
+		},
 	}
 
 	m.Mode = "EDITOR"

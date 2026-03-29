@@ -1,0 +1,12 @@
+id: wild_berries
+name: Wild Berries
+type: consumable
+max_hours: 24
+description: A cluster of small, tart wild berries.
+image: assets/images/objects/wild_berries.png
+weight: 0.2
+effects:
+  energy:
+    increase: 5.0
+  health:
+    increase: 2.0

@@ -102,9 +102,9 @@ func TestHeroFlagOverride(t *testing.T) {
 	heroConfig := &EntityConfig{
 		ID: "conde_olinos",
 		Name: "Conde Olinos",
-		Stats: EntityStats{
-			HealthMin: 500,
-			Speed:     0.05,
+		Stats: EntityStatsConfig{
+			HealthMin: IntInterval{Min: 500, Max: 500},
+			Speed:     FloatInterval{Min: 0.05, Max: 0.05},
 		},
 	}
 	g.characterRegistry.Characters["conde_olinos"] = heroConfig
@@ -114,9 +114,9 @@ func TestHeroFlagOverride(t *testing.T) {
 	// Since we already called NewGame, we manually trigger the block we added
 	if config, ok := g.characterRegistry.Characters[g.initialHeroID]; ok {
 		g.playableCharacter.Config = config
-		g.playableCharacter.Health = config.Stats.HealthMin
-		g.playableCharacter.MaxHealth = config.Stats.HealthMin
-		g.playableCharacter.Speed = config.Stats.Speed
+		g.playableCharacter.TemporalState.HealthPoints = config.Stats.HealthMin.Roll()
+		g.playableCharacter.TemporalState.MaxHealthPoints = config.Stats.HealthMin.Roll()
+		g.playableCharacter.Speed = config.Stats.Speed.Roll()
 		g.isCharacterSelect = false
 	}
 
@@ -126,8 +126,8 @@ func TestHeroFlagOverride(t *testing.T) {
 	}
 
 	// Verify health was initialized
-	if g.playableCharacter.MaxHealth != 500 {
-		t.Errorf("Expected health 500, got %d", g.playableCharacter.MaxHealth)
+	if g.playableCharacter.TemporalState.MaxHealthPoints != 500 {
+		t.Errorf("Expected health 500, got %d", g.playableCharacter.TemporalState.MaxHealthPoints)
 	}
 
 	// Verify character selection screen is bypassed
