@@ -14,7 +14,6 @@ func (o *Obstacle) Draw(screen engine.Image, vectorRenderer engine.VectorRendere
 	isoX, isoY := engine.CartesianToIso(o.X, o.Y)
 
 	op := engine.NewDrawImageOptions()
-	scale := o.Archetype.Scale
 
 	img := o.Archetype.Image
 	if img == nil {
@@ -44,10 +43,9 @@ func (o *Obstacle) Draw(screen engine.Image, vectorRenderer engine.VectorRendere
 	}
 
 	// Pivot point for isometric depth
-	pivotX := float64(frameWidth) * scale / 2
-	pivotY := float64(frameHeight) * scale * 0.85
+	pivotX := float64(frameWidth) / 2
+	pivotY := float64(frameHeight) * 0.85
 
-	op.Scale(scale, scale)
 	op.Translate(isoX+offsetX-pivotX, isoY+offsetY-pivotY)
 
 	if o.Archetype.FrameCount > 1 {

@@ -3,7 +3,6 @@ type: building
 destructible: true
 description: "A luxurious and well-defended residence."
 health: 8000
-scale: 1.250
 footprint:
   - x: 3.17
     y: -3.36

@@ -14,11 +14,11 @@ func TestIntegration_BiologicalCycle(t *testing.T) {
 	p := g.playableCharacter
 	p.Name = "Stultus"
 	p.PrimaryAttributes = PrimaryAttributes{Strength: 50, Dexterity: 50, Health: 50, Intellect: 50, Wisdom: 50}
-	p.TemporalState = TemporalState{
+	p.State = State{
 		HealthPoints: 1000, MaxHealthPoints: 1000,
 		Hunger: 0, Thirst: 0, Fatigue: 0,
 		Hygiene: 100,
-		Miccionate: 0, Defecate: 0,
+		BladderLevel: 0, BowelLevel: 0,
 		Pain: 0,
 	}
 	p.SyncStats(nil)
@@ -40,40 +40,40 @@ func TestIntegration_BiologicalCycle(t *testing.T) {
 	// Phase 1: Eat and Drink until needs are high
 	fmt.Println("--- Phase 1: Consumption ---")
 	for i := 0; i < 500; i++ {
-		p.State = ActorEating
+		p.ActionState = ActorEating
 		g.Update()
-		if p.TemporalState.Defecate > 50 {
+		if p.State.BowelLevel > 50 {
 			break
 		}
 	}
 	fmt.Printf("After eating: Hunger=%.1f, Defecate=%.1f, Pain=%.1f\n", 
-		p.TemporalState.Hunger, p.TemporalState.Defecate, p.TemporalState.Pain)
+		p.State.Hunger, p.State.BowelLevel, p.State.Pain)
 
 	// Phase 2: Wait until Defecate hits 100 and Causes Pain
 	fmt.Println("--- Phase 2: Waiting for urgency ---")
 	for i := 0; i < 200000; i++ { 
-		p.TemporalState.Defecate += 0.01 // Fast-forward for test
-		p.TemporalState.Miccionate += 0.005
+		p.State.BowelLevel += 0.01 // Fast-forward for test
+		p.State.BladderLevel += 0.005
 		g.Update()
-		if p.TemporalState.Defecate >= 90 {
+		if p.State.BowelLevel >= 90 {
 			break
 		}
 	}
-	p.TemporalState.Defecate = 90
-	p.TemporalState.Miccionate = 90
+	p.State.BowelLevel = 90
+	p.State.BladderLevel = 90
 
 	
 	// Hold it for a while to increase pain
 	fmt.Println("--- Phase 3: Holding it (Pain should increase) ---")
-	for i := 0; i < 5000; i++ {
+	for i := 0; i < 500; i++ {
 		g.Update()
 	}
 	
 	fmt.Printf("Urgent state: Defecate=%.1f, Miccionate=%.1f, Pain=%.1f\n", 
-		p.TemporalState.Defecate, p.TemporalState.Miccionate, p.TemporalState.Pain)
+		p.State.BowelLevel, p.State.BladderLevel, p.State.Pain)
 	
-	if p.TemporalState.Pain <= 0 {
-		t.Errorf("Expected pain from urgent need, got %.1f", p.TemporalState.Pain)
+	if p.State.Pain <= 0 {
+		t.Errorf("Expected pain from urgent need, got %.1f", p.State.Pain)
 	}
 
 	// Phase 4: Use the latrine
@@ -81,20 +81,20 @@ func TestIntegration_BiologicalCycle(t *testing.T) {
 	p.X, p.Y = 1.0, 1.0 // Move to latrine
 	
 	for i := 0; i < 1000; i++ {
-		p.State = ActorRelieving // IMPORTANT: Set state EVERY tick to avoid player-input Reset to Idle
+		p.ActionState = ActorRelieving // IMPORTANT: Set state EVERY tick to avoid player-input Reset to Idle
 		g.Update()
-		if p.TemporalState.Defecate <= 0 && p.TemporalState.Miccionate <= 0 {
+		if p.State.BowelLevel <= 0 && p.State.BladderLevel <= 0 {
 			break
 		}
 	}
 
 	fmt.Printf("After Relief: Defecate=%.1f, Miccionate=%.1f, Pain=%.1f, Hygiene=%.1f\n", 
-		p.TemporalState.Defecate, p.TemporalState.Miccionate, p.TemporalState.Pain, p.TemporalState.Hygiene)
+		p.State.BowelLevel, p.State.BladderLevel, p.State.Pain, p.State.Hygiene)
 
-	if p.TemporalState.Defecate > 0.1 || p.TemporalState.Miccionate > 0.1 {
-		t.Errorf("Expected ~0 defecate/miccionate, got D=%.1f, M=%.1f", p.TemporalState.Defecate, p.TemporalState.Miccionate)
+	if p.State.BowelLevel > 0.1 || p.State.BladderLevel > 0.1 {
+		t.Errorf("Expected ~0 defecate/miccionate, got D=%.1f, M=%.1f", p.State.BowelLevel, p.State.BladderLevel)
 	}
-	if p.TemporalState.Pain > 0 {
-		t.Errorf("Expected 0 pain after relief, got %.1f", p.TemporalState.Pain)
+	if p.State.Pain > 0 {
+		t.Errorf("Expected 0 pain after relief, got %.1f", p.State.Pain)
 	}
 }

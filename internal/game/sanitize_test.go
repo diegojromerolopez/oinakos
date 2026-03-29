@@ -125,18 +125,18 @@ func TestSanitizeMapType(t *testing.T) {
 
 func TestSanitizeSaveData(t *testing.T) {
 	p := PlayerSaveData{
-		TemporalState: TemporalState{
+		State: State{
 			HealthPoints:    -10,
 			MaxHealthPoints: 0,
 		},
 		Level:     -1,
 	}
 	sanitizePlayerSaveData(&p, "test")
-	if p.TemporalState.HealthPoints != 1 {
-		t.Errorf("Player HealthPoints: got %d, want 1", p.TemporalState.HealthPoints)
+	if p.State.HealthPoints != 1 {
+		t.Errorf("Player HealthPoints: got %d, want 1", p.State.HealthPoints)
 	}
-	if p.TemporalState.MaxHealthPoints != 100 {
-		t.Errorf("Player MaxHealthPoints: got %d, want 100", p.TemporalState.MaxHealthPoints)
+	if p.State.MaxHealthPoints != 100 {
+		t.Errorf("Player MaxHealthPoints: got %d, want 100", p.State.MaxHealthPoints)
 	}
 	if p.Level != 1 {
 		t.Errorf("Player Level: got %d, want 1", p.Level)
@@ -144,12 +144,12 @@ func TestSanitizeSaveData(t *testing.T) {
 
 	n := NPCSaveData{
 		Name:   "Orc",
-		TemporalState: TemporalState{HealthPoints: -5},
+		State: State{HealthPoints: -5},
 		Level:  0,
 	}
 	sanitizeNPCSaveData(&n, 0, "test")
-	if n.TemporalState.HealthPoints != 0 {
-		t.Errorf("NPC HealthPoints: got %d, want 0", n.TemporalState.HealthPoints)
+	if n.State.HealthPoints != 0 {
+		t.Errorf("NPC HealthPoints: got %d, want 0", n.State.HealthPoints)
 	}
 	if n.Level != 1 {
 		t.Errorf("NPC Level: got %d, want 1", n.Level)

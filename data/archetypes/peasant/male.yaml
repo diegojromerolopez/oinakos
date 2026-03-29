@@ -21,8 +21,8 @@ state:
   pain: 0.0
   arousal: 0.0
   hygiene: 70.0
-  miccionate: 0.0
-  defecate: 0.0
+  bladder_level: 0.0
+  bowel_level: 0.0
   age:
     current: 30
     rate: 1.0

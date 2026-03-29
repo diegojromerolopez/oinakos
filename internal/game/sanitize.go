@@ -108,9 +108,6 @@ func sanitizeObstacleArchetype(c *ObstacleArchetype, source string) {
 		log.Printf("Warning [%s]: obstacle %q has cooldown_time=%v, clamping to 0", source, c.ID, c.CooldownTime)
 		c.CooldownTime = 0
 	}
-	if c.Scale <= 0 {
-		c.Scale = 1.0
-	}
 }
 
 // sanitizeMapType validates and clamps all fields loaded from a map_type YAML.

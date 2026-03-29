@@ -73,7 +73,7 @@ type Settings struct {
 var FrequencyOptions = []string{"never", "rare", "infrequent", "half the time", "frequent", "always"}
 var FontOptions = []string{"medieval", "modern_antiqua", "uncial_antiqua", "glass_antiqua", "kings", "eagle_lake", "default"}
 var FogOfWarOptions = []string{"none", "vision", "exploration"}
-var AIProviderOptions = []string{"none", "openai", "claude", "gemini", "mistral", "huggingface", "ollama (local)", "ollama (service)"}
+var AIProviderOptions = []string{"none", "openai", "claude", "gemini", "mistral", "huggingface", "ollama (local)", "ollama (service)", "bridge"}
 var UnitsOptions = []string{"venburguian", "si", "imperial"}
 
 var TimePaceOptions = []string{"real", "double", "fast", "standard", "month", "year"}

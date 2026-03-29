@@ -35,11 +35,16 @@ func (gr *GameRenderer) drawQuitConfirmation(screen engine.Image) {
 
 func (gr *GameRenderer) drawGameOver(screen engine.Image) {
 	g := gr.game; gr.graphics.DrawFilledRect(screen, 0, 0, float32(g.width), float32(g.height), color.RGBA{0, 0, 0, 180}, false)
-	title := "GAME OVER"; tw, _ := gr.graphics.MeasureText(title, 48); gr.graphics.DrawTextAt(screen, title, (g.width-int(tw))/2, g.height/2-80, color.White, 48)
+	title := "GAME OVER"; tw, _ := gr.graphics.MeasureText(title, 48); gr.graphics.DrawTextAt(screen, title, (g.width-int(tw))/2, g.height/2-110, color.White, 48)
+
+	reason := fmt.Sprintf("Your character %s %s.", g.playableCharacter.Name, g.deathReason)
+	rtw, _ := gr.graphics.MeasureText(reason, 22)
+	gr.graphics.DrawTextAt(screen, reason, (g.width-int(rtw))/2, g.height/2-40, color.RGBA{200, 50, 50, 255}, 22)
+
 	kills := fmt.Sprintf("Kills: %d", g.playableCharacter.Kills); time := fmt.Sprintf("Time: %02d:%02d", int(g.playTime)/60, int(g.playTime)%60)
-	gr.graphics.DrawTextAt(screen, kills, (g.width-60)/2, g.height/2-15, color.White, 20)
-	gr.graphics.DrawTextAt(screen, time, (g.width-60)/2, g.height/2+20, color.White, 20)
-	gr.graphics.DrawTextAt(screen, "Press ESC to exit, or CLICK/ENTER to restart", (g.width-400)/2, g.height/2+60, color.White, 16)
+	gr.graphics.DrawTextAt(screen, kills, (g.width-120)/2, g.height/2, color.White, 20)
+	gr.graphics.DrawTextAt(screen, time, (g.width-120)/2, g.height/2+35, color.White, 20)
+	gr.graphics.DrawTextAt(screen, "Press ESC to exit, or CLICK/ENTER to restart", (g.width-400)/2, g.height/2+80, color.White, 16)
 }
 
 func (gr *GameRenderer) drawMapWon(screen engine.Image) {

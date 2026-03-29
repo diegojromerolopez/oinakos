@@ -3,7 +3,6 @@ type: building
 destructible: true
 description: A spacious two-story home.
 health: 5000
-scale: 2.344
 footprint:
   - x: -7.19
     y: -8.63

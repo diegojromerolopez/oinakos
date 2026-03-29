@@ -45,8 +45,8 @@ func TestSaveLoad(t *testing.T) {
 	if g2.playableCharacter.XP != g.playableCharacter.XP {
 		t.Errorf("XP mismatch: expected %d, got %d", g.playableCharacter.XP, g2.playableCharacter.XP)
 	}
-	if g2.playableCharacter.TemporalState.HealthPoints != g.playableCharacter.TemporalState.HealthPoints {
-		t.Errorf("Health mismatch: expected %d, got %d", g.playableCharacter.TemporalState.HealthPoints, g2.playableCharacter.TemporalState.HealthPoints)
+	if g2.playableCharacter.State.HealthPoints != g.playableCharacter.State.HealthPoints {
+		t.Errorf("Health mismatch: expected %d, got %d", g.playableCharacter.State.HealthPoints, g2.playableCharacter.State.HealthPoints)
 	}
 	if g2.playTime != g.playTime {
 		t.Errorf("PlayTime mismatch: expected %f, got %f", g.playTime, g2.playTime)

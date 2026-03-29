@@ -3,7 +3,6 @@ type: static
 destructible: false
 description: "An ancient Vettonian granite statue of a bull, front view."
 health: 0
-scale: 1.250
 footprint:
   - x: -3.0
     y: -10.13

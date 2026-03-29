@@ -12,7 +12,6 @@ yield: wheat
 frame_count: 3
 frames_per_row: 3
 animation_speed: 0
-scale: 0.8
 footprint:
 - {x: -0.4, y: -0.4}
 - {x: 0.4, y: -0.4}

@@ -22,9 +22,9 @@ func TestNPCAlly_VisionRange(t *testing.T) {
 	nearEnemy.Alignment = AlignmentEnemy
 
 	// Ensure all have health so they are considered 'alive'
-	ally.TemporalState.HealthPoints = 100
-	farEnemy.TemporalState.HealthPoints = 100
-	nearEnemy.TemporalState.HealthPoints = 100
+	ally.State.HealthPoints = 100
+	farEnemy.State.HealthPoints = 100
+	nearEnemy.State.HealthPoints = 100
 
 	ctx.World.Characters = []*Character{ally, farEnemy, nearEnemy}
 
@@ -58,9 +58,9 @@ func TestNPCAlly_TargetPriority(t *testing.T) {
 	enemy2.Alignment = AlignmentEnemy
 
 	// Ensure all have health
-	ally.TemporalState.HealthPoints = 100
-	enemy1.TemporalState.HealthPoints = 100
-	enemy2.TemporalState.HealthPoints = 100
+	ally.State.HealthPoints = 100
+	enemy1.State.HealthPoints = 100
+	enemy2.State.HealthPoints = 100
 
 	ctx.World.Characters = []*Character{ally, enemy1, enemy2}
 
@@ -80,7 +80,7 @@ func TestNPCNeutral_Retaliation(t *testing.T) {
 	npc := NewCharacter(5, 0, &EntityConfig{ID: "villager"}, 1, false, nil)
 	npc.Alignment = AlignmentNeutral
 	npc.Behavior = BehaviorWander
-	npc.TemporalState.HealthPoints = 100
+	npc.State.HealthPoints = 100
 	ctx.World.Characters = []*Character{npc}
 
 	// Hit the NPC
@@ -101,21 +101,21 @@ func TestNPCNeutral_Retaliation(t *testing.T) {
 func TestNPCVision_IgnoreDeadTarget(t *testing.T) {
 	ctx := NewTestContext()
 	mc := NewCharacter(0, 0, nil, 1, true, nil)
-	mc.TemporalState.MaxHealthPoints = 100
-	mc.TemporalState.HealthPoints = -10
-	mc.State = ActorDead
+	mc.State.MaxHealthPoints = 100
+	mc.State.HealthPoints = -10
+	mc.ActionState = ActorDead
 	ctx.World.PlayableCharacter = mc
 
 	npc := NewCharacter(5, 0, &EntityConfig{ID: "hunter"}, 1, false, nil)
-	npc.TemporalState.HealthPoints = 100
-	npc.TemporalState.MaxHealthPoints = 100
+	npc.State.HealthPoints = 100
+	npc.State.MaxHealthPoints = 100
 	npc.Behavior = BehaviorKnightHunter
 	npc.Alignment = AlignmentEnemy
 	ctx.World.Characters = []*Character{npc}
 
 	npc.Update(ctx)
 
-	if npc.State != ActorIdle {
+	if npc.ActionState != ActorIdle {
 		t.Error("Enemy NPC should be Idle if the target (player) is dead")
 	}
 }
@@ -132,17 +132,17 @@ func TestNPCVision_SwitchTargetOnDeath(t *testing.T) {
 
 	victim1 := NewCharacter(2, 0, &EntityConfig{ID: "v1"}, 1, false, nil)
 	victim1.Alignment = AlignmentAlly
-	victim1.TemporalState.HealthPoints = 100
+	victim1.State.HealthPoints = 100
 	victim1.Name = "victim1"
 
 	victim2 := NewCharacter(5, 0, &EntityConfig{ID: "v2"}, 1, false, nil)
 	victim2.Alignment = AlignmentAlly
-	victim2.TemporalState.HealthPoints = 100
+	victim2.State.HealthPoints = 100
 	victim2.Name = "victim2"
 
 	ctx.World.Characters = []*Character{fighter, victim1, victim2}
-	fighter.TemporalState.HealthPoints = 100
-	mc.TemporalState.HealthPoints = 100
+	fighter.State.HealthPoints = 100
+	mc.State.HealthPoints = 100
 	mc.X, mc.Y = 100, 100 // Move very far away
 
 	// 1. Target v1
@@ -152,7 +152,7 @@ func TestNPCVision_SwitchTargetOnDeath(t *testing.T) {
 	}
 
 	// 2. v1 dies
-	victim1.State = ActorDead
+	victim1.ActionState = ActorDead
 	fighter.Update(ctx)
 
 	if fighter.TargetActor != &victim2.Actor {
@@ -165,8 +165,8 @@ func TestNPC_RetaliationNPC(t *testing.T) {
 	ctx := NewTestContext()
 	npcA := NewCharacter(0, 0, &EntityConfig{ID: "a"}, 1, false, nil)
 	npcB := NewCharacter(2, 0, &EntityConfig{ID: "b"}, 1, false, nil)
-	npcA.TemporalState.HealthPoints = 100
-	npcB.TemporalState.HealthPoints = 100
+	npcA.State.HealthPoints = 100
+	npcB.State.HealthPoints = 100
 	ctx.World.Characters = []*Character{npcA, npcB}
 
 	// Initial state: no targets
@@ -195,9 +195,9 @@ func TestNPCChaotic_TargetSwitch(t *testing.T) {
 	npc := NewCharacter(10, 0, &EntityConfig{ID: "npc"}, 1, false, nil) // npc at dist 10
 	npc.Alignment = AlignmentAlly
 	
-	chaotic.TemporalState.HealthPoints = 100
-	mc.TemporalState.HealthPoints = 100
-	npc.TemporalState.HealthPoints = 100
+	chaotic.State.HealthPoints = 100
+	mc.State.HealthPoints = 100
+	npc.State.HealthPoints = 100
 
 	ctx.World.Characters = []*Character{chaotic, npc}
 
@@ -223,7 +223,7 @@ func TestNPCAlly_RetaliationHostile(t *testing.T) {
 
 	ally := NewCharacter(5, 0, &EntityConfig{ID: "ally"}, 1, false, nil)
 	ally.Alignment = AlignmentAlly
-	ally.TemporalState.HealthPoints = 100
+	ally.State.HealthPoints = 100
 	ctx.World.Characters = []*Character{ally}
 
 	// Hit the ally

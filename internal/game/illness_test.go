@@ -10,7 +10,7 @@ func TestIllness_FatigueDecay(t *testing.T) {
 	ctx := g.GetContext()
 	
 	a := &Actor{
-		TemporalState: TemporalState{
+		State: State{
 			Fatigue:      0.0,
 			HealthPoints: 100,
 		},
@@ -25,8 +25,8 @@ func TestIllness_FatigueDecay(t *testing.T) {
 	// Flu decay: 0.02
 	// Total decay: 0.023 per tick
 	// Total for 2 ticks: 0.046
-	if a.TemporalState.Fatigue <= 0 {
-		t.Errorf("Expected Fatigue increase from illness, got %.3f", a.TemporalState.Fatigue)
+	if a.State.Fatigue <= 0 {
+		t.Errorf("Expected Fatigue increase from illness, got %.3f", a.State.Fatigue)
 	}
 }
 
@@ -35,7 +35,7 @@ func TestIllness_CriticalImpact(t *testing.T) {
 	ctx := g.GetContext()
 	
 	a := &Actor{
-		TemporalState: TemporalState{
+		State: State{
 			Fatigue:         96.0,
 			HealthPoints:    100,
 			MaxHealthPoints: 100,
@@ -50,8 +50,8 @@ func TestIllness_CriticalImpact(t *testing.T) {
 		a.SharedUpdate(ctx)
 	}
 	
-	if a.TemporalState.HealthPoints >= 100 {
-		t.Errorf("Expected Health loss from critical illness, got %d", a.TemporalState.HealthPoints)
+	if a.State.HealthPoints >= 100 {
+		t.Errorf("Expected Health loss from critical illness, got %d", a.State.HealthPoints)
 	}
 }
 
@@ -62,15 +62,15 @@ func TestIllness_Infection(t *testing.T) {
 	
 	sick := &Actor{
 		X: 1, Y: 1,
-		TemporalState: TemporalState{Sanity: 100.0},
-		FluTicks:      1000,
-		Name:          "Patient Zero",
+		State:    State{Sanity: 100.0},
+		FluTicks: 1000,
+		Name:     "Patient Zero",
 	}
 	healthy := &Character{Actor: Actor{
 		X: 1.5, Y: 1.5,
-		TemporalState: TemporalState{Sanity: 100.0},
-		FluTicks:      0,
-		Name:          "Victim",
+		State:    State{Sanity: 100.0},
+		FluTicks: 0,
+		Name:     "Victim",
 	}}
 	
 	g.characters = []*Character{healthy}

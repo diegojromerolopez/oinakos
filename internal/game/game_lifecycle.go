@@ -13,6 +13,7 @@ func (g *Game) DestroyProgress() {
 	g.isCharacterSelect = false
 	g.isCampaignSelect = false
 	g.isGameOver = false
+	g.deathReason = ""
 	g.isMapWon = false
 	g.isGameWon = false
 	g.isPaused = false
@@ -96,6 +97,7 @@ func (g *Game) Restart() {
 	g.isCharacterSelect = false
 	g.isCampaignSelect = false
 	g.isGameOver = false
+	g.deathReason = ""
 	g.isMapWon = false
 	g.isGameWon = false
 	g.isPaused = false
@@ -149,13 +151,13 @@ func (g *Game) Restart() {
 			rolledAttrs := config.Attributes.Roll()
 			g.playableCharacter.RawStats = rolledStats
 			g.playableCharacter.PrimaryAttributes = rolledAttrs
-			g.playableCharacter.TemporalState.MaxHealthPoints = rolledStats.HealthMin
-			g.playableCharacter.TemporalState.HealthPoints = rolledStats.HealthMin
+			g.playableCharacter.State.MaxHealthPoints = rolledStats.HealthMin
+			g.playableCharacter.State.HealthPoints = rolledStats.HealthMin
 			g.playableCharacter.Speed = rolledStats.Speed
 			g.playableCharacter.BaseAttack = rolledStats.BaseAttack
 			g.playableCharacter.BaseDefense = rolledStats.BaseDefense
 			g.playableCharacter.Weapon = config.Weapon.Resolve(g.Registries.Objects)
-			g.playableCharacter.State = ActorIdle
+			g.playableCharacter.ActionState = ActorIdle
 			g.playableCharacter.Tick = 0
 			g.playableCharacter.DeadTimer = 0
 			g.playableCharacter.HitTimer = 0

@@ -3,7 +3,6 @@ type: building
 destructible: true
 description: A sprawling estate.
 health: 5000
-scale: 2.344
 footprint:
   - x: -17.41
     y: -13.28

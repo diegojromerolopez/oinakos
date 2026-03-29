@@ -120,7 +120,11 @@ type Game struct {
 	isFetchingModels  bool
 
 	pinnedCharacter  *Character
+	pinnedUIX, pinnedUIY int
+	isDraggingPinnedUI   bool
+	dragPinnedOffsetX, dragPinnedOffsetY int
 	particles        []*Particle
+	deathReason      string // Why the player died
 }
 
 func (g *Game) SetOnFontUpdate(cb func(string)) {
@@ -153,4 +157,18 @@ func (g *Game) GetContext() *SystemContext {
 		Intensity:  g.World.State.Intensity,
 		Settings:   g.settings,
 	}
+}
+func (g *Game) SetSimulationMode(enabled bool) {
+	if g.settings != nil {
+		g.settings.AISimulationMode = enabled
+	}
+}
+
+func (g *Game) BypassMenu() {
+	g.isMainMenu = false
+	g.isCharacterSelect = false
+	g.isCampaignSelect = false
+	g.isQuitConfirmationOpen = false
+	g.isAboutScreen = false
+	g.isSettingsScreen = false
 }

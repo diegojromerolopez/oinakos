@@ -102,7 +102,7 @@ func (m *MapEditor) initializeMap() {
 
 	m.MapData.Player = game.PlayerSaveData{
 		X: 0, Y: 0,
-		TemporalState: game.TemporalState{
+		State: game.State{
 			HealthPoints:    100,
 			MaxHealthPoints: 100,
 		},

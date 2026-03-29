@@ -142,8 +142,8 @@ func NewGame(assets fs.FS, graphics engine.Graphics, initialMapID, initialMapTyp
 			}
 			if maxHP < 100 { maxHP = 100 }
 
-			g.playableCharacter.TemporalState.MaxHealthPoints = maxHP
-			g.playableCharacter.TemporalState.HealthPoints = maxHP
+			g.playableCharacter.State.MaxHealthPoints = maxHP
+			g.playableCharacter.State.HealthPoints = maxHP
 			
 			g.playableCharacter.Speed = rolledStats.Speed
 			g.playableCharacter.BaseAttack = rolledStats.BaseAttack

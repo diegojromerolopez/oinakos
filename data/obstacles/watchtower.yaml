@@ -2,7 +2,6 @@ name: "Cursed Watchtower"
 type: building
 destructible: false
 description: "A fortified stone tower overlooking the desolate landscape. A sentinel of a forgotten era."
-scale: 1.250
 footprint:
   - x: 2.5
     y: 2.5

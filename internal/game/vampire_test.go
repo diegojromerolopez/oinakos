@@ -52,7 +52,7 @@ func TestVampireConversion(t *testing.T) {
 	victim := NewCharacter(1, 1, humanArch, 1, false, nil)
 	victim.Alignment = AlignmentNeutral
 	victim.SyncStats(nil)
-	victim.TemporalState.HealthPoints = 1
+	victim.State.HealthPoints = 1
 
 	ctx.World.Characters = []*Character{vampire, victim}
 
@@ -61,8 +61,8 @@ func TestVampireConversion(t *testing.T) {
 	// Transformation happens in die() -> applyKillAction()
 	// Force Idle state and sync for the test to ensure restoration is noticed.
 	victim.SyncStats(nil)
-	victim.TemporalState.HealthPoints = victim.GetTotalMaxHealth()
-	victim.Actor.State = ActorIdle
+	victim.State.HealthPoints = victim.GetTotalMaxHealth()
+	victim.ActionState = ActorIdle
 	victim.UnconsciousTimer = 0
 
 	// Assert
@@ -72,10 +72,10 @@ func TestVampireConversion(t *testing.T) {
 	if victim.Alignment != AlignmentEnemy {
 		t.Errorf("Expected converted vampire to inherit alignment ENEMY, got %v", victim.Alignment)
 	}
-	if victim.Actor.State != ActorIdle {
-		t.Errorf("Expected converted vampire to be Idle, got %v", victim.Actor.State)
+	if victim.ActionState != ActorIdle {
+		t.Errorf("Expected converted vampire to be Idle, got %v", victim.ActionState)
 	}
-	if victim.TemporalState.HealthPoints <= 0 {
+	if victim.State.HealthPoints <= 0 {
 		t.Error("Expected converted vampire to have health restored")
 	}
 }

@@ -61,7 +61,7 @@ func NewCharacter(x, y float64, config *EntityConfig, level int, isPlayer bool, 
 	
 	c := &Character{
 		Actor: Actor{
-			X: x, Y: y, Config: config, State: ActorIdle, Facing: DirSE, Level: level,
+			X: x, Y: y, Config: config, ActionState: ActorIdle, Facing: DirSE, Level: level,
 			Alignment: AlignmentEnemy, Group: config.Group, LeaderID: config.LeaderID, MustSurvive: config.MustSurvive,
 			Name: config.Name,
 			Denarii: config.Denarii,
@@ -133,17 +133,17 @@ func NewCharacter(x, y float64, config *EntityConfig, level int, isPlayer bool, 
 		minH := config.Stats.HealthMin.Min
 		maxH := config.Stats.HealthMax.Max
 		if maxH > minH {
-			c.TemporalState.MaxHealthPoints = minH + rand.Intn(maxH-minH+1)
+			c.State.MaxHealthPoints = minH + rand.Intn(maxH-minH+1)
 		} else {
-			c.TemporalState.MaxHealthPoints = minH
+			c.State.MaxHealthPoints = minH
 		}
 	} else {
-		c.TemporalState.MaxHealthPoints = c.PrimaryAttributes.Health * 10
+		c.State.MaxHealthPoints = c.PrimaryAttributes.Health * 10
 	}
-	if c.TemporalState.MaxHealthPoints < 100 { c.TemporalState.MaxHealthPoints = 100 }
-	c.TemporalState.HealthPoints = c.TemporalState.MaxHealthPoints
-	c.TemporalState.Hygiene = 100.0
-	c.TemporalState.IsConscious = true
+	if c.State.MaxHealthPoints < 100 { c.State.MaxHealthPoints = 100 }
+	c.State.HealthPoints = c.State.MaxHealthPoints
+	c.State.Hygiene = 100.0
+	c.State.IsConscious = true
 
 	// Set LifeStage based on config.Archetype
 	c.LifeStage = StageAdult
@@ -176,7 +176,7 @@ func NewCharacter(x, y float64, config *EntityConfig, level int, isPlayer bool, 
 		ageMax = config.State.Age.Max
 	}
 
-	c.TemporalState.Age = AgeState{Current: ageYears, Rate: ageRate, Max: ageMax}
+	c.State.Age = AgeState{Current: ageYears, Rate: ageRate, Max: ageMax}
 
 	// Enforce 18+ for adults/elders
 	if c.LifeStage == StageAdult || c.LifeStage == StageElder {
@@ -186,47 +186,47 @@ func NewCharacter(x, y float64, config *EntityConfig, level int, isPlayer bool, 
 		}
 	}
 	
-	c.TemporalState.HealthPoints = c.TemporalState.MaxHealthPoints
+	c.State.HealthPoints = c.State.MaxHealthPoints
 
 	if !config.Stats.HungerMax.IsZero() {
-		c.TemporalState.Hunger = config.Stats.HungerMax.Roll()
+		c.State.Hunger = config.Stats.HungerMax.Roll()
 	} else {
-		c.TemporalState.Hunger = 0.0
+		c.State.Hunger = 0.0
 	}
 	if !config.Stats.ThirstMax.IsZero() {
-		c.TemporalState.Thirst = config.Stats.ThirstMax.Roll()
+		c.State.Thirst = config.Stats.ThirstMax.Roll()
 	} else {
-		c.TemporalState.Thirst = 0.0
+		c.State.Thirst = 0.0
 	}
 	if !config.Stats.FatigueMax.IsZero() {
-		c.TemporalState.Fatigue = config.Stats.FatigueMax.Roll()
+		c.State.Fatigue = config.Stats.FatigueMax.Roll()
 	} else {
-		c.TemporalState.Fatigue = 0.0
+		c.State.Fatigue = 0.0
 	}
 
 	if config.State.Hunger > 0 {
-		c.TemporalState.Hunger = config.State.Hunger
+		c.State.Hunger = config.State.Hunger
 	}
 	if config.State.Thirst > 0 {
-		c.TemporalState.Thirst = config.State.Thirst
+		c.State.Thirst = config.State.Thirst
 	}
 	if config.State.Fatigue > 0 {
-		c.TemporalState.Fatigue = config.State.Fatigue
+		c.State.Fatigue = config.State.Fatigue
 	}
 	
 	if config.State.Hygiene > 0 {
-		c.TemporalState.Hygiene = config.State.Hygiene
+		c.State.Hygiene = config.State.Hygiene
 	} else {
-		c.TemporalState.Hygiene = 100.0
+		c.State.Hygiene = 100.0
 	}
-	if config.State.Miccionate > 0 {
-		c.TemporalState.Miccionate = config.State.Miccionate
+	if config.State.BladderLevel > 0 {
+		c.State.BladderLevel = config.State.BladderLevel
 	}
-	if config.State.Defecate > 0 {
-		c.TemporalState.Defecate = config.State.Defecate
+	if config.State.BowelLevel > 0 {
+		c.State.BowelLevel = config.State.BowelLevel
 	}
 
-	c.TemporalState.Sanity = 100.0
+	c.State.Sanity = 100.0
 	c.BodyTemperature = 37.0
 	c.PreferredTemperature = 37.0
 	
@@ -235,14 +235,14 @@ func NewCharacter(x, y float64, config *EntityConfig, level int, isPlayer bool, 
 
 	// Runtime health finalization and clamping
 	if config.State.HealthPoints > 0 {
-		c.TemporalState.HealthPoints = c.calculateStat(config.State.HealthPoints, c.Level)
-	} else if c.TemporalState.HealthPoints == 0 {
-		c.TemporalState.HealthPoints = c.TemporalState.MaxHealthPoints
+		c.State.HealthPoints = c.calculateStat(config.State.HealthPoints, c.Level)
+	} else if c.State.HealthPoints == 0 {
+		c.State.HealthPoints = c.State.MaxHealthPoints
 	}
 	
 	// Final clamping to ensure we don't exceed max health from attributes
-	if c.TemporalState.HealthPoints > c.TemporalState.MaxHealthPoints {
-		c.TemporalState.HealthPoints = c.TemporalState.MaxHealthPoints
+	if c.State.HealthPoints > c.State.MaxHealthPoints {
+		c.State.HealthPoints = c.State.MaxHealthPoints
 	}
 
 	c.AttackCooldown = c.BaseAttackCooldown

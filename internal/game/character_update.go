@@ -58,27 +58,27 @@ func (c *Character) DrawUI(game *Game, screen engine.Image, textRenderer engine.
 func (c *Character) updatePlayer(ctx *SystemContext) {
 	worldObstacles := ctx.World.Obstacles
 	mapW, mapH := ctx.World.CurrentMapType.MapWidth, ctx.World.CurrentMapType.MapHeight
-	if c.State == ActorCrouching || c.IsIncapacitated() { return }
+	if c.ActionState == ActorCrouching || c.IsIncapacitated() { return }
 
-	if c.State == ActorDead {
+	if c.ActionState == ActorDead {
 		if c.DeadTimer == 0 { c.X, c.Y = findSafePosition(c.X, c.Y, c.GetCollisionCircle(), worldObstacles) }
 		c.DeadTimer++
 		return
 	}
 
 	if c.HitTimer > 0 { c.HitTimer-- }
-	if c.State == ActorAttacking {
+	if c.ActionState == ActorAttacking {
 		if c.Tick == 15 { c.CheckAttackHits(ctx, c.PendingSkill) }
-		if c.Tick >= 30 { c.State = ActorIdle; c.PendingSkill = "" }
+		if c.Tick >= 30 { c.ActionState = ActorIdle; c.PendingSkill = "" }
 		return
 	}
-	if c.State == ActorDrinking || c.State == ActorEating {
-		if c.Tick >= 30 { c.State = ActorIdle }
+	if c.ActionState == ActorDrinking || c.ActionState == ActorEating {
+		if c.Tick >= 30 { c.ActionState = ActorIdle }
 		return
 	}
-	if c.State == ActorChopping || c.State == ActorDigging || c.State == ActorForaging {
+	if c.ActionState == ActorChopping || c.ActionState == ActorDigging || c.ActionState == ActorForaging {
 		if c.Tick == 15 { c.CheckAttackHits(ctx, "") }
-		if c.Tick >= 30 { c.State = ActorIdle }
+		if c.Tick >= 30 { c.ActionState = ActorIdle }
 		return
 	}
 
@@ -91,16 +91,16 @@ func (c *Character) updatePlayer(ctx *SystemContext) {
 	if c.IsPlayerControlled && !simMode {
 		if ctx.Input != nil {
 			if ctx.Input.IsKeyJustPressed(ctx.Settings.GetKey("rest")) {
-				if c.State == ActorResting { c.State = ActorIdle } else { c.State = ActorResting; c.Tick = 0 }
+				if c.ActionState == ActorResting { c.ActionState = ActorIdle } else { c.ActionState = ActorResting; c.Tick = 0 }
 				return
 			}
-			if c.State == ActorResting {
+			if c.ActionState == ActorResting {
 				if ctx.Input.IsKeyPressed(ctx.Settings.GetKey("move_up")) || ctx.Input.IsKeyPressed(engine.KeyUp) || 
 				   ctx.Input.IsKeyPressed(ctx.Settings.GetKey("move_left")) || ctx.Input.IsKeyPressed(engine.KeyLeft) || 
 				   ctx.Input.IsKeyPressed(ctx.Settings.GetKey("move_down")) || ctx.Input.IsKeyPressed(engine.KeyDown) || 
 				   ctx.Input.IsKeyPressed(ctx.Settings.GetKey("move_right")) || ctx.Input.IsKeyPressed(engine.KeyRight) || 
 				   ctx.Input.IsKeyPressed(ctx.Settings.GetKey("attack")) {
-					c.State = ActorIdle
+					c.ActionState = ActorIdle
 				} else { return }
 			}
 			if ctx.Input.IsKeyPressed(ctx.Settings.GetKey("move_up")) || ctx.Input.IsKeyPressed(engine.KeyUp) { dy -= 1 }
@@ -113,21 +113,21 @@ func (c *Character) updatePlayer(ctx *SystemContext) {
 						for _, action := range o.Archetype.Actions {
 							if action.Type == ActionHeal && action.RequiresInteraction {
 								if math.Sqrt(math.Pow(c.X-o.X, 2) + math.Pow(c.Y-o.Y, 2)) < 1.5 {
-									if action.Amount >= 999 { c.TemporalState.HealthPoints = c.TemporalState.MaxHealthPoints } else { c.Heal(action.Amount) }
+									if action.Amount >= 999 { c.State.HealthPoints = c.State.MaxHealthPoints } else { c.Heal(action.Amount) }
 									o.CooldownTicks = int(o.Archetype.CooldownTime * 3600)
 									ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{ Text: fmt.Sprintf("+%d", action.Amount), X: c.X, Y: c.Y, Life: 45, Color: ColorHeal })
-									c.State, c.Tick = ActorDrinking, 0
+									c.ActionState, c.Tick = ActorDrinking, 0
 									return
 								}
 							} else if action.Type == ActionBath && action.RequiresInteraction {
 								if math.Sqrt(math.Pow(c.X-o.X, 2) + math.Pow(c.Y-o.Y, 2)) < 1.5 {
-									c.State, c.Tick = ActorBathing, 0
+									c.ActionState, c.Tick = ActorBathing, 0
 									o.CooldownTicks = 600
 									return
 								}
 							} else if action.Type == ActionAlleviate && action.RequiresInteraction {
 								if math.Sqrt(math.Pow(c.X-o.X, 2) + math.Pow(c.Y-o.Y, 2)) < 1.5 {
-									c.State, c.Tick = ActorRelieving, 0
+									c.ActionState, c.Tick = ActorRelieving, 0
 									o.CooldownTicks = 300
 									return
 								}
@@ -135,7 +135,7 @@ func (c *Character) updatePlayer(ctx *SystemContext) {
 						}
 					}
 				}
-				c.State, c.Tick, c.PendingSkill = ActorAttacking, 0, ""
+				c.ActionState, c.Tick, c.PendingSkill = ActorAttacking, 0, ""
 				if ctx.Audio != nil && c.Config != nil {
 					prefix := c.Config.PlayableCharacter
 					if prefix == "" { prefix = c.Config.ID }
@@ -144,7 +144,7 @@ func (c *Character) updatePlayer(ctx *SystemContext) {
 				return
 			}
 			if ctx.Input.IsKeyJustPressed(ctx.Settings.GetKey("punch")) {
-				c.State, c.Tick, c.PendingSkill = ActorAttacking, 0, AttackPunch
+				c.ActionState, c.Tick, c.PendingSkill = ActorAttacking, 0, AttackPunch
 				if ctx.Audio != nil && c.Config != nil {
 					prefix := c.Config.PlayableCharacter
 					if prefix == "" { prefix = c.Config.ID }
@@ -153,7 +153,7 @@ func (c *Character) updatePlayer(ctx *SystemContext) {
 				return
 			}
 			if ctx.Input.IsKeyJustPressed(ctx.Settings.GetKey("slap")) {
-				c.State, c.Tick, c.PendingSkill = ActorAttacking, 0, AttackSlap
+				c.ActionState, c.Tick, c.PendingSkill = ActorAttacking, 0, AttackSlap
 				if ctx.Audio != nil && c.Config != nil {
 					prefix := c.Config.PlayableCharacter
 					if prefix == "" { prefix = c.Config.ID }
@@ -175,7 +175,7 @@ func (c *Character) updatePlayer(ctx *SystemContext) {
 					}
 				}
 				if isAxeEquipped { 
-					c.State, c.Tick = ActorChopping, 0
+					c.ActionState, c.Tick = ActorChopping, 0
 					c.CheckAttackHits(ctx, "") // Instant feedback / hit on first frame
 					return 
 				} else if ctx.Log != nil { 
@@ -198,10 +198,10 @@ func (c *Character) updatePlayer(ctx *SystemContext) {
 						}
 					}
 				}
-				if isPikeEquipped { c.State, c.Tick = ActorDigging, 0; return } else if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s: I don't have a pike!", c.Name), LogNPC) }
+				if isPikeEquipped { c.ActionState, c.Tick = ActorDigging, 0; return } else if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s: I don't have a pike!", c.Name), LogNPC) }
 			}
 			if ctx.Input.IsKeyJustPressed(ctx.Settings.GetKey("forage")) {
-				c.State, c.Tick = ActorForaging, 0
+				c.ActionState, c.Tick = ActorForaging, 0
 				return
 			}
 		}
@@ -210,17 +210,17 @@ func (c *Character) updatePlayer(ctx *SystemContext) {
 			mag := math.Sqrt(dx*dx + dy*dy)
 			mvX, mvY := (dx/mag)*c.Speed*c.GetSpeedModifier(ctx), (dy/mag)*c.Speed*c.GetSpeedModifier(ctx)
 			if !c.checkCollisionAt(c.X+mvX, c.Y+mvY, worldObstacles) {
-				c.X, c.Y, c.State = c.X+mvX, c.Y+mvY, ActorWalking
+				c.X, c.Y, c.ActionState = c.X+mvX, c.Y+mvY, ActorWalking
 				if c.Tick%30 == 0 && ctx.Audio != nil {
 					sound := "footstep_grass"
 					if c.CurrentTile == "water.png" || c.CurrentTile == "dark_water.png" { sound = "footstep_water" }
 					if c.CurrentTile == "paved_ground.png" || c.CurrentTile == "big_stones.png" { sound = "footstep_stone" }
 					ctx.Audio.PlayRandomSound(sound)
 				}
-			} else { c.State, c.Tick = ActorIdle, 0 }
+			} else { c.ActionState, c.Tick = ActorIdle, 0 }
 			c.updateFacing(dx, dy)
-		} else if c.State == ActorWalking { 
-			c.State, c.Tick = ActorIdle, 0 
+		} else if c.ActionState == ActorWalking { 
+			c.ActionState, c.Tick = ActorIdle, 0 
 		}
 		c.clampToMap(mapW, mapH)
 	} else { c.updateAI(ctx) }

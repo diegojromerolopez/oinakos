@@ -58,19 +58,19 @@ func TestPlayableCharacterXPAndLevelUp(t *testing.T) {
 func TestPlayableCharacterTakeDamage(t *testing.T) {
 	ctx := NewTestContext()
 	mc := &Character{Actor: Actor{
-		TemporalState: TemporalState{
+		State: State{
 			HealthPoints:    100,
 			MaxHealthPoints: 100,
 		},
 		Config: &EntityConfig{ID: "player"},
 	}}
 	mc.TakeDamage(20, nil, ctx)
-	if mc.TemporalState.HealthPoints != 80 {
-		t.Errorf("Health after damage: got %d, want 80", mc.TemporalState.HealthPoints)
+	if mc.State.HealthPoints != 80 {
+		t.Errorf("Health after damage: got %d, want 80", mc.State.HealthPoints)
 	}
 	mc.TakeDamage(80, nil, ctx)
-	if mc.TemporalState.HealthPoints != 0 || mc.State != ActorIncapacitated {
-		t.Errorf("Health after fatal damage: got %d, state=%v, want 0, state=ActorIncapacitated", mc.TemporalState.HealthPoints, mc.State)
+	if mc.State.HealthPoints != 0 || mc.ActionState != ActorIncapacitated {
+		t.Errorf("Health after fatal damage: got %d, state=%v, want 0, state=ActorIncapacitated", mc.State.HealthPoints, mc.ActionState)
 	}
 	if !mc.IsAlive() {
 		t.Error("Character should still be 'alive' (incapacitated) at 0 HP")
@@ -78,8 +78,8 @@ func TestPlayableCharacterTakeDamage(t *testing.T) {
 
 	// Death threshold (-10% of 100 = -10)
 	mc.TakeDamage(10, nil, ctx)
-	if mc.TemporalState.HealthPoints != -10 || mc.State != ActorDead {
-		t.Errorf("Health after irremediable damage: got %d, state=%v, want -10, state=ActorDead", mc.TemporalState.HealthPoints, mc.State)
+	if mc.State.HealthPoints != -10 || mc.ActionState != ActorDead {
+		t.Errorf("Health after irremediable damage: got %d, state=%v, want -10, state=ActorDead", mc.State.HealthPoints, mc.ActionState)
 	}
 	if mc.IsAlive() {
 		t.Error("Character should be truly dead at -10 HP")
@@ -115,7 +115,7 @@ func TestPlayableCharacterCheckAttackHits(t *testing.T) {
 	mc.Weapon = &Weapon{Name: "TestWeapon", Damage: Damage{Min: 10, Max: 10}}
 	mc.Facing = DirSE
 
-	npc := &Character{Actor: Actor{X: 1, Y: 0.5, State: ActorIdle}}
+	npc := &Character{Actor: Actor{X: 1, Y: 0.5, ActionState: ActorIdle}}
 	ctx.World.Characters = []*Character{npc}
 	ctx.World.PlayableCharacter = mc
 	mc.CheckAttackHits(ctx, "")
@@ -143,33 +143,33 @@ func TestPlayableCharacterCollision(t *testing.T) {
 func TestPlayableCharacterUpdate_Full(t *testing.T) {
 	ctx := NewTestContext()
 	mc := NewCharacter(0, 0, nil, 1, true, nil)
-	mc.TemporalState.HealthPoints = mc.TemporalState.MaxHealthPoints
+	mc.State.HealthPoints = mc.State.MaxHealthPoints
 	ctx.World.PlayableCharacter = mc
 	mockInput := ctx.Input.(*MockInputManager)
 
 	// Update when dead
-	mc.State = ActorDead
+	mc.ActionState = ActorDead
 	mc.Update(ctx)
-	if mc.State != ActorDead {
+	if mc.ActionState != ActorDead {
 		t.Error("Dead mc should stay dead")
 	}
 
 	// Update drinking
-	mc.State = ActorDrinking
+	mc.ActionState = ActorDrinking
 	mc.Tick = 0
-	mc.TemporalState.Thirst = 50.0
+	mc.State.Thirst = 50.0
 	mc.Update(ctx)
-	if mc.State != ActorDrinking {
+	if mc.ActionState != ActorDrinking {
 		t.Error("Should stay drinking")
 	}
 	mc.Tick = 60
 	mc.Update(ctx)
-	if mc.State != ActorIdle {
+	if mc.ActionState != ActorIdle {
 		t.Error("Should be idle after drink timer")
 	}
 
 	// Update attacking
-	mc.State = ActorAttacking
+	mc.ActionState = ActorAttacking
 	mc.Tick = 14
 	mc.Update(ctx)
 	if mc.Tick != 15 {
@@ -177,16 +177,16 @@ func TestPlayableCharacterUpdate_Full(t *testing.T) {
 	}
 	mc.Tick = 30
 	mc.Update(ctx)
-	if mc.State != ActorIdle {
+	if mc.ActionState != ActorIdle {
 		t.Error("Should be idle after attack anim")
 	}
 
 	// Movement Input checks
-	mc.State = ActorIdle
+	mc.ActionState = ActorIdle
 	mockInput.PressedKeys[engine.KeyW] = true
 	mockInput.PressedKeys[engine.KeyD] = true
 	mc.Update(ctx)
-	if mc.State != ActorWalking {
+	if mc.ActionState != ActorWalking {
 		t.Error("Should be walking on input")
 	}
 	if mc.Facing != DirNE {

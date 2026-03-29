@@ -58,6 +58,9 @@ func (g *Game) initAIManager() {
 			url = "https://api-inference.huggingface.co/v1"
 		}
 		provider = NewOpenAIProvider(g.settings.HuggingFaceApiKey, url, model)
+	case "bridge":
+		provider = NewAgentBridgeAIProvider()
+		model = "agent-bridge"
 	default:
 		provider = &NoopAIProvider{}
 	}

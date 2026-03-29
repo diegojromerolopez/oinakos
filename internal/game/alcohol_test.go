@@ -15,7 +15,7 @@ func TestAlcohol_Drunkenness(t *testing.T) {
 			Intellect: 50,
 			Wisdom: 50,
 		},
-		TemporalState: TemporalState{
+		State: State{
 			HealthPoints: 100,
 			MaxHealthPoints: 100,
 		},
@@ -55,14 +55,14 @@ func TestAlcohol_Drunkenness(t *testing.T) {
 		a.ConsumeItem(beer, ctx)
 	}
 	
-	if a.TemporalState.AlcoholLevel != 40.0 {
-		t.Errorf("AlcoholLevel: got %v, want 40.0", a.TemporalState.AlcoholLevel)
+	if a.State.AlcoholLevel != 40.0 {
+		t.Errorf("AlcoholLevel: got %v, want 40.0", a.State.AlcoholLevel)
 	}
 	
 	// Since Health is 1, a.CheckAttributeSuccess("health", 0) should fail with 99% probability.
 	// If it didn't fail, we force it for the test.
-	if !a.TemporalState.IsDrunk {
-		a.TemporalState.IsDrunk = true
+	if !a.State.IsDrunk {
+		a.State.IsDrunk = true
 	}
 	
 	// Sync stats to apply drunken effect
@@ -81,12 +81,12 @@ func TestAlcohol_Drunkenness(t *testing.T) {
 	}
 
 	// Test decay
-	a.TemporalState.AlcoholLevel = 0.001
+	a.State.AlcoholLevel = 0.001
 	a.updateNeeds(ctx)
-	if a.TemporalState.AlcoholLevel != 0 {
-		t.Errorf("AlcoholLevel after decay: got %v, want 0", a.TemporalState.AlcoholLevel)
+	if a.State.AlcoholLevel != 0 {
+		t.Errorf("AlcoholLevel after decay: got %v, want 0", a.State.AlcoholLevel)
 	}
-	if a.TemporalState.IsDrunk {
+	if a.State.IsDrunk {
 		t.Errorf("IsDrunk after sobriety should be false")
 	}
 }

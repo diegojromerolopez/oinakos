@@ -37,7 +37,7 @@ func TestCharacterAI_Wander(t *testing.T) {
 	initialX, initialY := npc.X, npc.Y
 	npc.updateAI(NewTestContext()) // Should wander since no targets
 	
-	if npc.X == initialX && npc.Y == initialY && npc.State != ActorWalking {
+	if npc.X == initialX && npc.Y == initialY && npc.ActionState != ActorWalking {
 		t.Errorf("Wander behavior did not move NPC")
 	}
 }
@@ -74,15 +74,15 @@ func TestCharacterAI_Flee(t *testing.T) {
 	ctx := setupTestGame()
 	mc := ctx.playableCharacter
 	mc.X, mc.Y = 5.0, 0.0
-	mc.TemporalState.HealthPoints = 100
-	mc.TemporalState.MaxHealthPoints = 100
+	mc.State.HealthPoints = 100
+	mc.State.MaxHealthPoints = 100
 	
 	npc := NewCharacter(0.0, 0.0, nil, 1, false, nil)
 	npc.Alignment = AlignmentEnemy
 	npc.Behavior = BehaviorFlee
 	npc.Speed = 1.0
-	npc.TemporalState.HealthPoints = 100
-	npc.TemporalState.MaxHealthPoints = 100
+	npc.State.HealthPoints = 100
+	npc.State.MaxHealthPoints = 100
 	npc.Speed = 1.0
 	npc.TargetActor = &mc.Actor // Explicitly set target to flee from
 	
@@ -136,7 +136,7 @@ func TestCharacterAI_Looting(t *testing.T) {
 func TestCharacterAI_Exhaustion(t *testing.T) {
 	ctx := setupTestGame()
 	npc := NewCharacter(0, 0, nil, 1, false, nil)
-	npc.TemporalState.Fatigue = 95.0
+	npc.State.Fatigue = 95.0
 	
 	sysCtx := NewTestContext()
 	sysCtx.World = ctx.World
@@ -145,8 +145,8 @@ func TestCharacterAI_Exhaustion(t *testing.T) {
 	}
 	
 	npc.updateAI(sysCtx)
-	if npc.State != ActorResting {
-		t.Errorf("Low energy NPC did not enter Resting state. state=%v", npc.State)
+	if npc.ActionState != ActorResting {
+		t.Errorf("Low energy NPC did not enter Resting state. state=%v", npc.ActionState)
 	}
 }
 

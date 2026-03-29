@@ -7,7 +7,6 @@ health: 1
 passable: true
 is_hazard: true
 frame_count: 1
-scale: 0.8
 actions:
   - type: soiling
     amount: 15

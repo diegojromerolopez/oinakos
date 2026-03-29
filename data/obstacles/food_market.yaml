@@ -3,7 +3,6 @@ type: stall
 destructible: true
 health: 500
 description: "A stall selling questionable meats and rot-resistant vegetables."
-scale: 1.250
 footprint:
   - x: 1.2
     y: 1.2

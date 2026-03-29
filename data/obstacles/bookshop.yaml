@@ -2,7 +2,6 @@ name: "The Forbidden Tome"
 type: building
 destructible: false
 description: "A dark stone building housing dusty manuscripts and forbidden lore."
-scale: 1.250
 footprint:
   - x: -1.0
     y: 2.81

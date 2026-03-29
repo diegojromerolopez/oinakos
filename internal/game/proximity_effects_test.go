@@ -8,8 +8,8 @@ import (
 func TestProximityHazards(t *testing.T) {
 	ctx := NewTestContext()
 	mc := NewCharacter(0, 0, nil, 1, true, nil)
-	mc.TemporalState.HealthPoints = 100
-	mc.TemporalState.MaxHealthPoints = 100
+	mc.State.HealthPoints = 100
+	mc.State.MaxHealthPoints = 100
 	ctx.World.PlayableCharacter = mc
 	mm := NewMechanicsManager(&Game{}) // We still need a Game for mm, but we pass ctx to its methods
 
@@ -32,14 +32,14 @@ func TestProximityHazards(t *testing.T) {
 	// Should take damage.
 	mm.UpdateProximityEffects(ctx)
 
-	if mc.TemporalState.HealthPoints != 90 {
-		t.Errorf("Expected health 90, got %d", mc.TemporalState.HealthPoints)
+	if mc.State.HealthPoints != 90 {
+		t.Errorf("Expected health 90, got %d", mc.State.HealthPoints)
 	}
 
 	// 2. Test Interval Timer (should not take damage again immediately)
 	mm.UpdateProximityEffects(ctx)
-	if mc.TemporalState.HealthPoints != 90 {
-		t.Errorf("Expected health to remain 90 due to interval, got %d", mc.TemporalState.HealthPoints)
+	if mc.State.HealthPoints != 90 {
+		t.Errorf("Expected health to remain 90 due to interval, got %d", mc.State.HealthPoints)
 	}
 
 	// Tick the obstacle and timer
@@ -51,8 +51,8 @@ func TestProximityHazards(t *testing.T) {
 	// Manually force timer to 0 to test re-application
 	campfire.EffectTimers[mc] = 0
 	mm.UpdateProximityEffects(ctx)
-	if mc.TemporalState.HealthPoints != 80 {
-		t.Errorf("Expected health 80 after timer reset, got %d", mc.TemporalState.HealthPoints)
+	if mc.State.HealthPoints != 80 {
+		t.Errorf("Expected health 80 after timer reset, got %d", mc.State.HealthPoints)
 	}
 
 	// 3. Test Contact Hazard (no aura)
@@ -74,10 +74,10 @@ func TestProximityHazards(t *testing.T) {
 	spikes := NewObstacle("spikes1", 0, 0, spikeArchetype)
 	ctx.World.Obstacles = []*Obstacle{spikes}
 
-	mc.TemporalState.HealthPoints = 100
+	mc.State.HealthPoints = 100
 	mm.UpdateProximityEffects(ctx)
-	if mc.TemporalState.HealthPoints != 95 {
-		t.Errorf("Expected health 95 from contact hazard, got %d", mc.TemporalState.HealthPoints)
+	if mc.State.HealthPoints != 95 {
+		t.Errorf("Expected health 95 from contact hazard, got %d", mc.State.HealthPoints)
 	}
 
 	// Move player away from spikes
@@ -85,16 +85,16 @@ func TestProximityHazards(t *testing.T) {
 	mc.Y = 10.0
 	spikes.EffectTimers[mc] = 0
 	mm.UpdateProximityEffects(ctx)
-	if mc.TemporalState.HealthPoints != 95 {
-		t.Errorf("Expected health 95 (no damage when away), got %d", mc.TemporalState.HealthPoints)
+	if mc.State.HealthPoints != 95 {
+		t.Errorf("Expected health 95 (no damage when away), got %d", mc.State.HealthPoints)
 	}
 }
 
 func TestProximityHealing(t *testing.T) {
 	ctx := NewTestContext()
 	mc := NewCharacter(0, 0, nil, 1, true, nil)
-	mc.TemporalState.HealthPoints = 50
-	mc.TemporalState.MaxHealthPoints = 100
+	mc.State.HealthPoints = 50
+	mc.State.MaxHealthPoints = 100
 	ctx.World.PlayableCharacter = mc
 	mm := NewMechanicsManager(&Game{})
 
@@ -114,8 +114,8 @@ func TestProximityHealing(t *testing.T) {
 	ctx.World.Obstacles = []*Obstacle{shrine}
 
 	mm.UpdateProximityEffects(ctx)
-	if mc.TemporalState.HealthPoints != 60 {
-		t.Errorf("Expected health 60, got %d", mc.TemporalState.HealthPoints)
+	if mc.State.HealthPoints != 60 {
+		t.Errorf("Expected health 60, got %d", mc.State.HealthPoints)
 	}
 
 	// 2. Test Alignment Limit (Enemy-only healing shouldn't heal player)
@@ -133,11 +133,11 @@ func TestProximityHealing(t *testing.T) {
 	}
 	altar := NewObstacle("altar1", 0, 0, unholyAltarArch)
 	ctx.World.Obstacles = []*Obstacle{altar}
-	mc.TemporalState.HealthPoints = 50
+	mc.State.HealthPoints = 50
 
 	mm.UpdateProximityEffects(ctx)
-	if mc.TemporalState.HealthPoints != 50 {
-		t.Errorf("Expected health 50 (player is not an enemy), got %d", mc.TemporalState.HealthPoints)
+	if mc.State.HealthPoints != 50 {
+		t.Errorf("Expected health 50 (player is not an enemy), got %d", mc.State.HealthPoints)
 	}
 
 	// 3. Test Alignment Limit (Ally healing should heal player)
@@ -156,16 +156,16 @@ func TestProximityHealing(t *testing.T) {
 	statue := NewObstacle("statue1", 0, 0, holyStatueArch)
 	ctx.World.Obstacles = []*Obstacle{statue}
 	mm.UpdateProximityEffects(ctx)
-	if mc.TemporalState.HealthPoints != 70 {
-		t.Errorf("Expected health 70, got %d", mc.TemporalState.HealthPoints)
+	if mc.State.HealthPoints != 70 {
+		t.Errorf("Expected health 70, got %d", mc.State.HealthPoints)
 	}
 }
 
 func TestInteractiveHealing(t *testing.T) {
 	ctx := NewTestContext()
 	mc := NewCharacter(0, 0, nil, 1, true, nil)
-	mc.TemporalState.HealthPoints = 10
-	mc.TemporalState.MaxHealthPoints = 100
+	mc.State.HealthPoints = 10
+	mc.State.MaxHealthPoints = 100
 	ctx.World.PlayableCharacter = mc
 
 	wellArchetype := &ObstacleArchetype{
@@ -186,15 +186,15 @@ func TestInteractiveHealing(t *testing.T) {
 	mockInput := ctx.Input.(*MockInputManager)
 	// No key pressed -> no heal
 	mc.Update(ctx)
-	if mc.TemporalState.HealthPoints != 10 {
-		t.Errorf("Expected health 10, got %d", mc.TemporalState.HealthPoints)
+	if mc.State.HealthPoints != 10 {
+		t.Errorf("Expected health 10, got %d", mc.State.HealthPoints)
 	}
 
 	// Press Space -> Heal
 	mockInput.PressedKeys[engine.KeySpace] = true
 	mc.Update(ctx)
-	if mc.TemporalState.HealthPoints != 100 {
-		t.Errorf("Expected health 100 after using well, got %d", mc.TemporalState.HealthPoints)
+	if mc.State.HealthPoints != 100 {
+		t.Errorf("Expected health 100 after using well, got %d", mc.State.HealthPoints)
 	}
 	if well.CooldownTicks != 60 {
 		t.Errorf("Expected cooldown 60 ticks, got %d", well.CooldownTicks)
@@ -211,12 +211,12 @@ func TestNPCProximityEffects(t *testing.T) {
 		Actor: Actor{
 			X: 0,
 			Y: 0,
-			TemporalState: TemporalState{
+			State: State{
 				HealthPoints:    50,
 				MaxHealthPoints: 100,
 			},
-			State:  ActorIdle,
-			Config: arch,
+			ActionState: ActorIdle,
+			Config:      arch,
 		},
 	}
 	ctx.World.Characters = []*Character{n}
@@ -237,8 +237,8 @@ func TestNPCProximityEffects(t *testing.T) {
 	ctx.World.Obstacles = []*Obstacle{fire}
 
 	mm.UpdateProximityEffects(ctx)
-	if n.TemporalState.HealthPoints != 40 {
-		t.Errorf("NPC should have 40 HP, got %d", n.TemporalState.HealthPoints)
+	if n.State.HealthPoints != 40 {
+		t.Errorf("NPC should have 40 HP, got %d", n.State.HealthPoints)
 	}
 
 	// 2. Healing Effect on NPC
@@ -254,7 +254,7 @@ func TestNPCProximityEffects(t *testing.T) {
 	well := NewObstacle("w1", 0, 0, wellArch)
 	ctx.World.Obstacles = []*Obstacle{well}
 	mm.UpdateProximityEffects(ctx)
-	if n.TemporalState.HealthPoints != 45 {
-		t.Errorf("NPC should have 45 HP, got %d", n.TemporalState.HealthPoints)
+	if n.State.HealthPoints != 45 {
+		t.Errorf("NPC should have 45 HP, got %d", n.State.HealthPoints)
 	}
 }

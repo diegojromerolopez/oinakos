@@ -2,7 +2,6 @@ name: "Burial Mound"
 type: terrain
 destructible: false
 description: "An ancient burial mound overgrown with moss and shadows."
-scale: 1.250
 footprint:
   - x: 2.61
     y: 2.64

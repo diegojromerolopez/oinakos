@@ -55,7 +55,7 @@ height_px: 1000
 	}
 
 	// 5. Test Entity Cleanup (Corpses should be retained, others cleaned up)
-	g.characters = []*Character{{Actor: Actor{State: ActorDead}}}
+	g.characters = []*Character{{Actor: Actor{ActionState: ActorDead}}}
 	g.projectiles = []*Projectile{{Alive: false}}
 	g.floatingTexts = []*FloatingText{{Life: 0}}
 
@@ -75,16 +75,16 @@ func TestPlayableCharacterUpdate_Detailed(t *testing.T) {
 	ctx.World.PlayableCharacter = mc
 
 	// Test drinking state
-	mc.State = ActorDrinking
+	mc.ActionState = ActorDrinking
 	mc.Tick = 0
-	mc.TemporalState.Thirst = 50.0 // Ensure it doesn't immediately finish
+	mc.State.Thirst = 50.0 // Ensure it doesn't immediately finish
 	mc.Update(ctx)
-	if mc.State != ActorDrinking {
+	if mc.ActionState != ActorDrinking {
 		t.Error("Should stay in drinking state")
 	}
 	mc.Tick = 60
 	mc.Update(ctx)
-	if mc.State != ActorIdle {
+	if mc.ActionState != ActorIdle {
 		t.Error("Should transition to idle after drinking")
 	}
 }
@@ -153,11 +153,11 @@ height_px: 1000
 func TestNPCUpdate_Detailed(t *testing.T) {
 	ctx := NewTestContext()
 	n := NewCharacter(0, 0, nil, 1, false, nil)
-	n.TemporalState.HealthPoints = 100
+	n.State.HealthPoints = 100
 	n.Weapon = WeaponTizon
 	n.Speed = 1.0 // Manually set speed since Archetype is nil
 	mc := NewCharacter(10, 10, nil, 1, true, nil)
-	mc.TemporalState.HealthPoints = 100
+	mc.State.HealthPoints = 100
 	ctx.World.PlayableCharacter = mc
 	ctx.World.Characters = []*Character{n}
 
@@ -188,8 +188,8 @@ func TestNPCUpdate_Detailed(t *testing.T) {
 	n.TargetActor = &otherNpc.Actor // Ensure it still targets otherNpc
 	n.AttackTimer = 0
 	n.Update(ctx)
-	if n.State != ActorAttacking {
-		t.Errorf("NPC should be attacking, got state %v", n.State)
+	if n.ActionState != ActorAttacking {
+		t.Errorf("NPC should be attacking, got state %v", n.ActionState)
 	}
 }
 
@@ -235,8 +235,8 @@ func TestNoSlidingMovement(t *testing.T) {
 		t.Errorf("Character should have stopped at (%f, %f), but moved to (%f, %f)", oldX, oldY, mc.X, mc.Y)
 	}
 
-	if mc.State != ActorIdle {
-		t.Errorf("Character should be ActorIdle on collision, got %v", mc.State)
+	if mc.ActionState != ActorIdle {
+		t.Errorf("Character should be ActorIdle on collision, got %v", mc.ActionState)
 	}
 	
 	if mc.Tick != 0 {
@@ -247,16 +247,16 @@ func TestNoSlidingMovement(t *testing.T) {
 func TestNPCHitBranch_Detailed(t *testing.T) {
 	ctx := NewTestContext()
 	n := NewCharacter(0, 0, nil, 1, false, nil)
-	n.TemporalState.HealthPoints = 100
+	n.State.HealthPoints = 100
 	n.Weapon = WeaponTizon
 	mc := NewCharacter(1, 0, nil, 1, true, nil)
-	mc.TemporalState.HealthPoints = 100
+	mc.State.HealthPoints = 100
 	ctx.World.PlayableCharacter = mc
 	ctx.World.Characters = []*Character{n}
 
 	// Force a hit
 	n.AttackTimer = 0
-	n.State = ActorIdle
+	n.ActionState = ActorIdle
 	n.BaseAttack = 1000
 	mc.BaseDefense = 0
 
@@ -266,20 +266,20 @@ func TestNPCHitBranch_Detailed(t *testing.T) {
 func TestPlayableCharacterTakeDamageDetailed(t *testing.T) {
 	ctx := NewTestContext()
 	mc := NewCharacter(0, 0, nil, 1, true, nil)
-	mc.TemporalState.HealthPoints = 100
-	mc.TemporalState.MaxHealthPoints = 100
+	mc.State.HealthPoints = 100
+	mc.State.MaxHealthPoints = 100
 	mc.TakeDamage(150, nil, ctx)
-	if mc.TemporalState.HealthPoints != -10 || mc.State != ActorDead {
-		t.Errorf("Should be dead, health=%d, state=%v", mc.TemporalState.HealthPoints, mc.State)
+	if mc.State.HealthPoints != -10 || mc.ActionState != ActorDead {
+		t.Errorf("Should be dead, health=%d, state=%v", mc.State.HealthPoints, mc.ActionState)
 	}
 
 	// Take damage while dead
 	mc.TakeDamage(10, nil, ctx)
-	if mc.TemporalState.HealthPoints != -10 { // Health should stay at the dead threshold
-		t.Errorf("Health should stay at -10 (dead threshold), got %d", mc.TemporalState.HealthPoints)
+	if mc.State.HealthPoints != -10 { // Health should stay at the dead threshold
+		t.Errorf("Health should stay at -10 (dead threshold), got %d", mc.State.HealthPoints)
 	}
-	if mc.State != ActorDead {
-		t.Errorf("State should remain ActorDead, got %v", mc.State)
+	if mc.ActionState != ActorDead {
+		t.Errorf("State should remain ActorDead, got %v", mc.ActionState)
 	}
 }
 
@@ -366,7 +366,7 @@ spawn_frequency: 0
 	}
 
 	// Kill the boss
-	boss.State = ActorDead
+	boss.ActionState = ActorDead
 	if err := g.Update(); err != nil {
 		t.Fatal(err)
 	}
@@ -399,7 +399,7 @@ difficulty: 1
 		},
 	}, 1, false, nil)
 
-	npc.TemporalState.HealthPoints = 5
+	npc.State.HealthPoints = 5
 	g.characters = []*Character{npc}
 
 	// Deal fatal damage
@@ -409,7 +409,7 @@ difficulty: 1
 	}
 	npc.TakeDamage(100, mc, ctx)
 
-	if npc.State != ActorDead {
+	if npc.ActionState != ActorDead {
 		t.Fatalf("NPC should be dead")
 	}
 

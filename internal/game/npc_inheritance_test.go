@@ -82,8 +82,9 @@ gender: male
 	}
 	npcReg.Characters = configs
 
-	// 4. Run LoadAssets to exercise inheritance logic
+	// 4. Run inheritance and assets loading
 	graphics := &MockGraphicsInheritance{}
+	npcReg.ProcessInheritance(archReg)
 	npcReg.LoadAssets(fsys, graphics, archReg, nil, nil)
 
 	npc := npcReg.Characters["crimson_guard"]
@@ -107,6 +108,7 @@ gender: male
 		AudioDir:    "assets/audio/npcs/golden_guard", // Empty in mock FS
 	}
 	npcReg.Characters["golden_guard"] = npc2
+	npcReg.ProcessInheritance(archReg)
 	npcReg.LoadAssets(fsys, graphics, archReg, nil, nil)
 
 	if npc2.SoundID != "man_at_arms_male" {

@@ -3,7 +3,6 @@ type: building
 destructible: false
 description: An ancient place of worship.
 health: 10000
-scale: 2.344
 footprint:
   - x: 5.11
     y: -5.55

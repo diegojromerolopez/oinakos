@@ -74,7 +74,7 @@ func (g *Game) serialize() ([]byte, error) {
 		Archetype: g.playableCharacter.Config.ID,
 		X:           g.playableCharacter.X,
 		Y:           g.playableCharacter.Y,
-		TemporalState: g.playableCharacter.TemporalState,
+		State: g.playableCharacter.State,
 		XP:          g.playableCharacter.XP,
 		Level:       g.playableCharacter.Level,
 		Kills:       g.playableCharacter.Kills,
@@ -126,7 +126,7 @@ func (g *Game) serialize() ([]byte, error) {
 		npcSave := NPCSaveData{
 			X:           n.X,
 			Y:           n.Y,
-			TemporalState: n.TemporalState,
+			State: n.State,
 			Level:       n.Level,
 			Behavior:    behaviorStr,
 			Name:        n.Name,

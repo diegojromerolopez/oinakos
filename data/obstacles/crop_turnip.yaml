@@ -12,7 +12,6 @@ yield: turnip
 frame_count: 3
 frames_per_row: 3
 animation_speed: 0
-scale: 0.6
 footprint:
 - {x: -0.2, y: -0.2}
 - {x: 0.2, y: -0.2}

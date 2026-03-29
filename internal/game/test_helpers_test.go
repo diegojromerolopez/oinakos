@@ -17,8 +17,9 @@ func NewTestContext() *SystemContext {
 		Audio:      NewMockAudioManager(),
 		Registries: &RegistryContainer{
 			Archetypes: NewArchetypeRegistry(),
-			Characters:       NewCharacterRegistry(),
+			Characters: NewCharacterRegistry(),
 			Obstacles:  NewObstacleRegistry(),
+			Objects:    NewObjectRegistry(),
 		},
 		Log: func(s string, c LogCategory) {},
 		Settings: DefaultSettings(),
@@ -100,5 +101,6 @@ func setupTestGame() *Game {
 }
 
 func init() {
+	InTestMode = true
 	isTestingEnvironment = true
 }

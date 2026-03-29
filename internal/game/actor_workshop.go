@@ -8,28 +8,28 @@ import (
 
 // ProcessCooking handles the multi-tick cycle for turning raw food into cooked meals.
 func (c *Character) ProcessCooking(ctx *SystemContext) {
-	if c.State != ActorCooking { return }
+	if c.ActionState != ActorCooking { return }
 
 	// 1. Need a heat source (Campfire)
 	nearFire := false
 	for _, o := range ctx.World.Obstacles {
-		if o.Alive && strings.Contains(strings.ToLower(o.ID), "campfire") {
+		if o.Alive && o.Archetype != nil && strings.Contains(strings.ToLower(o.Archetype.ID), "campfire") {
 			dist := math.Sqrt(math.Pow(c.X-o.X, 2) + math.Pow(c.Y-o.Y, 2))
 			if dist < 2.5 { nearFire = true; break }
 		}
 	}
-	if !nearFire { c.State = ActorIdle; return }
+	if !nearFire { c.ActionState = ActorIdle; return }
 
 	if c.Tick < 300 { return } // 5 seconds to cook
 	
 	// Success check using Herbalism/Intellect
 	if !c.CheckAbilitySuccess("cook", 0) {
-		c.State, c.Tick, c.LastAIReasoning = ActorIdle, 0, "Fumbled the cooking!"
+		c.ActionState, c.Tick, c.LastAIReasoning = ActorIdle, 0, "Fumbled the cooking!"
 		ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{ Text: "Fumble!", X: c.X, Y: c.Y - 1, Life: 60, Color: ColorHarm })
 		return
 	}
 
-	c.State, c.Tick = ActorIdle, 0
+	c.ActionState, c.Tick = ActorIdle, 0
 	
 	// Find raw meat
 	foundRaw := -1
@@ -59,26 +59,27 @@ func (c *Character) ProcessCooking(ctx *SystemContext) {
 
 // ProcessWorkshop handles repairing gear, smelting, and crafting.
 func (c *Character) ProcessWorkshop(ctx *SystemContext) {
-	if c.State != ActorWorkshop { return }
+	if c.ActionState != ActorWorkshop { return }
 
 	// 1. Find nearest station
 	var station *Obstacle
 	for _, o := range ctx.World.Obstacles {
-		id := strings.ToLower(o.ID)
+		if o.Archetype == nil { continue }
+		id := strings.ToLower(o.Archetype.ID)
 		if o.Alive && (strings.Contains(id, "bench") || strings.Contains(id, "workshop") || strings.Contains(id, "anvil") || strings.Contains(id, "furnace")) {
 			dist := math.Sqrt(math.Pow(c.X-o.X, 2) + math.Pow(c.Y-o.Y, 2))
 			if dist < 2.5 { station = o; break }
 		}
 	}
-	if station == nil { c.State = ActorIdle; return }
+	if station == nil { c.ActionState = ActorIdle; return }
 
-	stationID := strings.ToLower(station.ID)
+	stationID := strings.ToLower(station.Archetype.ID)
 	isFurnace := strings.Contains(stationID, "furnace") || strings.Contains(stationID, "anvil")
 	isBench := strings.Contains(stationID, "bench") || strings.Contains(stationID, "workshop")
 
-	if c.Tick < 480 { return } // 8 seconds to work
+	if c.Tick < 480 { return }
 
-	c.State, c.Tick = ActorIdle, 0
+	c.ActionState, c.Tick = ActorIdle, 0
 
 	// 1. Try Smelting (if furnace and has ore)
 	if isFurnace {

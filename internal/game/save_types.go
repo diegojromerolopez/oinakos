@@ -13,7 +13,7 @@ type PlayerSaveData struct {
 	Archetype string                           `yaml:"archetype"`
 	X           float64                          `yaml:"x"`
 	Y           float64                          `yaml:"y"`
-	TemporalState `yaml:"state,inline"`
+	State `yaml:"state,inline"`
 	XP          int                              `yaml:"xp"`
 	Level       int                              `yaml:"level"`
 	Kills       int                              `yaml:"kills"`
@@ -38,7 +38,7 @@ type NPCSaveData struct {
 	NPCID       string                           `yaml:"npc_id,omitempty"`
 	X           float64                          `yaml:"x"`
 	Y           float64                          `yaml:"y"`
-	TemporalState `yaml:"state,inline"`
+	State `yaml:"state,inline"`
 	Level       int                              `yaml:"level"`
 	Behavior    string                           `yaml:"behavior"`
 	Name        string                           `yaml:"name,omitempty"`

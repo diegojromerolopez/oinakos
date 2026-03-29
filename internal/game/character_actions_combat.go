@@ -1,0 +1,55 @@
+package game
+
+import (
+	"fmt"
+	"math"
+	"math/rand"
+)
+
+func (c *Character) TakeDamage(amount int, attacker ActorInterface, ctx *SystemContext) {
+	c.Actor.TakeDamage(amount, attacker, ctx)
+	if c.IsAlive() && !c.IsPlayerControlled { c.handleAIReaction(attacker, ctx) }
+}
+
+func (c *Character) handleAIReaction(attacker ActorInterface, ctx *SystemContext) {
+	if attacker == nil { return }
+	act := attacker.GetActor(); c.TargetActor = act
+	if float64(c.State.HealthPoints) < float64(act.State.HealthPoints)*0.2 { c.Alignment, c.Behavior = AlignmentNeutral, BehaviorFlee
+	} else {
+		c.Alignment, c.Behavior = AlignmentEnemy, BehaviorKnightHunter
+		if c.Group != "" {
+			for _, other := range ctx.World.Characters {
+				if other == c || other.Alignment == AlignmentEnemy || !other.IsAlive() || other.Group != c.Group { continue }
+				if math.Sqrt(math.Pow(c.X-other.X, 2)+math.Pow(c.Y-other.Y, 2)) < 20.0 { other.Alignment, other.Behavior, other.TargetActor = AlignmentEnemy, BehaviorKnightHunter, act }
+			}
+		}
+	}
+}
+
+func (c *Character) executeAttack(ctx *SystemContext, isTargetPlayer bool, dx, dy float64) {
+	if c.ActionState == ActorIncapacitated { return }
+	if c.ActionState != ActorAttacking {
+		if isTargetPlayer {
+			if c.CheckAttributeSuccess("wisdom", 0) && c.Config != nil && c.Config.Dialogues != nil {
+				if bark := c.Config.Dialogues.PickCombatBark(); bark != "" && ctx.Log != nil { gLog(ctx, fmt.Sprintf("%s: %s", c.Name, bark)) }
+			}
+			if rand.Float64() < 0.3 && ctx.Audio != nil && c.Config != nil { ctx.Audio.PlayRandomSound(c.Config.SoundID + "/attack") }
+		}
+		c.ActionState, c.Tick = ActorAttacking, 0
+	}
+	if c.AttackTimer >= c.AttackCooldown {
+		c.AttackTimer = 0
+		skill := c.PendingSkill
+		if !c.IsPlayerControlled && c.TargetActor != nil {
+			if c.TargetActor.IsIncapacitated() { skill = "torture" } else if isTargetPlayer && rand.Float64() < 0.15 { skill = "restrain" }
+		}
+		if c.Weapon != nil && c.Weapon.IsRanged() && skill == "" {
+			if mag := math.Sqrt(dx*dx + dy*dy); mag > 0 {
+				pSpd := c.RawStats.ProjectileSpeed; if pSpd <= 0 { pSpd = 0.5 }
+				ctx.World.Projectiles = append(ctx.World.Projectiles, NewProjectile(c.X, c.Y, dx/mag, dy/mag, pSpd, c.GetTotalAttack(), false, 100.0))
+			}
+		} else { c.CheckAttackHits(ctx, skill) }
+	}
+}
+
+func gLog(ctx *SystemContext, msg string) { if ctx.Log != nil { ctx.Log(msg, LogNPC) } }

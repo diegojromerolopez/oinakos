@@ -16,7 +16,7 @@ func TestPlayerUpdate_Comprehensive(t *testing.T) {
 	// 1. Test Resting toggle (KeyR)
 	input.JustPressedKeys[engine.KeyR] = true
 	mc.updatePlayer(ctx)
-	if mc.State != ActorResting {
+	if mc.ActionState != ActorResting {
 		t.Error("Player should be resting after KeyR")
 	}
 	input.JustPressedKeys[engine.KeyR] = false
@@ -24,7 +24,7 @@ func TestPlayerUpdate_Comprehensive(t *testing.T) {
 	// Break rest by moving
 	input.PressedKeys[engine.KeyW] = true
 	mc.updatePlayer(ctx)
-	if mc.State != ActorWalking {
+	if mc.ActionState != ActorWalking {
 		t.Error("Player should break rest when a movement key is pressed and transition to walking")
 	}
 	input.PressedKeys[engine.KeyW] = false
@@ -41,18 +41,18 @@ func TestPlayerUpdate_Comprehensive(t *testing.T) {
 	ctx.World.Obstacles = []*Obstacle{well}
 	
 	mc.X, mc.Y = 0.5, 0.5
-	mc.TemporalState.HealthPoints = 50
-	mc.TemporalState.MaxHealthPoints = 100
+	mc.State.HealthPoints = 50
+	mc.State.MaxHealthPoints = 100
 	input.PressedKeys[engine.KeySpace] = true
 	mc.updatePlayer(ctx)
-	if mc.TemporalState.HealthPoints != 60 {
-		t.Errorf("Healing failed: got %d, want 60", mc.TemporalState.HealthPoints)
+	if mc.State.HealthPoints != 60 {
+		t.Errorf("Healing failed: got %d, want 60", mc.State.HealthPoints)
 	}
-	if mc.State != ActorDrinking {
-		t.Errorf("Expected ActorDrinking state, got %v", mc.State)
+	if mc.ActionState != ActorDrinking {
+		t.Errorf("Expected ActorDrinking state, got %v", mc.ActionState)
 	}
 	input.PressedKeys[engine.KeySpace] = false
-	mc.State = ActorIdle // Reset for next tests
+	mc.ActionState = ActorIdle // Reset for next tests
 
 	// 3. Test Axe auto-equip (KeyC)
 	axeConfig := &ObjectConfig{ID: "axe", Name: "Lumberjack Axe", Combat: &Weapon{Name: "Axe", Damage: Damage{Min: 5, Max: 5}}}
@@ -62,11 +62,11 @@ func TestPlayerUpdate_Comprehensive(t *testing.T) {
 	if mc.Weapon == nil || mc.Weapon.Name != "Axe" {
 		t.Error("Axe should be equipped automatically")
 	}
-	if mc.State != ActorChopping {
-		t.Errorf("Expected ActorChopping state, got %v", mc.State)
+	if mc.ActionState != ActorChopping {
+		t.Errorf("Expected ActorChopping state, got %v", mc.ActionState)
 	}
 	input.JustPressedKeys[engine.KeyC] = false
-	mc.State = ActorIdle
+	mc.ActionState = ActorIdle
 
 	// 4. Test Pike auto-equip (KeyV)
 	pikeConfig := &ObjectConfig{ID: "pike", Name: "Mining Pickaxe", Combat: &Weapon{Name: "Pike", Damage: Damage{Min: 5, Max: 5}}}
@@ -76,11 +76,11 @@ func TestPlayerUpdate_Comprehensive(t *testing.T) {
 	if mc.Weapon == nil || mc.Weapon.Name != "Pike" {
 		t.Error("Pike should be equipped automatically")
 	}
-	if mc.State != ActorDigging {
-		t.Errorf("Expected ActorDigging state, got %v", mc.State)
+	if mc.ActionState != ActorDigging {
+		t.Errorf("Expected ActorDigging state, got %v", mc.ActionState)
 	}
 	input.JustPressedKeys[engine.KeyV] = false
-	mc.State = ActorIdle
+	mc.ActionState = ActorIdle
 
 	// 5. Test Movement Sounds on different tiles
 	mc.X, mc.Y = 0, 0

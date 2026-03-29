@@ -164,7 +164,7 @@ func (wm *WorldManager) LoadMapLevel() {
 			npc := NewCharacter(ps.X, ps.Y, config, g.mapLevel, false, g.Registries.Objects)
 			npc.Alignment, npc.MustSurvive, npc.IsTarget = ps.Alignment, ps.MustSurvive, ps.IsTarget
 			if ps.Name != "" { npc.Name = ps.Name }
-			if ps.State == "dead" { npc.State = ActorDead }
+			if ps.State == "dead" { npc.ActionState = ActorDead }
 			switch ps.Behavior {
 			case "wander": npc.Behavior = BehaviorWander
 			case "patrol": npc.Behavior = BehaviorPatrol

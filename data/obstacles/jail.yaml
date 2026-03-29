@@ -2,7 +2,6 @@ name: "Dungeon Jail"
 type: building
 destructible: false
 description: "A somber stone entrance to a subterranean jail or dungeon."
-scale: 1.250
 footprint:
   - x: -5.09
     y: 3.34

@@ -1,7 +1,10 @@
 package game
 
 import (
+	"fmt"
 	"oinakos/internal/engine"
+	"gopkg.in/yaml.v3"
+	"strings"
 )
 
 // ActorState is the unified state enum for all living entities.
@@ -90,15 +93,30 @@ const (
 
 func (a Alignment) String() string {
 	switch a {
-	case AlignmentEnemy:
-		return "ENEMY"
-	case AlignmentNeutral:
-		return "NEUTRAL"
-	case AlignmentAlly:
-		return "ALLY"
-	default:
-		return "UNKNOWN"
+	case AlignmentEnemy: return "ENEMY"
+	case AlignmentNeutral: return "NEUTRAL"
+	case AlignmentAlly: return "ALLY"
+	default: return "UNKNOWN"
 	}
+}
+
+func (a *Alignment) UnmarshalYAML(value *yaml.Node) error {
+	var s string
+	if err := value.Decode(&s); err == nil {
+		switch strings.ToLower(s) {
+		case "enemy": *a = AlignmentEnemy; return nil
+		case "neutral": *a = AlignmentNeutral; return nil
+		case "ally": *a = AlignmentAlly; return nil
+		}
+	}
+	var i int
+	if err := value.Decode(&i); err == nil {
+		if i >= 0 && i <= 2 {
+			*a = Alignment(i)
+			return nil
+		}
+	}
+	return fmt.Errorf("unknown alignment: %s", value.Value)
 }
 
 // BehaviorType controls NPC AI decision-making.
@@ -181,7 +199,7 @@ func (c AgeConfig) Roll() AgeState {
 	}
 }
 
-type TemporalState struct {
+type State struct {
 	HealthPoints     int     `yaml:"health_points,omitempty"`
 	MaxHealthPoints  int
 	Hunger           float64 `yaml:"hunger,omitempty"`
@@ -196,8 +214,8 @@ type TemporalState struct {
 	Arousal          float64 `yaml:"arousal,omitempty"`   // 0 to 100
 	Pain             float64 `yaml:"pain,omitempty"`      // 0 to 100
 	Hygiene          float64 `yaml:"hygiene,omitempty"`   // 100 to 0 (100 = clean, 0 = filthy)
-	Miccionate       float64 `yaml:"miccionate,omitempty"` // 0 to 100 (100 = urgent)
-	Defecate         float64 `yaml:"defecate,omitempty"`   // 0 to 100 (100 = urgent)
+	BladderLevel     float64 `yaml:"bladder_level,omitempty"` // 0 to 100 (100 = urgent)
+	BowelLevel       float64 `yaml:"bowel_level,omitempty"`   // 0 to 100 (100 = urgent)
 	AlcoholLevel     float64 `yaml:"alcohol_level,omitempty"`
 	IsDrunk          bool    `yaml:"is_drunk,omitempty"`
 	Age              AgeState `yaml:"age,omitempty"`
@@ -222,7 +240,7 @@ type Actor struct {
 	X, Y   float64
 	Z      float64
 	VerticalVelocity float64
-	TemporalState     TemporalState     `yaml:"state"`
+	State             State             `yaml:"state"`
 	PrimaryAttributes PrimaryAttributes `yaml:"attributes"`
 	RawStats          EntityStats       `yaml:"-"` // Rolled values from config
 	SkillValues       map[string]int    `yaml:"skills,omitempty"`
@@ -230,7 +248,7 @@ type Actor struct {
 	BodyStatus map[string]int // "head", "torso", "l_arm", "r_arm", "l_leg", "r_leg"
 	Config *EntityConfig
 	Facing Direction
-	State  ActorState
+	ActionState  ActorState
 	Trauma PhysicalTrauma
 	
 	// Navigation
@@ -287,6 +305,7 @@ type Actor struct {
 	RomanticInterest   map[string]float64
 	Submission         map[string]float64
 	Memories           []MemoryEvent
+	GroupSentiment     map[string]float64
 	IsPregnant         bool
 	GestationTicks     int
 	MatingCooldown     int
@@ -345,7 +364,7 @@ type Actor struct {
 	CrouchTimer        int
 	IsOccluded         bool
 	IsTarget           bool
-	IsConscious        bool // Mirroring TemporalState for easy access
+	IsConscious        bool // Mirroring State for easy access
 	UnconsciousTimer   int
 	
 	LastReaction       string

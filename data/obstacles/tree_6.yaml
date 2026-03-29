@@ -2,7 +2,6 @@ name: Tree 6
 type: tree
 destructible: true
 description: A sturdy tall tree. It can be chopped down.
-scale: 1.25
 footprint:
 - x: -5.56
   y: -0.31

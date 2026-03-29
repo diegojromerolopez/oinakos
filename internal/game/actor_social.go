@@ -25,8 +25,8 @@ func (a *Actor) GetEffectiveSentiment(other *Actor) float64 {
 	sentiment := a.Relationships[other.Name]
 	
 	// Hygiene penalty: if hygiene is below 50, it starts affecting how others like you
-	if other.TemporalState.Hygiene < 50 {
-		penalty := (50 - other.TemporalState.Hygiene) * 0.5 // Max -25
+	if other.State.Hygiene < 50 {
+		penalty := (50 - other.State.Hygiene) * 0.5 // Max -25
 		sentiment -= penalty
 	}
 	

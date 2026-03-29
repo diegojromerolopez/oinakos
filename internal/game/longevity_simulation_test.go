@@ -109,8 +109,8 @@ func TestSimulation_Longevity(t *testing.T) {
 	// Ensure the playable character doesn't die of neglect
 	g.playableCharacter.Name = "Oinakos"
 	g.playableCharacter.X, g.playableCharacter.Y = 110, 110
-	g.playableCharacter.TemporalState.HealthPoints = 1000
-	g.playableCharacter.TemporalState.MaxHealthPoints = 1000
+	g.playableCharacter.State.HealthPoints = 1000
+	g.playableCharacter.State.MaxHealthPoints = 1000
 	g.playableCharacter.Behavior = BehaviorChaotic
 	g.playableCharacter.Alignment = AlignmentAlly
 	g.playableCharacter.Shift = ShiftLeisure
@@ -162,8 +162,8 @@ func TestSimulation_Longevity(t *testing.T) {
 			c := g.characters[0]
 			fmt.Printf("Day %d: Pop=%d, Preg=%d, AgeY=%.1f, HP=%d, State=%s, Reason=%s, Target=%s, H=%.1f, P=%.1f, Hy=%.1f\n", 
 				day, pop, pregnantCount, float64(c.AgeTicks)/float64(TicksPerYear), 
-				c.TemporalState.HealthPoints, c.State.String(), c.LastAIReasoning, c.TargetActorID,
-				c.TemporalState.Hunger, c.TemporalState.Pain, c.TemporalState.Hygiene)
+				c.State.HealthPoints, c.ActionState.String(), c.LastAIReasoning, c.TargetActorID,
+				c.State.Hunger, c.State.Pain, c.State.Hygiene)
 		}
 	}
 

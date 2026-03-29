@@ -8,7 +8,7 @@ import (
 
 func (a *Actor) isWilling() bool {
 	// Willing if alive, sane enough, and not on cooldown
-	return a.IsAlive() && a.TemporalState.Sanity > 20 && a.MatingCooldown <= 0 && !a.IsPregnant
+	return a.IsAlive() && a.State.Sanity > 20 && a.MatingCooldown <= 0 && !a.IsPregnant
 }
 
 func (a *Actor) updateBreeding(ctx *SystemContext) {
@@ -50,7 +50,7 @@ func (a *Actor) updateBreeding(ctx *SystemContext) {
 			canMate := false
 			if a.isWilling() && other.isWilling() {
 				canMate = true
-			} else if a.isWilling() && (other.State == ActorIncapacitated) {
+			} else if a.isWilling() && (other.ActionState == ActorIncapacitated) {
 				canMate = true
 			}
 
@@ -112,7 +112,7 @@ func (a *Actor) mate(ctx *SystemContext, mate *Actor, practice string) {
 		female := a
 		if a.GetBioSex() == "male" { female = mate }
 		
-		if female.TemporalState.Arousal < 30 && !a.Config.IsAnimal {
+		if female.State.Arousal < 30 && !a.Config.IsAnimal {
 			female.CausePain(10.0, ctx)
 			if ctx.Log != nil { 
 				ctx.Log(fmt.Sprintf("[%s] receives pain from lack of arousal", female.Name), LogNPC)
@@ -126,14 +126,14 @@ func (a *Actor) mate(ctx *SystemContext, mate *Actor, practice string) {
 	}
 
 	// Relieve arousal for both
-	a.TemporalState.Arousal = 0
-	mate.TemporalState.Arousal = 0
+	a.State.Arousal = 0
+	mate.State.Arousal = 0
 
 	// Hygiene decreases a lot during sex
-	a.TemporalState.Hygiene -= 30
-	mate.TemporalState.Hygiene -= 30
-	if a.TemporalState.Hygiene < 0 { a.TemporalState.Hygiene = 0 }
-	if mate.TemporalState.Hygiene < 0 { mate.TemporalState.Hygiene = 0 }
+	a.State.Hygiene -= 30
+	mate.State.Hygiene -= 30
+	if a.State.Hygiene < 0 { a.State.Hygiene = 0 }
+	if mate.State.Hygiene < 0 { mate.State.Hygiene = 0 }
 
 	// Pregnancy logic
 	if practice != "vaginal" { return }
@@ -251,8 +251,8 @@ func (a *Actor) giveBirth(ctx *SystemContext) {
 	child.SyncStats(ctx.Registries.Objects)
 
 	// Scaled down (Child)
-	child.TemporalState.MaxHealthPoints /= 2
-	child.TemporalState.HealthPoints = child.TemporalState.MaxHealthPoints
+	child.State.MaxHealthPoints /= 2
+	child.State.HealthPoints = child.State.MaxHealthPoints
 	
 	ctx.World.Characters = append(ctx.World.Characters, child)
 

@@ -21,7 +21,7 @@ func TestMainCharacterDraw(t *testing.T) {
 	// Test drawing in various states
 	states := []ActorState{ActorIdle, ActorWalking, ActorAttacking, ActorDead}
 	for _, s := range states {
-		mc.State = s
+		mc.ActionState = s
 		mc.Facing = DirSE // Trigger flip
 		mc.Tick = 10
 		mc.Draw(screen, graphics, graphics, nil, 0, 0, true)
@@ -45,7 +45,7 @@ func TestNPCDraw(t *testing.T) {
 
 	states := []ActorState{ActorIdle, ActorWalking, ActorAttacking, ActorDead}
 	for _, s := range states {
-		n.State = s
+		n.ActionState = s
 		n.Facing = DirSE
 		n.Draw(screen, graphics, graphics, nil, 0, 0, true)
 

@@ -2,7 +2,6 @@ name: "Stables"
 type: building
 destructible: false
 description: "Dark and damp stables where beasts of burden are kept."
-scale: 1.250
 footprint:
   - x: 2.55
     y: -2.17

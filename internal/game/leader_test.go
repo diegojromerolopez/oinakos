@@ -12,15 +12,15 @@ func TestLeaderDeathConsequence(t *testing.T) {
 	
 	leader := NewCharacter(0, 0, leaderArch, 1, false, nil)
 	follower := NewCharacter(1, 1, followerArch, 1, false, nil)
-	leader.TemporalState.HealthPoints = 100
-	leader.TemporalState.MaxHealthPoints = 100
-	follower.TemporalState.HealthPoints = 100
-	follower.TemporalState.MaxHealthPoints = 100
+	leader.State.HealthPoints = 100
+	leader.State.MaxHealthPoints = 100
+	follower.State.HealthPoints = 100
+	follower.State.MaxHealthPoints = 100
 	
 	ctx.World.Characters = []*Character{leader, follower}
 	mc := NewCharacter(10, 10, nil, 1, true, nil)
-	mc.TemporalState.HealthPoints = 100
-	mc.TemporalState.MaxHealthPoints = 100
+	mc.State.HealthPoints = 100
+	mc.State.MaxHealthPoints = 100
 	ctx.World.PlayableCharacter = mc
 	
 	// Initial state
@@ -35,8 +35,8 @@ func TestLeaderDeathConsequence(t *testing.T) {
 	}
 	
 	// Kill leader (irremediably)
-	leader.TemporalState.HealthPoints = -10
-	leader.State = ActorDead
+	leader.State.HealthPoints = -10
+	leader.ActionState = ActorDead
 	
 	// Update follower after leader death
 	follower.Update(ctx)
@@ -65,18 +65,18 @@ func TestTraitorTargeting(t *testing.T) {
 
 	traitor := NewCharacter(2, 2, followerArch, 1, false, nil)
 	traitor.Alignment = AlignmentNeutral // Switched!
-
-	leader.TemporalState.HealthPoints = 100
-	leader.TemporalState.MaxHealthPoints = 100
-	peer.TemporalState.HealthPoints = 100
-	peer.TemporalState.MaxHealthPoints = 100
-	traitor.TemporalState.HealthPoints = 100
-	traitor.TemporalState.MaxHealthPoints = 100
-
+	
+	leader.State.HealthPoints = 100
+	leader.State.MaxHealthPoints = 100
+	peer.State.HealthPoints = 100
+	peer.State.MaxHealthPoints = 100
+	traitor.State.HealthPoints = 100
+	traitor.State.MaxHealthPoints = 100
+	
 	ctx.World.Characters = []*Character{leader, peer, traitor}
 	mc := NewCharacter(10, 10, nil, 1, true, nil)
-	mc.TemporalState.HealthPoints = 100
-	mc.TemporalState.MaxHealthPoints = 100
+	mc.State.HealthPoints = 100
+	mc.State.MaxHealthPoints = 100
 	ctx.World.PlayableCharacter = mc
 
 	// Peer should normally ignore Neutral NPCs if they weren't traitors,

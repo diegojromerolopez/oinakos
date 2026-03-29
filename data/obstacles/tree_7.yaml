@@ -2,7 +2,6 @@ name: Tree 7
 type: tree
 destructible: true
 description: A sturdy tall tree. It can be chopped down.
-scale: 1.25
 footprint:
 - x: 2.25
   y: 3.88

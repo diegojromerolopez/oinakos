@@ -17,7 +17,7 @@ func TestCharacterActions_Woodcutting(t *testing.T) {
 	}
 	ctx.Registries.Objects.Objects["axe"] = axe
 	mc.Weapon = axe.Combat
-	mc.State = ActorChopping
+	mc.ActionState = ActorChopping
 	
 	// Create a tree
 	treeArch := &ObstacleArchetype{
@@ -67,7 +67,7 @@ func TestCharacterActions_Digging(t *testing.T) {
 	}
 	ctx.Registries.Objects.Objects["pike"] = pike
 	mc.Weapon = pike.Combat
-	mc.State = ActorDigging
+	mc.ActionState = ActorDigging
 	
 	sysCtx := NewTestContext()
 	sysCtx.World = ctx.World
@@ -98,7 +98,7 @@ func TestCharacterActions_GenerousWoodcutting(t *testing.T) {
 	}
 	ctx.Registries.Objects.Objects["axe"] = axe
 	mc.Weapon = axe.Combat
-	mc.State = ActorChopping
+	mc.ActionState = ActorChopping
 	
 	// Create wood object config for drops
 	ctx.Registries.Objects.Objects["wood"] = &ObjectConfig{ID: "wood", Name: "Wood"}
@@ -150,7 +150,7 @@ func TestCharacterActions_GenerousDigging(t *testing.T) {
 	}
 	ctx.Registries.Objects.Objects["pike"] = pike
 	mc.Weapon = pike.Combat
-	mc.State = ActorDigging
+	mc.ActionState = ActorDigging
 	
 	sysCtx := NewTestContext()
 	sysCtx.World = ctx.World
@@ -172,8 +172,8 @@ func TestCharacterActions_CaveIn(t *testing.T) {
 	mc := ctx.playableCharacter
 	mc.X, mc.Y = 0, 0
 	mc.Facing = DirSE // dig target → gridX=5, gridY=0
-	mc.TemporalState.HealthPoints = 100
-	mc.TemporalState.MaxHealthPoints = 100
+	mc.State.HealthPoints = 100
+	mc.State.MaxHealthPoints = 100
 
 	pike := &ObjectConfig{
 		ID: "pike",
@@ -182,7 +182,7 @@ func TestCharacterActions_CaveIn(t *testing.T) {
 	}
 	ctx.Registries.Objects.Objects["pike"] = pike
 	mc.Weapon = pike.Combat
-	mc.State = ActorDigging
+	mc.ActionState = ActorDigging
 	
 	// Place a neighbour of the dig target (5,0) that is 10.0 above the new dug level (-0.5).
 	// Difference = 10.0 - (-0.5) = 10.5 ≥ 6.0 → triggers cave-in.
@@ -195,7 +195,7 @@ func TestCharacterActions_CaveIn(t *testing.T) {
 	
 	mc.CheckAttackHits(sysCtx, "")
 	
-	if mc.TemporalState.HealthPoints > 0 {
+	if mc.State.HealthPoints > 0 {
 		t.Errorf("Cave-in did not kill character")
 	}
 }
@@ -203,16 +203,16 @@ func TestCharacterActions_CaveIn(t *testing.T) {
 func TestCharacterActions_AIReaction(t *testing.T) {
 	ctx := setupTestGame()
 	npc := NewCharacter(5.0, 0, nil, 1, false, nil)
-	npc.TemporalState.HealthPoints = 100
-	npc.TemporalState.MaxHealthPoints = 100
+	npc.State.HealthPoints = 100
+	npc.State.MaxHealthPoints = 100
 	npc.Alignment = AlignmentNeutral
 	ctx.World.Characters = []*Character{npc}
 	
 	attacker := NewCharacter(0, 0, nil, 1, true, nil)
-	attacker.TemporalState.HealthPoints = 100
-	attacker.TemporalState.MaxHealthPoints = 100
-	attacker.TemporalState.HealthPoints = 100 // High health to trigger fleeing in NPC
-	attacker.TemporalState.MaxHealthPoints = 100
+	attacker.State.HealthPoints = 100
+	attacker.State.MaxHealthPoints = 100
+	attacker.State.HealthPoints = 100 // High health to trigger fleeing in NPC
+	attacker.State.MaxHealthPoints = 100
 	
 	sysCtx := NewTestContext()
 	sysCtx.World = ctx.World
@@ -224,7 +224,7 @@ func TestCharacterActions_AIReaction(t *testing.T) {
 	}
 	
 	// Heavy damage (low health) -> flees
-	npc.TemporalState.HealthPoints = 5
+	npc.State.HealthPoints = 5
 	npc.TakeDamage(1, attacker, sysCtx) // Triggers handleAIReaction internally
 	if npc.Behavior != BehaviorFlee {
 		t.Errorf("Low health NPC did not switch to Flee behavior. behavior=%v", npc.Behavior)

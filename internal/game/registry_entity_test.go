@@ -52,6 +52,7 @@ func TestCharacterRegistry_CreateLoadJobs(t *testing.T) {
 		Playable:    true,
 	}
 	
+	charReg.ProcessInheritance(archReg)
 	jobs := charReg.createLoadJobs(fsys, archReg, nil)
 	
 	// Hero has at least 1 local image (static.png) and 11 fallbacks to archetype or nil

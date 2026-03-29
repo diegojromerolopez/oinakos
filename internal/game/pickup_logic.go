@@ -111,7 +111,7 @@ func (g *Game) TryPickup(a *Actor, it *ItemInstance) bool {
 	// Set animation state
 	// CrouchImage is now loaded in registries
 	if a.Config.CrouchImage != nil {
-		a.State = ActorCrouching
+		a.ActionState = ActorCrouching
 		a.CrouchTimer = 30 // Show crouch for 0.5s
 	}
 	

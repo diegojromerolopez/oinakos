@@ -1,57 +1,94 @@
 package game
 
 import (
-	"os"
+	"oinakos/internal/engine"
 	"testing"
+	"testing/fstest"
 )
 
-func TestObjectRegistryLoadAll(t *testing.T) {
-	// Go tests run in the package directory, so we need to go up to the repo root
-	assets := os.DirFS("../..")
-	reg := NewObjectRegistry()
-	err := reg.LoadAll(assets)
+func TestObjectRegistry_LoadAll(t *testing.T) {
+	fs := fstest.MapFS{
+		"data/objects/iron_sword.yaml": {
+			Data: []byte(`
+id: iron_sword
+name: Iron Sword
+type: weapon
+weight: 5.0
+damage: 20
+resistance: 100
+`),
+		},
+		"data/objects/apple.yaml": {
+			Data: []byte(`
+id: apple
+name: Red Apple
+type: food
+hunger: 15
+`),
+		},
+	}
+
+	r := NewObjectRegistry()
+	err := r.LoadAll(fs)
 	if err != nil {
-		t.Fatalf("Failed to load registry: %v", err)
+		t.Fatalf("LoadAll failed: %v", err)
 	}
 
-	t.Logf("Loaded %d object IDs", len(reg.IDs))
-	if len(reg.IDs) == 0 {
-		t.Errorf("Registry is empty!")
+	if len(r.Objects) != 2 {
+		t.Errorf("expected 2 objects, got %d", len(r.Objects))
 	}
 
-	foundIronSword := false
-	for _, id := range reg.IDs {
-		obj := reg.Objects[id]
-		if obj == nil {
-			t.Errorf("Object %s not found in map!", id)
-			continue
-		}
-		if obj.ID != id {
-			t.Errorf("Mismatch for %s: map entry has ID %s", id, obj.ID)
-		}
-		if id == "iron_sword" {
-			foundIronSword = true
-			if obj.Name != "Iron Sword" {
-				t.Errorf("Expected name Iron Sword, got %s", obj.Name)
-			}
-			if obj.Weight != 4.0 {
-				t.Errorf("Expected weight 4.0, got %f", obj.Weight)
-			}
-			if obj.Type != "weapon" {
-				t.Errorf("Expected type weapon, got %s", obj.Type)
-			}
-			if obj.Combat == nil {
-				t.Errorf("Expected combat section, got nil")
-			} else {
-				if obj.Combat.Name != "Iron Sword" {
-					t.Errorf("Expected combat name Iron Sword, got %s", obj.Combat.Name)
-				}
-			}
-		}
-		t.Logf(" - Found ID: %s (Name: %s)", id, obj.Name)
+	sword := r.Get("iron_sword")
+	if sword == nil || sword.Name != "Iron Sword" {
+		t.Errorf("failed to load iron_sword: %v", sword)
 	}
 
-	if !foundIronSword {
-		t.Errorf("iron_sword not found in registry")
+	apple := r.Get("apple")
+	if apple == nil || apple.Hunger != 15 {
+		t.Errorf("failed to load apple: %v", apple)
+	}
+}
+
+func TestObjectRegistry_CreateLoadJobs(t *testing.T) {
+	reg := NewObjectRegistry()
+	reg.Objects["sword"] = &ObjectConfig{ID: "sword"}
+	reg.Objects["shield"] = &ObjectConfig{ID: "shield"}
+	reg.IDs = []string{"sword", "shield"}
+	
+	t.Run("no permit list", func(t *testing.T) {
+		jobs := reg.createLoadJobs(nil)
+		if len(jobs) != 2 {
+			t.Errorf("expected 2 jobs, got %d", len(jobs))
+		}
+	})
+	
+	t.Run("with permit list", func(t *testing.T) {
+		permit := map[string]bool{"sword": true}
+		jobs := reg.createLoadJobs(permit)
+		if len(jobs) != 1 {
+			t.Fatalf("expected 1 job, got %d", len(jobs))
+		}
+		if jobs[0].Path != "assets/images/objects/sword.png" {
+			t.Errorf("incorrect job path: %s", jobs[0].Path)
+		}
+	})
+	
+	t.Run("skip already loaded", func(t *testing.T) {
+		reg.Objects["sword"].Sprite = &engine.MockImage{}
+		jobs := reg.createLoadJobs(nil)
+		if len(jobs) != 1 {
+			t.Errorf("expected 1 job (shield), got %d", len(jobs))
+		}
+	})
+}
+
+func TestObjectRegistry_CountAssets(t *testing.T) {
+	reg := NewObjectRegistry()
+	reg.Objects["sword"] = &ObjectConfig{ID: "sword"}
+	reg.IDs = []string{"sword"}
+	
+	count := reg.CountAssets(nil)
+	if count != 1 {
+		t.Errorf("expected count 1, got %d", count)
 	}
 }

@@ -12,8 +12,8 @@ func TestNPCBehavior_Wander_SetsDirection(t *testing.T) {
 	ctx.World.PlayableCharacter = mc
 
 	npc := NewCharacter(0, 0, &EntityConfig{ID: "test"}, 1, false, nil)
-	npc.TemporalState.HealthPoints = 100
-	npc.TemporalState.MaxHealthPoints = 100
+	npc.State.HealthPoints = 100
+	npc.State.MaxHealthPoints = 100
 	npc.Behavior = BehaviorWander
 	npc.Alignment = AlignmentEnemy
 	npc.Speed = 0.1 // must be non-zero
@@ -42,10 +42,10 @@ func TestNPCBehavior_Fighter_TargetsNearestNPC(t *testing.T) {
 
 	target := NewCharacter(2, 0, &EntityConfig{ID: "target"}, 1, false, nil)
 	target.Alignment = AlignmentAlly
-	fighter.TemporalState.HealthPoints = 100
-	fighter.TemporalState.MaxHealthPoints = 100
-	target.TemporalState.HealthPoints = 100
-	target.TemporalState.MaxHealthPoints = 100
+	fighter.State.HealthPoints = 100
+	fighter.State.MaxHealthPoints = 100
+	target.State.HealthPoints = 100
+	target.State.MaxHealthPoints = 100
 	ctx.World.Characters = []*Character{fighter, target}
 
 	for i := 0; i < 10; i++ {
@@ -68,10 +68,10 @@ func TestNPCBehavior_Chaotic_TargetsNearestActor(t *testing.T) {
 
 	farNPC := NewCharacter(20, 0, &EntityConfig{ID: "far"}, 1, false, nil)
 	farNPC.Alignment = AlignmentEnemy
-	chaotic.TemporalState.HealthPoints = 100
-	chaotic.TemporalState.MaxHealthPoints = 100
-	farNPC.TemporalState.HealthPoints = 100
-	farNPC.TemporalState.MaxHealthPoints = 100
+	chaotic.State.HealthPoints = 100
+	chaotic.State.MaxHealthPoints = 100
+	farNPC.State.HealthPoints = 100
+	farNPC.State.MaxHealthPoints = 100
 	ctx.World.Characters = []*Character{chaotic, farNPC}
 
 	chaotic.Update(ctx)
@@ -108,8 +108,8 @@ func TestNPCBehavior_Ally_FollowsPlayerWhenNoEnemies(t *testing.T) {
 	ally := NewCharacter(0, 0, &EntityConfig{ID: "ally"}, 1, false, nil)
 	ally.Alignment = AlignmentAlly
 	ally.Speed = 0.2 // must be non-zero
-	ally.TemporalState.HealthPoints = 100
-	ally.TemporalState.MaxHealthPoints = 100
+	ally.State.HealthPoints = 100
+	ally.State.MaxHealthPoints = 100
 	ctx.World.Characters = []*Character{ally}
 
 	for i := 0; i < 20; i++ {
@@ -141,8 +141,8 @@ func TestNPCBehavior_ScavengeUpgrade(t *testing.T) {
 		},
 	}
 	npc := NewCharacter(0, 0, config, 1, false, nil)
-	npc.TemporalState.HealthPoints = 100
-	npc.TemporalState.MaxHealthPoints = 100
+	npc.State.HealthPoints = 100
+	npc.State.MaxHealthPoints = 100
 	npc.Speed = 0.2
 	weakWeapon := &ObjectConfig{
 		ID: "weak_weapon", Type: "weapon", Slot: "weapon", Weight: 2.0,

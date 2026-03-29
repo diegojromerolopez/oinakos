@@ -5,10 +5,11 @@ import (
 )
 const (
 	TicksPerSecond = 60
-	TicksPerDay    = 24 * 60 * 60 * TicksPerSecond
-	TicksPerMonth  = 30 * TicksPerDay
+	TicksPerHour   = 720 // 12 seconds IRL
+	TicksPerDay    = TicksPerHour * 24
+	TicksPerMonth  = 4 * TicksPerDay  // Oinakos custom calendar: 4 days per month
 	TicksPerSeason = 3 * TicksPerMonth
-	TicksPerYear   = 365 * TicksPerDay
+	TicksPerYear   = 12 * TicksPerMonth // 48 Days per year
 )
 
 // World holds all live game entities and spatial data.

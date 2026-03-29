@@ -104,7 +104,7 @@ func (g *Game) CalculateTradePrice(item *ItemInstance, buyer, seller *Actor, isB
 	final := base * sentimentMult * stockMult
 	
 	// Incapacitated characters can be looted for free
-	if seller != nil && seller.State == ActorIncapacitated {
+	if seller != nil && seller.ActionState == ActorIncapacitated {
 		return 0
 	}
 

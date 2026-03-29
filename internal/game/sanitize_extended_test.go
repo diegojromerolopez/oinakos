@@ -111,34 +111,34 @@ func TestSanitizePlayerSaveData(t *testing.T) {
 	}{
 		{
 			name:  "negative health clamped to 1",
-			input: PlayerSaveData{TemporalState: TemporalState{HealthPoints: -5, MaxHealthPoints: 100}, Level: 1},
+			input: PlayerSaveData{State: State{HealthPoints: -5, MaxHealthPoints: 100}, Level: 1},
 			check: func(t *testing.T, p *PlayerSaveData) {
-				if p.TemporalState.HealthPoints != 1 {
-					t.Errorf("HealthPoints: got %d, want 1", p.TemporalState.HealthPoints)
+				if p.State.HealthPoints != 1 {
+					t.Errorf("HealthPoints: got %d, want 1", p.State.HealthPoints)
 				}
 			},
 		},
 		{
 			name:  "zero max_health clamped to 100",
-			input: PlayerSaveData{TemporalState: TemporalState{HealthPoints: 10, MaxHealthPoints: 0}, Level: 1},
+			input: PlayerSaveData{State: State{HealthPoints: 10, MaxHealthPoints: 0}, Level: 1},
 			check: func(t *testing.T, p *PlayerSaveData) {
-				if p.TemporalState.MaxHealthPoints != 100 {
-					t.Errorf("MaxHealthPoints: got %d, want 100", p.TemporalState.MaxHealthPoints)
+				if p.State.MaxHealthPoints != 100 {
+					t.Errorf("MaxHealthPoints: got %d, want 100", p.State.MaxHealthPoints)
 				}
 			},
 		},
 		{
 			name:  "health exceeds max_health clamped to max",
-			input: PlayerSaveData{TemporalState: TemporalState{HealthPoints: 500, MaxHealthPoints: 100}, Level: 1},
+			input: PlayerSaveData{State: State{HealthPoints: 500, MaxHealthPoints: 100}, Level: 1},
 			check: func(t *testing.T, p *PlayerSaveData) {
-				if p.TemporalState.HealthPoints != 100 {
-					t.Errorf("HealthPoints: got %d, want 100", p.TemporalState.HealthPoints)
+				if p.State.HealthPoints != 100 {
+					t.Errorf("HealthPoints: got %d, want 100", p.State.HealthPoints)
 				}
 			},
 		},
 		{
 			name:  "zero level clamped to 1",
-			input: PlayerSaveData{TemporalState: TemporalState{HealthPoints: 10, MaxHealthPoints: 100}, Level: 0},
+			input: PlayerSaveData{State: State{HealthPoints: 10, MaxHealthPoints: 100}, Level: 0},
 			check: func(t *testing.T, p *PlayerSaveData) {
 				if p.Level != 1 {
 					t.Errorf("Level: got %d, want 1", p.Level)
@@ -147,7 +147,7 @@ func TestSanitizePlayerSaveData(t *testing.T) {
 		},
 		{
 			name:  "negative XP clamped to 0",
-			input: PlayerSaveData{TemporalState: TemporalState{HealthPoints: 10, MaxHealthPoints: 100}, Level: 1, XP: -50},
+			input: PlayerSaveData{State: State{HealthPoints: 10, MaxHealthPoints: 100}, Level: 1, XP: -50},
 			check: func(t *testing.T, p *PlayerSaveData) {
 				if p.XP != 0 {
 					t.Errorf("XP: got %d, want 0", p.XP)
@@ -156,7 +156,7 @@ func TestSanitizePlayerSaveData(t *testing.T) {
 		},
 		{
 			name:  "negative kills clamped to 0",
-			input: PlayerSaveData{TemporalState: TemporalState{HealthPoints: 10, MaxHealthPoints: 100}, Level: 1, Kills: -1},
+			input: PlayerSaveData{State: State{HealthPoints: 10, MaxHealthPoints: 100}, Level: 1, Kills: -1},
 			check: func(t *testing.T, p *PlayerSaveData) {
 				if p.Kills != 0 {
 					t.Errorf("Kills: got %d, want 0", p.Kills)
@@ -165,7 +165,7 @@ func TestSanitizePlayerSaveData(t *testing.T) {
 		},
 		{
 			name:  "negative base_attack clamped to 0",
-			input: PlayerSaveData{TemporalState: TemporalState{HealthPoints: 10, MaxHealthPoints: 100}, Level: 1, BaseAttack: -3},
+			input: PlayerSaveData{State: State{HealthPoints: 10, MaxHealthPoints: 100}, Level: 1, BaseAttack: -3},
 			check: func(t *testing.T, p *PlayerSaveData) {
 				if p.BaseAttack != 0 {
 					t.Errorf("BaseAttack: got %d, want 0", p.BaseAttack)
@@ -174,7 +174,7 @@ func TestSanitizePlayerSaveData(t *testing.T) {
 		},
 		{
 			name:  "negative base_defense clamped to 0",
-			input: PlayerSaveData{TemporalState: TemporalState{HealthPoints: 10, MaxHealthPoints: 100}, Level: 1, BaseDefense: -2},
+			input: PlayerSaveData{State: State{HealthPoints: 10, MaxHealthPoints: 100}, Level: 1, BaseDefense: -2},
 			check: func(t *testing.T, p *PlayerSaveData) {
 				if p.BaseDefense != 0 {
 					t.Errorf("BaseDefense: got %d, want 0", p.BaseDefense)
@@ -183,9 +183,9 @@ func TestSanitizePlayerSaveData(t *testing.T) {
 		},
 		{
 			name:  "valid data unchanged",
-			input: PlayerSaveData{TemporalState: TemporalState{HealthPoints: 50, MaxHealthPoints: 100}, Level: 5, XP: 200, Kills: 10},
+			input: PlayerSaveData{State: State{HealthPoints: 50, MaxHealthPoints: 100}, Level: 5, XP: 200, Kills: 10},
 			check: func(t *testing.T, p *PlayerSaveData) {
-				if p.TemporalState.HealthPoints != 50 || p.TemporalState.MaxHealthPoints != 100 || p.Level != 5 || p.XP != 200 || p.Kills != 10 {
+				if p.State.HealthPoints != 50 || p.State.MaxHealthPoints != 100 || p.Level != 5 || p.XP != 200 || p.Kills != 10 {
 					t.Errorf("Valid data was unexpectedly modified: %+v", *p)
 				}
 			},
@@ -203,28 +203,28 @@ func TestSanitizePlayerSaveData(t *testing.T) {
 
 func TestSanitizeNPCSaveData(t *testing.T) {
 	// Negative health → clamped to 0
-	n := NPCSaveData{X: 0, Y: 0, TemporalState: TemporalState{HealthPoints: -5, MaxHealthPoints: 10}, Level: 1}
+	n := NPCSaveData{X: 0, Y: 0, State: State{HealthPoints: -5, MaxHealthPoints: 10}, Level: 1}
 	sanitizeNPCSaveData(&n, 0, "test")
-	if n.TemporalState.HealthPoints != 0 {
-		t.Errorf("HealthPoints: got %d, want 0", n.TemporalState.HealthPoints)
+	if n.State.HealthPoints != 0 {
+		t.Errorf("HealthPoints: got %d, want 0", n.State.HealthPoints)
 	}
 
 	// Zero max_health with health > 0 → max_health set to health
-	n2 := NPCSaveData{X: 0, Y: 0, TemporalState: TemporalState{HealthPoints: 8, MaxHealthPoints: 0}, Level: 1}
+	n2 := NPCSaveData{X: 0, Y: 0, State: State{HealthPoints: 8, MaxHealthPoints: 0}, Level: 1}
 	sanitizeNPCSaveData(&n2, 1, "test")
-	if n2.TemporalState.MaxHealthPoints != 8 {
-		t.Errorf("MaxHealthPoints: got %d, want 8", n2.TemporalState.MaxHealthPoints)
+	if n2.State.MaxHealthPoints != 8 {
+		t.Errorf("MaxHealthPoints: got %d, want 8", n2.State.MaxHealthPoints)
 	}
 
 	// Zero max_health with health == 0 → max_health clamped to 1
-	n3 := NPCSaveData{X: 0, Y: 0, TemporalState: TemporalState{HealthPoints: 0, MaxHealthPoints: 0}, Level: 1}
+	n3 := NPCSaveData{X: 0, Y: 0, State: State{HealthPoints: 0, MaxHealthPoints: 0}, Level: 1}
 	sanitizeNPCSaveData(&n3, 2, "test")
-	if n3.TemporalState.MaxHealthPoints != 1 {
-		t.Errorf("MaxHealthPoints: got %d, want 1", n3.TemporalState.MaxHealthPoints)
+	if n3.State.MaxHealthPoints != 1 {
+		t.Errorf("MaxHealthPoints: got %d, want 1", n3.State.MaxHealthPoints)
 	}
 
 	// Zero level → clamped to 1
-	n4 := NPCSaveData{X: 0, Y: 0, TemporalState: TemporalState{HealthPoints: 5, MaxHealthPoints: 10}, Level: 0}
+	n4 := NPCSaveData{X: 0, Y: 0, State: State{HealthPoints: 5, MaxHealthPoints: 10}, Level: 0}
 	sanitizeNPCSaveData(&n4, 3, "test")
 	if n4.Level != 1 {
 		t.Errorf("Level: got %d, want 1", n4.Level)

@@ -12,7 +12,6 @@ yield: cabbage
 frame_count: 3
 frames_per_row: 3
 animation_speed: 0
-scale: 0.7
 footprint:
 - {x: -0.3, y: -0.3}
 - {x: 0.3, y: -0.3}

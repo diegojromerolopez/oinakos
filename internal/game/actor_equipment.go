@@ -19,8 +19,8 @@ func (a *Actor) ApplyPermanentEffects(obj *ObjectConfig) {
 		case "speed":
 			a.Speed += effect.Increase
 		case "max_health":
-			a.TemporalState.MaxHealthPoints += int(effect.Increase)
-			a.TemporalState.HealthPoints += int(effect.Increase)
+			a.State.MaxHealthPoints += int(effect.Increase)
+			a.State.HealthPoints += int(effect.Increase)
 		case "xp":
 			a.AddXP(int(effect.Increase))
 		}
@@ -42,7 +42,7 @@ func (a *Actor) ConsumeItem(item *ItemInstance, ctx *SystemContext) bool {
 			ctx.Log(fmt.Sprintf("[%s]: %s is spoiled! This caused stomach sickness.", a.Name, obj.Name), LogWarning)
 		}
 		// Effects: reduces health_points a 25%
-		damage := int(float64(a.TemporalState.HealthPoints) * 0.25)
+		damage := int(float64(a.State.HealthPoints) * 0.25)
 		if damage < 5 { damage = 5 } // Minimum impact
 		a.TakeDamage(damage, nil, ctx)
 		
@@ -50,7 +50,7 @@ func (a *Actor) ConsumeItem(item *ItemInstance, ctx *SystemContext) bool {
 		// 1 day = 17280 ticks. 2 days = 34560.
 		a.SicknessTicks = 17280 + rand.Intn(17280)
 		a.Sickness = "stomach sickness"
-		a.TemporalState.IsSick = true
+		a.State.IsSick = true
 	}
 
 	if ctx != nil && ctx.Log != nil && !isSpoiled {
@@ -63,14 +63,14 @@ func (a *Actor) ConsumeItem(item *ItemInstance, ctx *SystemContext) bool {
 	used := false
 
 	// Specific need restoration fields
-	if obj.Hunger > 0 { a.TemporalState.Hunger -= obj.Hunger; used = true; a.TemporalState.Defecate += float64(obj.Hunger) * 0.1 }
-	if obj.Thirst > 0 { a.TemporalState.Thirst -= obj.Thirst; used = true; a.TemporalState.Miccionate += float64(obj.Thirst) * 0.1 }
-	if obj.Fatigue > 0 { a.TemporalState.Fatigue -= obj.Fatigue; used = true }
+	if obj.Hunger > 0 { a.State.Hunger -= obj.Hunger; used = true; a.State.BowelLevel += float64(obj.Hunger) * 0.1 }
+	if obj.Thirst > 0 { a.State.Thirst -= obj.Thirst; used = true; a.State.BladderLevel += float64(obj.Thirst) * 0.1 }
+	if obj.Fatigue > 0 { a.State.Fatigue -= obj.Fatigue; used = true }
 	if obj.Energy > 0 { 
 		// Legacy: energy restores everything
-		a.TemporalState.Hunger -= obj.Energy
-		a.TemporalState.Thirst -= obj.Energy
-		a.TemporalState.Fatigue -= obj.Energy
+		a.State.Hunger -= obj.Energy
+		a.State.Thirst -= obj.Energy
+		a.State.Fatigue -= obj.Energy
 		used = true 
 	}
 	if obj.ClearSick {
@@ -84,13 +84,13 @@ func (a *Actor) ConsumeItem(item *ItemInstance, ctx *SystemContext) bool {
 	for stat, effect := range obj.Effects {
 		switch stat {
 		case "hunger":
-			a.TemporalState.Hunger -= effect.Increase; used = true
+			a.State.Hunger -= effect.Increase; used = true
 		case "thirst":
-			a.TemporalState.Thirst -= effect.Increase; used = true
+			a.State.Thirst -= effect.Increase; used = true
 		case "fatigue":
-			a.TemporalState.Fatigue -= effect.Increase; used = true
+			a.State.Fatigue -= effect.Increase; used = true
 		case "energy":
-			a.TemporalState.Hunger -= effect.Increase; a.TemporalState.Thirst -= effect.Increase; a.TemporalState.Fatigue -= effect.Increase; used = true
+			a.State.Hunger -= effect.Increase; a.State.Thirst -= effect.Increase; a.State.Fatigue -= effect.Increase; used = true
 		case "health":
 			a.Heal(int(effect.Increase))
 			if ctx != nil && ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] receives healing", a.Name), LogNPC) }
@@ -102,12 +102,12 @@ func (a *Actor) ConsumeItem(item *ItemInstance, ctx *SystemContext) bool {
 	}
 
 	if obj.IsAlcoholic {
-		a.TemporalState.AlcoholLevel += 10.0
+		a.State.AlcoholLevel += 10.0
 		used = true
-		if a.TemporalState.AlcoholLevel > 30.0 {
+		if a.State.AlcoholLevel > 30.0 {
 			// Health roll to resist drunkenness
 			if !a.CheckAttributeSuccess("health", 0) {
-				a.TemporalState.IsDrunk = true
+				a.State.IsDrunk = true
 				if ctx != nil && ctx.Log != nil {
 					ctx.Log(fmt.Sprintf("[%s] is now drunk!", a.Name), LogWarning)
 				}
@@ -115,12 +115,12 @@ func (a *Actor) ConsumeItem(item *ItemInstance, ctx *SystemContext) bool {
 		}
 	}
 
-	if a.TemporalState.Hunger > 100 { a.TemporalState.Hunger = 100 }
-	if a.TemporalState.Thirst > 100 { a.TemporalState.Thirst = 100 }
-	if a.TemporalState.Fatigue > 100 { a.TemporalState.Fatigue = 100 }
+	if a.State.Hunger > 100 { a.State.Hunger = 100 }
+	if a.State.Thirst > 100 { a.State.Thirst = 100 }
+	if a.State.Fatigue > 100 { a.State.Fatigue = 100 }
 	
 	if used && ctx != nil && ctx.World != nil {
-		a.State, a.Tick = ActorEating, 0
+		a.ActionState, a.Tick = ActorEating, 0
 		msg := fmt.Sprintf("+%s", obj.Name)
 		ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{
 			Text: msg, X: a.X, Y: a.Y - 1, Life: 45, Color: ColorHeal,

@@ -5,11 +5,11 @@ import (
 )
 
 func TestOcclusion_Logic(t *testing.T) {
-	mc := &Actor{X: 10, Y: 10, State: ActorIdle}
+	mc := &Actor{X: 10, Y: 10, ActionState: ActorIdle}
 	sortY := GetActorSortY(mc)
 	if sortY != 20 { t.Errorf("Expected sortY 20, got %v", sortY) }
 	
-	mc.State = ActorDead
+	mc.ActionState = ActorDead
 	sortY = GetActorSortY(mc)
 	if sortY != -80 { t.Errorf("Expected sortY -80, got %v", sortY) }
 	

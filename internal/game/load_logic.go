@@ -103,7 +103,7 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 
 	g.playableCharacter.X = data.Player.X
 	g.playableCharacter.Y = data.Player.Y
-	g.playableCharacter.TemporalState.HealthPoints = data.Player.HealthPoints
+	g.playableCharacter.State.HealthPoints = data.Player.HealthPoints
 	g.playableCharacter.XP = data.Player.XP
 	g.playableCharacter.Level = data.Player.Level
 	g.playableCharacter.Kills = data.Player.Kills
@@ -133,7 +133,7 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 	}
 	g.playableCharacter.UpdateEffects()
 
-	g.playableCharacter.TemporalState.MaxHealthPoints = data.Player.MaxHealthPoints
+	g.playableCharacter.State.MaxHealthPoints = data.Player.MaxHealthPoints
 	g.playableCharacter.BaseAttack = data.Player.BaseAttack
 	g.playableCharacter.BaseDefense = data.Player.BaseDefense
 	g.playableCharacter.BaseProtection = data.Player.BaseProtection
@@ -146,13 +146,13 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 	if g.playableCharacter.Submission == nil { g.playableCharacter.Submission = make(map[string]float64) }
 	
 	// Hunger, Thirst, Fatigue (with fallback for old saves)
-	g.playableCharacter.TemporalState.Hunger = data.Player.Hunger
-	g.playableCharacter.TemporalState.Thirst = data.Player.Thirst
-	g.playableCharacter.TemporalState.Fatigue = data.Player.Fatigue
-	if g.playableCharacter.TemporalState.Hunger == 0 && g.playableCharacter.TemporalState.Thirst == 0 && g.playableCharacter.TemporalState.Fatigue == 0 {
-		g.playableCharacter.TemporalState.Hunger = 100
-		g.playableCharacter.TemporalState.Thirst = 100
-		g.playableCharacter.TemporalState.Fatigue = 100
+	g.playableCharacter.State.Hunger = data.Player.Hunger
+	g.playableCharacter.State.Thirst = data.Player.Thirst
+	g.playableCharacter.State.Fatigue = data.Player.Fatigue
+	if g.playableCharacter.State.Hunger == 0 && g.playableCharacter.State.Thirst == 0 && g.playableCharacter.State.Fatigue == 0 {
+		g.playableCharacter.State.Hunger = 100
+		g.playableCharacter.State.Thirst = 100
+		g.playableCharacter.State.Fatigue = 100
 	}
 
 	if data.Player.Weapon != nil {
@@ -179,11 +179,11 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 	}
 
 
-	if g.playableCharacter.TemporalState.HealthPoints > 0 {
-		g.playableCharacter.State = ActorIdle
+	if g.playableCharacter.State.HealthPoints > 0 {
+		g.playableCharacter.ActionState = ActorIdle
 		g.isGameOver = false
 	} else {
-		g.playableCharacter.State = ActorDead
+		g.playableCharacter.ActionState = ActorDead
 		g.isGameOver = true
 	}
 
@@ -205,8 +205,8 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 			continue
 		}
 		n := NewCharacter(nData.X, nData.Y, config, nData.Level, false, g.Registries.Objects)
-		n.TemporalState.HealthPoints = nData.HealthPoints
-		n.TemporalState.MaxHealthPoints = nData.MaxHealthPoints
+		n.State.HealthPoints = nData.HealthPoints
+		n.State.MaxHealthPoints = nData.MaxHealthPoints
 		if nData.Name != "" { n.Name = nData.Name }
 		if nData.BaseAttack > 0 { n.BaseAttack = nData.BaseAttack }
 		if nData.BaseDefense > 0 { n.BaseDefense = nData.BaseDefense }
@@ -219,13 +219,13 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 		n.Submission = nData.Submission
 		if n.Submission == nil { n.Submission = make(map[string]float64) }
 		
-		n.TemporalState.Hunger = nData.Hunger
-		n.TemporalState.Thirst = nData.Thirst
-		n.TemporalState.Fatigue = nData.Fatigue
-		if n.TemporalState.Hunger == 0 && n.TemporalState.Thirst == 0 && n.TemporalState.Fatigue == 0 {
-			n.TemporalState.Hunger = 100
-			n.TemporalState.Thirst = 100
-			n.TemporalState.Fatigue = 100
+		n.State.Hunger = nData.Hunger
+		n.State.Thirst = nData.Thirst
+		n.State.Fatigue = nData.Fatigue
+		if n.State.Hunger == 0 && n.State.Thirst == 0 && n.State.Fatigue == 0 {
+			n.State.Hunger = 100
+			n.State.Thirst = 100
+			n.State.Fatigue = 100
 		}
 
 		n.Denarii = nData.Denarii
@@ -270,7 +270,7 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 			}
 		}
 		
-		if n.TemporalState.HealthPoints <= 0 { n.State = ActorDead }
+		if n.State.HealthPoints <= 0 { n.ActionState = ActorDead }
 		n.UpdateEffects()
 		g.characters = append(g.characters, n)
 	}

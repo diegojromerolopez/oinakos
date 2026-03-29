@@ -14,7 +14,7 @@ func TestSimulation_SocialAndPsychosis(t *testing.T) {
 	
 	npc := NewCharacter(2, 2, nil, 1, false, nil)
 	npc.Name = "NPC"
-	npc.TemporalState.HealthPoints = 100 // Ensure alive
+	npc.State.HealthPoints = 100 // Ensure alive
 	ctx.World.Characters = append(ctx.World.Characters, npc)
 
 	// 1. Memory and Sentiment
@@ -33,22 +33,22 @@ func TestSimulation_SocialAndPsychosis(t *testing.T) {
 	}
 
 	// 3. Psychosis (Berserk)
-	npc.TemporalState.Sanity = 0
-	log.Printf("NPC State before: %s, Sanity: %.2f", npc.State.String(), npc.TemporalState.Sanity)
+	npc.State.Sanity = 0
+	log.Printf("NPC State before: %s, Sanity: %.2f", npc.ActionState.String(), npc.State.Sanity)
 	npc.SharedUpdate(ctx) // This should trigger berserk
-	log.Printf("NPC State after: %s", npc.State.String())
+	log.Printf("NPC State after: %s", npc.ActionState.String())
 	
-	if npc.State != ActorBerserk {
-		t.Errorf("Expected ActorBerserk when sanity is 0, got %s", npc.State.String())
+	if npc.ActionState != ActorBerserk {
+		t.Errorf("Expected ActorBerserk when sanity is 0, got %s", npc.ActionState.String())
 	}
 	if npc.Alignment != AlignmentEnemy {
 		t.Errorf("Expected AlignmentEnemy when berserk, got %d", npc.Alignment)
 	}
 
 	// Recovery
-	npc.TemporalState.Sanity = 50
+	npc.State.Sanity = 50
 	npc.SharedUpdate(ctx)
-	if npc.State == ActorBerserk {
+	if npc.ActionState == ActorBerserk {
 		t.Errorf("Expected recovery from Berserk when sanity restored")
 	}
 }
@@ -58,11 +58,13 @@ func TestSimulation_Workshop(t *testing.T) {
 	
 	c := NewCharacter(0, 0, nil, 1, false, nil)
 	c.PrimaryAttributes = PrimaryAttributes{Intellect: 100, Strength: 100} // Ensure 100% success
+	c.Behavior = BehaviorArtisan
 	ctx.World.Characters = append(ctx.World.Characters, c)
 	
 	// Create a workbench
 	bench := &Obstacle{
 		ID: "workbench_01",
+		Archetype: &ObstacleArchetype{ID: "workbench"},
 		Alive: true,
 		X: 0.5, Y: 0.5, // Nearby
 	}
@@ -73,7 +75,7 @@ func TestSimulation_Workshop(t *testing.T) {
 	c.Slots["body"] = sword
 
 	// Try workshop
-	c.State = ActorWorkshop
+	c.ActionState = ActorWorkshop
 	c.Tick = 0
 	
 	// Update 481 times

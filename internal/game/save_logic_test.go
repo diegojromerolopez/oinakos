@@ -188,15 +188,15 @@ func TestGame_LoadAdvanced(t *testing.T) {
 	data.Player = PlayerSaveData{
 		Archetype: "conde_olinos",
 		X: 50, Y: 50, 
-		TemporalState: TemporalState{HealthPoints: 80, MaxHealthPoints: 100},
+		State: State{HealthPoints: 80, MaxHealthPoints: 100},
 		Level: 1,
 		Inventory: []ItemInstanceSaveData{{ID: "sword_iron", Resistance: 50, X: 0, Y: 0}},
 		Slots: map[string]ItemInstanceSaveData{"weapon": {ID: "sword_iron", Resistance: 50, X: 0, Y: 0}},
 	}
 	data.Characters = []NPCSaveData{
-		{Archetype: "orc_male", X: 10, Y: 10, TemporalState: TemporalState{HealthPoints: 50, MaxHealthPoints: 50}, Level: 1, Behavior: "wander"},
-		{NPCID: "unique_npc", X: 20, Y: 20, TemporalState: TemporalState{HealthPoints: 100, MaxHealthPoints: 100}, Level: 1, Behavior: "hunter", Alignment: AlignmentEnemy},
-		{Archetype: "orc_male", X: 30, Y: 30, TemporalState: TemporalState{HealthPoints: 0, MaxHealthPoints: 50}, Level: 1, Behavior: "patrol"}, // Dead NPC
+		{Archetype: "orc_male", X: 10, Y: 10, State: State{HealthPoints: 50, MaxHealthPoints: 50}, Level: 1, Behavior: "wander"},
+		{NPCID: "unique_npc", X: 20, Y: 20, State: State{HealthPoints: 100, MaxHealthPoints: 100}, Level: 1, Behavior: "hunter", Alignment: AlignmentEnemy},
+		{Archetype: "orc_male", X: 30, Y: 30, State: State{HealthPoints: 0, MaxHealthPoints: 50}, Level: 1, Behavior: "patrol"}, // Dead NPC
 	}
 	data.Obstacles = []ObstacleSaveData{
 		{ID: "tree_1", Archetype: "tree_oak", X: ptr(5.0), Y: ptr(5.0), HealthPoints: 100},

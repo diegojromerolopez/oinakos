@@ -14,7 +14,7 @@ func (a *Actor) updateHusbandry(ctx *SystemContext) {
 		a.MilkCooldownTicks--
 	}
 
-	if a.State != ActorMilking { return }
+	if a.ActionState != ActorMilking { return }
 
 	// 1. Locate the target animal
 	var targetAnimal *Actor
@@ -26,7 +26,7 @@ func (a *Actor) updateHusbandry(ctx *SystemContext) {
 	}
 
 	if targetAnimal == nil {
-		a.State = ActorIdle
+		a.ActionState = ActorIdle
 		a.LastAIReasoning = "Animal missing!"
 		return
 	}
@@ -34,20 +34,20 @@ func (a *Actor) updateHusbandry(ctx *SystemContext) {
 	// 2. Proximity check
 	dist := math.Sqrt(math.Pow(a.X-targetAnimal.X, 2) + math.Pow(a.Y-targetAnimal.Y, 2))
 	if dist > 2.0 {
-		a.State = ActorIdle
+		a.ActionState = ActorIdle
 		a.LastAIReasoning = "Too far to milk!"
 		return
 	}
 
 	// 3. Animal state check
 	if !targetAnimal.IsAlive() || !targetAnimal.Config.Stats.IsMilkable {
-		a.State = ActorIdle
+		a.ActionState = ActorIdle
 		a.LastAIReasoning = "Cannot milk this!"
 		return
 	}
 
 	if targetAnimal.MilkCooldownTicks > 0 {
-		a.State = ActorIdle
+		a.ActionState = ActorIdle
 		a.LastAIReasoning = "Already milked recently."
 		return
 	}
@@ -65,7 +65,7 @@ func (a *Actor) updateHusbandry(ctx *SystemContext) {
 	// 5. Success check at completion
 	if a.WorkTicks >= 300 { // 5s to milk
 		a.WorkTicks = 0
-		a.State = ActorIdle
+		a.ActionState = ActorIdle
 		
 		if !a.CheckAbilitySuccess("milk", 0) {
 			a.LastAIReasoning = "Fumbled the milking!"
@@ -96,11 +96,11 @@ func (a *Actor) updateHusbandry(ctx *SystemContext) {
 func (a *Actor) updateOwnership(ctx *SystemContext) {
 	if !a.IsAlive() { return }
 
-	if a.State != ActorStashing { return }
+	if a.ActionState != ActorStashing { return }
 
 	// Stashing logic: Move items from inventory to the owned chest
 	if a.OwnedChestID == "" {
-		a.State = ActorIdle
+		a.ActionState = ActorIdle
 		return
 	}
 
@@ -114,7 +114,7 @@ func (a *Actor) updateOwnership(ctx *SystemContext) {
 	}
 
 	if chest == nil || !chest.Alive {
-		a.State = ActorIdle
+		a.ActionState = ActorIdle
 		a.OwnedChestID = "" // Clear invalid ownership
 		return
 	}
@@ -122,14 +122,14 @@ func (a *Actor) updateOwnership(ctx *SystemContext) {
 	// Proximity
 	dist := math.Sqrt(math.Pow(a.X-chest.X, 2) + math.Pow(a.Y-chest.Y, 2))
 	if dist > 1.5 {
-		a.State = ActorIdle
+		a.ActionState = ActorIdle
 		return
 	}
 
 	// Move items
 	if len(a.Inventory) > 0 {
 		if !a.CheckAbilitySuccess("stash", 0) {
-			a.State = ActorIdle
+			a.ActionState = ActorIdle
 			return
 		}
 
@@ -145,5 +145,5 @@ func (a *Actor) updateOwnership(ctx *SystemContext) {
 		})
 	}
 
-	a.State = ActorIdle
+	a.ActionState = ActorIdle
 }

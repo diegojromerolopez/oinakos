@@ -12,14 +12,14 @@ func TestCheckAttackHits_HitOrMiss(t *testing.T) {
 	ctx.World.PlayableCharacter = mc
 
 	npc := NewCharacter(0.5, 0.5, &EntityConfig{ID: "test", XP: 1}, 1, false, nil)
-	npc.TemporalState.HealthPoints = 100
+	npc.State.HealthPoints = 100
 	npc.Alignment = AlignmentEnemy
 	ctx.World.Characters = []*Character{npc}
 
 	mc.CheckAttackHits(ctx, "")
 
 	// Either health dropped (hit) or a floating text was produced (MISS) — both valid
-	if npc.TemporalState.HealthPoints == 100 && len(ctx.World.FloatingTexts) == 0 {
+	if npc.State.HealthPoints == 100 && len(ctx.World.FloatingTexts) == 0 {
 		t.Error("Expected NPC to take damage or a floating text (MISS) to appear")
 	}
 }
@@ -31,13 +31,13 @@ func TestCheckAttackHits_DeadNPCSkipped(t *testing.T) {
 	ctx.World.PlayableCharacter = mc
 
 	npc := NewCharacter(0.5, 0.5, nil, 1, false, nil)
-	npc.State = ActorDead
-	npc.TemporalState.HealthPoints = 50
+	npc.ActionState = ActorDead
+	npc.State.HealthPoints = 50
 	ctx.World.Characters = []*Character{npc}
 
 	mc.CheckAttackHits(ctx, "")
 
-	if npc.TemporalState.HealthPoints != 50 {
+	if npc.State.HealthPoints != 50 {
 		t.Error("Dead NPC should never take damage")
 	}
 	if len(ctx.World.FloatingTexts) != 0 {
@@ -52,12 +52,12 @@ func TestCheckAttackHits_OutOfRange(t *testing.T) {
 	ctx.World.PlayableCharacter = mc
 
 	npc := NewCharacter(50, 50, nil, 1, false, nil) // Far away
-	npc.TemporalState.HealthPoints = 100
+	npc.State.HealthPoints = 100
 	ctx.World.Characters = []*Character{npc}
 
 	mc.CheckAttackHits(ctx, "")
 
-	if npc.TemporalState.HealthPoints != 100 {
+	if npc.State.HealthPoints != 100 {
 		t.Error("Out-of-range NPC should not take damage")
 	}
 	if len(ctx.World.FloatingTexts) != 0 {
@@ -78,7 +78,7 @@ func TestCheckAttackHits_AllDirections(t *testing.T) {
 
 		dx, dy := offsets[i][0], offsets[i][1]
 		npc := NewCharacter(dx, dy, &EntityConfig{ID: "test"}, 1, false, nil)
-		npc.TemporalState.HealthPoints = 100
+		npc.State.HealthPoints = 100
 		npc.BaseDefense = 0
 		ctx.World.Characters = []*Character{npc}
 
@@ -87,7 +87,7 @@ func TestCheckAttackHits_AllDirections(t *testing.T) {
 		hitDetected := false
 		for attempt := 0; attempt < 100; attempt++ {
 			mc.CheckAttackHits(ctx, "")
-			if npc.TemporalState.HealthPoints < 100 {
+			if npc.State.HealthPoints < 100 {
 				hitDetected = true
 				break
 			}
@@ -108,7 +108,7 @@ func TestCheckAttackHits_KillUpdatesMapKills(t *testing.T) {
 
 	// Ensure the MapKills map is initialized (it is inside NewCharacter)
 	npc := NewCharacter(0.5, 0.5, &EntityConfig{ID: "crimson_guard", XP: 10}, 1, false, nil)
-	npc.TemporalState.HealthPoints = 1
+	npc.State.HealthPoints = 1
 	npc.BaseDefense = 0
 	ctx.World.Characters = []*Character{npc}
 
@@ -117,7 +117,7 @@ func TestCheckAttackHits_KillUpdatesMapKills(t *testing.T) {
 	hitDetected := false
 	for attempt := 0; attempt < 100; attempt++ {
 		mc.CheckAttackHits(ctx, "")
-		if npc.State == ActorDead {
+		if npc.ActionState == ActorDead {
 			hitDetected = true
 			break
 		}

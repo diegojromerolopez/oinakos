@@ -105,8 +105,8 @@ func TestLoadMapLevel_InhabitantsAndObstacles(t *testing.T) {
 	if len(g.characters) != 2 {
 		t.Errorf("Expected 2 NPCs, got %d", len(g.characters))
 	}
-	if g.characters[0].State != ActorDead {
-		t.Errorf("Expected first NPC to be dead, got %v", g.characters[0].State)
+	if g.characters[0].ActionState != ActorDead {
+		t.Errorf("Expected first NPC to be dead, got %v", g.characters[0].ActionState)
 	}
 	if g.characters[1].Name != "Grimgor" {
 		t.Errorf("Expected second NPC name to be Grimgor, got %s", g.characters[1].Name)

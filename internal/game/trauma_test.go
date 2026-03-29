@@ -7,7 +7,7 @@ import (
 func TestTrauma_IncapacitationThreshold(t *testing.T) {
 	ctx := NewTestContext()
 	c := &Character{Actor: Actor{
-		TemporalState: TemporalState{
+		State: State{
 			HealthPoints:    100,
 			MaxHealthPoints: 100,
 			Hunger:          100.0,
@@ -20,13 +20,13 @@ func TestTrauma_IncapacitationThreshold(t *testing.T) {
 	// Damage to 5 HP (should still be active)
 	c.TakeDamage(95, nil, ctx)
 	if c.IsIncapacitated() {
-		t.Errorf("Expected actor to be active at 5 HP, got %v", c.State)
+		t.Errorf("Expected actor to be active at 5 HP, got %v", c.ActionState)
 	}
 
 	// Damage to 0 HP (should be incapacitated)
 	c.TakeDamage(5, nil, ctx)
 	if !c.IsIncapacitated() {
-		t.Errorf("Expected actor to be incapacitated at 0 HP, got %v", c.State)
+		t.Errorf("Expected actor to be incapacitated at 0 HP, got %v", c.ActionState)
 	}
 	if !c.IsAlive() {
 		t.Error("Actor should still be 'alive' (not truly dead) at 0 HP")
@@ -36,29 +36,29 @@ func TestTrauma_IncapacitationThreshold(t *testing.T) {
 func TestTrauma_BleedOutAndDeath(t *testing.T) {
 	ctx := NewTestContext()
 	c := &Character{Actor: Actor{
-		TemporalState: TemporalState{
+		State: State{
 			HealthPoints:    0,
 			MaxHealthPoints: 100,
 			Hunger:          0.0,
 			Thirst:          0.0,
 			Fatigue:         0.0,
 		},
-		State:  ActorIncapacitated,
-		Config: &EntityConfig{ID: "hero"},
+		ActionState: ActorIncapacitated,
+		Config:      &EntityConfig{ID: "hero"},
 	}}
 
-	// Hour simulation (3600 ticks)
-	for i := 0; i < 3600; i++ {
+	// Hour simulation (TicksPerHour ticks)
+	for i := 0; i < TicksPerHour; i++ {
 		c.Tick++
 		c.SharedUpdate(ctx)
 	}
 
-	if c.TemporalState.HealthPoints != -1 {
-		t.Errorf("Expected -1 HP after one game hour, got %d", c.TemporalState.HealthPoints)
+	if c.State.HealthPoints != -1 {
+		t.Errorf("Expected -1 HP after one game hour, got %d", c.State.HealthPoints)
 	}
 
 	// Fast forward to death (-10 HP)
-	c.TemporalState.HealthPoints = -10
+	c.State.HealthPoints = -10
 	c.SharedUpdate(ctx)
 
 	if !c.IsTrulyDead() {
@@ -72,7 +72,7 @@ func TestTrauma_BleedOutAndDeath(t *testing.T) {
 func TestTrauma_DeterministicLimbLoss(t *testing.T) {
 	ctx := NewTestContext()
 	c := &Character{Actor: Actor{
-		TemporalState: TemporalState{
+		State: State{
 			HealthPoints:    9, // < 10% of 100
 			MaxHealthPoints: 100,
 			Hunger:          100.0,
@@ -98,15 +98,15 @@ func TestTrauma_DeterministicLimbLoss(t *testing.T) {
 func TestTrauma_CumulativeTrauma(t *testing.T) {
 	ctx := NewTestContext()
 	c := &Character{Actor: Actor{
-		TemporalState: TemporalState{
+		State: State{
 			HealthPoints:    0,
 			MaxHealthPoints: 100,
 			Hunger:          100.0,
 			Thirst:          100.0,
 			Fatigue:         100.0,
 		},
-		State:  ActorIncapacitated,
-		Config: &EntityConfig{ID: "hero"},
+		ActionState: ActorIncapacitated,
+		Config:      &EntityConfig{ID: "hero"},
 	}}
 
 	// Multiple hits while incapacitated should cause multiple traumas
@@ -144,15 +144,15 @@ func TestTrauma_CumulativeTrauma(t *testing.T) {
 
 func TestTrauma_Recovery(t *testing.T) {
 	c := &Character{Actor: Actor{
-		TemporalState: TemporalState{
+		State: State{
 			HealthPoints:    -5,
 			MaxHealthPoints: 100,
 			Hunger:          100.0,
 			Thirst:          100.0,
 			Fatigue:         100.0,
 		},
-		State:  ActorIncapacitated,
-		Config: &EntityConfig{ID: "hero"},
+		ActionState: ActorIncapacitated,
+		Config:      &EntityConfig{ID: "hero"},
 	}}
 
 	// Heal to 10 HP (should stand up)
@@ -161,7 +161,7 @@ func TestTrauma_Recovery(t *testing.T) {
 	if c.IsIncapacitated() {
 		t.Error("Expected actor to NOT be incapacitated after healing to positive HP")
 	}
-	if c.State != ActorIdle {
-		t.Errorf("Expected state to be ActorIdle after recovery, got %v", c.State)
+	if c.ActionState != ActorIdle {
+		t.Errorf("Expected state to be ActorIdle after recovery, got %v", c.ActionState)
 	}
 }
