@@ -7,7 +7,6 @@ import (
 	"strings"
 )
 
-// ActorState is the unified state enum for all living entities.
 type ActorState int
 type LaborShift int
 
@@ -22,22 +21,23 @@ const (
 	ActorWalking
 	ActorAttacking
 	ActorDead
-	ActorDrinking  // Player-specific (well interaction)
-	ActorCrouching // Picking up items
-	ActorIncapacitated // Down but not yet Truly Dead
-	ActorResting   // Sleeping / Resting to regain energy
-	ActorChopping  // Gathering timber
-	ActorDigging   // Gathering ore/excavating
-	ActorForaging  // Gathering fruits/veg from environment
-	ActorEating    // Transitioning after consuming food
-	ActorBerserk   // Psychotic break - hostile to all
-	ActorCooking   // Preparing food at a campfire
-	ActorWorkshop  // Repairing gear at a workbench
-	ActorMilking   // Gathering milk from livestock
-	ActorStashing  // Moving items to an owned chest
-	ActorIntercourse // Sexual activity
-	ActorBathing     // Taking a bath
-	ActorRelieving   // Alleviating bodily needs
+	ActorDrinking  
+	ActorCrouching 
+	ActorIncapacitated 
+	ActorResting   
+	ActorChopping  
+	ActorDigging   
+	ActorForaging  
+	ActorEating    
+	ActorBerserk   
+	ActorCooking   
+	ActorWorkshop  
+	ActorMilking   
+	ActorStashing  
+	ActorIntercourse 
+	ActorBathing     
+	ActorRelieving   
+	ActorFeeding     
 )
 
 func (s ActorState) String() string {
@@ -62,17 +62,13 @@ func (s ActorState) String() string {
 	case ActorIntercourse:   return "Intercourse"
 	case ActorBathing:       return "Bathing"
 	case ActorRelieving:     return "Relieving"
+	case ActorFeeding:       return "Feeding"
 	default:                 return "Unknown"
 	}
 }
 
-// Backward-compatible aliases for PlayableCharacterState
 type PlayableCharacterState = ActorState
-
-// Backward-compatible aliases for NPCState
 type NPCState = ActorState
-
-// Direction represents isometric facing direction.
 type Direction int
 
 const (
@@ -82,7 +78,6 @@ const (
 	DirNW
 )
 
-// Alignment represents faction membership.
 type Alignment int
 
 const (
@@ -119,7 +114,6 @@ func (a *Alignment) UnmarshalYAML(value *yaml.Node) error {
 	return fmt.Errorf("unknown alignment: %s", value.Value)
 }
 
-// BehaviorType controls NPC AI decision-making.
 type BehaviorType int
 
 const (
@@ -130,14 +124,13 @@ const (
 	BehaviorChaotic
 	BehaviorEscort
 	BehaviorFlee
-	BehaviorTrader // NPC will open a trade window when interacted with
-	BehaviorHauler // NPC will move items on the ground to stockpiles
-	BehaviorLumberjack // NPC will chop trees and move wood to stockpiles
-	BehaviorFarmer     // NPC will plant and harvest crops
-	BehaviorArtisan    // NPC will smelt, craft, and repair at workbenches
+	BehaviorTrader 
+	BehaviorHauler 
+	BehaviorLumberjack 
+	BehaviorFarmer     
+	BehaviorArtisan    
 )
 
-// PhysicalTrauma tracks irreversible physical injuries.
 type PhysicalTrauma struct {
 	LeftArmLost   bool
 	RightArmLost  bool
@@ -145,25 +138,24 @@ type PhysicalTrauma struct {
 	RightLegLost  bool
 	LeftHandLost  bool
 	RightHandLost bool
-	EyesLost      int  // 0, 1, or 2
-	BurnedAlive   bool // Survivors of extreme fire
+	EyesLost      int  
+	BurnedAlive   bool 
 	SpineBroken   bool
 }
 
-// MemoryEvent tracks past interactions for AI decision making.
 type MemoryEvent struct {
 	Tick   int     `json:"tick"`
-	Type   string  `json:"type"`   // "gift", "attack", "observed_kill"
-	Source string  `json:"source"` // Actor ID
-	Value  float64 `json:"value"`  // Sentiment change (+ or -)
+	Type   string  `json:"type"`   
+	Source string  `json:"source"` 
+	Value  float64 `json:"value"`  
 }
 
 type PrimaryAttributes struct {
-	Strength           int     // Affects melee attacks, base_attack (0-100)
-	Dexterity          int     // Affects ranged attacks, speed, cooldown (0-100)
-	Health             int     // Affects max health points, thirst, hunger, base_defense (0-100)
-	Intellect          int     // Persuasion, logic, planning (0-100)
-	Wisdom             int     // Integrity, morale, code (0-100)
+	Strength           int     
+	Dexterity          int     
+	Health             int     
+	Intellect          int     
+	Wisdom             int     
 }
 
 type EntityStats struct {
@@ -188,7 +180,7 @@ type EntityStats struct {
 type AgeConfig struct {
 	Current FloatInterval `yaml:"current"`
 	Rate    float64       `yaml:"rate"`
-	Max     float64       `yaml:"max"` // Max age character can reach (0 = infinite)
+	Max     float64       `yaml:"max"` 
 }
 
 func (c AgeConfig) Roll() AgeState {
@@ -209,22 +201,22 @@ type State struct {
 	IsPoisoned       bool    `yaml:"is_poisoned,omitempty"`
 	IsAngry          bool    `yaml:"is_angry,omitempty"`
 	IsConscious      bool    `yaml:"is_conscious,omitempty"`
-	IsSeptic         bool    `yaml:"is_septic,omitempty"` // Wound infection
-	IsSick           bool    `yaml:"is_sick,omitempty"`   // Common cold / stomach flu / etc.
-	Arousal          float64 `yaml:"arousal,omitempty"`   // 0 to 100
-	Pain             float64 `yaml:"pain,omitempty"`      // 0 to 100
-	Hygiene          float64 `yaml:"hygiene,omitempty"`   // 100 to 0 (100 = clean, 0 = filthy)
-	BladderLevel     float64 `yaml:"bladder_level,omitempty"` // 0 to 100 (100 = urgent)
-	BowelLevel       float64 `yaml:"bowel_level,omitempty"`   // 0 to 100 (100 = urgent)
+	IsSeptic         bool    `yaml:"is_septic,omitempty"` 
+	IsSick           bool    `yaml:"is_sick,omitempty"`   
+	Arousal          float64 `yaml:"arousal,omitempty"`   
+	Pain             float64 `yaml:"pain,omitempty"`      
+	Hygiene          float64 `yaml:"hygiene,omitempty"`   
+	BladderLevel     float64 `yaml:"bladder_level,omitempty"` 
+	BowelLevel       float64 `yaml:"bowel_level,omitempty"`   
 	AlcoholLevel     float64 `yaml:"alcohol_level,omitempty"`
 	IsDrunk          bool    `yaml:"is_drunk,omitempty"`
 	Age              AgeState `yaml:"age,omitempty"`
 }
 
 type AgeState struct {
-	Current float64 `yaml:"current"` // Years
-	Rate    float64 `yaml:"rate"`    // 1.0 normal, 0.0 vampire
-	Max     float64 `yaml:"max"`     // Absolute death threshold
+	Current float64 `yaml:"current"` 
+	Rate    float64 `yaml:"rate"`    
+	Max     float64 `yaml:"max"`     
 }
 
 const (
@@ -235,31 +227,27 @@ const (
 	StageElder    = "elder"
 )
 
-// Actor holds all runtime state shared between the player character and any NPC.
 type Actor struct {
 	X, Y   float64
 	Z      float64
 	VerticalVelocity float64
 	State             State             `yaml:"state"`
 	PrimaryAttributes PrimaryAttributes `yaml:"attributes"`
-	RawStats          EntityStats       `yaml:"-"` // Rolled values from config
+	RawStats          EntityStats       `yaml:"-"` 
 	SkillValues       map[string]int    `yaml:"skills,omitempty"`
 	
-	BodyStatus map[string]int // "head", "torso", "l_arm", "r_arm", "l_leg", "r_leg"
+	BodyStatus map[string]int 
 	Config *EntityConfig
 	Facing Direction
 	ActionState  ActorState
 	Trauma PhysicalTrauma
 	
-	// Navigation
 	Path      []engine.Point
-	PathTimer int // Ticks until next path recalculation
+	PathTimer int 
 	
-	// Mental Ticks
 	WorkTicks     int
 	LeisureTicks  int
 	
-	// Character Identity & Social
 	ID               string
 	Name             string
 	Denarii          int
@@ -268,14 +256,12 @@ type Actor struct {
 	LeaderID         string
 	MustSurvive      bool
 	IsTransexual     bool
-	ParentID         string // For offspring
-	FatherID         string // For offspring
+	ParentID         string 
+	FatherID         string 
 	
-	// Life Stage & Aging
 	AgeTicks         float64
-	LifeStage        string // "baby", "kid", "teenager", "adult", "elder"
+	LifeStage        string 
 	
-	// Combat Stats (derived)
 	BaseAttack         int
 	RangedAttack       int     
 	BaseDefense        int
@@ -284,7 +270,6 @@ type Actor struct {
 	Speed              float64
 	CriticalChance     float64
 	
-	// Bonus from items/buffs
 	AttackBonus     int
 	DefenseBonus    int
 	ProtectionBonus int
@@ -292,15 +277,13 @@ type Actor struct {
 	MaxHealthBonus  int
 	RegenPerSecond  int
 	
-	// Thermodynamics & Illness
 	BodyTemperature      float64
 	PreferredTemperature float64
 	FluTicks             int
-	SicknessTicks        int    // General sickness duration
-	Sickness             string // Type: "stomach sickness", etc.
+	SicknessTicks        int    
+	Sickness             string 
 	ContagionTimer       int
 	
-	// Reproductive & Relationships
 	Relationships      map[string]float64
 	RomanticInterest   map[string]float64
 	Submission         map[string]float64
@@ -311,14 +294,12 @@ type Actor struct {
 	MatingCooldown     int
 	ArousalTimer       int
 	
-	// Inventory & Equipment
 	Inventory []*ItemInstance
 	Slots     map[string]*ItemInstance
 	MaxWeight float64
 	Weapon    *Weapon
 	BaseWeapon *Weapon
 	
-	// AI Decisions & State
 	Shift              LaborShift
 	Mood               MoodType
 	LastAIChoice       string
@@ -328,13 +309,11 @@ type Actor struct {
 	LastTalkTick       int
 	CurrentTile        string
 	
-	// Targets
 	TargetActorID      string
 	TargetObstacle     *Obstacle
 	TargetItem         *ItemInstance
 	TargetStockpile    *FloorZone
 	
-	// Productive Stats
 	Nourishment int
 	Survivalism int
 	Mate        float64
@@ -346,27 +325,28 @@ type Actor struct {
 	Art         int
 	Culture     int
 	
-	// Counters & Progress
 	Kills    int
 	MapKills map[string]int
 	Level    int
 	XP       int
 	
-	// Ownership
 	OwnedChestID      string
 	MilkCooldownTicks int
 	MeatQuantity      float64
 	
-	// Timers & Visual Flags
 	Tick               int
 	HitTimer           int
 	DeadTimer          int
 	CrouchTimer        int
 	IsOccluded         bool
 	IsTarget           bool
-	IsConscious        bool // Mirroring State for easy access
+	IsConscious        bool 
 	UnconsciousTimer   int
 	
 	LastReaction       string
 	SelectedModel      string
+
+	// Simulation: DF Features
+	RotTicks           int  // Ticks since death (for miasma)
+	GriefTicks         int  // Ticks of mourning
 }

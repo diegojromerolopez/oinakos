@@ -14,31 +14,28 @@ func (a *Actor) updateMaintenance(ctx *SystemContext) {
 }
 
 func (a *Actor) updateNeeds(ctx *SystemContext) {
-	// Percentile scaling: Health 0 -> 1.25x decay, Health 50 -> 0.75x decay, Health 100 -> 0.25x decay
 	decayMultiplier := 1.25 - (float64(a.PrimaryAttributes.Health) * 0.01)
 	if decayMultiplier < 0.25 { decayMultiplier = 0.25 }
 
-	// Weather modifiers
 	weatherPenalty := 1.0
 	if ctx != nil && ctx.World != nil && ctx.World.State.Weather == WeatherRain {
 		weatherPenalty += (ctx.World.State.Intensity * 0.5)
 	}
 
-	// Re-balanced rates
-	a.State.Hunger += 0.02 * decayMultiplier * weatherPenalty
-	a.State.Thirst += 0.03 * decayMultiplier * weatherPenalty 
-	a.State.Fatigue += 0.01 * decayMultiplier * weatherPenalty
+	pMult := 1.0; if a.IsPregnant { pMult = 1.25 }
+	a.State.Hunger += 0.02 * decayMultiplier * weatherPenalty * pMult
+	a.State.Thirst += 0.03 * decayMultiplier * weatherPenalty * pMult
+	
+	fMult := 1.0; if a.IsPregnant { fMult = 1.5 }
+	a.State.Fatigue += 0.01 * decayMultiplier * weatherPenalty * fMult
 
-	// Passive excretion buildup
 	a.State.BladderLevel += 0.015
 	a.State.BowelLevel += 0.01
 
-	// Retentive Pain
 	if a.State.BladderLevel > 80 { a.State.Pain += 0.0001 }
 	if a.State.BowelLevel > 80 { a.State.Pain += 0.00005 }
 	if a.State.BladderLevel >= 100 || a.State.BowelLevel >= 100 { a.State.Pain += 0.001 }
 
-	// Hygiene decay
 	a.State.Hygiene -= 0.005
 
 	if a.State.Hunger > 100 { a.State.Hunger = 100 }
@@ -48,7 +45,6 @@ func (a *Actor) updateNeeds(ctx *SystemContext) {
 	if a.State.BowelLevel > 100 { a.State.BowelLevel = 100 }
 	if a.State.Hygiene < 0 { a.State.Hygiene = 0 }
 	
-	// Alcohol decay
 	if a.State.AlcoholLevel > 0 {
 		a.State.AlcoholLevel -= 0.0028
 		if a.State.AlcoholLevel <= 0 {
@@ -60,7 +56,6 @@ func (a *Actor) updateNeeds(ctx *SystemContext) {
 		}
 	}
 
-	// Hazards
 	if ctx != nil && ctx.World != nil {
 		for _, o := range ctx.World.Obstacles {
 			if o.Alive && o.Archetype != nil && o.Archetype.IsHazard {
@@ -72,7 +67,6 @@ func (a *Actor) updateNeeds(ctx *SystemContext) {
 		}
 	}
 
-	// Hygiene Sickness
 	if a.State.Hygiene <= 0 && a.Tick%TicksPerDay == 0 && a.IsAlive() {
 		if rand.Float64() < 0.2 { a.State.IsSick = true }
 	}
@@ -85,49 +79,30 @@ func (a *Actor) updateNeeds(ctx *SystemContext) {
 
 	if ctx != nil && ctx.World != nil && ctx.World.CurrentMapType != nil {
 		groundZ := ctx.World.CurrentMapType.GetElevationAt(a.X, a.Y)
-		a.VerticalVelocity -= 0.05 // Gravity
+		a.VerticalVelocity -= 0.05 
 		a.Z += a.VerticalVelocity
 		if a.Z < groundZ { a.Z, a.VerticalVelocity = groundZ, 0 }
 	}
 
-	// Regeneration
 	if a.RegenPerSecond > 0 && a.State.HealthPoints < a.GetTotalMaxHealth() {
 		if a.Tick%60 == 0 { a.Heal(a.RegenPerSecond) }
 	}
 
-	// Trauma Effects
 	if a.Trauma.BurnedAlive && a.Tick%600 == 0 { a.State.HealthPoints -= 1 }
-	
-	// Bleeding from missing limbs
 	bleedingRate := 0
 	if a.Trauma.LeftArmLost { bleedingRate++ }
 	if a.Trauma.RightArmLost { bleedingRate++ }
 	if a.Trauma.LeftLegLost { bleedingRate++ }
 	if a.Trauma.RightLegLost { bleedingRate++ }
-	
 	if bleedingRate > 0 && a.Tick%300 == 0 {
 		a.State.HealthPoints -= bleedingRate
-		if ctx != nil && ctx.World != nil && ctx.World.PlayableCharacter != nil && a.Name == ctx.World.PlayableCharacter.Name {
-			ctx.Log("Bleeding heavily...", LogCombatDamage)
-		}
+		if ctx != nil && ctx.World != nil && ctx.World.PlayableCharacter != nil && a.Name == ctx.World.PlayableCharacter.Name { ctx.Log("Bleeding heavily...", LogCombatDamage) }
 	}
 	
-	// Passive HP loss while incapacitated (Bleed Out)
-	if a.ActionState == ActorIncapacitated && a.Tick % TicksPerHour == 0 {
-		a.State.HealthPoints -= 1
-	}
+	if a.ActionState == ActorIncapacitated && a.Tick % TicksPerHour == 0 { a.State.HealthPoints -= 1 }
 
-	if a.ActionState == ActorDrinking {
-		a.State.Thirst -= 1.0; a.State.BladderLevel += 0.5
-		if a.State.Thirst < 0 { a.State.Thirst = 0 }
-	}
-	if a.ActionState == ActorEating {
-		a.State.Hunger -= 1.0; a.State.BowelLevel += 0.5
-		if a.State.Hunger < 0 { a.State.Hunger = 0 }
-	}
 	if a.ActionState == ActorBathing {
-		a.State.Hygiene += 2.0
-		if a.State.Hygiene >= 100 { a.State.Hygiene, a.ActionState = 100, ActorIdle }
+		a.State.Hygiene += 2.0; if a.State.Hygiene >= 100 { a.State.Hygiene, a.ActionState = 100, ActorIdle }
 	}
 	
 	if a.ActionState == ActorRelieving {
@@ -152,8 +127,7 @@ func (a *Actor) updateNeeds(ctx *SystemContext) {
 		a.State.Fatigue -= recoveryRate
 		if a.State.Fatigue <= 0 { a.State.Fatigue, a.ActionState = 0, ActorIdle }
 		if a.Tick%60 == 0 {
-			healthFactor := 0.20
-			if isComfy { healthFactor = 0.60 }
+			healthFactor := 0.20; if isComfy { healthFactor = 0.60 }
 			if a.State.HealthPoints < a.GetTotalMaxHealth() {
 				regen := int(float64(a.GetTotalMaxHealth()) * healthFactor / 33.0)
 				if regen < 1 { regen = 1 }; a.Heal(regen)
@@ -165,7 +139,6 @@ func (a *Actor) updateNeeds(ctx *SystemContext) {
 		a.State.Hunger += 0.002; a.State.Thirst += 0.004; a.State.Fatigue += 0.01; a.State.Hygiene -= 0.0005
 	}
 
-	// Critical Penalties
 	isCritical := a.State.Hunger >= 100 || a.State.Thirst >= 100 || a.State.Fatigue >= 100
 	if isCritical && a.Tick%TicksPerHour == 0 && a.IsAlive() {
 		a.State.HealthPoints -= 1
@@ -180,27 +153,19 @@ func (a *Actor) updateNeeds(ctx *SystemContext) {
 	if (a.State.BladderLevel > 80 || a.State.BowelLevel > 80) && a.Tick%(TicksPerSecond*5) == 0 { a.CausePain(5.0, ctx) }
 	if (a.State.BladderLevel >= 100 || a.State.BowelLevel >= 100) && a.Tick%(TicksPerSecond*10) == 0 {
 		a.State.HealthPoints -= 1; a.State.IsSick = true; a.AlleviateOnSelf(ctx) 
-		if ctx != nil && ctx.World != nil {
-			ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{ Text: "Pants Soiled!", X: a.X, Y: a.Y, Life: 60, Color: ColorHarm })
-		}
+		if ctx != nil && ctx.World != nil { ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{ Text: "Pants Soiled!", X: a.X, Y: a.Y, Life: 60, Color: ColorHarm }) }
 	}
 
 	a.SyncLifeStatus()
 }
 
-func (a *Actor) AlleviateProperly(ctx *SystemContext) {
-	a.State.BladderLevel, a.State.BowelLevel, a.State.Pain = 0, 0, 0
-}
-
+func (a *Actor) AlleviateProperly(ctx *SystemContext) { a.State.BladderLevel, a.State.BowelLevel, a.State.Pain = 0, 0, 0 }
 func (a *Actor) AlleviateOnSelf(ctx *SystemContext) {
 	a.State.BladderLevel, a.State.BowelLevel = 0, 0
-	a.State.Hygiene -= 50.0; if a.State.Hygiene < 0 { a.State.Hygiene = 0 }
-	a.State.Pain = 0
+	a.State.Hygiene -= 50.0; if a.State.Hygiene < 0 { a.State.Hygiene = 0 }; a.State.Pain = 0
 }
 
-func (c *Character) TakeBath(ctx *SystemContext) {
-	c.ActionState, c.Tick = ActorBathing, 0
-}
+func (c *Character) TakeBath(ctx *SystemContext) { c.ActionState, c.Tick = ActorBathing, 0 }
 
 func (c *Character) TransferSoilingToVictims(ctx *SystemContext) {
 	if c.State.Hygiene > 30 { return }

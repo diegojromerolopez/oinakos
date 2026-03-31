@@ -32,6 +32,9 @@ type PlayerContext struct {
 	Kills       int      `json:"kills"`
 	Level       int      `json:"level"`
 	Denarii     int      `json:"denarii"`
+	Hunger      int      `json:"hunger"`
+	Thirst      int      `json:"thirst"`
+	Fatigue     int      `json:"fatigue"`
 	Inventory   []string `json:"inventory"`
 }
 
@@ -68,6 +71,9 @@ func BuildWorldContext(g *Game, focusNPC *Character) string {
 			Kills:       g.playableCharacter.Kills,
 			Level:       g.playableCharacter.Level,
 			Denarii:     g.playableCharacter.Denarii,
+			Hunger:      int(g.playableCharacter.State.Hunger),
+			Thirst:      int(g.playableCharacter.State.Thirst),
+			Fatigue:     int(g.playableCharacter.State.Fatigue),
 			Inventory:   g.playableCharacter.GetInventoryNames(),
 		},
 		NearbyNPCs: []NPCContext{},

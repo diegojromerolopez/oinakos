@@ -11,7 +11,7 @@ func (gr *GameRenderer) drawHUD(screen engine.Image) {
 	gr.graphics.DrawFilledRect(screen, 10, 10, 220, 50, color.RGBA{0, 0, 0, 180}, false)
 	gr.graphics.DrawTextAt(screen, fmt.Sprintf("%s, HOUR %02d:%02d", sState.Season, sState.Hour, sState.Ticks/12), 20, 25, color.RGBA{218, 165, 32, 255}, 14)
 	gr.graphics.DrawTextAt(screen, fmt.Sprintf("TEMP: %.1fC WEATHER: %s", sState.Temperature, sState.Weather), 20, 45, color.White, 11)
-	hudY, barX, barW := 70, 160, 200; gr.graphics.DrawFilledRect(screen, 10, float32(hudY), 350, 500, color.RGBA{0, 0, 0, 180}, false)
+	hudY, barX, barW := 70, 160, 200; gr.graphics.DrawFilledRect(screen, 10, float32(hudY), 350, 520, color.RGBA{0, 0, 0, 180}, false)
 	hp, maxHP := g.playableCharacter.State.HealthPoints, g.playableCharacter.State.MaxHealthPoints
 	gr.graphics.DrawTextAt(screen, fmt.Sprintf("HP: %d/%d", hp, maxHP), 20, hudY+10, color.White, 16)
 	gr.graphics.DrawFilledRect(screen, 160, float32(hudY+12), 200, 10, color.RGBA{100, 0, 0, 255}, false)
@@ -20,28 +20,43 @@ func (gr *GameRenderer) drawHUD(screen engine.Image) {
 		if healthPct <= 0.5 { healthColor = color.RGBA{200, 0, 0, 255} } else if healthPct <= 0.7 { healthColor = color.RGBA{200, 200, 0, 255} }
 		gr.graphics.DrawFilledRect(screen, 160, float32(hudY+12), float32(200*healthPct), 10, healthColor, false)
 	}
-	needs := []struct { label string; val float64; clr color.RGBA }{
-		{"HUNGER", g.playableCharacter.State.Hunger, color.RGBA{210, 105, 30, 255}},
-		{"THIRST", g.playableCharacter.State.Thirst, color.RGBA{0, 191, 255, 255}},
-		{"FATIGUE", g.playableCharacter.State.Fatigue, color.RGBA{255, 215, 0, 255}},
-		{"HYGIENE", g.playableCharacter.State.Hygiene, color.RGBA{144, 238, 144, 255}},
-		{"BLADDER", g.playableCharacter.State.BladderLevel, color.RGBA{255, 255, 0, 255}},
-		{"BOWEL", g.playableCharacter.State.BowelLevel, color.RGBA{139, 69, 19, 255}},
-		{"SANITY", g.playableCharacter.State.Sanity, color.RGBA{0, 255, 255, 255}},
-		{"AROUSAL", g.playableCharacter.State.Arousal, color.RGBA{255, 105, 180, 255}},
-		{"PAIN", g.playableCharacter.State.Pain, color.RGBA{255, 0, 0, 255}},
-		{"ALCOHOL", g.playableCharacter.State.AlcoholLevel, color.RGBA{150, 50, 250, 255}},
+
+	p := g.playableCharacter
+	isVampire := p.State.Age.Rate == 0
+	
+	type needDef struct { label string; val float64; clr color.RGBA }
+	var needs []needDef
+	
+	if isVampire {
+		needs = append(needs, needDef{"BLOODLUST", p.State.Hunger, color.RGBA{180, 0, 0, 255}})
+	} else {
+		needs = append(needs, needDef{"HUNGER", p.State.Hunger, color.RGBA{210, 105, 30, 255}})
+		needs = append(needs, needDef{"THIRST", p.State.Thirst, color.RGBA{0, 191, 255, 255}})
 	}
+	
+	needs = append(needs, []needDef{
+		{"FATIGUE", p.State.Fatigue, color.RGBA{255, 215, 0, 255}},
+		{"HYGIENE", p.State.Hygiene, color.RGBA{144, 238, 144, 255}},
+		{"BLADDER", p.State.BladderLevel, color.RGBA{255, 255, 0, 255}},
+		{"BOWEL", p.State.BowelLevel, color.RGBA{139, 69, 19, 255}},
+		{"SANITY", p.State.Sanity, color.RGBA{0, 255, 255, 255}},
+		{"AROUSAL", p.State.Arousal, color.RGBA{255, 105, 180, 255}},
+		{"PAIN", p.State.Pain, color.RGBA{255, 0, 0, 255}},
+		{"ALCOHOL", p.State.AlcoholLevel, color.RGBA{150, 50, 250, 255}},
+	}...)
+
 	for i, n := range needs {
 		gr.graphics.DrawTextAt(screen, fmt.Sprintf("%s: %d%%", n.label, int(n.val)), 20, hudY+35+i*13, color.White, 12)
 		gr.graphics.DrawFilledRect(screen, float32(barX), float32(hudY+37+i*13), float32(barW), 6, color.RGBA{30, 30, 30, 255}, false)
 		gr.graphics.DrawFilledRect(screen, float32(barX), float32(hudY+37+i*13), float32(float64(barW)*(n.val/100.0)), 6, n.clr, false)
 	}
-	yPos := hudY + 168; gr.graphics.DrawTextAt(screen, fmt.Sprintf("LVL: %d XP: %d AGE: %.1f GOLD: %d", g.playableCharacter.Level, g.playableCharacter.XP, g.playableCharacter.State.Age.Current, g.playableCharacter.Denarii), 20, yPos, color.White, 12)
-	yPos = gr.drawWrappedText(screen, "OBJ: "+g.currentMapType.Description, 20, yPos+15, 310, color.White, 12, hudY+280); yPos += 15
-	gr.graphics.DrawTextAt(screen, fmt.Sprintf("POS %s, %s KILLS: %d", g.settings.FormatDistance(g.playableCharacter.X), g.settings.FormatDistance(g.playableCharacter.Y), g.playableCharacter.Kills), 20, yPos, color.White, 12); yPos += 15
-	gr.graphics.DrawTextAt(screen, fmt.Sprintf("STR: %d DEX: %d HEA: %d INT: %d WIS: %d", g.playableCharacter.PrimaryAttributes.Strength, g.playableCharacter.PrimaryAttributes.Dexterity, g.playableCharacter.PrimaryAttributes.Health, g.playableCharacter.PrimaryAttributes.Intellect, g.playableCharacter.PrimaryAttributes.Wisdom), 20, yPos, color.RGBA{200, 200, 255, 255}, 12); yPos += 15
-	gr.graphics.DrawTextAt(screen, fmt.Sprintf("ATK:%d DEF:%d SHIELD:%d WT:%s/%s", g.playableCharacter.GetTotalAttack(), g.playableCharacter.GetTotalDefense(), g.playableCharacter.GetTotalProtection(), g.settings.FormatWeight(g.playableCharacter.GetTotalWeight()), g.settings.FormatWeight(g.playableCharacter.MaxWeight)), 20, yPos, color.White, 12); yPos += 15
+	
+	yPos := hudY + 168 + 15; if isVampire { yPos -= 13 }
+	gr.graphics.DrawTextAt(screen, fmt.Sprintf("LVL: %d XP: %d AGE: %.1f GOLD: %d", p.Level, p.XP, p.State.Age.Current, p.Denarii), 20, yPos, color.White, 12)
+	yPos = gr.drawWrappedText(screen, "OBJ: "+g.currentMapType.Description, 20, yPos+15, 310, color.White, 12, hudY+300); yPos += 15
+	gr.graphics.DrawTextAt(screen, fmt.Sprintf("POS %s, %s KILLS: %d", g.settings.FormatDistance(p.X), g.settings.FormatDistance(p.Y), p.Kills), 20, yPos, color.White, 12); yPos += 15
+	gr.graphics.DrawTextAt(screen, fmt.Sprintf("STR: %d DEX: %d HEA: %d INT: %d WIS: %d", p.PrimaryAttributes.Strength, p.PrimaryAttributes.Dexterity, p.PrimaryAttributes.Health, p.PrimaryAttributes.Intellect, p.PrimaryAttributes.Wisdom), 20, yPos, color.RGBA{200, 200, 255, 255}, 12); yPos += 15
+	gr.graphics.DrawTextAt(screen, fmt.Sprintf("ATK:%d DEF:%d SHIELD:%d WT:%s/%s", p.GetTotalAttack(), p.GetTotalDefense(), p.GetTotalProtection(), g.settings.FormatWeight(p.GetTotalWeight()), g.settings.FormatWeight(p.MaxWeight)), 20, yPos, color.White, 12); yPos += 15
 	if g.isMenuOpen { gr.drawMenu(screen) }
 	if g.saveMessageTimer > 0 { sttw, _ := gr.graphics.MeasureText(g.saveMessage, 18); gr.graphics.DrawTextAt(screen, g.saveMessage, (g.width-int(sttw))/2, g.height-40, color.RGBA{218, 165, 32, 255}, 18) }
 	gr.drawMinimap(screen); gr.drawObjectiveArrow(screen)

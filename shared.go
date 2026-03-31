@@ -35,19 +35,23 @@ func (c *combinedFS) Open(name string) (fs.File, error) {
 	return c.embed.Open(name)
 }
 
-func setupCommon() (fs.FS, bool, string, string, string) {
+func setupCommon() (fs.FS, bool, string, string, string, bool, float64) {
 	var initialMap string
 	var initialMapType string
 	var heroID string
 	var loadGame string
 	var debug bool
 	var configDir string
+	var fastSim bool
+	var simDuration float64
 	flag.StringVar(&initialMap, "map", "", "Map YAML file to load (save/instance)")
 	flag.StringVar(&initialMapType, "map-type", "", "Named map type to generate from")
 	flag.StringVar(&heroID, "hero", "", "Character ID to use as the playable character")
 	flag.StringVar(&loadGame, "load-game", "", "Saved game file to load (e.g. quicksaves/save_20240101_120000.yaml)")
 	flag.BoolVar(&debug, "debug", false, "Show collision perimeters (red borders)")
 	flag.StringVar(&configDir, "config", "", "Config directory to use for settings and saves")
+	flag.BoolVar(&fastSim, "fast", false, "Run simulation at maximum speed (1min real = 1mo game)")
+	flag.Float64Var(&simDuration, "duration", 0, "Duration of simulation in minutes (0 = infinite)")
 	flag.Parse()
 
 	if debug {
@@ -78,7 +82,7 @@ func setupCommon() (fs.FS, bool, string, string, string) {
 
 	engine.InitAudio(finalAssets)
 
-	return finalAssets, debug, initialMap, initialMapType, heroID
+	return finalAssets, debug, initialMap, initialMapType, heroID, fastSim, simDuration
 }
 
 func loadRegistries(finalAssets fs.FS) (*game.ArchetypeRegistry, *game.CharacterRegistry) {

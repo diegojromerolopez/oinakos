@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	finalAssets, debug, initialMap, initialMapType, heroID := setupCommon()
+	finalAssets, debug, initialMap, initialMapType, heroID, _, _ := setupCommon()
 	log.Printf("Starting Ebiten GUI mode...")
 
 	loadRegistries(finalAssets)

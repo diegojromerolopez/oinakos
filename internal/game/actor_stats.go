@@ -22,11 +22,9 @@ func (a *Actor) SyncStats(objReg *ObjectRegistry) {
 
 	age := float64(a.AgeTicks) / float64(TicksPerYear)
 	pMult, mMult := 1.0, 1.0
-	
 	if age < 25 {
 		penaltyPrc := (25.0 - age) / 25.0
-		pMult = 1.0 - (0.25 * penaltyPrc)
-		mMult = 1.0 - (0.30 * penaltyPrc)
+		pMult, mMult = 1.0-(0.25*penaltyPrc), 1.0-(0.30*penaltyPrc)
 	} else if age > 40 {
 		mMult = 1.0 + (0.05 * math.Floor((age-40.0)/10.0))
 		pPenalty := 0.25 * (age - 40.0) / (85.0 - 40.0)
@@ -35,6 +33,11 @@ func (a *Actor) SyncStats(objReg *ObjectRegistry) {
 	}
 
 	str, dex, hlt, itl, wis := float64(a.PrimaryAttributes.Strength)*pMult, float64(a.PrimaryAttributes.Dexterity)*pMult, float64(a.PrimaryAttributes.Health)*pMult, float64(a.PrimaryAttributes.Intellect)*mMult, float64(a.PrimaryAttributes.Wisdom)*mMult
+
+	// PREGNANCY PENALTIES (Biology Item 5: Maternal Burden)
+	if a.IsPregnant {
+		str, dex, itl, wis = str*0.6, dex*0.5, itl*0.7, wis*0.8
+	}
 
 	if a.State.Arousal > 10 { itl, wis = itl - a.State.Arousal*0.5, wis - a.State.Arousal*0.5 }
 	if a.State.IsDrunk { dex, itl, wis = dex*0.7, itl*0.7, wis*0.7 }
@@ -46,6 +49,7 @@ func (a *Actor) SyncStats(objReg *ObjectRegistry) {
 	a.RangedAttack, a.CriticalChance = int(dex * 2), str * 0.005
 	a.Speed = dex * 0.02
 	if a.RawStats.Speed > 0 { a.Speed = a.RawStats.Speed * pMult }
+	if a.IsPregnant { a.Speed *= 0.7 } // Move 30% slower
 	if a.Speed <= 0 { a.Speed = 0.01 }
 
 	a.Nourishment, a.Survivalism, a.Mate = int(hlt * 2), int(str*0.5 + hlt*0.5), hlt * 0.01
@@ -56,16 +60,13 @@ func (a *Actor) SyncStats(objReg *ObjectRegistry) {
 	if a.State.HealthPoints > a.State.MaxHealthPoints { a.State.HealthPoints = a.State.MaxHealthPoints }
 
 	cooldownMult := 1.5 - (dex * 0.01)
-	baseCD := a.RawStats.AttackCooldown
-	if baseCD == 0 { baseCD = 60 }
+	baseCD := a.RawStats.AttackCooldown; if baseCD == 0 { baseCD = 60 }
 	a.BaseAttackCooldown = int(float64(baseCD) * cooldownMult)
 	if a.BaseAttackCooldown < 10 { a.BaseAttackCooldown = 10 }
 
 	if a.RawStats.MaxWeight > 0 { a.MaxWeight = a.RawStats.MaxWeight } else { a.MaxWeight = (str*1.5 + hlt*0.5) / 0.329 }
-	a.BaseWeapon = a.Config.Weapon.Resolve(objReg)
-	if a.BaseWeapon == nil { a.BaseWeapon = WeaponFists }
-	a.Weapon = a.BaseWeapon
-	a.BaseProtection = a.calculateStat(a.RawStats.BaseProtection, a.Level)
+	a.BaseWeapon = a.Config.Weapon.Resolve(objReg); if a.BaseWeapon == nil { a.BaseWeapon = WeaponFists }
+	a.Weapon, a.BaseProtection = a.BaseWeapon, a.calculateStat(a.RawStats.BaseProtection, a.Level)
 }
 
 func (a *Actor) calculateStat(base int, level int) int {

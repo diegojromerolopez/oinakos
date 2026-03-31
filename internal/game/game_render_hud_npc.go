@@ -42,7 +42,15 @@ func (gr *GameRenderer) drawNPCStatusBox(screen engine.Image, n *Character, x, y
 	gr.graphics.DrawTextAt(screen, fmt.Sprintf("STR:%d DEX:%d HEA:%d", n.PrimaryAttributes.Strength, n.PrimaryAttributes.Dexterity, n.PrimaryAttributes.Health), int(bx)+10, yMed, color.RGBA{200, 200, 255, 255}, 11)
 	yMed += 14; gr.graphics.DrawTextAt(screen, fmt.Sprintf("INT:%d WIS:%d AGE:%.1f", n.PrimaryAttributes.Intellect, n.PrimaryAttributes.Wisdom, n.State.Age.Current), int(bx)+10, yMed, color.RGBA{200, 200, 255, 255}, 11)
 	yBio := yMed + 25; gr.graphics.DrawTextAt(screen, "-- BIOLOGICAL NEEDS --", int(bx)+10, yBio, gray, 11)
-	yBio += 15; gr.graphics.DrawTextAt(screen, fmt.Sprintf("HUNGER:%d%% THIRST:%d%% FATIGUE:%d%%", int(n.State.Hunger), int(n.State.Thirst), int(n.State.Fatigue)), int(bx)+20, yBio, white, 10)
+	yBio += 15
+	
+	isVampire := n.State.Age.Rate == 0
+	if isVampire {
+		gr.graphics.DrawTextAt(screen, fmt.Sprintf("BLOODLUST:%d%% FATIGUE:%d%%", int(n.State.Hunger), int(n.State.Fatigue)), int(bx)+20, yBio, color.RGBA{255, 150, 150, 255}, 10)
+	} else {
+		gr.graphics.DrawTextAt(screen, fmt.Sprintf("HUNGER:%d%% THIRST:%d%% FATIGUE:%d%%", int(n.State.Hunger), int(n.State.Thirst), int(n.State.Fatigue)), int(bx)+20, yBio, white, 10)
+	}
+	
 	yBio += 12; gr.graphics.DrawTextAt(screen, fmt.Sprintf("BLAD:%d%% BOWL:%d%% SAN:%d%% PAIN:%d%%", int(n.State.BladderLevel), int(n.State.BowelLevel), int(n.State.Sanity), int(n.State.Pain)), int(bx)+20, yBio, white, 10)
 	yMem := yBio + 25; gr.graphics.DrawTextAt(screen, "-- RECENT MEMORIES --", int(bx)+10, yMem, gray, 11); yMem += 15
 	for i, count := len(n.Memories)-1, 0; i >= 0 && count < 6; i, count = i-1, count+1 {
@@ -57,18 +65,4 @@ func (gr *GameRenderer) drawNPCStatusBox(screen engine.Image, n *Character, x, y
 		if mx >= cx && mx <= cx+85 && my >= cy-12 && my <= cy+8 { clr = color.RGBA{255, 255, 0, 255} }
 		gr.graphics.DrawTextAt(screen, cmd, cx, cy, clr, 11)
 	}
-}
-
-func (gr *GameRenderer) drawInfoBox(screen engine.Image, title, desc string, x, y int) {
-	boxW, boxH, bx, by := 300.0, 160.0, float32(x+20), float32(y+20)
-	if float64(bx)+boxW > float64(gr.game.width) { bx = float32(float64(x) - boxW - 20) }
-	if float64(by)+boxH > float64(gr.game.height) { by = float32(float64(y) - boxH - 20) }
-	gr.graphics.DrawFilledRect(screen, bx-2, by-2, float32(boxW+4), float32(boxH+4), color.RGBA{218, 165, 32, 255}, false)
-	gr.graphics.DrawFilledRect(screen, bx, by, float32(boxW), float32(boxH), color.RGBA{0, 0, 0, 240}, false)
-	gr.graphics.DebugPrintAt(screen, title, int(bx)+10, int(by)+10, color.RGBA{218, 165, 32, 255})
-	words, line, lineNum := strings.Fields(desc), "", 0
-	for _, w := range words {
-		if len(line)+len(w) > 35 { gr.graphics.DebugPrintAt(screen, line, int(bx)+10, int(by)+35+lineNum*15, color.White); line, lineNum = w+" ", lineNum+1 } else { line += w + " " }
-	}
-	gr.graphics.DebugPrintAt(screen, line, int(bx)+10, int(by)+35+lineNum*15, color.White)
 }

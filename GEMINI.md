@@ -66,21 +66,23 @@ Living entities simulate needs every tick. Decay is modified by the **Health** a
 
 - **Hunger/Thirst**: Base rates `0.02` and `0.03`. Dehydration/Starvation leads to HP loss.
 - **Fatigue**: Base rate `0.01`. Recovered by `ActorResting` near comforts.
-- **Excretion**: `BladderLevel` and `BowelLevel` build up. Reaching 100 causes **"Pants Soiled"** (Hygiene -50, Sickness risk).
-- **Hygiene**: Decays at `0.005`. At 0, high risk of **Sepsis/Sick** status.
-- **Alcohol**: Decays at `0.0028`. High levels cause `IsDrunk` debuff (Stats -30%).
+- **Vampirism**: Immortal characters (Age Rate 0) satisfy Hunger/Thirst via **"Bloodlust"** (ActorFeeding on victims). Standard food is rejected.
 
 ### Lifecycle & Aging
 - **Life Stages**: `Baby` (<1y), `Kid` (1-12y), `Teenager` (12-18y), `Adult` (18-65y), `Elder` (>65y).
+- **Career Transition**: At Age 18, NPCs select a Professional Archetype (e.g., Man-at-Arms, Peasant, Priest) based on their highest Primary Attribute.
 - **Death**: Natural death chance starts at **85 years**. `Age.Max` in YAML can set hard limits (0 = immortal).
-- **Genetics**: Offspring inherit attributes from parents with stochastic variation.
+- **Genetics**: Offspring inherit attributes from parents (50/50 blend) with stochastic variation (Mutation chance: 5%).
 
-### Physical Trauma
-Irreversible damage tracked in `PhysicalTrauma`:
-- Lost limbs (Arms, Legs, Hands).
-- Sensory loss (Eyesight 0-2).
-- Catastrophic injuries (Spine broken, Burned alive).
-- **Bleeding**: Each lost limb causes HP drain every 300 ticks.
+### Procreation & Romance
+- **The Social Drive**: Intercourse occurs during `ShiftLeisure`. Triggered by **Relationship (>40)** or **Uninhibited Impulse** (Arousal > 50 or IsDrunk).
+- **Biological Constraint**: Pregnancy only for **non-transexual biological females** mated with **non-transexual biological males**. 
+- **Exclusivity**: Human procreation requires **Vaginal** intercourse.
+
+### Trauma & Environmental Hazards
+- **Physical Trauma**: Irreversible damage (Limbs, Blindness, Broken Spine).
+- **Grief Cascade**: Death of a Partner/Friend triggers **"Mourning"** (Double GriefTicks). Causes massive Sanity drain, leading to Psychotic Breaks.
+- **Miasma**: Dead bodies "Rot" after 1 day. Rotten corpses emit a **Miasma Cloud** (4 pedes radius). Causes Sanity loss and Sickness (Plague). AI will pathfind around Miasma.
 
 ---
 
@@ -88,25 +90,12 @@ Irreversible damage tracked in `PhysicalTrauma`:
 
 ### World Serialization
 The engine serializes the environment into `WorldContext` JSON for AI reasoning:
-- **Player State**: Health, location, inventory, kills.
-- **Nearby NPCs**: Sentiment, behavior, biological needs, memories.
-- **Map Mission**: Current objectives and target locations.
+- **Sanity & Breakpoints**: Critical Sanity (0) triggers `ActorBerserk` (Psychotic Break).
 
 ### Agent Bridge
-External AI (like Antigravity) interacts via `agent-bridge`:
+External AI interacts via `agent-bridge`:
 1. **Output**: Game writes `output.json` with situation and options.
 2. **Input**: AI writes `input.json` with `ChosenOption` and `Reasoning`.
-3. **Loop**: Engine polls for the decision every 500ms.
-
----
-
-## 🎨 Asset Standards
-
-- **Sprites**: 160×160 px, Lime Green (`#00FF00`) background.
-- **Palette Masking**:
-  - **Magenta (`#FF00FF`)**: Primary color (Faction/Team).
-  - **Yellow (`#FFFF00`)**: Secondary color.
-- **Collision**: Defined via `footprint` polygon. Use `make boundaries-editor` to modify.
 
 ---
 

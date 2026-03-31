@@ -1,0 +1,29 @@
+name: Goal Seeking Test
+id: goal_test
+type: reach_portal
+width_px: 5120
+height_px: 5120
+level: 1
+play_time: 0
+floor_tile: grass.png
+player:
+  x: 0
+  y: 0
+  health: 100
+  max_health: 100
+target_point:
+  x: 50
+  y: 50
+obstacles:
+- archetype: well
+  x: 10
+  y: 10
+- archetype: tree_1
+  x: 5
+  y: 5
+- archetype: portal_1
+  id: target_portal
+  x: 50
+  y: 50
+inhabitants: []
+weather: clear

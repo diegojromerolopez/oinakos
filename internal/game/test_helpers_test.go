@@ -7,22 +7,18 @@ import (
 
 // NewTestContext creates a SystemContext populated with mocks for testing.
 func NewTestContext() *SystemContext {
-	world := NewWorld()
+	g := setupTestGame()
+	world := g.World
 	// Initialize with dummy values
 	world.CurrentMapType = &MapType{MapWidth: 1000, MapHeight: 1000}
 	
 	return &SystemContext{
 		World:      world,
-		Input:      NewMockInputManager(),
-		Audio:      NewMockAudioManager(),
-		Registries: &RegistryContainer{
-			Archetypes: NewArchetypeRegistry(),
-			Characters: NewCharacterRegistry(),
-			Obstacles:  NewObstacleRegistry(),
-			Objects:    NewObjectRegistry(),
-		},
-		Log: func(s string, c LogCategory) {},
-		Settings: DefaultSettings(),
+		Input:      g.input,
+		Audio:      g.audio,
+		Registries: g.Registries,
+		Log:        func(s string, c LogCategory) {},
+		Settings:   g.settings,
 	}
 }
 

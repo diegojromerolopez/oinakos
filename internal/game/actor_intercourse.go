@@ -7,7 +7,6 @@ import (
 )
 
 func (a *Actor) isWilling() bool {
-	// Willing if alive, sane enough, and not on cooldown
 	return a.IsAlive() && a.State.Sanity > 20 && a.MatingCooldown <= 0 && !a.IsPregnant
 }
 
@@ -15,63 +14,51 @@ func (a *Actor) updateBreeding(ctx *SystemContext) {
 	if !a.IsAlive() || a.Config == nil { return }
 	
 	adultMode := true
-	if ctx != nil && ctx.Settings != nil {
-		adultMode = ctx.Settings.AdultMode
-	}
+	if ctx != nil && ctx.Settings != nil { adultMode = ctx.Settings.AdultMode }
+	if !adultMode && !a.Config.IsAnimal { return }
 
-	// If adult mode is off, skip human breeding logic but keep animals
-	if !adultMode && !a.Config.IsAnimal {
-		return
-	}
-
-	// 1. Timer decrements
 	if a.MatingCooldown > 0 { a.MatingCooldown-- }
 	if a.IsPregnant {
 		a.GestationTicks--
-		if a.GestationTicks <= 0 {
-			a.giveBirth(ctx)
-		}
+		if a.GestationTicks <= 0 { a.giveBirth(ctx) }
 		return
 	}
 
-	// 2. Mating Logic: Only during Leisure shift
-	if a.Shift != ShiftLeisure || a.IsPregnant { return }
+	if a.Shift != ShiftLeisure { return }
 
-	// Check for nearby mate
 	var mate *Actor
 	minDist := 2.0
 	for _, char := range ctx.World.Characters {
 		other := &char.Actor
 		if other.Name == a.Name || !other.IsAlive() { continue }
 		
-		// Eligibility Check
 		if a.isBioOpposite(other) || (adultMode && !a.Config.IsAnimal) {
-			// Eligibility: (Both willing) OR (One willing AND other incapacitated/immobilized)
+			sentiment := a.Relationships[other.ID]
 			canMate := false
-			if a.isWilling() && other.isWilling() {
+			
+			// 1. Arousal or Alcohol driven (Casual/Uninhibited)
+			isUninhibited := a.State.Arousal > 50 || other.State.Arousal > 50 || a.State.IsDrunk || other.State.IsDrunk
+			if a.isWilling() && other.isWilling() && isUninhibited {
 				canMate = true
-			} else if a.isWilling() && (other.ActionState == ActorIncapacitated) {
+			} 
+			// 2. Emotional driven (Romantic)
+			if !canMate && a.isWilling() && other.isWilling() && sentiment > 40 {
+				canMate = true
+			}
+			// 3. Incapacitated (if allowed)
+			if !canMate && a.isWilling() && (other.ActionState == ActorIncapacitated) {
 				canMate = true
 			}
 
 			if canMate {
-				dist := math.Sqrt(math.Pow(a.X-other.X, 2) + math.Pow(a.Y-other.Y, 2))
-				if dist < minDist {
-					mate = other
-					break
-				}
+				if d := math.Sqrt(math.Pow(a.X-other.X, 2)+math.Pow(a.Y-other.Y, 2)); d < minDist { mate = other; break }
 			}
 		}
 	}
 
 	if mate != nil {
-		if a.Config.IsAnimal {
+		if a.Config.IsAnimal { a.mate(ctx, mate, "vaginal") } else if adultMode {
 			a.mate(ctx, mate, "vaginal")
-		} else if adultMode {
-			// Auto sex for humans in leisure
-			practice := "vaginal"
-			if rand.Float64() < 0.3 { practice = "anal" }
-			a.mate(ctx, mate, practice)
 		}
 	}
 }
@@ -90,127 +77,73 @@ func (a *Actor) GetBioSex() string {
 }
 
 func (a *Actor) mate(ctx *SystemContext, mate *Actor, practice string) {
-	// GENDER ROLES: Only those with a penis (bio-males) can be on the giving end.
-	// The initiator 'a' in mate(mate) is the giver.
-	if a.GetBioSex() == "female" {
+	if a.GetBioSex() == "female" { return }
+
+	a.MatingCooldown, mate.MatingCooldown = 50000, 50000
+	if ctx.Log != nil { 
+		relStr := "BONDED"
+		if a.Relationships[mate.Name] <= 40 { relStr = "CASUAL" }
+		if a.State.IsDrunk || mate.State.IsDrunk { relStr += " UNINHIBITED" }
+		ctx.Log(fmt.Sprintf("[%s]: initiates %s mating with %s", a.Name, relStr, mate.Name), LogNPC) 
+	}
+
+	if practice == "vaginal" {
+		f := a; if a.GetBioSex() == "male" { f = mate }
+		if f.State.Arousal < 30 && !a.Config.IsAnimal {
+			f.CausePain(10.0, ctx)
+			if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] receives pain (un-aroused)", f.Name), LogNPC) }
+		}
+	}
+
+	a.State.Arousal, mate.State.Arousal = 0, 0
+	a.State.Hygiene -= 30; mate.State.Hygiene -= 30
+	if a.State.Hygiene < 0 { a.State.Hygiene = 0 }; if mate.State.Hygiene < 0 { mate.State.Hygiene = 0 }
+
+	if practice != "vaginal" { return }
+
+	var mother, father *Actor
+	if a.GetBioSex() == "female" && mate.GetBioSex() == "male" { mother, father = a, mate } else if a.GetBioSex() == "male" && mate.GetBioSex() == "female" { mother, father = mate, a }
+
+	if mother == nil || father == nil { return } 
+
+	if mother.IsTransexual || father.IsTransexual {
+		if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] and [%s] biologically sterile pair.", mother.Name, father.Name), LogNPC) }
 		return
 	}
 
-	// Set cooldowns
-	a.MatingCooldown = 50000 
-	mate.MatingCooldown = 50000
+	chance := mother.GetAbilityYield("mate")
+	if mother.Config.ID == "courtesan_female" { chance *= 0.2 }
 
-	if ctx.Log != nil {
-		ctx.Log(fmt.Sprintf("[%s]: is mating with %s", a.Name, mate.Name), LogNPC)
-	}
-
-	// Handle effects
-	receiving := mate
-	
-	// Arousal effects
-	if practice == "vaginal" {
-		female := a
-		if a.GetBioSex() == "male" { female = mate }
-		
-		if female.State.Arousal < 30 && !a.Config.IsAnimal {
-			female.CausePain(10.0, ctx)
-			if ctx.Log != nil { 
-				ctx.Log(fmt.Sprintf("[%s] receives pain from lack of arousal", female.Name), LogNPC)
-			}
-		}
-	} else if practice == "anal" {
-		receiving.CausePain(15.0, ctx)
-		if ctx.Log != nil { 
-			ctx.Log(fmt.Sprintf("[%s] receives discomfort from anal intercourse", receiving.Name), LogNPC)
-		}
-	}
-
-	// Relieve arousal for both
-	a.State.Arousal = 0
-	mate.State.Arousal = 0
-
-	// Hygiene decreases a lot during sex
-	a.State.Hygiene -= 30
-	mate.State.Hygiene -= 30
-	if a.State.Hygiene < 0 { a.State.Hygiene = 0 }
-	if mate.State.Hygiene < 0 { mate.State.Hygiene = 0 }
-
-	// Pregnancy logic
-	if practice != "vaginal" { return }
-
-	// Determine mother/father
-	var mother, father *Actor
-	if a.GetBioSex() == "female" && mate.GetBioSex() == "male" {
-		mother, father = a, mate
-	} else if a.GetBioSex() == "male" && mate.GetBioSex() == "female" {
-		mother, father = mate, a
-	}
-
-	if mother == nil || father == nil { return } // Same bio sex cannot breed
-
-	// Chance of pregnancy
-	chance := mother.GetAbilityYield("mate") // health * 0.01 (0.0 to 1.0)
-	if mother.Config.ID == "courtesan_female" {
-		chance *= 0.2 // Courtesans are more specialized
-	}
-
-	if rand.Float64() < chance {
-		if !mother.IsPregnant {
-			mother.IsPregnant = true
-			mother.FatherID = father.Name
-			mother.AddMemory(ctx.World.State.Ticks, "mated", father.Name, 0)
-			
-			mother.GestationTicks = 9 * TicksPerMonth
-			if mother.Config.IsAnimal {
-				mother.GestationTicks = TicksPerMonth
-			}
-
-			if ctx.Log != nil {
-				ctx.Log(fmt.Sprintf("[%s] receives pregnant", mother.Name), LogNPC)
-			}
-		}
+	if rand.Float64() < chance && !mother.IsPregnant {
+		mother.IsPregnant, mother.FatherID = true, father.Name
+		mother.GestationTicks = 9 * TicksPerMonth
+		if mother.Config.IsAnimal { mother.GestationTicks = TicksPerMonth }
+		if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] is pregnant (F:%s)", mother.Name, father.Name), LogNPC) }
 	}
 }
 
 func (a *Actor) giveBirth(ctx *SystemContext) {
 	a.IsPregnant = false
-	
-	// Determine child archetype
 	archID := a.Config.ID
 	if a.Config.IsAnimal {
-		if archID == "sheep" || archID == "ram" {
-			archID = "lamb"
-		} else if archID == "cow" || archID == "bull" {
-			archID = "calf"
-		}
+		if archID == "sheep" || archID == "ram" { archID = "lamb" } else if archID == "cow" || archID == "bull" { archID = "calf" }
 	} else {
-		// Default to peasant, but inherit group
-		archID = "peasant_female" 
-		if a.Config.Group == "Nobility" { archID = "noble_female" }
+		archID = "peasant_female"; if a.Config.Group == "Nobility" { archID = "noble_female" }
 	}
 
-	arch, ok := ctx.Registries.Archetypes.Archetypes[archID]
-	if !ok {
-		arch = a.Config
-	}
-
+	arch, ok := ctx.Registries.Archetypes.Archetypes[archID]; if !ok { arch = a.Config }
 	child := NewCharacter(a.X, a.Y, arch, 1, false, ctx.Registries.Objects)
-	child.Alignment = a.Alignment
-	child.ParentID = a.Name
-	child.FatherID = a.FatherID
+	child.Alignment, child.ParentID, child.FatherID = a.Alignment, a.Name, a.FatherID
 	
-	// INHERITANCE: Blend parents' attributes
-	// We find the father if possible
+	// Reset to infancy
+	child.LifeStage = StageBaby
+	child.AgeTicks = 0
+	child.State.Age.Current = 0
+	child.State.Age.Rate = 1.0 
+
 	var father *Actor
-	if ctx.World.PlayableCharacter != nil && ctx.World.PlayableCharacter.Name == a.FatherID {
-		father = &ctx.World.PlayableCharacter.Actor
-	} else {
-		for _, char := range ctx.World.Characters {
-			if char.Name == a.FatherID {
-				father = &char.Actor
-				break
-			}
-		}
+	if ctx.World.PlayableCharacter != nil && ctx.World.PlayableCharacter.Name == a.FatherID { father = &ctx.World.PlayableCharacter.Actor } else {
+		for _, char := range ctx.World.Characters { if char.Name == a.FatherID { father = &char.Actor; break } }
 	}
 
 	if father != nil {
@@ -221,42 +154,19 @@ func (a *Actor) giveBirth(ctx *SystemContext) {
 		child.PrimaryAttributes.Wisdom = (a.PrimaryAttributes.Wisdom + father.PrimaryAttributes.Wisdom) / 2
 	}
 
-	// MUTATION (Item 2: Genetic Mutation)
-	mutationChance := 0.05
-	if rand.Float64() < mutationChance {
-		mutationType := "Frail"
-		bonus := -15
-		if rand.Float64() < 0.2 { // Rare Heroic mutation (1% total)
-			mutationType = "Heroic"
-			bonus = 20
-		}
-		child.PrimaryAttributes.Strength += bonus
-		child.PrimaryAttributes.Dexterity += bonus
-		child.PrimaryAttributes.Health += bonus
-		child.PrimaryAttributes.Intellect += bonus
-		child.PrimaryAttributes.Wisdom += bonus
-		if ctx.Log != nil {
-			ctx.Log(fmt.Sprintf("%s's child was born with a %s mutation!", a.Name, mutationType), LogNPC)
-		}
+	if rand.Float64() < 0.05 {
+		mod := -15; if rand.Float64() < 0.2 { mod = 20 }
+		child.PrimaryAttributes.Strength += mod; child.PrimaryAttributes.Dexterity += mod
+		child.PrimaryAttributes.Health += mod; child.PrimaryAttributes.Intellect += mod; child.PrimaryAttributes.Wisdom += mod
 	}
 	
-	// Clamp attributes to 0-100
 	clampAttr := func(v int) int { if v < 5 { return 5 }; if v > 100 { return 100 }; return v }
-	child.PrimaryAttributes.Strength = clampAttr(child.PrimaryAttributes.Strength)
-	child.PrimaryAttributes.Dexterity = clampAttr(child.PrimaryAttributes.Dexterity)
-	child.PrimaryAttributes.Health = clampAttr(child.PrimaryAttributes.Health)
-	child.PrimaryAttributes.Intellect = clampAttr(child.PrimaryAttributes.Intellect)
+	child.PrimaryAttributes.Strength, child.PrimaryAttributes.Dexterity = clampAttr(child.PrimaryAttributes.Strength), clampAttr(child.PrimaryAttributes.Dexterity)
+	child.PrimaryAttributes.Health, child.PrimaryAttributes.Intellect = clampAttr(child.PrimaryAttributes.Health), clampAttr(child.PrimaryAttributes.Intellect)
 	child.PrimaryAttributes.Wisdom = clampAttr(child.PrimaryAttributes.Wisdom)
 	
 	child.SyncStats(ctx.Registries.Objects)
-
-	// Scaled down (Child)
-	child.State.MaxHealthPoints /= 2
-	child.State.HealthPoints = child.State.MaxHealthPoints
-	
+	child.State.MaxHealthPoints /= 2; child.State.HealthPoints = child.State.MaxHealthPoints
 	ctx.World.Characters = append(ctx.World.Characters, child)
-
-	if ctx.Log != nil {
-		ctx.Log(fmt.Sprintf("[%s]: has given birth to a child", a.Name), LogNPC)
-	}
+	if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s]: has given birth to a child", a.Name), LogNPC) }
 }
