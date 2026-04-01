@@ -4,9 +4,9 @@ import "testing"
 
 func TestSimulation_MilkingCowTrade(t *testing.T) {
 	g, ctx := setupSimulationGame(); pc := g.playableCharacter; pc.Name = "oinakos"
-	cowConfig := &EntityConfig{ IsAnimal: true, Stats: EntityStatsConfig{ IsMilkable: true, HealthMin: IntInterval{Min: 100, Max: 100}, HealthMax: IntInterval{Min: 100, Max: 100}, MilkCooldown: IntInterval{Min: 0, Max: 0} }, Abilities: map[string]Ability{ "milk": {Yield: "husbandry * 1.0", ParentAttribute: "wisdom"} } }
+	cowConfig := &EntityConfig{ IsAnimal: true, Stats: EntityStatsConfig{ IsMilkable: true, HealthPoints: IntInterval{Min: 100, Max: 100}, MilkCooldown: IntInterval{Min: 0, Max: 0} }, Abilities: map[string]Ability{ "milk": {Yield: "husbandry * 1.0", ParentAttribute: "wisdom"} } }
 	cow := NewCharacter(1, 1, cowConfig, 1, false, g.Registries.Objects); cow.Name = "cow"; g.World.Characters = append(g.World.Characters, cow)
-	trader := NewCharacter(2, 2, &EntityConfig{Stats: EntityStatsConfig{HealthMin: IntInterval{Min: 100, Max: 100}, HealthMax: IntInterval{Min: 100, Max: 100}}}, 1, false, g.Registries.Objects); trader.Name = "tradesman"; trader.Denarii = 500; g.World.Characters = append(g.World.Characters, trader)
+	trader := NewCharacter(2, 2, &EntityConfig{Stats: EntityStatsConfig{HealthPoints: IntInterval{Min: 100, Max: 100}}}, 1, false, g.Registries.Objects); trader.Name = "tradesman"; trader.Denarii = 500; g.World.Characters = append(g.World.Characters, trader)
 	pc.PrimaryAttributes.Wisdom, pc.ActionState, pc.TargetActorID = 100, ActorMilking, "cow"
 	for i := 0; i < 305; i++ { pc.updateHusbandry(ctx); cow.updateHusbandry(ctx) }
 	if pc.ActionState == ActorMilking { t.Fatalf("Character is still milking") }
@@ -17,7 +17,7 @@ func TestSimulation_MilkingCowTrade(t *testing.T) {
 
 func TestSimulation_AttackingOrcTrade(t *testing.T) {
 	g, ctx := setupSimulationGame(); pc := g.playableCharacter; pc.Name, pc.PrimaryAttributes.Strength = "con", 100; pc.SyncStats(g.Registries.Objects)
-	orc := NewCharacter(1, 1, &EntityConfig{Stats: EntityStatsConfig{HealthMin: IntInterval{Min: 10, Max: 10}, HealthMax: IntInterval{Min: 10, Max: 10}}}, 1, false, nil); orc.Name = "orc"
+	orc := NewCharacter(1, 1, &EntityConfig{Stats: EntityStatsConfig{HealthPoints: IntInterval{Min: 10, Max: 10}}}, 1, false, nil); orc.Name = "orc"
 	orc.Inventory = append(orc.Inventory, &ItemInstance{Config: &ObjectConfig{ID: "orcish_axe", Name: "Orcish Axe", Value: 50}}); g.World.Characters = append(g.World.Characters, orc)
 	trader := NewCharacter(2, 2, &EntityConfig{}, 1, false, nil); trader.Denarii = 500
 	for i := 0; i < 10; i++ { pc.TargetActorID = "orc"; pc.CheckAttackHits(ctx, "slash"); if orc.State.HealthPoints <= 0 { break } }

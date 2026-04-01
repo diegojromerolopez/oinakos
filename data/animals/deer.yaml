@@ -1,0 +1,22 @@
+id: deer
+name: Deer
+behavior: flee
+is_animal: true
+gender: female
+meat: 8
+attributes:
+  strength: { min: 40, max: 60, mode: normal, mean: 50, sd: 5 }
+  health: { min: 50, max: 70, mode: normal, mean: 60, sd: 5 }
+  dexterity: { min: 70, max: 100, mode: normal, mean: 85, sd: 10 }
+  intellect: { min: 20, max: 20, mode: normal, mean: 20, sd: 0 }
+  wisdom: { min: 40, max: 40, mode: normal, mean: 40, sd: 0 }
+stats:
+  health_points: { min: 40, max: 40, mode: normal, mean: 40, sd: 0 }
+  health_points: { min: 80, max: 80, mode: normal, mean: 80, sd: 0 }
+  speed: { min: 0.08, max: 0.10, mode: normal, mean: 0.09, sd: 0.01 }
+  attack_cooldown: { min: 90, max: 90, mode: normal, mean: 90, sd: 0 }
+weapon:
+  name: Kick
+  type: melee
+  damage: { min: 10, max: 30 }
+xp: 20

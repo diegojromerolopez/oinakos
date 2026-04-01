@@ -8,5 +8,7 @@ image: assets/images/objects/apple.png
 effects:
   energy:
     increase: 8.0
+  thirst:
+    increase: 5.0
   health:
     increase: 3.0

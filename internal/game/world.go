@@ -7,9 +7,9 @@ const (
 	TicksPerSecond = 60
 	TicksPerHour   = 720 // 12 seconds IRL
 	TicksPerDay    = TicksPerHour * 24
-	TicksPerMonth  = 4 * TicksPerDay  // Oinakos custom calendar: 4 days per month
+	TicksPerMonth  = 30 * TicksPerDay // Aligning with 360-day year standard
 	TicksPerSeason = 3 * TicksPerMonth
-	TicksPerYear   = 12 * TicksPerMonth // 48 Days per year
+	TicksPerYear   = 12 * TicksPerMonth // 360 Days per year
 )
 
 // World holds all live game entities and spatial data.

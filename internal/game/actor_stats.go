@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"math"
 	"strings"
 )
@@ -32,32 +33,39 @@ func (a *Actor) SyncStats(objReg *ObjectRegistry) {
 		pMult = 1.0 - pPenalty
 	}
 
-	str, dex, hlt, itl, wis := float64(a.PrimaryAttributes.Strength)*pMult, float64(a.PrimaryAttributes.Dexterity)*pMult, float64(a.PrimaryAttributes.Health)*pMult, float64(a.PrimaryAttributes.Intellect)*mMult, float64(a.PrimaryAttributes.Wisdom)*mMult
-
-	// PREGNANCY PENALTIES (Biology Item 5: Maternal Burden)
-	if a.IsPregnant {
-		str, dex, itl, wis = str*0.6, dex*0.5, itl*0.7, wis*0.8
+	if a.State.IsDrunk {
+		pMult *= 0.7
+		mMult *= 0.7
 	}
 
-	if a.State.Arousal > 10 { itl, wis = itl - a.State.Arousal*0.5, wis - a.State.Arousal*0.5 }
-	if a.State.IsDrunk { dex, itl, wis = dex*0.7, itl*0.7, wis*0.7 }
-	if itl < 1 { itl = 1 }; if wis < 1 { wis = 1 }
+	if a.IsPregnant {
+		pMult *= 0.7
+	}
 
-	if a.RawStats.BaseAttack > 0 { a.BaseAttack = int(float64(a.RawStats.BaseAttack) * pMult) } else { a.BaseAttack = int(str * 2) }
+	str, dex, hlt, itl, wis := float64(a.PrimaryAttributes.Strength)*pMult, float64(a.PrimaryAttributes.Dexterity)*pMult, float64(a.PrimaryAttributes.Health)*pMult, float64(a.PrimaryAttributes.Intellect)*mMult, float64(a.PrimaryAttributes.Wisdom)*mMult
+
+	if a.RawStats.BaseAttack > 0 { a.BaseAttack = int(float64(a.RawStats.BaseAttack) * pMult) } else { a.BaseAttack = int(str * 2); fmt.Printf("DEBUG: SyncStats str=%v pMult=%v BaseAttack=%v a.PrimaryAttributes.Strength=%v\n", str, pMult, a.BaseAttack, a.PrimaryAttributes.Strength) }
 	if a.RawStats.BaseDefense > 0 { a.BaseDefense = int(float64(a.RawStats.BaseDefense) * pMult) } else { a.BaseDefense = int(dex*1.5 + hlt*1.0) }
 	
 	a.RangedAttack, a.CriticalChance = int(dex * 2), str * 0.005
 	a.Speed = dex * 0.02
 	if a.RawStats.Speed > 0 { a.Speed = a.RawStats.Speed * pMult }
-	if a.IsPregnant { a.Speed *= 0.7 } // Move 30% slower
 	if a.Speed <= 0 { a.Speed = 0.01 }
 
-	a.Nourishment, a.Survivalism, a.Mate = int(hlt * 2), int(str*0.5 + hlt*0.5), hlt * 0.01
+	a.Nourishment = int(hlt * 2)
+	a.Survivalism = int(wis*0.4 + itl*0.3 + hlt*0.2 + dex*0.1)
+	
+	a.Mate = hlt * 0.01
+
 	a.Crafting, a.Herbalism, a.Trading, a.Harvesting, a.Husbandry, a.Art, a.Culture = int(itl*1.2 + str*0.3), int(wis*1.0 + itl*0.5), int(itl*1.2 + wis*0.3), int(wis*1.2 + dex*0.3), int(wis*1.0 + dex*0.5), int(dex*0.5 + itl*0.5), int(itl*0.5 + wis*0.5)
 
-	if a.RawStats.HealthMin > 0 { a.State.MaxHealthPoints = int(float64(a.RawStats.HealthMin) * pMult) } else { a.State.MaxHealthPoints = int(hlt * 10) }
+	if a.RawStats.HealthPoints > 0 { a.State.MaxHealthPoints = int(float64(a.RawStats.HealthPoints) * pMult) } else { a.State.MaxHealthPoints = int(hlt * 10) }
 	if a.State.MaxHealthPoints < 10 { a.State.MaxHealthPoints = 10 }
-	if a.State.HealthPoints > a.State.MaxHealthPoints { a.State.HealthPoints = a.State.MaxHealthPoints }
+	
+	// Preserve current HP if valid, otherwise reset. This is critical for Residency stability.
+	if a.State.HealthPoints <= 0 || a.State.HealthPoints > a.State.MaxHealthPoints {
+		a.State.HealthPoints = a.State.MaxHealthPoints
+	}
 
 	cooldownMult := 1.5 - (dex * 0.01)
 	baseCD := a.RawStats.AttackCooldown; if baseCD == 0 { baseCD = 60 }
@@ -67,6 +75,42 @@ func (a *Actor) SyncStats(objReg *ObjectRegistry) {
 	if a.RawStats.MaxWeight > 0 { a.MaxWeight = a.RawStats.MaxWeight } else { a.MaxWeight = (str*1.5 + hlt*0.5) / 0.329 }
 	a.BaseWeapon = a.Config.Weapon.Resolve(objReg); if a.BaseWeapon == nil { a.BaseWeapon = WeaponFists }
 	a.Weapon, a.BaseProtection = a.BaseWeapon, a.calculateStat(a.RawStats.BaseProtection, a.Level)
+}
+
+
+
+func (a *Actor) EvaluateActorFormula(formula string) float64 {
+	if formula == "" { return 0 }
+	parts := strings.Split(formula, "+")
+	total := 0.0
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if strings.Contains(p, "*") {
+			sub := strings.Split(p, "*")
+			varName, multStr := strings.TrimSpace(sub[0]), strings.TrimSpace(sub[1])
+			val := 0.0
+			switch varName {
+			case "strength": val = float64(a.PrimaryAttributes.Strength)
+			case "dexterity": val = float64(a.PrimaryAttributes.Dexterity)
+			case "health": val = float64(a.PrimaryAttributes.Health)
+			case "intellect": val = float64(a.PrimaryAttributes.Intellect)
+			case "wisdom": val = float64(a.PrimaryAttributes.Wisdom)
+			case "survivalism": val = float64(a.Survivalism)
+			case "nourishment": val = float64(a.Nourishment)
+			case "crafting": val = float64(a.Crafting)
+			case "culture": val = float64(a.Culture)
+			}
+			var mult float64
+			fmt.Sscanf(multStr, "%f", &mult)
+			total += val * mult
+		} else {
+			var mult float64
+			if _, err := fmt.Sscanf(p, "%f", &mult); err == nil {
+				total += mult
+			}
+		}
+	}
+	return total
 }
 
 func (a *Actor) calculateStat(base int, level int) int {
@@ -91,11 +135,16 @@ func (a *Actor) getAttrValue(attr string) int {
 }
 
 func (a *Actor) GetAbilityYield(abilityID string) float64 {
+	if a.Config != nil && a.Config.Abilities != nil {
+		if ab, ok := a.Config.Abilities[abilityID]; ok && ab.Yield != "" {
+			return a.EvaluateActorFormula(ab.Yield)
+		}
+	}
 	switch abilityID {
 	case "milk": return float64(a.Husbandry) * 1.0
 	case "shear": return float64(a.Husbandry) * 0.5
 	case "forage": return float64(a.Survivalism) * 0.3
-	case "cook", "brew", "heal": return float64(a.Herbalism) * 1.0
+	case "brew", "heal": return float64(a.Herbalism) * 1.0
 	case "rest": return float64(a.Nourishment) * 0.25
 	case "eat": return float64(a.Nourishment) * 1.0
 	case "drink": return float64(a.Nourishment) * 0.8

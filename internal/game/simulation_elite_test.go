@@ -12,7 +12,7 @@ func TestPregnancyPenalties(t *testing.T) {
 			AgeTicks: 25.0 * float64(TicksPerYear), 
 			Config: &EntityConfig{ 
 				Name: "Human", 
-				Stats: EntityStatsConfig{ Age: AgeConfig{ Rate: 1.0 } },
+				Stats: EntityStatsConfig{ Age: AgeConfig{ Rate: FloatInterval{Min: 1.0, Max: 1.0} } },
 			},
 		},
 	}

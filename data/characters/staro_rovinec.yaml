@@ -31,6 +31,7 @@ stats:
   attack_range: 5.0
   projectile_speed: 0.15
   max_weight: 150
+  survivalism: 57
 abilities:
   punch:
     damage: melee_attack * 1.0
@@ -118,6 +119,9 @@ abilities:
   intimidate:
     yield: culture * 1.0
     parent_attribute: strength
+  cook:
+    yield: dexterity * 0.4 + intellect * 0.4 + survivalism * 0.2
+    parent_attribute: intellect
 xp: 200
 primary_color: '#200020'
 secondary_color: '#CC0000'

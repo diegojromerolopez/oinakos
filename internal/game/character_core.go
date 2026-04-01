@@ -38,8 +38,7 @@ var characterNames = []string{
 func NewCharacter(x, y float64, config *EntityConfig, level int, isPlayer bool, objReg *ObjectRegistry) *Character {
 	if config == nil {
 		config = &EntityConfig{ID: "unknown", Name: "Unknown Entity"}
-		config.Stats.HealthMin = IntInterval{Min: 100, Max: 100}
-		config.Stats.HealthMax = IntInterval{Min: 100, Max: 100}
+		config.Stats.HealthPoints = IntInterval{Min: 100, Max: 100}
 		config.Stats.Speed = FloatInterval{Min: 0.1, Max: 0.1}
 		config.Stats.AttackCooldown = IntInterval{Min: 60, Max: 60}
 		config.Attributes = PrimaryAttributeConfig{
@@ -49,7 +48,7 @@ func NewCharacter(x, y float64, config *EntityConfig, level int, isPlayer bool, 
 		}
 		config.Weapon = WeaponConfig{Inline: WeaponTizon}
 		config.Stats.MaxWeight = FloatInterval{Min: 100.0, Max: 100.0}
-		config.Stats.Age = AgeConfig{Current: FloatInterval{Mean: 25.0, SD: 5.0, Mode: "normal"}, Rate: 1.0} // Default adult age
+		config.Stats.Age = AgeConfig{Current: FloatInterval{Mean: 25.0, SD: 5.0, Mode: "normal"}, Rate: FloatInterval{Min: 1.0, Max: 1.0}} // Default adult age
 	}
 
 	attributes := config.Attributes.Roll()
@@ -65,6 +64,7 @@ func NewCharacter(x, y float64, config *EntityConfig, level int, isPlayer bool, 
 			Alignment: AlignmentEnemy, Group: config.Group, LeaderID: config.LeaderID, MustSurvive: config.MustSurvive,
 			Name: config.Name,
 			Denarii: config.Denarii,
+			ID: config.ID,
 			PrimaryAttributes: attributes,
 			RawStats: stats,
 			SkillValues: skills,
@@ -129,9 +129,9 @@ func NewCharacter(x, y float64, config *EntityConfig, level int, isPlayer bool, 
 	}
 
 	// Initial health values (clamped later by SyncStats)
-	if config.Stats.HealthMax.Roll() > config.Stats.HealthMin.Roll() {
-		minH := config.Stats.HealthMin.Min
-		maxH := config.Stats.HealthMax.Max
+	if config.Stats.HealthPoints.Min > 0 {
+		minH := config.Stats.HealthPoints.Min
+		maxH := config.Stats.HealthPoints.Max
 		if maxH > minH {
 			c.State.MaxHealthPoints = minH + rand.Intn(maxH-minH+1)
 		} else {
@@ -185,31 +185,16 @@ func NewCharacter(x, y float64, config *EntityConfig, level int, isPlayer bool, 
 			c.AgeTicks = minAgeTicks
 		}
 	}
-	
+
 	c.State.HealthPoints = c.State.MaxHealthPoints
-
-	if !config.Stats.HungerMax.IsZero() {
-		c.State.Hunger = config.Stats.HungerMax.Roll()
-	} else {
-		c.State.Hunger = 0.0
-	}
-	if !config.Stats.ThirstMax.IsZero() {
-		c.State.Thirst = config.Stats.ThirstMax.Roll()
-	} else {
-		c.State.Thirst = 0.0
-	}
-	if !config.Stats.FatigueMax.IsZero() {
-		c.State.Fatigue = config.Stats.FatigueMax.Roll()
-	} else {
-		c.State.Fatigue = 0.0
-	}
-
+	
 	if config.State.Hunger > 0 {
 		c.State.Hunger = config.State.Hunger
 	}
 	if config.State.Thirst > 0 {
 		c.State.Thirst = config.State.Thirst
 	}
+	
 	if config.State.Fatigue > 0 {
 		c.State.Fatigue = config.State.Fatigue
 	}

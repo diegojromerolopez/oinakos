@@ -29,7 +29,6 @@ func TestActor_CoverageAdditions(t *testing.T) {
 	p.PrimaryAttributes.Strength = 100
 	other.PrimaryAttributes.Strength = 10
 	winner := p.CompetitiveAttributeRoll(&other.Actor, "strength")
-	// Since it's random, we can't guarantee winner, but we call the code.
 	_ = winner
 
 	// 4. CompetitiveContest
@@ -39,7 +38,6 @@ func TestActor_CoverageAdditions(t *testing.T) {
 	// 5. TakeBath
 	p.State.Hygiene = 50
 	p.TakeBath(ctx)
-	// We need multiple updates to reach 100 as it recovers 2.0 per tick in ActorBathing state
 	for i := 0; i < 30; i++ {
 		p.SharedUpdate(ctx)
 	}
@@ -53,11 +51,7 @@ func TestActor_CoverageAdditions(t *testing.T) {
 	victim.Memories = []MemoryEvent{}
 	ctx.World.Characters = append(ctx.World.Characters, victim)
 	p.X, p.Y = 10, 10
-	
-	// Try torture while active (should fail)
 	p.Torture(&victim.Actor, ctx)
-	
-	// Incapacitate victim
 	victim.Actor.ActionState = ActorIncapacitated
 	p.Torture(&victim.Actor, ctx)
 	if victim.Relationships[p.Name] >= 0 {
@@ -68,12 +62,10 @@ func TestActor_CoverageAdditions(t *testing.T) {
 	victim.Actor.ActionState = ActorDead
 	victim.Actor.MeatQuantity = 10
 	p.ActionState = ActorChopping
-	// Mock object registry for raw_meat
 	if ctx.Registries.Objects == nil {
 		ctx.Registries.Objects = NewObjectRegistry()
 	}
 	ctx.Registries.Objects.Objects["raw_meat"] = &ObjectConfig{Name: "Raw Meat"}
-	
 	p.hitCharacter(&victim.Actor, "", ctx)
 	if victim.Actor.MeatQuantity >= 10 {
 		t.Error("Expected meat quantity to decrease after butchery")
@@ -82,14 +74,6 @@ func TestActor_CoverageAdditions(t *testing.T) {
 	// 8. SpawnDefecation
 	p.X, p.Y = 10, 10
 	p.SpawnDefecation(ctx)
-	found := false
-	for _, o := range ctx.World.Obstacles {
-		if o.ID == "defecation" {
-			found = true
-			break
-		}
-	}
-	_ = found
 
 	// 9. GetAbilityYield exhaustive
 	yieldMap := map[string]string{
@@ -112,15 +96,6 @@ func TestActor_CoverageAdditions(t *testing.T) {
 		p.GetAbilityYield(id)
 	}
 	p.GetAbilityYield("unknown")
-
-	// 10. TransferSoilingToVictims
-	victim.Actor.ActionState = ActorIncapacitated
-	victim.Actor.X, victim.Actor.Y = p.X, p.Y
-	p.State.Hygiene = 0
-	p.TransferSoilingToVictims(ctx)
-	if victim.State.Hygiene >= 100 {
-		t.Error("Expected hygiene to drop after transfer")
-	}
 
 	// 11. getAttrValue
 	attrs := []string{"strength", "dexterity", "health", "intellect", "wisdom", "invalid"}

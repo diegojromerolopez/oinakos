@@ -150,9 +150,9 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 	g.playableCharacter.State.Thirst = data.Player.Thirst
 	g.playableCharacter.State.Fatigue = data.Player.Fatigue
 	if g.playableCharacter.State.Hunger == 0 && g.playableCharacter.State.Thirst == 0 && g.playableCharacter.State.Fatigue == 0 {
-		g.playableCharacter.State.Hunger = 100
-		g.playableCharacter.State.Thirst = 100
-		g.playableCharacter.State.Fatigue = 100
+		g.playableCharacter.State.Hunger = 0
+		g.playableCharacter.State.Thirst = 0
+		g.playableCharacter.State.Fatigue = 0
 	}
 
 	if data.Player.Weapon != nil {
@@ -223,9 +223,9 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 		n.State.Thirst = nData.Thirst
 		n.State.Fatigue = nData.Fatigue
 		if n.State.Hunger == 0 && n.State.Thirst == 0 && n.State.Fatigue == 0 {
-			n.State.Hunger = 100
-			n.State.Thirst = 100
-			n.State.Fatigue = 100
+			n.State.Hunger = 0
+			n.State.Thirst = 0
+			n.State.Fatigue = 0
 		}
 
 		n.Denarii = nData.Denarii

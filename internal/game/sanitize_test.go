@@ -26,8 +26,7 @@ func TestSanitizeEntityConfig(t *testing.T) {
 			input: EntityConfig{
 				ID: "orc",
 				Stats: EntityStatsConfig{
-					HealthMin: IntInterval{Min: -5, Max: -5},
-					HealthMax: IntInterval{Min: -10, Max: -10},
+					HealthPoints: IntInterval{Min: -5, Max: -5},
 					Speed:     FloatInterval{Min: -1.0, Max: -1.0},
 				},
 			},
@@ -41,8 +40,7 @@ func TestSanitizeEntityConfig(t *testing.T) {
 			input: EntityConfig{
 				ID: "hero",
 				Stats: EntityStatsConfig{
-					HealthMin: IntInterval{Min: 100, Max: 100},
-					HealthMax: IntInterval{Min: 100, Max: 100},
+					HealthPoints: IntInterval{Min: 100, Max: 100},
 					Speed:     FloatInterval{Min: 5.0, Max: 5.0},
 				},
 			},
@@ -60,11 +58,11 @@ func TestSanitizeEntityConfig(t *testing.T) {
 			if config.ID != tt.wantID {
 				t.Errorf("ID: got %s, want %s", config.ID, tt.wantID)
 			}
-			if config.Stats.HealthMin.Min != tt.wantHP {
-				t.Errorf("HealthMin: got %d, want %d", config.Stats.HealthMin.Min, tt.wantHP)
+			if config.Stats.HealthPoints.Min != tt.wantHP {
+				t.Errorf("HealthPoints: got %d, want %d", config.Stats.HealthPoints.Min, tt.wantHP)
 			}
-			if config.Stats.HealthMax.Max != tt.wantMax {
-				t.Errorf("HealthMax: got %d, want %d", config.Stats.HealthMax.Max, tt.wantMax)
+			if config.Stats.HealthPoints.Max != tt.wantMax {
+				t.Errorf("HealthPoints: got %d, want %d", config.Stats.HealthPoints.Max, tt.wantMax)
 			}
 			if config.Stats.Speed.Min != tt.wantSpd {
 				t.Errorf("Speed: got %f, want %f", config.Stats.Speed.Min, tt.wantSpd)
@@ -84,7 +82,6 @@ func TestSanitizeObstacleArchetype(t *testing.T) {
 			name: "invalid values",
 			input: ObstacleArchetype{
 				ID:     "",
-				HealthPoints: -10,
 			},
 			wantID: "unknown",
 			wantHP: 0,
@@ -126,7 +123,6 @@ func TestSanitizeMapType(t *testing.T) {
 func TestSanitizeSaveData(t *testing.T) {
 	p := PlayerSaveData{
 		State: State{
-			HealthPoints:    -10,
 			MaxHealthPoints: 0,
 		},
 		Level:     -1,

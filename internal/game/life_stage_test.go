@@ -22,6 +22,9 @@ func TestLifeStage_Transitions(t *testing.T) {
 			}
 		}
 	}
+	// Special cases for Adult professions
+	ctx.Registries.Archetypes.Archetypes["archetypes/man_at_arms"] = &Archetype{ID: "archetypes/man_at_arms", Name: "Man-at-Arms", Gender: "male"}
+	ctx.Registries.Archetypes.Archetypes["archetypes/peasant"] = &Archetype{ID: "archetypes/peasant", Name: "Peasant", Gender: "female"}
 
 	ticksPY := float64(TicksPerYear)
 
@@ -82,6 +85,9 @@ func TestLifeStage_Transitions(t *testing.T) {
 			
 			// Verify archetype swap if it succeeded
 			prefix := "archetypes/" + s.endStage + "/" + s.gender
+			if s.endStage == StageAdult {
+				if s.gender == "male" { prefix = "archetypes/man_at_arms" } else { prefix = "archetypes/peasant" }
+			}
 			if a.Config.ID != prefix {
 				t.Errorf("Archetype not swapped to %s, got %s", prefix, a.Config.ID)
 			}

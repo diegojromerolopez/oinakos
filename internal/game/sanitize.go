@@ -44,13 +44,11 @@ func sanitizeEntityConfig(c *EntityConfig, source string) {
 		c.Name = c.ID
 		changed = true
 	}
-	if c.Stats.HealthMin.Min <= 0 {
-		c.Stats.HealthMin = IntInterval{Min: 1, Max: 1}
-		changed = true
+	if c.Stats.HealthPoints.Min < 1 {
+		c.Stats.HealthPoints.Min = 1
 	}
-	if c.Stats.HealthMax.Min < c.Stats.HealthMin.Min {
-		c.Stats.HealthMax = c.Stats.HealthMin
-		changed = true
+	if c.Stats.HealthPoints.Max < c.Stats.HealthPoints.Min {
+		c.Stats.HealthPoints.Max = c.Stats.HealthPoints.Min
 	}
 	if c.Stats.Speed.Min <= 0 {
 		c.Stats.Speed = FloatInterval{Min: 0.01, Max: 0.01}
@@ -85,8 +83,8 @@ func sanitizeEntityConfig(c *EntityConfig, source string) {
 		if c.Stats.ProjectileSpeed.Max < 0 { c.Stats.ProjectileSpeed.Max = 0 }
 		changed = true
 	}
-	if c.Stats.Age.Rate == 0 && c.Stats.Age.Current.IsZero() {
-		c.Stats.Age.Rate = 1.0 
+	if c.Stats.Age.Rate.IsZero() && c.Stats.Age.Current.IsZero() {
+		c.Stats.Age.Rate = FloatInterval{Min: 1.0, Max: 1.0} 
 	}
 	_ = changed
 }
@@ -150,8 +148,8 @@ func sanitizeMapType(m *MapType, source string) {
 
 // sanitizePlayerSaveData validates fields from a player save block.
 func sanitizePlayerSaveData(p *PlayerSaveData, source string) {
-	if p.HealthPoints < 0 {
-		log.Printf("Warning [%s]: player health=%d is negative, clamping to 1", source, p.HealthPoints)
+	if p.HealthPoints <= 0 {
+		log.Printf("Warning [%s]: player health=%d is invalid, clamping to 1", source, p.HealthPoints)
 		p.HealthPoints = 1
 	}
 	if p.MaxHealthPoints <= 0 {

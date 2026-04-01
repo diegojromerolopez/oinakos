@@ -12,9 +12,11 @@ func (c *Character) TakeDamage(amount int, attacker ActorInterface, ctx *SystemC
 }
 
 func (c *Character) handleAIReaction(attacker ActorInterface, ctx *SystemContext) {
-	if attacker == nil { return }
+	if attacker == nil || c.State.Thirst > 90 || c.State.Hunger > 90 { return }
 	act := attacker.GetActor(); c.TargetActor = act
-	if float64(c.State.HealthPoints) < float64(act.State.HealthPoints)*0.2 { c.Alignment, c.Behavior = AlignmentNeutral, BehaviorFlee
+	// Flee if HP is critically low (50) or if significantly outmatched
+	if c.State.HealthPoints < 50 || float64(c.State.HealthPoints) < float64(act.State.HealthPoints)*0.2 { 
+		c.Alignment, c.Behavior = AlignmentNeutral, BehaviorFlee
 	} else {
 		c.Alignment, c.Behavior = AlignmentEnemy, BehaviorKnightHunter
 		if c.Group != "" {
@@ -27,6 +29,7 @@ func (c *Character) handleAIReaction(attacker ActorInterface, ctx *SystemContext
 }
 
 func (c *Character) executeAttack(ctx *SystemContext, isTargetPlayer bool, dx, dy float64) {
+	if IsDebugEnabled() { DebugLog("NPC [%s] EXECUTE ATTACK on Target (Player: %v)", c.Name, isTargetPlayer) }
 	if c.ActionState == ActorIncapacitated { return }
 	if c.ActionState != ActorAttacking {
 		if isTargetPlayer {

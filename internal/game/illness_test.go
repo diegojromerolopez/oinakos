@@ -37,7 +37,6 @@ func TestIllness_CriticalImpact(t *testing.T) {
 	a := &Actor{
 		State: State{
 			Fatigue:         96.0,
-			HealthPoints:    100,
 			MaxHealthPoints: 100,
 		},
 		FluTicks: 1000,
@@ -60,30 +59,25 @@ func TestIllness_Infection(t *testing.T) {
 	g := setupTestGame()
 	ctx := g.GetContext()
 	
-	sick := &Actor{
-		X: 1, Y: 1,
-		State:    State{Sanity: 100.0},
-		FluTicks: 1000,
-		Name:     "Patient Zero",
-	}
-	healthy := &Character{Actor: Actor{
-		X: 1.5, Y: 1.5,
-		State:    State{Sanity: 100.0},
-		FluTicks: 0,
-		Name:     "Victim",
-	}}
+	sick := NewCharacter(1, 1, nil, 1, false, nil)
+	sick.ID = "sick_actor"
+	sick.FluTicks = 1000
+	
+	healthy := NewCharacter(1.5, 1.5, nil, 1, false, nil)
+	healthy.ID = "healthy_actor"
+	healthy.FluTicks = 0
 	
 	g.characters = []*Character{healthy}
 	ctx.World.Characters = g.characters
 	
 	// Trigger contagion check (every 600 ticks)
-	sick.ContagionTimer = 599
+	sick.Tick = 600
 	sick.SharedUpdate(ctx)
 	
 	// Contagion prob: 0.12. With seed 1, this should eventually trigger if we repeat enough or fix seed.
 	// Actually, let's force the spread for the test
 	for i := 0; i < 100; i++ {
-		sick.ContagionTimer = 0
+		sick.Tick = 600
 		sick.SharedUpdate(ctx)
 		if healthy.FluTicks > 0 {
 			break

@@ -61,8 +61,8 @@ func (mh *MenuHandler) updateCharacterSelect() error {
 			rolledAttrs := config.Attributes.Roll()
 			g.playableCharacter.RawStats = rolledStats
 			g.playableCharacter.PrimaryAttributes = rolledAttrs
-			g.playableCharacter.State.MaxHealthPoints = rolledStats.HealthMin
-			g.playableCharacter.State.HealthPoints = rolledStats.HealthMin
+			g.playableCharacter.State.MaxHealthPoints = rolledStats.HealthPoints
+			g.playableCharacter.State.HealthPoints = rolledStats.HealthPoints
 			g.playableCharacter.Speed = rolledStats.Speed
 			g.playableCharacter.BaseAttack = rolledStats.BaseAttack
 			g.playableCharacter.BaseDefense = rolledStats.BaseDefense

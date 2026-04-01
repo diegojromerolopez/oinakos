@@ -18,7 +18,14 @@ func (a *Actor) die(attacker ActorInterface, ctx *SystemContext) {
 			a.Denarii = 0
 		}
 	}
-	if ctx != nil && ctx.World != nil && ctx.World.Game != nil { ctx.World.Game.DropAllItems(a) }
+	if ctx != nil && ctx.World != nil && ctx.World.Game != nil { 
+		ctx.World.Game.DropAllItems(a) 
+		// BUTCHERY PREPARATION (Elite Simulation: Resource Layer)
+		if a.Config != nil && a.Config.IsAnimal {
+			a.MeatQuantity = float64(a.Config.Meat)
+			if a.MeatQuantity <= 0 { a.MeatQuantity = 1.0 } // Minimum meat if not specified
+		}
+	}
 	prefix := "unknown"
 	if a.Config != nil { 
 		prefix = a.Config.SoundID; if prefix == "" { prefix = a.Config.ID }

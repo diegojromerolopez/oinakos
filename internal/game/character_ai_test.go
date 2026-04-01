@@ -35,7 +35,11 @@ func TestCharacterAI_Wander(t *testing.T) {
 	npc.Speed = 0.5
 	
 	initialX, initialY := npc.X, npc.Y
-	npc.updateAI(NewTestContext()) // Should wander since no targets
+	ctx := NewTestContext()
+	if ctx.World.PlayableCharacter != nil {
+		ctx.World.PlayableCharacter.X, ctx.World.PlayableCharacter.Y = 100, 100
+	}
+	npc.updateAI(ctx) // Should wander since no targets
 	
 	if npc.X == initialX && npc.Y == initialY && npc.ActionState != ActorWalking {
 		t.Errorf("Wander behavior did not move NPC")
@@ -44,7 +48,9 @@ func TestCharacterAI_Wander(t *testing.T) {
 
 func TestCharacterAI_Patrol(t *testing.T) {
 	ctx := setupTestGame()
-	ctx.World.PlayableCharacter = nil // Remove player to avoid targeting
+	if ctx.playableCharacter != nil {
+		ctx.playableCharacter.X, ctx.playableCharacter.Y = 100, 100
+	}
 	npc := NewCharacter(0, 0, nil, 1, false, nil)
 	npc.Behavior = BehaviorPatrol
 	npc.Speed = 1.0

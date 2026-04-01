@@ -11,7 +11,7 @@ func TestPlayableCharacterStats(t *testing.T) {
 			Level: 1,
 			Config: &EntityConfig{
 				Attributes: PrimaryAttributeConfig{Strength: IntInterval{Min: 5, Max: 5}},
-				Stats:      EntityStatsConfig{HealthMin: IntInterval{Min: 10, Max: 10}},
+				Stats:      EntityStatsConfig{HealthPoints: IntInterval{Min: 10, Max: 10}},
 			},
 			PrimaryAttributes: PrimaryAttributes{Strength: 5},
 			AgeTicks:          25.0 * float64(TicksPerYear),
@@ -59,10 +59,11 @@ func TestPlayableCharacterTakeDamage(t *testing.T) {
 	ctx := NewTestContext()
 	mc := &Character{Actor: Actor{
 		State: State{
-			HealthPoints:    100,
 			MaxHealthPoints: 100,
+			HealthPoints:    100,
 		},
 		Config: &EntityConfig{ID: "player"},
+		ActionState: ActorIdle,
 	}}
 	mc.TakeDamage(20, nil, ctx)
 	if mc.State.HealthPoints != 80 {

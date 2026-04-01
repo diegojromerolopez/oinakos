@@ -84,7 +84,7 @@ func setupTestGame() *Game {
 	pConfig := &EntityConfig{
 		MaxItems: 10,
 		Stats: EntityStatsConfig{
-			HealthMin: IntInterval{Min: 100, Max: 100}, HealthMax: IntInterval{Min: 100, Max: 100},
+			HealthPoints: IntInterval{Min: 100, Max: 100},
 			Speed: FloatInterval{Min: 0.1, Max: 0.1}, BaseAttack: IntInterval{Min: 10, Max: 10}, BaseDefense: IntInterval{Min: 5, Max: 5},
 		},
 		Attributes: PrimaryAttributeConfig{
@@ -93,6 +93,8 @@ func setupTestGame() *Game {
 	}
 	g.playableCharacter = NewCharacter(0, 0, pConfig, 1, true, objectRegistry)
 	g.World.PlayableCharacter = g.playableCharacter
+	g.characters = []*Character{g.playableCharacter}
+	g.World.Characters = g.characters
 	return g
 }
 

@@ -25,13 +25,18 @@ func (g *Game) Update() error {
 		g.World.Obstacles, g.World.Characters, g.World.Projectiles, g.World.PlayableCharacter, g.World.CurrentMapType, g.World.PlayTime = g.obstacles, g.characters, g.projectiles, g.playableCharacter, &g.currentMapType, g.playTime
 	}
 	ctx := g.GetContext()
-	g.mechanicsManager.UpdateFogOfWar(ctx); g.worldManager.UpdateChunks(); g.worldManager.UpdateNPCSpawning(); g.updateWorldState(); g.updateWeatherVFX()
+	if !g.simulationMode {
+		g.mechanicsManager.UpdateFogOfWar(ctx)
+		g.updateWeatherVFX()
+	}
+	g.worldManager.UpdateChunks(); g.worldManager.UpdateNPCSpawning(); g.updateWorldState()
 	activeProjectiles := []*Projectile{}
 	for _, p := range g.productProjectiles() { p.Update(ctx); if p.Alive { activeProjectiles = append(activeProjectiles, p) } }
 	g.projectiles = activeProjectiles
 	if !g.isPaused && !g.isGameOver { g.playTime += 1.0 / 60.0; if g.saveMessageTimer > 0 { g.saveMessageTimer-- } }
-	g.playableCharacter.CurrentTile = g.currentMapType.GetTileAt(g.playableCharacter.X, g.playableCharacter.Y); g.playableCharacter.Update(ctx)
-	if g.playableCharacter.Tick%30 == 0 { os.WriteFile("/tmp/oinakos_pos.txt", []byte(fmt.Sprintf("%.2f,%.2f", g.playableCharacter.X, g.playableCharacter.Y)), 0644) }
+	g.playableCharacter.CurrentTile = g.currentMapType.GetTileAt(g.playableCharacter.X, g.playableCharacter.Y)
+	// Skip file IO in simulation mode
+	if !g.simulationMode && g.playableCharacter.Tick%30 == 0 { os.WriteFile("/tmp/oinakos_pos.txt", []byte(fmt.Sprintf("%.2f,%.2f", g.playableCharacter.X, g.playableCharacter.Y)), 0644) }
 	g.mechanicsManager.UpdateProximityEffects(ctx)
 	if g.mechanicsManager.CheckWinConditions(ctx) { g.isMapWon = true; return nil }
 	if !g.playableCharacter.IsAlive() { g.isGameOver, g.deathReason = true, g.playableCharacter.GetDeathReason() }
@@ -41,8 +46,10 @@ func (g *Game) Update() error {
 	if len(g.World.Characters) > len(g.characters) { g.characters = g.World.Characters }
 	g.UpdatePickups(); g.updateItemExpiration(ctx)
 	activeTexts := make([]*FloatingText, 0)
-	for _, ft := range g.floatingTexts { if ft.Update() { activeTexts = append(activeTexts, ft) } }; g.floatingTexts = activeTexts
-	pIsoX, pIsoY := engine.CartesianToIso(g.playableCharacter.X, g.playableCharacter.Y); g.camera.Follow(pIsoX, pIsoY, 0.1); g.updateOcclusion(); g.ensurePlayerNotStuck()
+	if !g.simulationMode {
+		for _, ft := range g.floatingTexts { if ft.Update() { activeTexts = append(activeTexts, ft) } }; g.floatingTexts = activeTexts
+		pIsoX, pIsoY := engine.CartesianToIso(g.playableCharacter.X, g.playableCharacter.Y); g.camera.Follow(pIsoX, pIsoY, 0.1); g.updateOcclusion(); g.ensurePlayerNotStuck()
+	}
 	if g.isInventoryOpen { g.menuHandler.updateInventoryScreen() } else if g.isTradeOpen { g.menuHandler.updateTradeScreen() } else if g.ActiveDialogue != nil { g.menuHandler.updateDialogueScreen() }
 	return nil
 }

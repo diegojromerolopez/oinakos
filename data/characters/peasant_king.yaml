@@ -33,6 +33,7 @@ stats:
   attack_cooldown: 50
   attack_range: 1.2
   max_weight: 120
+  survivalism: 57
 abilities:
   punch:
     damage: melee_attack * 1.0
@@ -120,6 +121,9 @@ abilities:
   intimidate:
     yield: culture * 1.0
     parent_attribute: strength
+  cook:
+    yield: dexterity * 0.4 + intellect * 0.4 + survivalism * 0.2
+    parent_attribute: intellect
 xp: 250
 equipment:
   weapon: gilded_pitchfork

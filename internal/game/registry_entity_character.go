@@ -43,9 +43,9 @@ func (r *CharacterRegistry) createLoadJobs(assets fs.FS, archs *ArchetypeRegistr
 			add := func(f string, t *engine.Image, fb engine.Image) {
 				if _, err := fs.Stat(assets, path.Join(c.AssetDir, f)); err == nil { jobs = append(jobs, &SpriteLoadJob{Path: path.Join(c.AssetDir, f), Dest: t}) } else if fb != nil { *t = fb }
 			}
-			fArch, bArch, crArch, cArch := engine.Image(nil), engine.Image(nil), engine.Image(nil), engine.Image(nil)
-			if arch != nil { fArch, bArch, crArch, cArch = arch.StaticImage, arch.BackImage, arch.CorpseImage, arch.CrouchImage }
-			add("static.png", &c.StaticImage, fArch); add("back.png", &c.BackImage, bArch); add("corpse.png", &c.CorpseImage, crArch); add("crouch.png", &c.CrouchImage, cArch)
+			fArch, bArch, crArch, cArch, pArch, ckArch := engine.Image(nil), engine.Image(nil), engine.Image(nil), engine.Image(nil), engine.Image(nil), engine.Image(nil)
+			if arch != nil { fArch, bArch, crArch, cArch, pArch, ckArch = arch.StaticImage, arch.BackImage, arch.CorpseImage, arch.CrouchImage, arch.PregnantImage, arch.CookingImage }
+			add("static.png", &c.StaticImage, fArch); add("back.png", &c.BackImage, bArch); add("corpse.png", &c.CorpseImage, crArch); add("crouch.png", &c.CrouchImage, cArch); add("pregnant.png", &c.PregnantImage, pArch); add("cooking.png", &c.CookingImage, ckArch)
 			for _, f := range []string{"attack.png", "attack1.png", "attack2.png", "hit.png", "hit1.png", "hit2.png", "chopping.png", "digging.png"} {
 				dest := []*engine.Image{&c.AttackImage, &c.Attack1Image, &c.Attack2Image, &c.HitImage, &c.Hit1Image, &c.Hit2Image, &c.ChoppingImage, &c.DiggingImage}[len(jobs)%8] // Placeholder for logic
 				_ = f; _ = dest // Simplified for brevity in this split
@@ -59,8 +59,9 @@ func (r *CharacterRegistry) ProcessInheritance(archs *ArchetypeRegistry) {
 	for _, c := range r.Characters {
 		lookup := c.Archetype; if c.Gender != "" && !strings.Contains(c.Archetype, c.Gender) { if _, ok := archs.Archetypes[c.Archetype+"_"+c.Gender]; ok { lookup = c.Archetype + "_" + c.Gender } }
 		if arch, ok := archs.Archetypes[lookup]; ok {
-			if c.Stats.HealthMin.IsZero() { c.Stats.HealthMin = arch.Stats.HealthMin }
-			if c.Stats.HealthMax.IsZero() { c.Stats.HealthMax = arch.Stats.HealthMax }
+			if c.Stats.HealthPoints.IsZero() {
+		c.Stats.HealthPoints = arch.Stats.HealthPoints
+	}
 			if c.Stats.Speed.IsZero() { c.Stats.Speed = arch.Stats.Speed }
 			if c.Stats.BaseAttack.IsZero() { c.Stats.BaseAttack = arch.Stats.BaseAttack }
 			if c.Stats.BaseDefense.IsZero() { c.Stats.BaseDefense = arch.Stats.BaseDefense }

@@ -1,0 +1,22 @@
+id: hare
+name: Hare
+behavior: flee
+is_animal: true
+gender: male
+meat: 2
+attributes:
+  strength: { min: 8, max: 12, mode: normal, mean: 10, sd: 2 }
+  health: { min: 10, max: 20, mode: normal, mean: 15, sd: 5 }
+  dexterity: { min: 90, max: 110, mode: normal, mean: 100, sd: 5 }
+  intellect: { min: 5, max: 5, mode: normal, mean: 5, sd: 0 }
+  wisdom: { min: 20, max: 20, mode: normal, mean: 20, sd: 0 }
+stats:
+  health_points: { min: 5, max: 5, mode: normal, mean: 5, sd: 0 }
+  health_points: { min: 12, max: 12, mode: normal, mean: 12, sd: 0 }
+  speed: { min: 0.07, max: 0.09, mode: normal, mean: 0.08, sd: 0.01 }
+  attack_cooldown: { min: 30, max: 30, mode: normal, mean: 30, sd: 0 }
+weapon:
+  name: Kick
+  type: melee
+  damage: { min: 2, max: 3 }
+xp: 2

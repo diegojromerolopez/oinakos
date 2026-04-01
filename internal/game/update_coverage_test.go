@@ -7,7 +7,7 @@ import (
 func TestCharacter_UpdateCoverage(t *testing.T) {
 	ctx := NewTestContext()
 	p := NewCharacter(0, 0, nil, 1, true, nil)
-	p.RawStats.HealthMax = 100
+	p.RawStats.HealthPoints = 100
 	p.State.MaxHealthPoints = 100
 	p.State.HealthPoints = 100
 	p.IsPlayerControlled = true

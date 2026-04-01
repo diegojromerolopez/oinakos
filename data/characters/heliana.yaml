@@ -4,7 +4,8 @@ gender: female
 playable: true
 transexual: true
 unique: true
-description: "A tall, black-haired woman with striking features. She is a master urbainer of the city districts, known for her ability to bypass any lock and read any crowd."
+description: A tall, black-haired woman with striking features. She is a master urbainer
+  of the city districts, known for her ability to bypass any lock and read any crowd.
 attributes:
   strength: 70
   health: 65
@@ -32,6 +33,7 @@ stats:
   speed: 0.06
   attack_cooldown: 35
   max_weight: 180
+  survivalism: 84
 abilities:
   punch:
     damage: melee_attack * 1.0
@@ -119,10 +121,13 @@ abilities:
   intimidate:
     yield: culture * 1.0
     parent_attribute: strength
+  cook:
+    yield: dexterity * 0.4 + intellect * 0.4 + survivalism * 0.2
+    parent_attribute: intellect
 denarii: 150
 equipment:
-  head: "hood_black"
-  body: "tunic_dark"
-  weapon: "sicari_exceptional"
+  head: hood_black
+  body: tunic_dark
+  weapon: sicari_exceptional
 inventory: []
 xp: 150

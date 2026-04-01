@@ -126,7 +126,8 @@ func (c *Character) hitCharacter(target *Actor, skill string, ctx *SystemContext
 
 func (c *Character) executeButchery(target *Actor, ctx *SystemContext) {
 	if target.MeatQuantity <= 0 { return }
-	yield := 1.0 + rand.Float64()*2.0; if yield > target.MeatQuantity { yield = target.MeatQuantity }
+	yield := c.GetAbilityYield("butcher"); if yield > target.MeatQuantity { yield = target.MeatQuantity }
+	if yield <= 0 { yield = 1.0 } // Minimum yield if success checked elsewhere
 	target.MeatQuantity -= yield
 	if target.MeatQuantity <= 0 || int(target.MeatQuantity+yield)/5 > int(target.MeatQuantity)/5 {
 		if cfg := ctx.Registries.Objects.Get("raw_meat"); cfg != nil {

@@ -13,6 +13,12 @@ func (a *Actor) SharedUpdate(ctx *SystemContext) {
 		a.UnconsciousTimer--
 		a.SyncLifeStatus()
 	}
+	if a.CrouchTimer > 0 {
+		a.CrouchTimer--
+		if a.CrouchTimer == 0 && a.ActionState == ActorCrouching {
+			a.ActionState = ActorIdle
+		}
+	}
 	a.updateIllness(ctx)
 	
 	if a.ActionState == ActorDead {
@@ -29,6 +35,7 @@ func (a *Actor) SharedUpdate(ctx *SystemContext) {
 	a.updateMaintenance(ctx)
 	a.updateArousal(ctx)
 	a.updatePain(ctx)
+	a.updateScale(ctx)
 	a.updateAge(ctx)
 	a.updateGrief(ctx)
 
@@ -162,6 +169,20 @@ func (a *Actor) updateAge(ctx *SystemContext) {
 	}
 }
 
+func (a *Actor) updateScale(ctx *SystemContext) {
+	if a.ActionState == ActorDead { return }
+	targetScale := 1.0
+	switch a.LifeStage {
+	case StageBaby:     targetScale = 0.3
+	case StageKid:      targetScale = 0.5
+	case StageTeenager: targetScale = 0.8
+	}
+	
+	// Smooth transition
+	if a.Scale < 0.1 { a.Scale = targetScale }
+	a.Scale = a.Scale*0.999 + targetScale*0.001
+}
+
 func (a *Actor) updateIllness(ctx *SystemContext) {
 	if ctx == nil || ctx.World == nil { return }
 	
@@ -182,6 +203,7 @@ func (a *Actor) updateIllness(ctx *SystemContext) {
 				if other.Actor.FluTicks > 0 || !other.IsAlive() || other.ID == a.ID { continue }
 				dist := math.Sqrt(math.Pow(a.X-other.X, 2) + math.Pow(a.Y-other.Y, 2))
 				if dist < radius && rand.Float64() < 0.12 {
+					if IsDebugEnabled() { DebugLog("Contagion TRIGGERED from %s to %s", a.Name, other.Name) }
 					other.Actor.FluTicks = 86400 * 3; other.Actor.State.IsSick = true
 					if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s caught fever from %s!", other.Name, a.Name), LogWarning) }
 				}

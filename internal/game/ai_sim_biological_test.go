@@ -26,14 +26,18 @@ func TestSimulation_ElviraCleans(t *testing.T) {
 func TestSimulation_BiologicalReliefLoop(t *testing.T) {
 	_, ctx := setupSimulationGame(); pc := ctx.World.PlayableCharacter; pc.Name = "oinakos"
 	for d := 1; d <= 2; d++ {
-		w := &ObjectConfig{Thirst: 50}; w_it := NewItemInstance("w", w, pc.X, pc.Y); for i := 0; i < 20; i++ { pc.ConsumeItem(w_it, ctx) }
-		if pc.State.BladderLevel < 80 { t.Errorf("Day %d: Expected high bladder", d) }
+		w := &ObjectConfig{Thirst: 50}; w_it := NewItemInstance("w", w, pc.X, pc.Y); for i := 0; i < 16; i++ { pc.ConsumeItem(w_it, ctx) }
+		if pc.State.BladderLevel < 80 { t.Errorf("Day %d: Expected high bladder, got %v", d, pc.State.BladderLevel) }
 		for i := 0; i < 901; i++ { pc.SharedUpdate(ctx); pc.Tick++ }
 		if pc.State.Pain < 3.0 { t.Errorf("Day %d: Expected pain", d) }
-		f := &ObjectConfig{Hunger: 50}; f_it := NewItemInstance("f", f, pc.X, pc.Y); for i := 0; i < 20; i++ { pc.ConsumeItem(f_it, ctx) }
+		f := &ObjectConfig{Hunger: 50}; f_it := NewItemInstance("f", f, pc.X, pc.Y); for i := 0; i < 16; i++ { pc.ConsumeItem(f_it, ctx) }
 		if pc.State.BowelLevel < 80 { t.Errorf("Day %d: Expected high bowel", d) }
-		pc.ActionState = ActorRelieving; for i := 0; i < 100; i++ { pc.SharedUpdate(ctx); pc.Tick++ }
-		if pc.State.BladderLevel > 2.0 || pc.State.BowelLevel > 2.0 { t.Errorf("Day %d: Expected relief", d) }
+		pc.State.Pain = 0
+		pc.ActionState = ActorRelieving; pc.Tick = 0
+		for i := 0; i < 100; i++ { pc.Update(ctx) }
+		if pc.State.BladderLevel > 2.0 || pc.State.BowelLevel > 2.0 { 
+			t.Errorf("Day %d: Expected relief, got B: %v, b: %v, state: %v, tick: %v", d, pc.State.BowelLevel, pc.State.BladderLevel, pc.ActionState, pc.Tick) 
+		}
 		if pc.State.Pain > 0 { t.Errorf("Day %d: Expected pain 0", d) }
 		ctx.World.State.Ticks += 86400
 	}

@@ -32,6 +32,7 @@ stats:
   attack_cooldown: 60
   attack_range: 1.5
   max_weight: 200
+  survivalism: 61
 abilities:
   punch:
     damage: melee_attack * 1.0
@@ -122,6 +123,9 @@ abilities:
     - poison_damage_per_second: 5
       duration: 5.0
       probability: 0.9
+  cook:
+    yield: dexterity * 0.4 + intellect * 0.4 + survivalism * 0.2
+    parent_attribute: intellect
 xp: 150
 equipment:
   weapon: reptilian_whip

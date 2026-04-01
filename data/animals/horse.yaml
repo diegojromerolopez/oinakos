@@ -1,6 +1,7 @@
 id: horse
 name: Horse
 behavior: wander
+is_animal: true
 attributes:
   strength:
     min: 80

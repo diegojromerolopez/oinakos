@@ -4,8 +4,7 @@ type: consumable
 max_hours: 12
 description: A piece of raw animal meat. It can be eaten for energy, but it's better cooked.
 weight: 2.0
-effects:
-  energy:
-    increase: 15.0
-  health:
-    increase: 2.0
+hunger: 15.0
+energy: 5.0
+health: 2.0
+value: 5

@@ -14,8 +14,8 @@ func TestVampireConversion(t *testing.T) {
 		Name: "Vampire Male",
 		Gender: "male",
 	}
-	vampArch.Stats.HealthMin = IntInterval{Min: 50, Max: 50}
-	vampArch.Stats.HealthMax = IntInterval{Min: 50, Max: 50}
+	vampArch.Stats.HealthPoints = IntInterval{Min: 50, Max: 50}
+	vampArch.Stats.HealthPoints = IntInterval{Min: 50, Max: 50}
 	vampArch.Attributes.Health = IntInterval{Min: 50, Max: 50}
 	vampArch.State.MaxHealthPoints = 50
 	vampArch.Actions = &ActionConfig{
@@ -38,8 +38,8 @@ func TestVampireConversion(t *testing.T) {
 		Name:   "Peasant Male",
 		Gender: "male",
 	}
-	humanArch.Stats.HealthMin = IntInterval{Min: 10, Max: 10}
-	humanArch.Stats.HealthMax = IntInterval{Min: 10, Max: 10}
+	humanArch.Stats.HealthPoints = IntInterval{Min: 10, Max: 10}
+	humanArch.Stats.HealthPoints = IntInterval{Min: 10, Max: 10}
 	humanArch.Attributes.Health = IntInterval{Min: 50, Max: 50}
 
 	ctx.Registries.Archetypes.Archetypes["vampire_male"] = vampArch

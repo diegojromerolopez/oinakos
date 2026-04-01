@@ -21,7 +21,7 @@ type AIManager struct {
 	provider         AIProvider
 	conversations    map[string]*NPCConversation
 	pendingDecisions []PendingDecision
-	mu              sync.Mutex
+	mu               sync.Mutex
 }
 
 func NewAIManager(provider AIProvider) *AIManager {
@@ -29,6 +29,12 @@ func NewAIManager(provider AIProvider) *AIManager {
 		provider:      provider,
 		conversations: make(map[string]*NPCConversation),
 	}
+}
+
+func (m *AIManager) SetProvider(p AIProvider) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.provider = p
 }
 
 type AppliedDecision struct {
@@ -58,6 +64,7 @@ func (m *AIManager) RequestDecision(ctx context.Context, npcID string, worldCtx 
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
+	if m.provider == nil { return }
 	resCh := m.provider.Decide(ctx, worldCtx, options)
 	m.pendingDecisions = append(m.pendingDecisions, PendingDecision{NPCID: npcID, ResCh: resCh})
 }
@@ -106,4 +113,3 @@ func (g *Game) setAIModelForCurrentProvider(model string) {
 		g.settings.WebGPUModel = model
 	}
 }
-

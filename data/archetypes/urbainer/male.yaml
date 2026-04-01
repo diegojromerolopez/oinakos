@@ -26,8 +26,7 @@ attributes:
   intellect: { min: 75, max: 95 }
   wisdom: { min: 60, max: 80 }
 stats:
-  health_points_min: { min: 80, max: 100 }
-  health_points_max: { min: 80, max: 100 }
+  health_points: { min: 80, max: 100 }
   speed: { min: 0.024, max: 0.028 }
   attack_cooldown: { min: 45, max: 55 }
 skills:

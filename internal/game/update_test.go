@@ -393,8 +393,7 @@ difficulty: 1
 	npc := NewCharacter(0, 0, &EntityConfig{
 		ID: "test_npc",
 		Stats: EntityStatsConfig{
-			HealthMin: IntInterval{Min: 5, Max: 5},
-			HealthMax: IntInterval{Min: 5, Max: 5},
+			HealthPoints: IntInterval{Min: 5, Max: 5},
 			BaseDefense: IntInterval{Min: 0, Max: 0},
 		},
 	}, 1, false, nil)

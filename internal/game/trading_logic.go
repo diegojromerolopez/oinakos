@@ -119,3 +119,27 @@ func (g *Game) CalculateTradePrice(item *ItemInstance, buyer, seller *Actor, isB
 	if val < 1 { val = 1 }
 	return val
 }
+
+// BuyLodging allows a character to pay for a stay at the inn.
+func (g *Game) BuyLodging() {
+	if g.ActiveTrader == nil {
+		return
+	}
+	pc := g.playableCharacter
+	// 5 Denarii for 12 hours of rest rights
+	price := 5
+	if pc.Denarii >= price {
+		pc.Denarii -= price
+		g.ActiveTrader.Denarii += price
+		pc.LodgingTicks += 8640 // 12 hours
+		
+		if g.audio != nil {
+			g.audio.PlayRandomSound("pickup")
+		}
+		
+		g.LogEvent("Paid 5 Denarii for a night at the inn.", LogInfo)
+		g.AddFloatingText("Paid Lodging", pc.X, pc.Y, ColorHeal)
+	} else {
+		g.LogEvent("Not enough Denarii for the inn!", LogInfo)
+	}
+}

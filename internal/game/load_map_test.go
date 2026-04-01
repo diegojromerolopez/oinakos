@@ -102,8 +102,8 @@ func TestLoadMapLevel_InhabitantsAndObstacles(t *testing.T) {
 
 	g.worldManager.LoadMapLevel()
 
-	if len(g.characters) != 2 {
-		t.Errorf("Expected 2 NPCs, got %d", len(g.characters))
+	if len(g.characters) != 3 {
+		t.Errorf("Expected 3 NPCs (Player + 2 Inhabitants), got %d", len(g.characters))
 	}
 	if g.characters[0].ActionState != ActorDead {
 		t.Errorf("Expected first NPC to be dead, got %v", g.characters[0].ActionState)

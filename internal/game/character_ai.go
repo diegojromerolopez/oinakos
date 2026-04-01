@@ -12,49 +12,194 @@ func (c *Character) updateAI(ctx *SystemContext) {
 	if !c.IsAlive() || (c.IsIncapacitated() && c.ActionState != ActorBerserk) { return }
 
 	// Sanity Check
+	// Leader death consequence check
+	if c.LeaderID != "" {
+		leaderDead := true
+		for _, other := range ctx.World.Characters {
+			if other.ID == c.LeaderID && other.IsAlive() {
+				leaderDead = false
+				break
+			}
+		}
+		if leaderDead && c.Alignment == AlignmentEnemy {
+			c.Alignment = AlignmentNeutral
+			c.Behavior = BehaviorWander 
+		}
+	}
+
 	c.EvaluateBerserk(ctx)
 
-	// 1. External AI Override (e.g. Simulation Player AI)
+	// Action State progression (for all AI characters, including simulated player)
+	// We exclude long-running actions (Cooking, Workshop, Intercourse, Milking) from this early timeout
+	// because they have their own internal timer/completion logic (400+ ticks).
+	isLongRunning := c.ActionState == ActorCooking || c.ActionState == ActorWorkshop || c.ActionState == ActorIntercourse || c.ActionState == ActorMilking
+	if isLongRunning {
+		// Only interrupt if absolutely dying
+		if c.State.Thirst > 95 || c.State.Hunger > 95 || c.State.HealthPoints < 20 {
+			// Falls through to handleSurvivalNeeds
+		} else {
+			return
+		}
+	}
+
+	if c.ActionState == ActorDrinking || c.ActionState == ActorEating || c.ActionState == ActorResting || c.ActionState == ActorRelieving || c.ActionState == ActorChopping || c.ActionState == ActorDigging || c.ActionState == ActorForaging || c.ActionState == ActorFeeding || c.ActionState == ActorBathing || c.ActionState == ActorCrouching {
+		if c.Tick >= 60 { 
+			if c.ActionState == ActorRelieving {
+				c.AlleviateProperly(ctx)
+				c.SpawnDefecation(ctx)
+			}
+			c.ActionState = ActorIdle 
+		}
+		return
+	}
+	if c.ActionState == ActorAttacking {
+		if c.Tick == 15 { c.CheckAttackHits(ctx, c.PendingSkill) }
+		if c.Tick >= 30 { c.ActionState = ActorIdle; c.PendingSkill = "" }
+		return
+	}
+
 	simMode := false
 	if ctx.World != nil && ctx.World.Game != nil && ctx.World.Game.settings != nil {
 		simMode = ctx.World.Game.settings.AISimulationMode
 	}
 	
-	if (c.IsPlayerControlled && simMode) || (c.ActionState == ActorBerserk && c.IsPlayerControlled) {
-		// A* Path Following (Priority over WanderDir)
-		if len(c.Path) > 0 {
-			target := c.Path[0]
-			dx, dy := target.X-c.X, target.Y-c.Y
-			dist := math.Sqrt(dx*dx + dy*dy)
-			if dist < 0.5 {
-				c.Path = c.Path[1:]
-			} else {
-				c.executeMovement(ctx, dx, dy, ctx.World.Obstacles, false)
-			}
-			return
-		}
+	isAIPlayer := (c.IsPlayerControlled && simMode) || (c.ActionState == ActorBerserk && c.IsPlayerControlled)
 
-		// Biological/Action State progression
-		if c.ActionState == ActorDrinking || c.ActionState == ActorEating || c.ActionState == ActorResting || c.ActionState == ActorRelieving || c.ActionState == ActorChopping || c.ActionState == ActorDigging || c.ActionState == ActorForaging || c.ActionState == ActorCooking {
-			if c.Tick >= 30 { c.ActionState = ActorIdle }
+	// 1. Survival Layer (Priority)
+	if (isAIPlayer || !c.IsPlayerControlled) && !c.AIDecisionPending && c.handleSurvivalNeeds(ctx) {
+		return
+	}
+
+	// 1a. Medical Support (Doctor/Cleric Specialization)
+	if !c.IsPlayerControlled && c.Config != nil && (strings.Contains(strings.ToLower(c.Config.ID), "doctor") || strings.Contains(strings.ToLower(c.Config.ID), "cleric")) {
+		var patient *Character; minDist := 15.0
+		for _, other := range ctx.World.Characters {
+			if other == c || !other.IsAlive() || other.Alignment == AlignmentEnemy { continue }
+			if other.IsIncapacitated() {
+				dist := math.Sqrt(math.Pow(c.X-other.X, 2) + math.Pow(c.Y-other.Y, 2))
+				if dist < minDist { minDist, patient = dist, other }
+			}
+		}
+		if patient != nil {
+			if minDist < 1.5 {
+				patient.Heal(25); patient.ActionState, patient.Tick = ActorIdle, 0
+				if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s has treated %s.", c.Name, patient.Name), LogNPC) }
+				c.ActionState, c.Tick = ActorIdle, 0; return 
+			}
+			c.MoveTo(ctx, patient.X, patient.Y); return
+		}
+	}
+
+	// 2. A* Path Following (Priority over WanderDir/Behaviors)
+	if len(c.Path) > 0 {
+		target := c.Path[0]
+		dx, dy := target.X-c.X, target.Y-c.Y
+		dist := math.Sqrt(dx*dx + dy*dy)
+		if dist < 0.5 {
+			c.Path = c.Path[1:]
+		} else {
+			c.executeMovement(ctx, dx, dy, ctx.World.Obstacles, false)
+		}
+		return
+	}
+
+	// 2.5 Targeting and Looting Layer
+	playableCharacter := ctx.World.PlayableCharacter
+	playerDist := 999.0
+	if playableCharacter != nil {
+		pDx, pDy := playableCharacter.X-c.X, playableCharacter.Y-c.Y
+		playerDist = math.Sqrt(pDx*pDx + pDy*pDy)
+	}
+
+	canLoot := c.MaxWeight > 0 && (c.Config == nil || !c.Config.IsAnimal)
+	if c.Tick%30 == 0 && canLoot { c.TargetItem = c.findLootTarget(ctx.World.Items) }
+	if c.TargetItem != nil && canLoot && c.TargetItem.Pickable {
+		dx, dy := c.TargetItem.X-c.X, c.TargetItem.Y-c.Y
+		if math.Sqrt(dx*dx+dy*dy) < 1.5 {
+			if ctx.World.Game != nil && ctx.World.Game.TryPickup(&c.Actor, c.TargetItem) {
+				c.EquipItem(c.TargetItem)
+				itList := []*ItemInstance{}
+				for _, it := range ctx.World.Items { if it != c.TargetItem { itList = append(itList, it) } }
+				ctx.World.Items, c.TargetItem = itList, nil
+				return
+			}
+			c.TargetItem, c.ActionState = nil, ActorIdle
+		} else {
+			c.executeMovement(ctx, dx, dy, ctx.World.Obstacles, false)
 			return
 		}
-		if c.ActionState == ActorAttacking {
-			if c.Tick == 15 { c.CheckAttackHits(ctx, c.PendingSkill) }
-			if c.Tick >= 30 { c.ActionState = ActorIdle; c.PendingSkill = "" }
-			return
+	}
+
+	targetX, targetY, hasTarget, isTargetPlayer := c.findTarget(playableCharacter, ctx.World.Characters, playerDist)
+	if hasTarget {
+		dx, dy := targetX-c.X, targetY-c.Y
+		dist := math.Sqrt(dx*dx + dy*dy)
+		attackRange := 1.4
+		if c.RawStats.AttackRange > 0 { attackRange = c.RawStats.AttackRange }
+		if c.Weapon != nil { attackRange = c.Weapon.GetMaxDistance() }
+		canAttack := (c.TargetActor != nil && c.Alignment != c.TargetActor.Alignment) || c.Behavior == BehaviorChaotic || c.Behavior == BehaviorNpcFighter
+		if dist < attackRange && canAttack { 
+			if dist < attackRange*0.5 && c.Weapon != nil && c.Weapon.IsRanged() { 
+				c.executeMovement(ctx, dx, dy, ctx.World.Obstacles, true) 
+			} else { 
+				c.executeAttack(ctx, isTargetPlayer, dx, dy) 
+			} 
+		} else { 
+			c.executeMovement(ctx, dx, dy, ctx.World.Obstacles, c.Behavior == BehaviorFlee) 
 		}
-		
-		// Fallback to simpler movement vectors (WanderDir)
+		c.clampToMap(ctx.World.CurrentMapType.MapWidth, ctx.World.CurrentMapType.MapHeight)
+		return
+	}
+
+	// 3. Behavior Layer (Map Goals / Roles)
+	if isAIPlayer {
 		if c.WanderDirX != 0 || c.WanderDirY != 0 {
 			c.executeMovement(ctx, c.WanderDirX, c.WanderDirY, ctx.World.Obstacles, false)
 		} else {
 			c.ActionState = ActorIdle
 		}
-		return
+	} else {
+		obstacles := ctx.World.Obstacles
+		switch c.Behavior {
+		case BehaviorHauler: c.updateHauler(ctx, obstacles)
+		case BehaviorLumberjack: c.updateLumberjack(ctx, obstacles)
+		case BehaviorFarmer: c.updateFarmer(ctx, obstacles)
+		case BehaviorArtisan: c.updateArtisan(ctx, obstacles)
+		case BehaviorPatrol: c.updatePatrol(ctx, obstacles)
+		case BehaviorChaos: c.updateChaotic(ctx, obstacles)
+		case BehaviorTrader: c.updateWander(ctx, obstacles)
+		case BehaviorHunter: c.updateChaotic(ctx, obstacles) // Fallback for hunters searching
+		case BehaviorWander: 
+			if c.Alignment == AlignmentAlly && ctx.World.PlayableCharacter != nil {
+				pc := ctx.World.PlayableCharacter
+				dx, dy := pc.X-c.X, pc.Y-c.Y
+				dist := math.Sqrt(dx*dx+dy*dy)
+				if dist > 8.0 {
+					c.TargetActor = &pc.Actor
+					c.executeMovement(ctx, dx, dy, obstacles, false)
+					return 
+				}
+			}
+			c.updateWander(ctx, obstacles)
+		case BehaviorNpcFighter, BehaviorFlee, BehaviorEscort: c.updateChaotic(ctx, obstacles) // Handled as chaotic for combat/movement
+		default:
+			if c.Alignment == AlignmentAlly && ctx.World.PlayableCharacter != nil {
+				pc := ctx.World.PlayableCharacter
+				dx, dy := pc.X-c.X, pc.Y-c.Y
+				if math.Sqrt(dx*dx+dy*dy) > 8.0 && c.TargetActor == nil {
+					c.TargetActor = &pc.Actor
+					c.executeMovement(ctx, dx, dy, obstacles, false)
+				} else {
+					c.updateWander(ctx, obstacles)
+				}
+			} else if rand.Float64() < 0.05 && c.checkEconomicSeeking(ctx) {
+				// Handled by economic seeking
+			} else {
+				c.updateWander(ctx, obstacles)
+			}
+		}
 	}
 
-	// 2. Default NPC AI Logic
 	c.clampToMap(ctx.World.CurrentMapType.MapWidth, ctx.World.CurrentMapType.MapHeight)
 }
 
@@ -72,6 +217,16 @@ func (c *Character) ApplyAIDecision(ctx *SystemContext, dec AIDecision) {
 		c.WanderDirX, c.WanderDirY = rand.Float64()*2 - 1, rand.Float64()*2 - 1
 	case strings.Contains(choice, "rest"): 
 		c.ActionState, c.Tick = ActorResting, 0
+	case strings.Contains(choice, "eat"):
+		c.ActionState, c.Tick = ActorEating, 0
+	case strings.Contains(choice, "drink"):
+		c.ActionState, c.Tick = ActorDrinking, 0
+	case strings.Contains(choice, "feed"):
+		c.ActionState, c.Tick = ActorFeeding, 0
+	case strings.Contains(choice, "hunt"):
+		c.Behavior = BehaviorHunter
+	case strings.Contains(choice, "forage"):
+		c.ActionState, c.Tick = ActorForaging, 0
 	}
 }
 

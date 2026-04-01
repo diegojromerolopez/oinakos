@@ -14,8 +14,7 @@ func TestCharacterStatsInitialization(t *testing.T) {
 		ID: "orc",
 		Attributes: PrimaryAttributeConfig{ Health: IntInterval{Min: 10, Max: 10} }, // Will result in 100HP base
 		Stats: EntityStatsConfig{
-			HealthMin: IntInterval{Min: 50, Max: 50},
-			HealthMax: IntInterval{Min: 100, Max: 100},
+			HealthPoints: IntInterval{Min: 50, Max: 50},
 			HungerMax: FloatInterval{Min: 80.0, Max: 80.0},
 			ThirstMax: FloatInterval{Min: 80.0, Max: 80.0},
 			FatigueMax: FloatInterval{Min: 80.0, Max: 80.0},

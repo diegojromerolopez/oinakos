@@ -3,6 +3,7 @@ package game
 import (
 	"image"
 	"io/fs"
+	"sync/atomic"
 
 	"oinakos/internal/engine"
 )
@@ -11,8 +12,6 @@ const (
 	WinMenuContinue = 0
 	WinMenuQuit     = 1
 )
-
-
 
 type Game struct {
 	width, height     int
@@ -23,25 +22,25 @@ type Game struct {
 	projectiles       []*Projectile
 	isGameOver        bool
 	isMapWon          bool
-	isGameWon         bool // For completing entire campaign or single map
-	mapWonMenuIndex   int  // 0: Continue/Replay, 1: Quit
+	isGameWon         bool 
+	mapWonMenuIndex   int  
 	isPaused          bool
 	currentMapType    MapType
-	mapLevel          int       // Current level (for scaling)
-	currentCampaign   *Campaign // If playing a campaign
-	campaignIndex     int       // Progress in campaign Maps
-	isCampaign        bool      // True if playing a campaign
-	isMainMenu        bool      // True if showing main menu
-	mainMenuIndex     int       // Index for main menu
-	isAboutScreen     bool      // True if showing about screen
-	isSettingsScreen  bool      // True if showing settings screen
-	isKeymapScreen    bool      // True if showing keymap screen
-	isInventoryOpen   bool      // True if showing inventory screen
-	ActiveBook        *ItemInstance // True if currently reading a book
-	isCampaignSelect  bool      // True if showing campaign picker
-	campaignMenuIndex int       // Index of selected campaign
-	keymapSelectedIndex int     // For remapping
-	remappingAction   string    // Current action being remapped
+	mapLevel          int       
+	currentCampaign   *Campaign 
+	campaignIndex     int       
+	isCampaign        bool      
+	isMainMenu        bool      
+	mainMenuIndex     int       
+	isAboutScreen     bool      
+	isSettingsScreen  bool      
+	isKeymapScreen    bool      
+	isInventoryOpen   bool      
+	ActiveBook        *ItemInstance 
+	isCampaignSelect  bool      
+	campaignMenuIndex int       
+	keymapSelectedIndex int     
+	remappingAction   string    
 	initialMapTypeID  string
 	debug             bool
 
@@ -67,14 +66,14 @@ type Game struct {
 	audio                     AudioManager
 
 	isMenuOpen       bool
-	menuIndex        int // 0: Resume, 1: Quicksave, 2: Load, 3: Quit
+	menuIndex        int 
 	loadDialogActive bool
 	loadPathInput    string
 
 	isCharacterSelect  bool
 	characterMenuIndex int
 	saveMessage        string
-	saveMessageTimer   int // Ticks to show the message
+	saveMessageTimer   int 
 
 	settings *Settings
 	settingsFontIndex  int
@@ -90,7 +89,7 @@ type Game struct {
 	ExploredTiles map[image.Point]bool
 
 	isQuitConfirmationOpen bool
-	quitConfirmationIndex  int // 0: Yes, 1: No
+	quitConfirmationIndex  int 
 
 	World      *World
 	Registries *RegistryContainer
@@ -99,7 +98,7 @@ type Game struct {
 	worldManager     *WorldManager
 	mechanicsManager *MechanicsManager
 
-	LoadingProgress int32 // 0 to 1000 representing 0.0 to 1.0
+	LoadingProgress int32 
 	LoadingMessage  string
 	Version         string
 
@@ -124,7 +123,18 @@ type Game struct {
 	isDraggingPinnedUI   bool
 	dragPinnedOffsetX, dragPinnedOffsetY int
 	particles        []*Particle
-	deathReason      string // Why the player died
+	deathReason      string 
+	simulationMode   bool
+}
+
+func (g *Game) SetSimulationMode(enabled bool) {
+	g.simulationMode = enabled
+	if enabled {
+		atomic.StoreInt32(&g.LoadingProgress, 1000)
+	}
+	if g.settings != nil {
+		g.settings.AISimulationMode = enabled
+	}
 }
 
 func (g *Game) SetOnFontUpdate(cb func(string)) {
@@ -158,11 +168,7 @@ func (g *Game) GetContext() *SystemContext {
 		Settings:   g.settings,
 	}
 }
-func (g *Game) SetSimulationMode(enabled bool) {
-	if g.settings != nil {
-		g.settings.AISimulationMode = enabled
-	}
-}
+
 
 func (g *Game) BypassMenu() {
 	g.isMainMenu = false
@@ -171,4 +177,44 @@ func (g *Game) BypassMenu() {
 	g.isQuitConfirmationOpen = false
 	g.isAboutScreen = false
 	g.isSettingsScreen = false
+}
+
+func (g *Game) GetAIManager() *AIManager {
+	return g.aiManager
+}
+
+func (g *Game) SetAIManager(m *AIManager) {
+	g.aiManager = m
+}
+
+var isTestingEnvironment = false
+
+func SetTestingMode(active bool) {
+	isTestingEnvironment = active
+}
+
+func (g *Game) GetDeathReason() string {
+	return g.deathReason
+}
+
+func (g *Game) IsGameOver() bool {
+	return g.isGameOver
+}
+
+func (g *Game) GetPlayableCharacter() *Character {
+	return g.playableCharacter
+}
+
+func (g *Game) SetCurrentMapType(m *MapType) {
+	if m == nil { return }
+	g.currentMapType = *m
+	if g.World != nil {
+		g.World.CurrentMapType = &g.currentMapType
+	}
+}
+
+func (g *Game) TriggerMapLoad() {
+	if g.worldManager != nil {
+		go g.worldManager.LoadMapLevel()
+	}
 }

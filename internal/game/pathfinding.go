@@ -46,6 +46,11 @@ func (g *Game) FindAStarPath(startX, startY, endX, endY float64) []engine.Point 
 	eX, eY := int(math.Floor(endX/gridSize)), int(math.Floor(endY/gridSize))
 	if sX == eX && sY == eY { return nil }
 
+	// Optimization: Direct Line-of-Sight check
+	if g.isPathClear(startX, startY, endX, endY) {
+		return []engine.Point{{X: endX, Y: endY}}
+	}
+
 	openSet := &PriorityQueue{}
 	heap.Init(openSet)
 	closedSet := make(map[string]bool)
@@ -99,7 +104,11 @@ func (g *Game) getNeighbors(n *PathNode, goalX, goalY int, gridSize float64) []*
 		isBlocked := false
 		// 1. Check Obstacles
 		for _, o := range g.obstacles {
-			if o.Alive && o.IsColliding(posX, posY, 0.5) { isBlocked = true; break }
+			if !o.Alive { continue }
+			// Spatial pruning: if obstacle center is too far from neighbor point, skip detailed check
+			dx, dy := posX-o.X, posY-o.Y
+			if dx*dx+dy*dy > 16.0 { continue } 
+			if o.IsColliding(posX, posY, 0.5) { isBlocked = true; break }
 		}
 		if isBlocked { continue }
 		
@@ -116,6 +125,24 @@ func (g *Game) getNeighbors(n *PathNode, goalX, goalY int, gridSize float64) []*
 		}
 	}
 	return neighbors
+}
+
+func (g *Game) isPathClear(x1, y1, x2, y2 float64) bool {
+	// Simple ray-casting (3 points check for efficiency)
+	points := 5
+	for i := 1; i < points; i++ {
+		t := float64(i) / float64(points)
+		px, py := x1 + (x2-x1)*t, y1 + (y2-y1)*t
+		for _, o := range g.obstacles {
+			if o.Alive {
+				dx, dy := px-o.X, py-o.Y
+				if dx*dx + dy*dy < 9.0 { // Radius-based fast check
+					if o.IsColliding(px, py, 0.5) { return false }
+				}
+			}
+		}
+	}
+	return true
 }
 
 func reconstructPath(node *PathNode, gridSize float64) []engine.Point {

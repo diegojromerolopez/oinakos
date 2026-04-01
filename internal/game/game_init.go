@@ -136,7 +136,7 @@ func NewGame(assets fs.FS, graphics engine.Graphics, initialMapID, initialMapTyp
 			g.playableCharacter.PrimaryAttributes = rolledAttrs
 			
 			// Use robust HP initialization (mirrors NewCharacter)
-			maxHP := rolledStats.HealthMin
+			maxHP := rolledStats.HealthPoints
 			if maxHP <= 0 {
 				maxHP = rolledAttrs.Health * 10
 			}
@@ -150,8 +150,10 @@ func NewGame(assets fs.FS, graphics engine.Graphics, initialMapID, initialMapTyp
 			g.playableCharacter.BaseDefense = rolledStats.BaseDefense
 			g.playableCharacter.Weapon = config.Weapon.Resolve(g.Registries.Objects)
 			g.playableCharacter.Name = config.Name
+			g.playableCharacter.ID = g.initialHeroID
+			g.playableCharacter.LoadEquipment(g.Registries.Objects)
 			g.isCharacterSelect = false
-			log.Printf("Using initial hero: %s (HP=%d)", g.initialHeroID, maxHP)
+			log.Printf("Using initial hero: %s (HP=%d) | Inv: %d items", g.initialHeroID, maxHP, len(g.playableCharacter.Inventory))
 		} else {
 			log.Printf("Warning: initial hero %s not found in registry", g.initialHeroID)
 		}

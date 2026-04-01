@@ -28,6 +28,7 @@ func (a *Actor) InitBodyStatus() {
 func (a *Actor) GetActor() *Actor { return a }
 
 func (a *Actor) SyncState() {
+	// Clamp values using floor for consistency as requested
 	a.State.Hunger = clampFloat(a.State.Hunger, 0, 100)
 	a.State.Thirst = clampFloat(a.State.Thirst, 0, 100)
 	a.State.Fatigue = clampFloat(a.State.Fatigue, 0, 100)
@@ -39,6 +40,15 @@ func (a *Actor) SyncState() {
 	a.State.BowelLevel = clampFloat(a.State.BowelLevel, 0, 100)
 	a.State.AlcoholLevel = clampFloat(a.State.AlcoholLevel, 0, 100)
 	a.IsConscious = a.State.IsConscious
+
+	if a.State.HealthPoints <= a.GetDeathThreshold() && a.ActionState != ActorDead {
+		a.ActionState = ActorDead
+	}
+}
+
+func (a *Actor) Kill(reason string) {
+	a.ActionState = ActorDead
+	a.State.HealthPoints = a.GetDeathThreshold()
 }
 
 func (a *Actor) GetTotalMaxHealth() int { return a.State.MaxHealthPoints + a.MaxHealthBonus }

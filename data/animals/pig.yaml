@@ -1,6 +1,8 @@
 id: pig
 name: Pig
 behavior: wander
+is_animal: true
+gender: female
 attributes:
   strength:
     min: 40
@@ -163,5 +165,5 @@ weapon:
     min: 4
     max: 12
   max_distance: touch
-meat: 3
-xp: 4
+meat: 10
+xp: 8

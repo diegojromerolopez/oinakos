@@ -37,7 +37,6 @@ func TestTrauma_BleedOutAndDeath(t *testing.T) {
 	ctx := NewTestContext()
 	c := &Character{Actor: Actor{
 		State: State{
-			HealthPoints:    0,
 			MaxHealthPoints: 100,
 			Hunger:          0.0,
 			Thirst:          0.0,
@@ -73,7 +72,6 @@ func TestTrauma_DeterministicLimbLoss(t *testing.T) {
 	ctx := NewTestContext()
 	c := &Character{Actor: Actor{
 		State: State{
-			HealthPoints:    9, // < 10% of 100
 			MaxHealthPoints: 100,
 			Hunger:          100.0,
 			Thirst:          100.0,
@@ -99,7 +97,6 @@ func TestTrauma_CumulativeTrauma(t *testing.T) {
 	ctx := NewTestContext()
 	c := &Character{Actor: Actor{
 		State: State{
-			HealthPoints:    0,
 			MaxHealthPoints: 100,
 			Hunger:          100.0,
 			Thirst:          100.0,
@@ -145,7 +142,6 @@ func TestTrauma_CumulativeTrauma(t *testing.T) {
 func TestTrauma_Recovery(t *testing.T) {
 	c := &Character{Actor: Actor{
 		State: State{
-			HealthPoints:    -5,
 			MaxHealthPoints: 100,
 			Hunger:          100.0,
 			Thirst:          100.0,

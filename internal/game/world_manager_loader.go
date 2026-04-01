@@ -194,6 +194,13 @@ func (wm *WorldManager) LoadMapLevel() {
 	}
 	for i := 0; i < 50; i++ { if !g.playableCharacter.checkCollisionAt(g.playableCharacter.X, g.playableCharacter.Y, g.obstacles) { break }; g.playableCharacter.X += 0.5; g.playableCharacter.Y += 0.5 }
 
-	DebugLog("Map Load Complete: %s", g.currentMapType.Name)
+	g.characters = append(g.characters, g.playableCharacter)
+	
+	if g.World != nil {
+		g.World.Characters = g.characters
+		g.World.Obstacles = g.obstacles
+	}
+
+	DebugLog("Map Load Complete: %s (Pop: %d, Obs: %d)", g.currentMapType.Name, len(g.characters), len(g.obstacles))
 	wm.LoadMapAssets()
 }

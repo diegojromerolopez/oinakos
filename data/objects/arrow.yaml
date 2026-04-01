@@ -1,0 +1,8 @@
+id: arrow
+name: Arrow
+description: A simple wooden arrow with a flint tip.
+type: consumable
+weight: 0.1
+value: 1
+sprite: arrow.png
+primary_color: "#8B4513"

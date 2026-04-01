@@ -6,7 +6,7 @@ description: The lead hero. A mysterious knight whose path is forged in iron and
   duty.
 archetype: man_at_arms_male
 state:
-  health_points: 100
+  health_points: 300
   hunger: 0.0
   thirst: 0.0
   fatigue: 0.0
@@ -21,16 +21,18 @@ state:
     rate: 1.0
     max: 100
 attributes:
-  strength: 85
-  health: 90
+  strength: 60
+  health: 30
   dexterity: 80
   intellect: 60
   wisdom: 70
 stats:
+  health_points: 300
   base_protection: 10
   speed: 0.07
   attack_cooldown: 30
   max_weight: 250
+  survivalism: 72
 abilities:
   punch:
     damage: melee_attack * 1.0
@@ -103,9 +105,6 @@ abilities:
     yield: survivalism * 1.0
     parent_attribute: strength
     required_weapon: pike
-  butcher:
-    yield: survivalism * 0.5
-    parent_attribute: strength
   build:
     yield: crafting * 1.0
     parent_attribute: strength
@@ -115,12 +114,21 @@ abilities:
   stash:
     yield: strength * 0.005
     parent_attribute: strength
-  intimidate:
-    yield: culture * 1.0
+  forage:
+    yield: survivalism * 1.2
+    parent_attribute: wisdom
+  hunt:
+    yield: survivalism * 1.0
     parent_attribute: strength
-denarii: 200
+  butcher:
+    yield: survivalism * 0.8
+    parent_attribute: dexterity
+  cook:
+    yield: dexterity * 0.4 + intellect * 0.4 + survivalism * 0.2
+    parent_attribute: intellect
+denarii: 1000
 equipment:
-  weapon: tizon
+  weapon: bow
   body: steel_armor
   head: steel_helmet
   ring1: ring_protection
@@ -129,3 +137,33 @@ inventory:
 - steel_dagger
 - orcish_axe
 - pike
+- bread
+- bread
+- wine_bottle
+- apple
+- apple
+- apple
+- cooking_pot
+- raw_meat
+- cabbage
+- bow
+- arrow
+- arrow
+- arrow
+- arrow
+- arrow
+- arrow
+- arrow
+- arrow
+- arrow
+- arrow
+- arrow
+- arrow
+- arrow
+- arrow
+- arrow
+- arrow
+- arrow
+- arrow
+- arrow
+- arrow

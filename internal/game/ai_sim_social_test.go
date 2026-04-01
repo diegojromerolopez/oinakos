@@ -4,7 +4,7 @@ import "testing"
 
 func TestSimulation_ElviraCooksCow(t *testing.T) {
 	g, ctx := setupSimulationGame(); pc := g.playableCharacter; pc.Name = "elvira"
-	cow := NewCharacter(1, 1, &EntityConfig{Stats: EntityStatsConfig{HealthMin: IntInterval{Min: 5, Max: 5}, HealthMax: IntInterval{Min: 5, Max: 5}}}, 1, false, nil); cow.Name = "cow"; g.World.Characters = append(g.World.Characters, cow)
+	cow := NewCharacter(1, 1, &EntityConfig{Stats: EntityStatsConfig{HealthPoints: IntInterval{Min: 5, Max: 5}}}, 1, false, nil); cow.Name = "cow"; g.World.Characters = append(g.World.Characters, cow)
 	cow.State.HealthPoints = 0; rM := &ItemInstance{Config: &ObjectConfig{ID: "raw_meat", Hunger: 10}}
 	pc.Inventory = append(pc.Inventory, rM); pc.Inventory = []*ItemInstance{}; stew := &ItemInstance{Config: &ObjectConfig{ID: "stew", Hunger: 50}}
 	pc.Inventory = append(pc.Inventory, stew); logMessage(ctx, "Cook crafted Beef Stew", LogInfo); if !hasLog(g, "crafted") { t.Errorf("Expected crafted log") }

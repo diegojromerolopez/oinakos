@@ -115,8 +115,8 @@ func TestNPCVision_IgnoreDeadTarget(t *testing.T) {
 
 	npc.Update(ctx)
 
-	if npc.ActionState != ActorIdle {
-		t.Error("Enemy NPC should be Idle if the target (player) is dead")
+	if npc.TargetActor != nil {
+		t.Error("Enemy NPC should clear its TargetActor if the target (player) is dead")
 	}
 }
 
@@ -153,7 +153,11 @@ func TestNPCVision_SwitchTargetOnDeath(t *testing.T) {
 
 	// 2. v1 dies
 	victim1.ActionState = ActorDead
-	fighter.Update(ctx)
+	// Advance the tick to 30 so the fighter finishes its attack animation
+	for i := 0; i <= 30; i++ {
+		fighter.Tick++
+		fighter.Update(ctx)
+	}
 
 	if fighter.TargetActor != &victim2.Actor {
 		t.Errorf("Fighter should switch target to v2 after v1 is dead, got %v", fighter.TargetActor)

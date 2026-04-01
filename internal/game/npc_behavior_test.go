@@ -103,10 +103,14 @@ func TestNPCBehavior_Neutral_DoesNotTargetActor(t *testing.T) {
 func TestNPCBehavior_Ally_FollowsPlayerWhenNoEnemies(t *testing.T) {
 	ctx := NewTestContext()
 	mc := NewCharacter(10, 10, nil, 1, true, nil)
+	mc.ID = "test_player"
 	ctx.World.PlayableCharacter = mc
 
 	ally := NewCharacter(0, 0, &EntityConfig{ID: "ally"}, 1, false, nil)
+	ally.ID = "test_ally"
 	ally.Alignment = AlignmentAlly
+	ally.Behavior = BehaviorWander
+	ally.PrimaryAttributes.Dexterity = 100
 	ally.Speed = 0.2 // must be non-zero
 	ally.State.HealthPoints = 100
 	ally.State.MaxHealthPoints = 100
@@ -136,7 +140,7 @@ func TestNPCBehavior_ScavengeUpgrade(t *testing.T) {
 			Strength: IntInterval{Min: 50, Max: 50}, Dexterity: IntInterval{Min: 50, Max: 50}, Health: IntInterval{Min: 50, Max: 50},
 		},
 		Stats: EntityStatsConfig{
-			HealthMin: IntInterval{Min: 100, Max: 100}, HealthMax: IntInterval{Min: 100, Max: 100},
+			HealthPoints: IntInterval{Min: 100, Max: 100},
 			Speed: FloatInterval{Min: 0.1, Max: 0.1},
 		},
 	}

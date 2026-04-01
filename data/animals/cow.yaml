@@ -1,6 +1,7 @@
 id: cow
 name: Cow
 behavior: wander
+is_animal: true
 attributes:
   strength:
     min: 40
@@ -163,5 +164,5 @@ weapon:
     min: 10
     max: 30
   max_distance: touch
-meat: 4
-xp: 5
+meat: 40
+xp: 15

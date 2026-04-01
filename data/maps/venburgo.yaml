@@ -164,20 +164,15 @@ inhabitants:
   y: 17
   alignment: neutral
   behavior: trader
+- archetype: doctor_male
+  x: -5
+  y: -10
+  alignment: neutral
+  behavior: trader
 fauna:
 - archetype: cow
-  x: 2
+  x: 5
   y: 17
-  alignment: neutral
-  behavior: wander
-- archetype: cow
-  x: -4
-  y: 19
-  alignment: neutral
-  behavior: wander
-- archetype: cow
-  x: 4
-  y: 22
   alignment: neutral
   behavior: wander
 - archetype: pig
@@ -185,21 +180,41 @@ fauna:
   y: 14
   alignment: neutral
   behavior: wander
-- archetype: pig
-  x: -1
-  y: 18
+- archetype: boar
+  x: 5
+  y: 14
   alignment: neutral
   behavior: wander
-- archetype: pig
-  x: 6
-  y: 16
+- archetype: deer
+  x: -30
+  y: -30
   alignment: neutral
-  behavior: wander
-- archetype: dog
-  x: -2
-  y: 13
+  behavior: flee
+- archetype: buck
+  x: -32
+  y: -32
   alignment: neutral
-  behavior: wander
+  behavior: flee
+- archetype: rabbit
+  x: -25
+  y: 25
+  alignment: neutral
+  behavior: flee
+- archetype: hare
+  x: -27
+  y: 27
+  alignment: neutral
+  behavior: flee
+- archetype: fox
+  x: 30
+  y: 30
+  alignment: neutral
+  behavior: hunter
+- archetype: wild_boar
+  x: 40
+  y: 40
+  alignment: hostile
+  behavior: fighter
 - archetype: chicken
   x: -3
   y: 16
@@ -215,11 +230,74 @@ fauna:
   y: 20
   alignment: neutral
   behavior: wander
+spawns:
+- archetype: rabbit
+  alignment: 0
+  frequency: 5
+  probability: 0.6
+- archetype: deer
+  alignment: 0
+  frequency: 10
+  probability: 0.4
+- archetype: fox
+  alignment: 0
+  frequency: 60
+  probability: 0.1
+- archetype: wild_boar
+  alignment: 2
+  frequency: 120
+  probability: 0.05
+- archetype: peasant_male
+  alignment: 0
+  frequency: 240
+  probability: 0.1
 obstacles:
 # Center Area
 - archetype: well
   x: 0
   y: 0
+- archetype: well
+  x: 2
+  y: 14
+- archetype: campfire
+  x: 0
+  y: 12
+- archetype: food_market
+  x: -2
+  y: 16
+- archetype: tavern
+  x: 2
+  y: 16
+- archetype: apple_tree
+  x: -5
+  y: 15
+- archetype: apple_tree
+  x: -5
+  y: 17
+- archetype: apple_tree
+  x: -5
+  y: 19
+- archetype: apple_tree
+  x: 5
+  y: 15
+- archetype: apple_tree
+  x: 5
+  y: 17
+- archetype: apple_tree
+  x: 5
+  y: 19
+- archetype: apple_tree
+  x: -3
+  y: 14
+- archetype: apple_tree
+  x: 3
+  y: 14
+- archetype: apple_tree
+  x: -8
+  y: 16
+- archetype: apple_tree
+  x: 8
+  y: 16
 - archetype: personal_chest
   x: 1
   y: 16

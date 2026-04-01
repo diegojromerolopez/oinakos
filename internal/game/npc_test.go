@@ -101,9 +101,8 @@ func TestNewCharacter(t *testing.T) {
 			Wisdom:    IntInterval{Min: 2, Max: 2},
 		},
 		Stats: EntityStatsConfig{
-			HealthMin: IntInterval{Min: 100, Max: 100},
 			Speed:     FloatInterval{Min: 0.5, Max: 0.5},
-			Age:       AgeConfig{Current: FloatInterval{Mean: 25.0, SD: 0.0, Mode: "normal"}, Rate: 1.0},
+			Age:       AgeConfig{Current: FloatInterval{Mean: 25.0, SD: 0.0, Mode: "normal"}, Rate: FloatInterval{Min: 1.0, Max: 1.0}},
 		},
 	}
 	n := NewCharacter(10, 20, arch, 1, false, nil)
@@ -255,7 +254,7 @@ func TestNPC_MeleeAttack(t *testing.T) {
 	ctx.World.PlayableCharacter = mc
 
 	arch := &EntityConfig{Stats: EntityStatsConfig{
-		HealthMin:      IntInterval{Min: 50, Max: 50},
+		HealthPoints:      IntInterval{Min: 50, Max: 50},
 		BaseAttack:     IntInterval{Min: 1000, Max: 1000},
 		BaseDefense:    IntInterval{Min: 5, Max: 5},
 		AttackRange:    FloatInterval{Min: 1.0, Max: 1.0},

@@ -24,4 +24,3 @@ func (p *Projectile) Draw(screen engine.Image, vectorRenderer engine.VectorRende
 	}
 }
 
-var isTestingEnvironment = false

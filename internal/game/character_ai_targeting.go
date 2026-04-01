@@ -4,18 +4,27 @@ import "math"
 
 func (c *Character) findTarget(player *Character, others []*Character, playerDist float64) (float64, float64, bool, bool) {
 	var bestX, bestY float64; var hasTarget, isTargetPlayer bool; minDist := 15.0
+	
 	isTargetValid := func(other *Character) bool {
 		if c.Relationships != nil {
-			if sentiment, ok := c.Relationships[other.Name]; ok && sentiment < -20.0 {
+			if sentiment, ok := c.Relationships[other.ID]; ok && sentiment < -20.0 {
 				return true // Grudge!
 			}
 		}
 		if c.Behavior == BehaviorChaotic { return true }
+		
+		// Hunting Logic: Hunters target animals regardless of alignment
+		// We use "hunt" yield which is mapped correctly in GetAbilityYield
+		if (c.Behavior == BehaviorKnightHunter || c.GetAbilityYield("hunt") > 40) && other.Config != nil && other.Config.IsAnimal {
+			return true
+		}
+		
 		if c.Alignment == AlignmentEnemy { return other.Alignment == AlignmentAlly || other.LeaderID != "" || other.Group != ""
 		} else if c.Alignment == AlignmentAlly { return other.Alignment == AlignmentEnemy
 		} else if c.Alignment == AlignmentNeutral { return c.TargetActor == &other.Actor }
 		return false
 	}
+	
 	if player != nil && player.IsAlive() && playerDist < minDist && isTargetValid(player) {
 		minDist, bestX, bestY, hasTarget, isTargetPlayer, c.TargetActor = playerDist, player.X, player.Y, true, true, &player.Actor
 	}

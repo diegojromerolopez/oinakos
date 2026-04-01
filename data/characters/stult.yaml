@@ -34,6 +34,7 @@ stats:
   attack_range: 4.0
   projectile_speed: 0.25
   max_weight: 180
+  survivalism: 19
 abilities:
   punch:
     damage: melee_attack * 1.0
@@ -121,6 +122,9 @@ abilities:
   intimidate:
     yield: culture * 1.0
     parent_attribute: strength
+  cook:
+    yield: dexterity * 0.4 + intellect * 0.4 + survivalism * 0.2
+    parent_attribute: intellect
 xp: 160
 dialogues:
   player_greetings:

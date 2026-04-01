@@ -31,9 +31,9 @@ func (wm *WorldManager) UpdateNPCSpawning() {
 		activeNPCs := make([]*Character, 0)
 		for _, n := range g.characters {
 			dist := math.Sqrt(math.Pow(n.X-g.playableCharacter.X, 2) + math.Pow(n.Y-g.playableCharacter.Y, 2))
-			if n.IsAlive() {
-				if dist < 40 { activeNPCs = append(activeNPCs, n) }
-			} else { activeNPCs = append(activeNPCs, n) }
+			if dist < 300 {
+				activeNPCs = append(activeNPCs, n)
+			}
 		}
 		g.characters = activeNPCs
 	}

@@ -70,13 +70,12 @@ stats:
     mode: normal
     mean: 50.0
     sd: 0.0
-  health_points_min:
+  health_points:
     min: 25
     max: 25
     mode: normal
     mean: 25.0
     sd: 0.0
-  health_points_max:
     min: 35
     max: 35
     mode: normal

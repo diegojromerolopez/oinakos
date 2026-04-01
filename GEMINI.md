@@ -52,6 +52,7 @@ Oinakos is a performance-optimized, infinite isometric action RPG and biological
 | `speed` | `dexterity * 0.02` | Cartesian units/tick |
 | `attack_cooldown`| `baseCD * (1.5 - dexterity * 0.01)` | Min clamp: 10 ticks |
 | `max_weight` | `(strength * 1.5 + health * 0.5) / 0.329` | Roman **librae** |
+| `survivalism` | `wisdom * 0.4 + intellect * 0.3 + health * 0.2 + dexterity * 0.1` | General survival proficiency (Yield basis) |
 
 **Age Modifiers:**
 - **Young (<25)**: Physical stats penalty up to 25%, Mental up to 30%.
@@ -83,6 +84,9 @@ Living entities simulate needs every tick. Decay is modified by the **Health** a
 - **Physical Trauma**: Irreversible damage (Limbs, Blindness, Broken Spine).
 - **Grief Cascade**: Death of a Partner/Friend triggers **"Mourning"** (Double GriefTicks). Causes massive Sanity drain, leading to Psychotic Breaks.
 - **Miasma**: Dead bodies "Rot" after 1 day. Rotten corpses emit a **Miasma Cloud** (4 pedes radius). Causes Sanity loss and Sickness (Plague). AI will pathfind around Miasma.
+- **Hunting & Butchering**: 
+  - **Hunt**: Used to track and kill animals. Success and yields scale with `survivalism`.
+  - **Butcher**: Used to extract maximum `raw_meat` from animal corpses. Yields scale with `survivalism`.
 
 ---
 

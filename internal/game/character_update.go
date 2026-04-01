@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"log"
 	"math"
 	"strings"
 
@@ -10,6 +11,13 @@ import (
 
 func (c *Character) Update(ctx *SystemContext) {
 	c.Tick++
+	c.AttackTimer++
+	if (c.ID == "oinakos" || c.ID == "hero") && ctx.World.Game.Tick%1000 == 0 {
+		invNames := []string{}
+		for _, it := range c.Inventory { if it != nil && it.Config != nil { invNames = append(invNames, it.Config.ID) } }
+		log.Printf("[SIM-HERO] Tick: %d | HP: %d/%d | H:%.1f T:%.1f | State: %s | Inv(%d): %v", 
+			c.Tick, c.State.HealthPoints, c.State.MaxHealthPoints, c.State.Hunger, c.State.Thirst, c.ActionState, len(c.Inventory), invNames)
+	}
 	c.SharedUpdate(ctx)
 	c.ProcessCooking(ctx)
 	c.ProcessWorkshop(ctx)
@@ -74,6 +82,16 @@ func (c *Character) updatePlayer(ctx *SystemContext) {
 	}
 	if c.ActionState == ActorDrinking || c.ActionState == ActorEating {
 		if c.Tick >= 30 { c.ActionState = ActorIdle }
+		return
+	}
+	if c.ActionState == ActorBathing || c.ActionState == ActorRelieving {
+		if c.Tick >= 60 {
+			if c.ActionState == ActorRelieving {
+				c.AlleviateProperly(ctx)
+				c.SpawnDefecation(ctx)
+			}
+			c.ActionState = ActorIdle
+		}
 		return
 	}
 	if c.ActionState == ActorChopping || c.ActionState == ActorDigging || c.ActionState == ActorForaging {

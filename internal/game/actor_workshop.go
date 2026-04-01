@@ -10,7 +10,7 @@ import (
 func (c *Character) ProcessCooking(ctx *SystemContext) {
 	if c.ActionState != ActorCooking { return }
 
-	// 1. Need a heat source (Campfire)
+	// 1. Requirement: Near a heat source (Campfire)
 	nearFire := false
 	for _, o := range ctx.World.Obstacles {
 		if o.Alive && o.Archetype != nil && strings.Contains(strings.ToLower(o.Archetype.ID), "campfire") {
@@ -20,40 +20,74 @@ func (c *Character) ProcessCooking(ctx *SystemContext) {
 	}
 	if !nearFire { c.ActionState = ActorIdle; return }
 
-	if c.Tick < 300 { return } // 5 seconds to cook
+	// 2. Recipe Detection (Early check to see if pot is needed)
+	foundMeat, foundVeg := -1, -1
+	for i, it := range c.Inventory {
+		if it == nil || it.Config == nil { continue }
+		if it.Config.ID == "raw_meat" && foundMeat == -1 { foundMeat = i }
+		if (it.Config.ID == "cabbage" || it.Config.ID == "turnip" || it.Config.ID == "apple" || it.Config.ID == "pear") && foundVeg == -1 { foundVeg = i }
+	}
+
+	// 3. Requirement: Utensils (Cooking Pot) - ONLY needed for stew (vegetable recipes)
+	hasPot := false
+	for _, it := range c.Inventory { if it != nil && it.Config != nil && it.Config.ID == "cooking_pot" { hasPot = true; break } }
 	
-	// Success check using Herbalism/Intellect
-	if !c.CheckAbilitySuccess("cook", 0) {
-		c.ActionState, c.Tick, c.LastAIReasoning = ActorIdle, 0, "Fumbled the cooking!"
-		ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{ Text: "Fumble!", X: c.X, Y: c.Y - 1, Life: 60, Color: ColorHarm })
+	if foundVeg >= 0 && !hasPot {
+		c.ActionState, c.LastAIReasoning = ActorIdle, "Need a cooking pot for stew!"
+		return 
+	}
+	if foundMeat == -1 && foundVeg == -1 {
+		c.ActionState, c.LastAIReasoning = ActorIdle, "Nothing to cook!"
 		return
 	}
 
-	c.ActionState, c.Tick = ActorIdle, 0
-	
-	// Find raw meat
-	foundRaw := -1
-	for i, it := range c.Inventory {
-		if it != nil && it.Config != nil && it.Config.ID == "raw_meat" { foundRaw = i; break }
+	if c.Tick < 400 { return } // 6.6 seconds (400 ticks)
+
+	// 3. Success Check
+	if !c.CheckAbilitySuccess("cook", 0) {
+		c.ActionState, c.Tick, c.LastAIReasoning = ActorIdle, 0, "Burned the meal!"
+		ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{ Text: "🔥 BURNT!", X: c.X, Y: c.Y - 1, Life: 60, Color: ColorHarm })
+		return
 	}
 
-	if foundRaw >= 0 {
-		cookedID := "meat"
+	// 4. Recipe Processing
+	if foundMeat >= 0 {
+		c.ActionState, c.Tick = ActorIdle, 0
+		cookedID := "meat" // Default cooked meat
+		msg := "prepared some Cooked Meat!"
+		floatMsg := "🍖 MEAT!"
+		if foundVeg >= 0 { 
+			cookedID = "stew" 
+			msg = "prepared a Hearty Stew!"
+			floatMsg = "🍜 STEW!"
+		}
+		
 		cookedConfig := ctx.Registries.Objects.Objects[cookedID]
 		if cookedConfig != nil {
-			// Yield determines quality or hunger restoration bonus
 			yield := c.GetAbilityYield("cook")
 			
-			c.Inventory = append(c.Inventory[:foundRaw], c.Inventory[foundRaw+1:]...)
+			// Remove ingredients (removing higher index first)
+			if foundVeg >= 0 {
+				if foundMeat > foundVeg {
+					c.Inventory = append(c.Inventory[:foundMeat], c.Inventory[foundMeat+1:]...)
+					c.Inventory = append(c.Inventory[:foundVeg], c.Inventory[foundVeg+1:]...)
+				} else {
+					c.Inventory = append(c.Inventory[:foundVeg], c.Inventory[foundVeg+1:]...)
+					c.Inventory = append(c.Inventory[:foundMeat], c.Inventory[foundMeat+1:]...)
+				}
+			} else {
+				c.Inventory = append(c.Inventory[:foundMeat], c.Inventory[foundMeat+1:]...)
+			}
+
 			it := NewItemInstance(cookedID, cookedConfig, c.X, c.Y)
-			// Bonus nourishment from skill
-			it.Resistance = int(yield * 0.1) // 0-15 bonus
-			
+			it.Resistance = int(yield * 0.2) // Quality bonus
 			c.Inventory = append(c.Inventory, it)
-			if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s cooked a Delicious Meal (Quality: %.1f)!", c.Name, yield), LogNPC) }
-			ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{ Text: "🍳 YUM!", X: c.X, Y: c.Y - 1, Life: 60, Color: ColorHeal })
-			c.ModifySentiment("self", 5.0)
+			
+			if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s %s", c.Name, msg), LogNPC) }
+			ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{ Text: floatMsg, X: c.X, Y: c.Y - 1, Life: 60, Color: ColorHeal })
 		}
+	} else {
+		c.ActionState, c.Tick, c.LastAIReasoning = ActorIdle, 0, "Missing meat for cooking!"
 	}
 }
 

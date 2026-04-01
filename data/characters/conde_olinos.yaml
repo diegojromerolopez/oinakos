@@ -30,6 +30,7 @@ stats:
   speed: 0.08
   attack_cooldown: 28
   max_weight: 250
+  survivalism: 64
 abilities:
   punch:
     damage: melee_attack * 1.0
@@ -117,6 +118,9 @@ abilities:
   intimidate:
     yield: culture * 1.0
     parent_attribute: strength
+  cook:
+    yield: dexterity * 0.4 + intellect * 0.4 + survivalism * 0.2
+    parent_attribute: intellect
 equipment:
   weapon: long_sword
   body: steel_armor

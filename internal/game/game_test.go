@@ -103,7 +103,7 @@ func TestHeroFlagOverride(t *testing.T) {
 		ID: "conde_olinos",
 		Name: "Conde Olinos",
 		Stats: EntityStatsConfig{
-			HealthMin: IntInterval{Min: 500, Max: 500},
+			HealthPoints: IntInterval{Min: 500, Max: 500},
 			Speed:     FloatInterval{Min: 0.05, Max: 0.05},
 		},
 	}
@@ -114,8 +114,8 @@ func TestHeroFlagOverride(t *testing.T) {
 	// Since we already called NewGame, we manually trigger the block we added
 	if config, ok := g.characterRegistry.Characters[g.initialHeroID]; ok {
 		g.playableCharacter.Config = config
-		g.playableCharacter.State.HealthPoints = config.Stats.HealthMin.Roll()
-		g.playableCharacter.State.MaxHealthPoints = config.Stats.HealthMin.Roll()
+		g.playableCharacter.State.HealthPoints = config.Stats.HealthPoints.Roll()
+		g.playableCharacter.State.MaxHealthPoints = config.Stats.HealthPoints.Roll()
 		g.playableCharacter.Speed = config.Stats.Speed.Roll()
 		g.isCharacterSelect = false
 	}

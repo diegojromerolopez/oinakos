@@ -16,7 +16,7 @@ type AgentBridgeAIProvider struct {
 }
 
 func NewAgentBridgeAIProvider() *AgentBridgeAIProvider {
-	dir := filepath.Join(GetOinakosDir(), "simulation")
+	dir := filepath.Join(GetOinakosDir(), "headless")
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		_ = os.MkdirAll(dir, 0755)
 	}

@@ -11,7 +11,7 @@ import (
 func TestSaveLoad(t *testing.T) {
 	g := NewGame(nil, &engine.MockGraphics{}, "data/maps/test_save.yaml", "", "", &MockInputManager{}, &MockAudioManager{}, false, "0.1-test")
 	// Add NPC and Obstacle to test persistence
-	n := NewCharacter(10, 20, &EntityConfig{ID: "orc", XP: 10, Stats: EntityStatsConfig{HealthMin: IntInterval{Min: 100, Max: 100}, HealthMax: IntInterval{Min: 100, Max: 100}}}, 1, false, nil)
+	n := NewCharacter(10, 20, &EntityConfig{ID: "orc", XP: 10, Stats: EntityStatsConfig{HealthPoints: IntInterval{Min: 100, Max: 100}}}, 1, false, nil)
 	g.World.Characters = []*Character{n}
 	g.characters = []*Character{n}
 	

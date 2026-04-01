@@ -53,6 +53,8 @@ func TestWorldManager_UpdateNPCSpawning(t *testing.T) {
 		},
 	}
 	
+	g.characters = nil
+	g.World.Characters = nil
 	wm.UpdateNPCSpawning()
 	
 	if len(g.characters) != 1 {
@@ -111,7 +113,7 @@ func TestWorldManager_NPCSpawnTimer_Cleanup(t *testing.T) {
 	g.playableCharacter.X, g.playableCharacter.Y = 0, 0
 	
 	// Add an NPC far away
-	farNpc := NewCharacter(100, 100, &EntityConfig{ID: "far"}, 1, false, nil)
+	farNpc := NewCharacter(1000, 1000, &EntityConfig{ID: "far"}, 1, false, nil)
 	g.characters = []*Character{farNpc}
 	
 	g.npcSpawnTimer = 299

@@ -2,230 +2,235 @@ package game
 
 import (
 	"fmt"
+	"math"
+	"strings"
 	"oinakos/internal/engine"
 	"gopkg.in/yaml.v3"
-	"strings"
-)
-
-type ActorState int
-type LaborShift int
-
-const (
-	ShiftWork LaborShift = iota
-	ShiftLeisure
-	ShiftSleep
-)
-
-const (
-	ActorIdle ActorState = iota
-	ActorWalking
-	ActorAttacking
-	ActorDead
-	ActorDrinking  
-	ActorCrouching 
-	ActorIncapacitated 
-	ActorResting   
-	ActorChopping  
-	ActorDigging   
-	ActorForaging  
-	ActorEating    
-	ActorBerserk   
-	ActorCooking   
-	ActorWorkshop  
-	ActorMilking   
-	ActorStashing  
-	ActorIntercourse 
-	ActorBathing     
-	ActorRelieving   
-	ActorFeeding     
-)
-
-func (s ActorState) String() string {
-	switch s {
-	case ActorIdle:          return "Idle"
-	case ActorWalking:       return "Walking"
-	case ActorAttacking:     return "Attacking"
-	case ActorDead:          return "Dead"
-	case ActorDrinking:      return "Drinking"
-	case ActorCrouching:     return "Crouching"
-	case ActorIncapacitated: return "Incapacitated"
-	case ActorResting:       return "Resting"
-	case ActorChopping:      return "Chopping"
-	case ActorDigging:       return "Digging"
-	case ActorForaging:      return "Foraging"
-	case ActorEating:        return "Eating"
-	case ActorBerserk:       return "Berserk"
-	case ActorCooking:       return "Cooking"
-	case ActorWorkshop:      return "Workshop"
-	case ActorMilking:       return "Milking"
-	case ActorStashing:      return "Stashing"
-	case ActorIntercourse:   return "Intercourse"
-	case ActorBathing:       return "Bathing"
-	case ActorRelieving:     return "Relieving"
-	case ActorFeeding:       return "Feeding"
-	default:                 return "Unknown"
-	}
-}
-
-type PlayableCharacterState = ActorState
-type NPCState = ActorState
-type Direction int
-
-const (
-	DirSE Direction = iota
-	DirSW
-	DirNE
-	DirNW
 )
 
 type Alignment int
 
 const (
-	AlignmentEnemy Alignment = iota
-	AlignmentNeutral
-	AlignmentAlly
+	AlignmentNeutral Alignment = iota
+	AlignmentFriendly
+	AlignmentHostile
+	AlignmentEnemy = AlignmentHostile
+	AlignmentAlly  = AlignmentFriendly
 )
+
+func (a *Alignment) UnmarshalYAML(v *yaml.Node) error {
+	var i int
+	if err := v.Decode(&i); err == nil {
+		*a = Alignment(i)
+		return nil
+	}
+	var s string
+	if err := v.Decode(&s); err == nil {
+		switch strings.ToLower(s) {
+		case "neutral":
+			*a = AlignmentNeutral
+			return nil
+		case "friendly", "ally":
+			*a = AlignmentFriendly
+			return nil
+		case "hostile", "enemy":
+			*a = AlignmentHostile
+			return nil
+		default:
+			return fmt.Errorf("unknown alignment: %s", s)
+		}
+	}
+	return fmt.Errorf("invalid alignment format")
+}
+
+type Direction int
+
+const (
+	DirS Direction = iota
+	DirSE
+	DirE
+	DirNE
+	DirN
+	DirNW
+	DirW
+	DirSW
+)
+
+type ActorState int
+
+const (
+	ActorIdle ActorState = iota
+	ActorWalking
+	ActorAttacking
+	ActorHit
+	ActorDead
+	ActorInteracting
+	ActorHarvesting
+	ActorResting
+	ActorThinking
+	ActorIncapacitated
+	ActorFeeding
+	ActorBerserk
+    ActorCrouching
+    ActorDrinking
+    ActorEating
+    ActorBathing
+    ActorCooking
+    ActorForaging
+    ActorChopping
+    ActorDigging
+    ActorMilking
+    ActorStashing
+    ActorRelieving
+    ActorWorkshop
+    ActorIntercourse
+)
+
+func (s ActorState) String() string {
+    switch s {
+    case ActorIdle: return "Idle"
+    case ActorWalking: return "Walking"
+    case ActorAttacking: return "Attacking"
+    case ActorHit: return "Hit"
+    case ActorDead: return "Dead"
+    case ActorInteracting: return "Interacting"
+    case ActorHarvesting: return "Harvesting"
+    case ActorResting: return "Resting"
+    case ActorThinking: return "Thinking"
+    case ActorIncapacitated: return "Incapacitated"
+    case ActorFeeding: return "Feeding"
+    case ActorBerserk: return "Berserk"
+    case ActorCrouching: return "Crouching"
+    case ActorDrinking: return "Drinking"
+    case ActorEating: return "Eating"
+    case ActorBathing: return "Bathing"
+    case ActorCooking: return "Cooking"
+    case ActorForaging: return "Foraging"
+    case ActorChopping: return "Chopping"
+    case ActorDigging: return "Digging"
+    case ActorMilking: return "Milking"
+    case ActorStashing: return "Stashing"
+    case ActorRelieving: return "Relieving"
+    case ActorWorkshop: return "Workshop"
+    case ActorIntercourse: return "Intercourse"
+    default: return "Unknown"
+    }
+}
 
 func (a Alignment) String() string {
 	switch a {
-	case AlignmentEnemy: return "ENEMY"
-	case AlignmentNeutral: return "NEUTRAL"
-	case AlignmentAlly: return "ALLY"
-	default: return "UNKNOWN"
+	case AlignmentNeutral: return "neutral"
+	case AlignmentFriendly: return "friendly"
+	case AlignmentHostile: return "hostile"
+	default: return "unknown"
 	}
 }
 
-func (a *Alignment) UnmarshalYAML(value *yaml.Node) error {
-	var s string
-	if err := value.Decode(&s); err == nil {
-		switch strings.ToLower(s) {
-		case "enemy": *a = AlignmentEnemy; return nil
-		case "neutral": *a = AlignmentNeutral; return nil
-		case "ally": *a = AlignmentAlly; return nil
-		}
-	}
-	var i int
-	if err := value.Decode(&i); err == nil {
-		if i >= 0 && i <= 2 {
-			*a = Alignment(i)
-			return nil
-		}
-	}
-	return fmt.Errorf("unknown alignment: %s", value.Value)
+type AgeConfig struct {
+    Current  FloatInterval `yaml:"current"`
+    Max      FloatInterval `yaml:"max"`
+    Rate     FloatInterval `yaml:"rate"`
 }
+
+func (c AgeConfig) Roll() AgeState {
+    return AgeState{Current: c.Current.Roll(), Max: c.Max.Roll(), Rate: c.Rate.Roll()}
+}
+
+type LaborShift int
+
+const (
+	ShiftWork LaborShift = iota
+	ShiftLeisure
+	ShiftRest
+)
 
 type BehaviorType int
 
 const (
-	BehaviorWander BehaviorType = iota
-	BehaviorPatrol
-	BehaviorKnightHunter
-	BehaviorNpcFighter
-	BehaviorChaotic
-	BehaviorEscort
-	BehaviorFlee
-	BehaviorTrader 
-	BehaviorHauler 
-	BehaviorLumberjack 
-	BehaviorFarmer     
-	BehaviorArtisan    
+    BehaviorNone BehaviorType = iota
+    BehaviorChaos
+    BehaviorFighter
+    BehaviorHunter
+    BehaviorWander
+    BehaviorPatrol
+    BehaviorEscort
+    BehaviorFlee
+    BehaviorTrader
+    BehaviorHauler
+    BehaviorLumberjack
+    BehaviorFarmer
+    BehaviorArtisan
+    BehaviorChaotic      = BehaviorChaos
+    BehaviorNpcFighter   = BehaviorFighter
+    BehaviorKnightHunter = BehaviorHunter
 )
 
-type PhysicalTrauma struct {
-	LeftArmLost   bool
-	RightArmLost  bool
-	LeftLegLost   bool
-	RightLegLost  bool
-	LeftHandLost  bool
-	RightHandLost bool
-	EyesLost      int  
-	BurnedAlive   bool 
-	SpineBroken   bool
-}
-
-type MemoryEvent struct {
-	Tick   int     `json:"tick"`
-	Type   string  `json:"type"`   
-	Source string  `json:"source"` 
-	Value  float64 `json:"value"`  
-}
-
-type PrimaryAttributes struct {
-	Strength           int     
-	Dexterity          int     
-	Health             int     
-	Intellect          int     
-	Wisdom             int     
-}
-
-type EntityStats struct {
-	HealthMin       int     `yaml:"health_min"`
-	HealthMax       int     `yaml:"health_max"`
-	HungerMax       float64 `yaml:"hunger_max"`
-	ThirstMax       float64 `yaml:"thirst_max"`
-	FatigueMax      float64 `yaml:"fatigue_max"`
-	Speed           float64 `yaml:"speed"`
-	BaseAttack      int     `yaml:"base_attack"`
-	BaseDefense     int     `yaml:"base_defense"`
-	BaseProtection  int     `yaml:"base_protection"`
-	AttackCooldown  int     `yaml:"attack_cooldown"`
-	AttackRange     float64 `yaml:"attack_range"`
-	ProjectileSpeed float64 `yaml:"projectile_speed"`
-	IsMilkable      bool    `yaml:"is_milkable"`
-	MilkCooldown    int     `yaml:"milk_cooldown"`
-	MaxWeight       float64       `yaml:"max_weight"`
-	Age             AgeState      `yaml:"age"`
-}
-
-type AgeConfig struct {
-	Current FloatInterval `yaml:"current"`
-	Rate    float64       `yaml:"rate"`
-	Max     float64       `yaml:"max"` 
-}
-
-func (c AgeConfig) Roll() AgeState {
-	return AgeState{
-		Current: c.Current.Roll(),
-		Rate:    c.Rate,
-		Max:     c.Max,
-	}
-}
-
 type State struct {
-	HealthPoints     int     `yaml:"health_points,omitempty"`
-	MaxHealthPoints  int
-	Hunger           float64 `yaml:"hunger,omitempty"`
-	Thirst           float64 `yaml:"thirst,omitempty"`
-	Fatigue          float64 `yaml:"fatigue,omitempty"`
-	Sanity           float64 `yaml:"sanity,omitempty"`
-	IsPoisoned       bool    `yaml:"is_poisoned,omitempty"`
-	IsAngry          bool    `yaml:"is_angry,omitempty"`
-	IsConscious      bool    `yaml:"is_conscious,omitempty"`
-	IsSeptic         bool    `yaml:"is_septic,omitempty"` 
-	IsSick           bool    `yaml:"is_sick,omitempty"`   
-	Arousal          float64 `yaml:"arousal,omitempty"`   
-	Pain             float64 `yaml:"pain,omitempty"`      
-	Hygiene          float64 `yaml:"hygiene,omitempty"`   
-	BladderLevel     float64 `yaml:"bladder_level,omitempty"` 
-	BowelLevel       float64 `yaml:"bowel_level,omitempty"`   
-	AlcoholLevel     float64 `yaml:"alcohol_level,omitempty"`
-	IsDrunk          bool    `yaml:"is_drunk,omitempty"`
-	Age              AgeState `yaml:"age,omitempty"`
+	HealthPoints    int     `yaml:"health_points"`
+	MaxHealthPoints int     `yaml:"max_health_points"`
+	Sanity          float64 `yaml:"sanity"`
+	Hunger          float64 `yaml:"hunger"`
+	Thirst          float64 `yaml:"thirst"`
+	Fatigue         float64 `yaml:"fatigue"`
+	BladderLevel    float64 `yaml:"bladder_level"`
+	BowelLevel      float64 `yaml:"bowel_level"`
+	Hygiene         float64 `yaml:"hygiene"`
+	Arousal         float64 `yaml:"arousal"`
+	IsDrunk         bool    `yaml:"is_drunk"`
+	AlcoholLevel    float64 `yaml:"alcohol_level"`
+	Pain            float64 `yaml:"pain"`
+	IsSick          bool    `yaml:"is_sick"`
+	IsSeptic        bool    `yaml:"is_septic"`
+	IsPoisoned      bool    `yaml:"is_poisoned"`
+	IsConscious     bool    `yaml:"is_conscious"`
+	Age             AgeState `yaml:"age"`
+	IsAngry         bool    `yaml:"is_angry"`
 }
 
 type AgeState struct {
-	Current float64 `yaml:"current"` 
-	Rate    float64 `yaml:"rate"`    
-	Max     float64 `yaml:"max"`     
+	Current float64 `yaml:"current"`
+	Max     float64 `yaml:"max"`
+	Rate    float64 `yaml:"rate"`
 }
 
-const (
-	StageBaby     = "baby"
-	StageKid      = "kid"
-	StageTeenager = "teenager"
-	StageAdult    = "peasant"
-	StageElder    = "elder"
-)
+type PrimaryAttributes struct {
+	Strength  int `yaml:"strength"`
+	Dexterity int `yaml:"dexterity"`
+	Health    int `yaml:"health"`
+	Intellect int `yaml:"intellect"`
+	Wisdom    int `yaml:"wisdom"`
+}
+
+type PhysicalTrauma struct {
+	LeftArmLost  bool
+	RightArmLost bool
+	LeftLegLost  bool
+	RightLegLost bool
+	EyesLost     int
+	BurnedAlive  bool
+	SpineBroken  bool
+}
+
+type MemoryEvent struct {
+	Tick      int
+	Type      string
+	Context   string
+	EmotionalWeight float64
+    Source    string
+    Value     float64
+}
+
+type EntityStats struct {
+	HealthPoints int
+	HungerMax, ThirstMax, FatigueMax, Speed float64
+	BaseAttack, BaseDefense, BaseProtection, AttackCooldown int
+	AttackRange, ProjectileSpeed float64
+	IsMilkable bool
+	MilkCooldown int
+	MaxWeight float64
+	Age AgeState
+	Survivalism string
+}
 
 type Actor struct {
 	X, Y   float64
@@ -244,6 +249,12 @@ type Actor struct {
 	
 	Path      []engine.Point
 	PathTimer int 
+	
+	WanderDirX float64
+	WanderDirY float64
+	PatrolStartX, PatrolStartY float64
+	PatrolEndX, PatrolEndY     float64
+	PatrolHeading              bool
 	
 	WorkTicks     int
 	LeisureTicks  int
@@ -310,6 +321,7 @@ type Actor struct {
 	CurrentTile        string
 	
 	TargetActorID      string
+	TargetActor        *Actor
 	TargetObstacle     *Obstacle
 	TargetItem         *ItemInstance
 	TargetStockpile    *FloorZone
@@ -336,17 +348,34 @@ type Actor struct {
 	
 	Tick               int
 	HitTimer           int
+	LastReaction       string
+	SelectedModel      string
 	DeadTimer          int
 	CrouchTimer        int
 	IsOccluded         bool
 	IsTarget           bool
-	IsConscious        bool 
 	UnconsciousTimer   int
-	
-	LastReaction       string
-	SelectedModel      string
+	IsConscious        bool 
+
+	Behavior   BehaviorType
 
 	// Simulation: DF Features
 	RotTicks           int  // Ticks since death (for miasma)
 	GriefTicks         int  // Ticks of mourning
+	LodgingTicks       int  // Ticks of paid inn stay
+	Scale              float64 // Visual scale (1.0 = normal)
+	LastCompanionTick  int  // Last time they had social companionship
+	LastGamblingTick   int  // Last time they played at the Fortune Home
 }
+
+func (a *Actor) DistanceToObject(o *Obstacle) float64 {
+	return math.Sqrt(math.Pow(a.X-o.X, 2) + math.Pow(a.Y-o.Y, 2))
+}
+
+const (
+	StageBaby     = "Baby"
+	StageKid      = "Kid"
+	StageTeenager = "Teenager"
+	StageAdult    = "Adult"
+	StageElder    = "Elder"
+)

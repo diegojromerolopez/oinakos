@@ -1,0 +1,22 @@
+id: boar
+name: Boar
+behavior: wander
+is_animal: true
+gender: male
+meat: 14
+attributes:
+  strength: { min: 60, max: 80, mode: normal, mean: 70, sd: 10 }
+  health: { min: 50, max: 70, mode: normal, mean: 60, sd: 5 }
+  dexterity: { min: 30, max: 50, mode: normal, mean: 40, sd: 5 }
+  intellect: { min: 10, max: 10, mode: normal, mean: 10, sd: 0 }
+  wisdom: { min: 20, max: 20, mode: normal, mean: 20, sd: 0 }
+stats:
+  health_points: { min: 60, max: 60, mode: normal, mean: 60, sd: 0 }
+  health_points: { min: 90, max: 90, mode: normal, mean: 90, sd: 0 }
+  speed: { min: 0.03, max: 0.05, mode: normal, mean: 0.04, sd: 0.01 }
+  attack_cooldown: { min: 80, max: 80, mode: normal, mean: 80, sd: 0 }
+weapon:
+  name: Tusk
+  type: melee
+  damage: { min: 8, max: 20 }
+xp: 12

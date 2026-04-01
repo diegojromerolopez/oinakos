@@ -31,7 +31,6 @@ func TestCharacterActions_Woodcutting(t *testing.T) {
 		X: 1.0, Y: 0,
 		Archetype: treeArch,
 		Alive: true,
-		HealthPoints: 100,
 		WeightLeft: 100,
 	}
 	ctx.World.Obstacles = []*Obstacle{tree}
@@ -111,13 +110,11 @@ func TestCharacterActions_GenerousWoodcutting(t *testing.T) {
 		ID: "tree_oak",
 		Type: "tree",
 		Destructible: true,
-		HealthPoints: 100,
 	}
 	tree := &Obstacle{
 		X: treeDist, Y: 0,
 		Archetype: treeArch,
 		Alive: true,
-		HealthPoints: 100,
 		WeightLeft: 100,
 	}
 	ctx.World.Obstacles = []*Obstacle{tree}

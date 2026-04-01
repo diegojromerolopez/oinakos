@@ -15,9 +15,9 @@ func TestArchetypeRegistry_CreateLoadJobs(t *testing.T) {
 	
 	t.Run("no permit list", func(t *testing.T) {
 		jobs := reg.createLoadJobs(nil)
-		// 13 assets per archetype (static, back, corpse, attack, attack1, attack2, hit, hit1, hit2, crouch, chopping, digging, pregnant)
-		if len(jobs) != 13 {
-			t.Errorf("expected 13 jobs, got %d", len(jobs))
+		// 14 assets per archetype (static, back, corpse, attack, attack1, attack2, hit, hit1, hit2, crouch, chopping, digging, pregnant, sit)
+		if len(jobs) != 14 {
+			t.Errorf("expected 14 jobs, got %d", len(jobs))
 		}
 	})
 	
@@ -40,7 +40,7 @@ func TestCharacterRegistry_CreateLoadJobs(t *testing.T) {
 	archReg.Archetypes["man"] = &Archetype{
 		ID:       "man",
 		AssetDir: "assets/images/archetypes/man",
-		Stats: EntityStatsConfig{HealthMin: IntInterval{Min: 50, Max: 50}},
+		Stats: EntityStatsConfig{HealthPoints: IntInterval{Min: 50, Max: 50}},
 	}
 	
 	charReg := NewCharacterRegistry()
@@ -65,8 +65,8 @@ func TestCharacterRegistry_CreateLoadJobs(t *testing.T) {
 		t.Errorf("expected SoundID hero, got %s", hero.SoundID)
 	}
 	// Verify stat fallback
-	if hero.Stats.HealthMin.Min != 50 {
-		t.Errorf("expected HealthMin 50 from archetype, got %v", hero.Stats.HealthMin)
+	if hero.Stats.HealthPoints.Min != 50 {
+		t.Errorf("expected HealthPoints 50 from archetype, got %v", hero.Stats.HealthPoints)
 	}
 }
 

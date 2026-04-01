@@ -233,7 +233,6 @@ func TestSanitizeNPCSaveData(t *testing.T) {
 
 func TestSanitizeObstacleArchetype_Clamping(t *testing.T) {
 	o := &ObstacleArchetype{
-		HealthPoints:       -5,
 		CooldownTime: -1.0,
 	}
 	sanitizeObstacleArchetype(o, "test")
@@ -249,7 +248,7 @@ func TestSanitizeObstacleArchetype_Clamping(t *testing.T) {
 	}
 }
 
-func TestSanitizeObstacleArchetype_HealthMinusOne(t *testing.T) {
+func TestSanitizeObstacleArchetype_HealthPointsusOne(t *testing.T) {
 	// Health == -1 is valid (indestructible), below -1 is clamped
 	o := &ObstacleArchetype{ID: "wall", HealthPoints: -1}
 	sanitizeObstacleArchetype(o, "test")

@@ -69,7 +69,7 @@ gender: male
 	// 2. Add the base archetype manually
 	archReg.Archetypes["man_at_arms_male"] = &EntityConfig{
 		ID: "man_at_arms_male",
-		Stats: EntityStatsConfig{HealthMin: IntInterval{Min: 100, Max: 100}},
+		Stats: EntityStatsConfig{HealthPoints: IntInterval{Min: 100, Max: 100}},
 	}
 
 	// 3. Load the NPC from YAML
@@ -96,8 +96,8 @@ gender: male
 	}
 
 	// VERIFY: Did it inherit stats from the composite ID?
-	if npc.Stats.HealthMin.Min != 100 {
-		t.Errorf("Expected inherited health 100, got %v", npc.Stats.HealthMin)
+	if npc.Stats.HealthPoints.Min != 100 {
+		t.Errorf("Expected inherited health 100, got %v", npc.Stats.HealthPoints)
 	}
 
 	// TEST 2: Inherited audio (no local wav)
