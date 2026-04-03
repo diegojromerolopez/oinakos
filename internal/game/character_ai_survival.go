@@ -15,7 +15,8 @@ func (c *Character) handleSurvivalNeeds(ctx *SystemContext) bool {
 	isStarving := c.State.Hunger > 90
 	isDehydrated := c.State.Thirst > 90
 	isHungry := c.State.Hunger > 70
-	isThirsty := c.State.Thirst > 60
+	isThirsty := c.State.Thirst > 30 // Proactive threshold (lowered from 45)
+	isUrgentThirst := c.State.Thirst > 60 // Urgent survival threshold
 	isExhausted := c.State.Fatigue > 85
 	isBursting := c.State.BladderLevel > 85 || c.State.BowelLevel > 85
 	isDirty := c.State.Hygiene < 30
@@ -62,6 +63,30 @@ func (c *Character) handleSurvivalNeeds(ctx *SystemContext) bool {
 	// 2. Metabolic Consumption (Inventory first)
 	for i, item := range c.Inventory {
 		if item == nil || item.Config == nil { continue }
+		
+		// Handle Canteen/Refillable: Only use if AWAY from a local source to conserve water
+		if (item.LiquidContent > 0 || item.Refillable) && isThirsty {
+			if item.LiquidContent >= 0.25 { // At least one gulp
+				// Find nearest well - don't waste bottle if one is close
+				nearWell := false
+				for _, o := range ctx.World.Obstacles {
+					id, archID := strings.ToLower(o.ID), ""
+					if o.Archetype != nil { archID = strings.ToLower(o.Archetype.ID) }
+					if strings.Contains(id, "well") || strings.Contains(archID, "well") {
+						if d := math.Sqrt(math.Pow(c.X-o.X, 2)+math.Pow(c.Y-o.Y, 2)); d < 30.0 { nearWell = true; break }
+					}
+				}
+				if !nearWell || isUrgentThirst {
+					c.State.Thirst -= 12.5 // Exactly one gulp's worth
+					item.LiquidContent -= 0.25
+					if item.LiquidContent < 0 { item.LiquidContent = 0 }
+					c.ActionState, c.Tick = ActorDrinking, 0
+					if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s drank from %s (Remaining: %.2fL).", c.Name, item.Config.Name, item.LiquidContent), LogNPC) }
+					return true
+				}
+			}
+		}
+
 		hasNutrients := item.Config.Consumable || item.Config.Hunger > 0 || item.Config.Thirst > 0 || item.Config.Fatigue > 0 || item.Config.Energy > 0
 		if !hasNutrients && item.Config.Effects != nil {
 			if _, ok := item.Config.Effects["hunger"]; ok { hasNutrients = true }

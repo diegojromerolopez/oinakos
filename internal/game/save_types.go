@@ -5,6 +5,9 @@ import "image"
 type ItemInstanceSaveData struct {
 	ID         string  `yaml:"id"`
 	Resistance int     `yaml:"resistance,omitempty"`
+	LiquidContent float64 `yaml:"liquid_content,omitempty"`
+	LiquidMax     float64 `yaml:"liquid_max,omitempty"`
+	Refillable    bool    `yaml:"refillable,omitempty"`
 	X          float64 `yaml:"x,omitempty"`
 	Y          float64 `yaml:"y,omitempty"`
 }

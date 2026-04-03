@@ -19,6 +19,15 @@ func (c *Character) findTarget(player *Character, others []*Character, playerDis
 			return true
 		}
 		
+		if c.Behavior == BehaviorCriminal && other.IsAlive() {
+			isVulnerable := other.State.Hunger > 60 || other.State.Thirst > 60 || other.State.Fatigue > 60 || other.State.IsDrunk
+			isAlone := true
+			for _, n := range others {
+				if n != other && n != c && n.IsAlive() && math.Sqrt(math.Pow(other.X-n.X, 2)+math.Pow(other.Y-n.Y, 2)) < 10.0 { isAlone = false; break }
+			}
+			if isVulnerable || isAlone { return true }
+		}
+
 		if c.Alignment == AlignmentEnemy { return other.Alignment == AlignmentAlly || other.LeaderID != "" || other.Group != ""
 		} else if c.Alignment == AlignmentAlly { return other.Alignment == AlignmentEnemy
 		} else if c.Alignment == AlignmentNeutral { return c.TargetActor == &other.Actor }

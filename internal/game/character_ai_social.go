@@ -38,6 +38,8 @@ func (c *Character) HandleSocial(ctx *SystemContext) {
 				action = "trade"
 			} else if sentiment > 30 && c.Config.Gender != other.Config.Gender {
 				action = "seduce"
+			} else if c.Shift == ShiftLeisure && rand.Float64() < 0.1 {
+				action = "chit_chat"
 			}
 
 			switch action {
@@ -134,7 +136,18 @@ func (c *Character) HandleSocial(ctx *SystemContext) {
 					if ctx.Log != nil && playerNear(c, ctx) {
 						ctx.Log(fmt.Sprintf("%s shared a romantic moment with %s.", c.Name, other.Name), LogNPC)
 					}
+					c.ActionState = ActorSocializing
+					other.ActionState = ActorSocializing
 				}
+			case "chit_chat":
+				c.ModifySentiment(other.Name, 1.0)
+				other.ModifySentiment(c.Name, 1.0)
+				c.ActionState = ActorSocializing
+				other.ActionState = ActorSocializing
+				if ctx.Log != nil && playerNear(c, ctx) {
+					ctx.Log(fmt.Sprintf("%s and %s are gossiping.", c.Name, other.Name), LogNPC)
+				}
+				ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{ Text: "Gossip!", X: c.X, Y: c.Y, Life: 45, Color: ColorHarm })
 			}
 		}
 	}

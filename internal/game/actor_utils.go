@@ -39,6 +39,7 @@ func (a *Actor) GetSpeedModifier(ctx *SystemContext) float64 {
 		if multiplier < 0.1 { multiplier = 0.1 }
 		if a.State.Pain > 50 { multiplier *= (1.0 - (a.State.Pain-50)/100.0) }
 		if a.State.Pain > 80 { multiplier = 0 }
+		if a.State.Sanity < 30 { multiplier *= 0.5 } // Depression/Lethargy speed penalty
 		if ctx != nil {
 			switch ctx.Weather {
 			case WeatherRain: multiplier *= 0.9

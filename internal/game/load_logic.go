@@ -241,6 +241,7 @@ func (g *Game) unmarshal(bytes []byte, fpath string) error {
 		case "trader": n.Behavior = BehaviorTrader
 		case "hauler": n.Behavior = BehaviorHauler
 		case "lumberjack": n.Behavior = BehaviorLumberjack
+		case "behavior_criminal": n.Behavior = BehaviorCriminal
 		}
 
 		if nData.Alignment != 0 { n.Alignment = nData.Alignment }

@@ -175,6 +175,7 @@ func (wm *WorldManager) LoadMapLevel() {
 			case "trader": npc.Behavior = BehaviorTrader
 			case "hauler": npc.Behavior = BehaviorHauler
 			case "lumberjack": npc.Behavior = BehaviorLumberjack
+			case "behavior_criminal": npc.Behavior = BehaviorCriminal
 			}
 			g.characters = append(g.characters, npc)
 		}

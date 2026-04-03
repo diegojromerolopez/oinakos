@@ -10,6 +10,9 @@ type ItemInstance struct {
 	Resistance int
 	Weight     float64 `json:"weight"`
 	HoursLeft  float64 `json:"hours_left"` // Runtime hours until expiration
+	LiquidContent float64 `json:"liquid_content"` // Volume of liquid stored (Leters)
+	LiquidMax     float64 `json:"liquid_max"`     // Maximum volume (Leters)
+	Refillable    bool    `json:"refillable"`     // Can be refilled at water sources
 	DroppedBy  string  `json:"dropped_by,omitempty"`
 	X, Y, Z    float64
 	Pickable   bool
@@ -19,10 +22,14 @@ func NewItemInstance(id string, config *ObjectConfig, x, y float64) *ItemInstanc
 	res := 0
 	weight := 0.0
 	hours := 0.0
+	liquidMax := 0.0
+	refillable := false
 	if config != nil {
 		res = config.Resistance
 		weight = config.Weight
 		hours = config.MaxHours
+		liquidMax = config.MaxLiquid
+		refillable = config.Refillable
 	}
 	return &ItemInstance{
 		ID:         id,
@@ -30,6 +37,9 @@ func NewItemInstance(id string, config *ObjectConfig, x, y float64) *ItemInstanc
 		Resistance: res,
 		Weight:     weight,
 		HoursLeft:  hours,
+		LiquidMax:  liquidMax,
+		LiquidContent: liquidMax, // Default to full
+		Refillable: refillable,
 		X:          x,
 		Y:          y,
 		Z:          0,

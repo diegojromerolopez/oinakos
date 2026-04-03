@@ -64,6 +64,18 @@ func (a *Actor) SharedUpdate(ctx *SystemContext) {
 		a.WorkTicks = 0
 		if a.LeisureTicks < 3600 { a.State.Sanity += 0.005 } 
 		if a.LeisureTicks > 10800 { a.State.Sanity -= 0.005 } 
+
+		// DRUNK BEHAVIORAL SHIFTS
+		if a.State.IsDrunk && a.Tick%TicksPerHour == 0 {
+			r := rand.Float64()
+			if r < 0.10 { // Aggressive
+				a.ActionState = ActorBerserk
+				if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s has become a mean drunk!", a.Name), LogWarning) }
+			} else if r < 0.30 { // Submissive/Weepy
+				a.State.Sanity -= 5.0
+				if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s is feeling weepy and vulnerable while drunk.", a.Name), LogNPC) }
+			}
+		}
 	}
 
 	a.SyncState()
@@ -154,8 +166,12 @@ func (a *Actor) updateAge(ctx *SystemContext) {
 	if nextStage != "" && ctx != nil && ctx.Registries != nil {
 		a.LifeStage = nextStage
 		if nextStage == StageAdult {
-			archID := "man_at_arms"
-			if a.PrimaryAttributes.Intellect > a.PrimaryAttributes.Strength { archID = "peasant" }
+			archID := "peasant"
+			if a.PrimaryAttributes.Strength > 70 && a.PrimaryAttributes.Intellect < 40 {
+				archID = "criminal"
+			} else if a.PrimaryAttributes.Strength > 60 {
+				archID = "man_at_arms"
+			}
 			if a.PrimaryAttributes.Wisdom > 50 { archID = "hermit" }
 			if newArch, ok := ctx.Registries.Archetypes.Archetypes["archetypes/"+archID]; ok { a.Config = newArch }
 		} else {

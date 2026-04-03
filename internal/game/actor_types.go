@@ -84,6 +84,8 @@ const (
     ActorRelieving
     ActorWorkshop
     ActorIntercourse
+    ActorSocializing
+    ActorGambling
 )
 
 func (s ActorState) String() string {
@@ -113,6 +115,8 @@ func (s ActorState) String() string {
     case ActorRelieving: return "Relieving"
     case ActorWorkshop: return "Workshop"
     case ActorIntercourse: return "Intercourse"
+    case ActorSocializing: return "Socializing"
+    case ActorGambling: return "Gambling"
     default: return "Unknown"
     }
 }
@@ -160,6 +164,7 @@ const (
     BehaviorLumberjack
     BehaviorFarmer
     BehaviorArtisan
+    BehaviorCriminal
     BehaviorChaotic      = BehaviorChaos
     BehaviorNpcFighter   = BehaviorFighter
     BehaviorKnightHunter = BehaviorHunter
@@ -185,6 +190,9 @@ type State struct {
 	IsConscious     bool    `yaml:"is_conscious"`
 	Age             AgeState `yaml:"age"`
 	IsAngry         bool    `yaml:"is_angry"`
+	IsHypersexual   bool    `yaml:"is_hypersexual"`
+	ThirstMax       float64 `yaml:"thirst_max"`
+	HydrationBuffer int     `yaml:"hydration_buffer"`
 }
 
 type AgeState struct {

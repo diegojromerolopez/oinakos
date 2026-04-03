@@ -25,9 +25,16 @@ func (a *Actor) updateSanity(ctx *SystemContext) {
 		a.State.Sanity += bonus
 	}
 
-	// Hard caps
 	if a.State.Sanity < 0 { a.State.Sanity = 0 }
 	if a.State.Sanity > 100 { a.State.Sanity = 100 }
+
+	// Psychological Manifestation: Hypersexuality (DF-style mental break)
+	if a.State.Sanity < 20 && !a.State.IsHypersexual && rand.Float64() < 0.001 {
+		a.State.IsHypersexual = true
+		if ctx != nil && ctx.Log != nil { ctx.Log(fmt.Sprintf("%s has developed hypersexual symptoms from mental strain.", a.Name), LogWarning) }
+	} else if a.State.Sanity > 50 && a.State.IsHypersexual {
+		a.State.IsHypersexual = false
+	}
 	
 	if a.State.Sanity < 10 && a.Tick%600 == 0 && ctx != nil && ctx.World != nil {
 		ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{
@@ -39,8 +46,10 @@ func (a *Actor) updateSanity(ctx *SystemContext) {
 func (a *Actor) updateArousal(ctx *SystemContext) {
 	if a.SexualOrientation == "asexual" { a.State.Arousal = 0; return }
 
-	// Monthly arousal cycle: 100 units / 1 Month (518,400 ticks) = 0.000192 / tick
+	// Monthly arousal cycle
 	growth := 0.000192; if ctx != nil && ctx.World != nil && ctx.World.State.Season == SeasonSpring { growth *= 1.5 }
+	if a.State.IsHypersexual { growth *= 3.0 } // 3x growth rate for hypersexual trait
+	
 	a.State.Arousal += growth
 
 	if a.State.Arousal >= 100 {

@@ -9,7 +9,7 @@ import (
 
 func (c *Character) updateAI(ctx *SystemContext) {
 	// Emergency Hydration: If incapacitated but at a source, drink anyway (Last Gasp)
-	if c.IsAlive() && c.State.Thirst > 95 && c.ActionState == ActorIncapacitated {
+	if c.IsAlive() && c.State.Thirst > 80 && c.ActionState == ActorIncapacitated {
 		atSource := false
 		for _, o := range ctx.World.Obstacles {
 			if o.Alive && strings.Contains(strings.ToLower(o.ID), "well") && math.Sqrt(math.Pow(c.X-o.X, 2)+math.Pow(c.Y-o.Y, 2)) < 3.0 { atSource = true; break }

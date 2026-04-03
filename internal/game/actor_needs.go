@@ -1,7 +1,9 @@
 package game
 
 import (
+	"fmt"
 	"math"
+	"math/rand"
 	"strings"
 )
 
@@ -15,19 +17,27 @@ func (a *Actor) updateNeeds(ctx *SystemContext) {
 	decayMultiplier := 1.25 - (float64(a.PrimaryAttributes.Health) * 0.01)
 	if decayMultiplier < 0.25 { decayMultiplier = 0.25 }
 	if a.LodgingTicks > 0 { a.LodgingTicks-- }
+	if a.State.HydrationBuffer > 0 { a.State.HydrationBuffer-- }
 
 	weatherPenalty := 1.0
 	if ctx != nil && ctx.World != nil && ctx.World.State.Weather == WeatherRain {
 		weatherPenalty += (ctx.World.State.Intensity * 0.5)
 	}
 
-	pMult := 1.0; if a.IsPregnant { pMult = 1.25 }
-	// Rule of Threes - 100 units spanning 30 days (Hunger) and 3 days (Thirst)
-	// (2 Liters/Day calibration: 100 units = lethality, requires ~0.0023/tick)
-	a.State.Hunger += 0.000192 * decayMultiplier * weatherPenalty * pMult
-	a.State.Thirst += 0.0023 * decayMultiplier * weatherPenalty * pMult
+	pMult := 1.0; if a.IsPregnant { pMult = 1.15 } // Reduced pregnancy metabolic load
 	
-	fMult := 1.0; if a.IsPregnant { fMult = 1.5 }
+	// METABOLIC RESILIENCE: High Health (70%) and Strength (30%) reduces decay.
+	// Buffer range: 1.0 (0 attributes) down to 0.25 (100 attributes).
+	physResilience := 1.0 - (float64(a.PrimaryAttributes.Health)*0.0055 + float64(a.PrimaryAttributes.Strength)*0.002)
+	if physResilience < 0.25 { physResilience = 0.25 }
+
+	// BASE RATES (Tuned for ~12hr survival window at average stats)
+	a.State.Hunger += 0.00005 * decayMultiplier * weatherPenalty * pMult * physResilience
+	if a.State.HydrationBuffer <= 0 {
+		a.State.Thirst += 0.00035 * decayMultiplier * weatherPenalty * pMult * physResilience
+	}
+	
+	fMult := 1.0; if a.IsPregnant { fMult = 1.25 } // Reduced pregnancy fatigue strain
 	
 	// Circadian Rhythm: Night (6 PM - 6 AM) vs Day (6 AM - 6 PM)
 	isNight := false
@@ -49,22 +59,22 @@ func (a *Actor) updateNeeds(ctx *SystemContext) {
 	}
 	if isAlone && isNight { a.State.Sanity -= 0.005 }
 	if a.State.Fatigue > 80 { a.State.Sanity -= 0.002 } // Cognitive exhaustion
-
-	// Spiritual Healing (Proximity to Cleric/Monastery)
+ 
+	// Spiritual Healing
 	if ctx != nil && ctx.World != nil {
 		for _, other := range ctx.World.Characters {
 			if other.IsAlive() && (strings.Contains(strings.ToLower(other.Config.ID), "cleric") || strings.Contains(strings.ToLower(other.Config.ID), "monk")) {
 				dist := math.Sqrt(math.Pow(a.X-other.X, 2) + math.Pow(a.Y-other.Y, 2))
-				if dist < 4.0 { a.State.Sanity += 0.01; break } // Holy presence
+				if dist < 4.0 { a.State.Sanity += 0.01; break }
 			}
 		}
 	}
 
-	// Low Sanity increases fatigue accumulation (Depression/Lack of will)
+	// Low Sanity increases fatigue accumulation (Depression/Lethargy)
 	sanityPenalty := 1.0; if a.State.Sanity < 30 { sanityPenalty = 1.2 }
 
-	// Base Stamina: 72 hours awake at Day-rate, but forced to night-respect.
-	a.State.Fatigue += 0.00192 * decayMultiplier * weatherPenalty * fMult * circadianMult * sanityPenalty
+	// Base Stamina (Tuned for social balance)
+	a.State.Fatigue += 0.0016 * decayMultiplier * weatherPenalty * fMult * circadianMult * sanityPenalty
 
 	// Forced Collapse (Natural Human Limit)
 	if a.State.Fatigue >= 100 && a.ActionState != ActorResting {
@@ -128,15 +138,66 @@ func (a *Actor) updateNeeds(ctx *SystemContext) {
 				if regen < 1 { regen = 1 }; a.Heal(regen)
 			}
 		}
-	} else if a.ActionState == ActorDrinking {
-		a.State.Thirst -= 2.0; a.State.Sanity += 0.05
-		// Last Gasp Heal: Drinking while at death's door gives 1 HP back to break the 'Incapacitated' cycle
-		if a.State.HealthPoints <= 0 && a.Tick%30 == 0 { a.State.HealthPoints = 1 }
-		if a.State.Thirst <= 0 { a.State.Thirst, a.ActionState = 0, ActorIdle }
-		if a.Tick%60 == 0 { ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{ Text: "Refreshing...", X: a.X, Y: a.Y, Life: 45, Color: ColorHeal }) }
+	} else if a.ActionState == ActorDrinking || (a.ActionState == ActorIncapacitated && a.Tick%30 == 0) {
+		// Gulp Hydration: 1 Gulp (0.25L) every 30 ticks reduces Thirst by 12.5%
+		// This means 4 glasses/gulps = 1 liter relief, effectively satisfying the character quickly.
+		// INCAPACITATED CHARACTERS: Can still 'sip' from containers in their inventory to break the loop.
+		
+		isDrinking := a.ActionState == ActorDrinking
+		hasSipped := false
+
+		if a.Tick%30 == 0 {
+			// Auto-Refill/Consume Canteens/Bottles
+			isAtSource := false
+			if ctx != nil && ctx.World != nil {
+				for _, o := range ctx.World.Obstacles {
+					id, archID := strings.ToLower(o.ID), ""
+					if o.Archetype != nil { archID = strings.ToLower(o.Archetype.ID) }
+					if strings.Contains(id, "well") || strings.Contains(archID, "well") || strings.Contains(id, "river") || strings.Contains(archID, "river") {
+						if d := math.Sqrt(math.Pow(a.X-o.X, 2)+math.Pow(a.Y-o.Y, 2)); d < 5.0 { isAtSource = true; break }
+					}
+				}
+			}
+
+			if isAtSource && isDrinking {
+				for _, it := range a.Inventory {
+					if it != nil && it.Refillable && it.LiquidMax > 0 && it.LiquidContent < it.LiquidMax {
+						it.LiquidContent = it.LiquidMax // Fully refill
+						if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s topped off their %s.", a.Name, it.Config.Name), LogNPC) }
+					}
+				}
+				a.State.Thirst -= 12.5
+				hasSipped = true
+			} else {
+				// Consume from inventory if not at source
+				for _, it := range a.Inventory {
+					if it != nil && it.LiquidContent > 0 {
+						sip := 0.25; if it.LiquidContent < sip { sip = it.LiquidContent }
+						it.LiquidContent -= sip
+						a.State.Thirst -= (sip / 0.25) * 12.5
+						hasSipped = true
+						if !isDrinking && a.ActionState == ActorIncapacitated {
+							if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s desperation-sipped from their %s.", a.Name, it.Config.Name), LogNPC) }
+						}
+						break
+					}
+				}
+			}
+
+			if hasSipped {
+				a.State.Sanity += 0.5
+				if ctx != nil && ctx.World != nil { ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{ Text: "*Gulp*", X: a.X, Y: a.Y, Life: 45, Color: ColorHeal }) }
+			}
+		}
+
+		// Last Gasp Heal: Drinking while at death's door gives 5 HP back per glass to break the 'Incapacitated' cycle
+		if hasSipped && a.State.HealthPoints <= 0 { a.State.HealthPoints = 5 }
+		if isDrinking && a.State.Thirst <= 0 { a.State.Thirst, a.ActionState = 0, ActorIdle }
 	} else if a.ActionState == ActorEating {
 		a.State.Hunger -= 2.0
+		a.State.Thirst -= 0.5 // Meat and meals provide a small amount of hydration
 		if a.State.Hunger < 0 { a.State.Hunger = 0 }
+		if a.State.Thirst < 0 { a.State.Thirst = 0 }
 	} else if a.ActionState == ActorBathing {
 		a.State.Hygiene += 2.0
 		if a.State.Hygiene >= 100 { a.State.Hygiene, a.ActionState = 100, ActorIdle }
@@ -148,6 +209,24 @@ func (a *Actor) updateNeeds(ctx *SystemContext) {
 		// Persistence Hunter: High Strength improves walking gait efficiency.
 		strEff := 1.0 - (float64(a.PrimaryAttributes.Strength) * 0.005); if strEff < 0.6 { strEff = 0.6 }
 		a.State.Hunger += 0.0005 * strEff; a.State.Thirst += 0.001 * strEff; a.State.Fatigue += 0.00005 * strEff
+	} else if a.ActionState == ActorRelieving {
+		a.State.BladderLevel -= 2.0
+		a.State.BowelLevel -= 1.0
+		if a.State.BladderLevel <= 0 && a.State.BowelLevel <= 0 {
+			a.State.BladderLevel, a.State.BowelLevel = 0, 0
+			a.ActionState = ActorIdle
+		}
+	} else if a.ActionState == ActorSocializing {
+		a.State.Sanity += 0.05
+		a.State.Arousal += 0.005 
+		if a.Tick%300 == 0 { 
+			if rand.Float64() < 0.1 { a.ActionState = ActorIdle }
+		}
+	} else if a.ActionState == ActorGambling {
+		a.State.Sanity += 0.1
+		if a.Tick%600 == 0 {
+			if rand.Float64() < 0.2 { a.ActionState = ActorIdle }
+		}
 	}
 
 	if a.State.Hunger >= 100 || a.State.Thirst >= 100 {

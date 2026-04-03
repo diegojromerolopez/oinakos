@@ -55,12 +55,16 @@ func (a *Actor) SyncStats(objReg *ObjectRegistry) {
 	a.Nourishment = int(hlt * 2)
 	a.Survivalism = int(wis*0.4 + itl*0.3 + hlt*0.2 + dex*0.1)
 	
-	a.Mate = hlt * 0.01
+	a.Mate = hlt * 0.02 // Doubled fertility base (Community Growth Focus)
 
 	a.Crafting, a.Herbalism, a.Trading, a.Harvesting, a.Husbandry, a.Art, a.Culture = int(itl*1.2 + str*0.3), int(wis*1.0 + itl*0.5), int(itl*1.2 + wis*0.3), int(wis*1.2 + dex*0.3), int(wis*1.0 + dex*0.5), int(dex*0.5 + itl*0.5), int(itl*0.5 + wis*0.5)
 
 	if a.RawStats.HealthPoints > 0 { a.State.MaxHealthPoints = int(float64(a.RawStats.HealthPoints) * pMult) } else { a.State.MaxHealthPoints = int(hlt * 10) }
 	if a.State.MaxHealthPoints < 10 { a.State.MaxHealthPoints = 10 }
+	
+	// Attribute-Based Fluid Storage: Health increases ThirstMax
+	a.State.ThirstMax = 100.0 * (1.0 + (hlt * 0.01)) // Up to 200.0 at 100 Health
+	if a.State.ThirstMax < 100 { a.State.ThirstMax = 100 }
 	
 	// Preserve current HP if valid, otherwise reset. This is critical for Residency stability.
 	if a.State.HealthPoints <= 0 || a.State.HealthPoints > a.State.MaxHealthPoints {

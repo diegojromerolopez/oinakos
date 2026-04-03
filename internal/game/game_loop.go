@@ -40,13 +40,27 @@ func (g *Game) Update() error {
 	g.mechanicsManager.UpdateProximityEffects(ctx)
 	if g.mechanicsManager.CheckWinConditions(ctx) { g.isMapWon = true; return nil }
 	if !g.playableCharacter.IsAlive() { g.isGameOver, g.deathReason = true, g.playableCharacter.GetDeathReason() }
-	aliveObstacles := make([]*Obstacle, 0, len(g.obstacles))
-	for _, o := range g.obstacles { o.Update(); if o.Alive { aliveObstacles = append(aliveObstacles, o) } }; g.obstacles = aliveObstacles
+	
+	// Memory Optimization: Periodic entity scrubbing
+	if g.Tick%1000 == 0 {
+		aliveObstacles := make([]*Obstacle, 0, len(g.obstacles))
+		for _, o := range g.obstacles { if o.Alive { aliveObstacles = append(aliveObstacles, o) } }; g.obstacles = aliveObstacles
+		
+		activeProjectiles := []*Projectile{}
+		for _, p := range g.productProjectiles() { if p.Alive { activeProjectiles = append(activeProjectiles, p) } }; g.projectiles = activeProjectiles
+		
+		if g.World != nil {
+			g.World.FloatingTexts = g.floatingTexts
+			g.World.Projectiles = g.projectiles
+			g.World.Obstacles = g.obstacles
+		}
+	}
+
 	for _, n := range g.characters { n.CurrentTile = g.currentMapType.GetTileAt(n.X, n.Y); n.Update(ctx); if n.MustSurvive && !n.IsAlive() { g.isGameOver = true } }
 	if len(g.World.Characters) > len(g.characters) { g.characters = g.World.Characters }
 	g.UpdatePickups(); g.updateItemExpiration(ctx)
-	activeTexts := make([]*FloatingText, 0)
 	if !g.simulationMode {
+		activeTexts := make([]*FloatingText, 0)
 		for _, ft := range g.floatingTexts { if ft.Update() { activeTexts = append(activeTexts, ft) } }; g.floatingTexts = activeTexts
 		pIsoX, pIsoY := engine.CartesianToIso(g.playableCharacter.X, g.playableCharacter.Y); g.camera.Follow(pIsoX, pIsoY, 0.1); g.updateOcclusion(); g.ensurePlayerNotStuck()
 	}

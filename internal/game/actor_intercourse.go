@@ -29,7 +29,7 @@ func (a *Actor) updateBreeding(ctx *SystemContext) {
 	if !a.Config.IsAnimal && a.Shift != ShiftLeisure && a.ActionState != ActorBerserk { return }
 
 	var mate *Actor
-	minDist := 2.0
+	minDist := 4.0 // Increased interaction range for social density
 	for _, char := range ctx.World.Characters {
 		other := &char.Actor
 		if other.Name == a.Name || !other.IsAlive() { continue }
@@ -52,8 +52,8 @@ func (a *Actor) updateBreeding(ctx *SystemContext) {
 			isViolent := a.ActionState == ActorBerserk
 
 			if isService && !isViolent {
-				// Non-violent mating with courtesans REQUIRES money. No bypass.
-				if a.Denarii >= 25 { canMate = true }
+				// Non-violent mating with courtesans REQUIRES money.
+				if a.Denarii >= 2 { canMate = true }
 			} else {
 				// 1. Arousal or Alcohol driven (Casual/Uninhibited)
 				isUninhibited := a.State.Arousal > 50 || other.State.Arousal > 50 || a.State.IsDrunk || other.State.IsDrunk
@@ -72,6 +72,18 @@ func (a *Actor) updateBreeding(ctx *SystemContext) {
 				if !canMate && isViolent && other.IsAlive() {
 					canMate = true
 				}
+				// 5. BLACKOUT MATING (Uninhibited drunk logic)
+				if !canMate && a.State.IsDrunk && other.State.IsDrunk && a.isBioOpposite(other) && sentiment > 10 {
+					if rand.Float64() < 0.5 { canMate = true }
+				}
+				// 6. CRIMINAL PREDATION
+				if !canMate && a.Behavior == BehaviorCriminal && other.IsAlive() && a.Name != other.Name {
+					canMate = true
+				}
+				// 7. HYPERSEXUAL COMPULSION (Mental Break result)
+				if !canMate && a.State.IsHypersexual && other.IsAlive() && a.Name != other.Name {
+					canMate = true
+				}
 			}
 
 			if canMate {
@@ -81,8 +93,11 @@ func (a *Actor) updateBreeding(ctx *SystemContext) {
 	}
 
 	if mate != nil {
+		practice := "vaginal"
+		if a.Behavior == BehaviorCriminal && rand.Float64() < 0.5 { practice = "anal" }
+		
 		if a.Config.IsAnimal { a.mate(ctx, mate, "vaginal") } else if adultMode {
-			a.mate(ctx, mate, "vaginal")
+			a.mate(ctx, mate, practice)
 		}
 	}
 }
@@ -110,14 +125,14 @@ func (a *Actor) mate(ctx *SystemContext, mate *Actor, practice string) {
 	isViolent := a.ActionState == ActorBerserk
 	
 	if isService && !isViolent {
-		if a.Denarii < 25 {
-			if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] cannot afford professional courtesan services (%d/25 Denarii)", a.Name, a.Denarii), LogNPC) }
+		if a.Denarii < 2 {
+			if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] cannot afford professional courtesan services (%d/2 Denarii)", a.Name, a.Denarii), LogNPC) }
 			return
 		}
-		a.Denarii -= 25; mate.Denarii += 25
+		a.Denarii -= 2; mate.Denarii += 2
 	}
 
-	a.MatingCooldown, mate.MatingCooldown = 50000, 50000
+	a.MatingCooldown, mate.MatingCooldown = 5000, 5000
 	if ctx.Log != nil { 
 		relStr := "BONDED"
 		sentiment := 0.0
@@ -132,23 +147,45 @@ func (a *Actor) mate(ctx *SystemContext, mate *Actor, practice string) {
 	if practice == "vaginal" {
 		f := a; if a.GetBioSex() == "male" { f = mate }
 		if f.State.Arousal < 30 && !a.Config.IsAnimal {
-			f.CausePain(10.0, ctx)
-			if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] receives physical trauma (non-consensual or un-aroused)", f.Name), LogNPC) }
+			f.CausePain(40.0, ctx)
+			if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] receives severe physical trauma (assault)", f.Name), LogNPC) }
 		}
 	} else if practice == "anal" {
-		mate.CausePain(15.0, ctx)
-		if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] receives physical trauma from anal intercourse", mate.Name), LogNPC) }
+		mate.CausePain(30.0, ctx)
+		if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] receives severe physical trauma from anal assault", mate.Name), LogNPC) }
+	}
+
+	// BLACKOUT MEMORY LOSS: If both were drunk, they gain NO relationship from the act
+	if a.State.IsDrunk && mate.State.IsDrunk {
+		if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] and [%s] have no memory of their drunken encounter.", a.Name, mate.Name), LogNPC) }
+	} else if !isViolent {
+		a.ModifySentiment(mate.ID, 5.0)
+		mate.ModifySentiment(a.ID, 5.0)
 	}
 
 	if isViolent {
 		if mate.Relationships == nil { mate.Relationships = make(map[string]float64) }
 		mate.Relationships[a.ID] -= 50.0 // Massive relationship damage
 		mate.State.Sanity -= 20.0        // Deep emotional trauma
+		mate.ModifySubmission(a.ID, 25.0) // Submission as a trauma response
 		mate.AddMemory(mate.Tick, "trauma", a.Name, -50.0)
+		
+		// Probability of acute mental break leading to depression
+		if rand.Float64() < 0.25 {
+			mate.State.Sanity -= 25.0
+			if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] has suffered a complete mental breakdown after the assault.", mate.Name), LogWarning) }
+		}
 	}
 
+
 	a.State.Arousal, mate.State.Arousal = 0, 0
-	a.State.Hygiene -= 30; mate.State.Hygiene -= 30
+	
+	// TAVERN AS HYDRATION HUB: Successful social mating grants a hydration buffer (frozen thirst)
+	if !isViolent {
+		a.State.HydrationBuffer = 3000
+		mate.State.HydrationBuffer = 3000
+	}
+	a.State.Hygiene -= 10; mate.State.Hygiene -= 10
 	if a.State.Hygiene < 0 { a.State.Hygiene = 0 }; if mate.State.Hygiene < 0 { mate.State.Hygiene = 0 }
 
 	if practice != "vaginal" { return }
@@ -170,12 +207,16 @@ func (a *Actor) mate(ctx *SystemContext, mate *Actor, practice string) {
 }
 
 func (a *Actor) giveBirth(ctx *SystemContext) {
-	a.IsPregnant = false
 	archID := a.Config.ID
 	if a.Config.IsAnimal {
 		if archID == "sheep" || archID == "ram" { archID = "lamb" } else if archID == "cow" || archID == "bull" { archID = "calf" } else if archID == "pig" || archID == "boar" { archID = "piglet" }
 	} else {
-		archID = "peasant_female"; if a.Config.Group == "Nobility" { archID = "noble_female" }
+		// Default to peasant child if not specified otherwise
+		if strings.Contains(strings.ToLower(a.Config.Group), "noble") {
+			archID = "noble_female" 
+		} else {
+			archID = "peasant_female"
+		}
 	}
 
 	arch, ok := ctx.Registries.Archetypes.Archetypes[archID]; if !ok { arch = a.Config }
