@@ -37,19 +37,20 @@ func (a *Actor) updateSanity(ctx *SystemContext) {
 }
 
 func (a *Actor) updateArousal(ctx *SystemContext) {
-	if a.State.Arousal > 0 {
-		a.State.Arousal -= 0.05 // Natural decay
-		if a.State.Arousal < 0 { a.State.Arousal = 0 }
-	}
+	if a.SexualOrientation == "asexual" { a.State.Arousal = 0; return }
+
+	// Monthly arousal cycle: 100 units / 1 Month (518,400 ticks) = 0.000192 / tick
+	growth := 0.000192; if ctx != nil && ctx.World != nil && ctx.World.State.Season == SeasonSpring { growth *= 1.5 }
+	a.State.Arousal += growth
 
 	if a.State.Arousal >= 100 {
 		a.ArousalTimer++
 		if a.ArousalTimer > 21600 { // 1 hour at 60 TPS
 			if a.Tick%600 == 0 {
-				a.State.HealthPoints -= 1
+				a.CausePain(0.1, ctx) 
 				if ctx != nil && ctx.World != nil {
 					ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{
-						Text: "Strain!", X: a.X, Y: a.Y, Life: 45, Color: ColorHarm,
+						Text: "Distracted...", X: a.X, Y: a.Y, Life: 45, Color: ColorHarm,
 					})
 				}
 			}

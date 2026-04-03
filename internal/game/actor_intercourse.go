@@ -8,6 +8,7 @@ import (
 )
 
 func (a *Actor) isWilling() bool {
+	if a.SexualOrientation == "asexual" { return false }
 	return a.IsAlive() && a.State.Sanity > 20 && a.MatingCooldown <= 0 && !a.IsPregnant
 }
 
@@ -33,7 +34,14 @@ func (a *Actor) updateBreeding(ctx *SystemContext) {
 		other := &char.Actor
 		if other.Name == a.Name || !other.IsAlive() { continue }
 		
-		if a.isBioOpposite(other) || (adultMode && !a.Config.IsAnimal) {
+		isPreferred := false
+		if a.SexualOrientation == "" || a.SexualOrientation == "heterosexual" {
+			if a.isBioOpposite(other) { isPreferred = true }
+		} else if a.SexualOrientation == "homosexual" {
+			if !a.isBioOpposite(other) { isPreferred = true }
+		}
+
+		if isPreferred || (adultMode && !a.Config.IsAnimal) {
 			sentiment := 0.0
 			if a.Relationships != nil { sentiment = a.Relationships[other.ID] }
 

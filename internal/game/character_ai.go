@@ -8,8 +8,25 @@ import (
 )
 
 func (c *Character) updateAI(ctx *SystemContext) {
+	// Emergency Hydration: If incapacitated but at a source, drink anyway (Last Gasp)
+	if c.IsAlive() && c.State.Thirst > 95 && c.ActionState == ActorIncapacitated {
+		atSource := false
+		for _, o := range ctx.World.Obstacles {
+			if o.Alive && strings.Contains(strings.ToLower(o.ID), "well") && math.Sqrt(math.Pow(c.X-o.X, 2)+math.Pow(c.Y-o.Y, 2)) < 3.0 { atSource = true; break }
+		}
+		if !atSource && (c.CurrentTile == "water.png" || strings.Contains(c.CurrentTile, "water")) { atSource = true }
+		if atSource { c.ActionState, c.Tick = ActorDrinking, 0; return }
+	}
+
 	if c.TargetActor != nil && !c.TargetActor.IsAlive() { c.TargetActor = nil }
-	if !c.IsAlive() || (c.IsIncapacitated() && c.ActionState != ActorBerserk) { return }
+	
+	// CRITICAL FIX: If we are already EATING or DRINKING, we must FINISH the action
+	// even if the character is technically incapacitated. This prevents the rapid-switch loop
+	// that causes thirst to stay at 100%.
+	isConsuming := c.ActionState == ActorDrinking || c.ActionState == ActorEating
+	if !c.IsAlive() || (c.IsIncapacitated() && c.ActionState != ActorBerserk && !isConsuming) { 
+		return 
+	}
 
 	// Sanity Check
 	// Leader death consequence check

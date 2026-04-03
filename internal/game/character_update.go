@@ -12,11 +12,13 @@ import (
 func (c *Character) Update(ctx *SystemContext) {
 	c.Tick++
 	c.AttackTimer++
-	if (c.ID == "oinakos" || c.ID == "hero") && ctx.World.Game.Tick%1000 == 0 {
-		invNames := []string{}
-		for _, it := range c.Inventory { if it != nil && it.Config != nil { invNames = append(invNames, it.Config.ID) } }
-		log.Printf("[SIM-HERO] Tick: %d | HP: %d/%d | H:%.1f T:%.1f | State: %s | Inv(%d): %v", 
-			c.Tick, c.State.HealthPoints, c.State.MaxHealthPoints, c.State.Hunger, c.State.Thirst, c.ActionState, len(c.Inventory), invNames)
+	if (c.ID == "oinakos" || c.ID == "hero") {
+		significantChange := c.ActionState != c.LastLoggedState || math.Abs(float64(c.State.HealthPoints-c.LastLoggedHP)) > 10
+		if significantChange {
+			log.Printf("[SIM-HERO] WorldTick: %d | HP: %d/%d | H:%.1f T:%.1f | State: %s | Inv(%d)", 
+				ctx.World.Game.Tick, c.State.HealthPoints, c.State.MaxHealthPoints, c.State.Hunger, c.State.Thirst, c.ActionState, len(c.Inventory))
+			c.LastLoggedState, c.LastLoggedHP = c.ActionState, c.State.HealthPoints
+		}
 	}
 	c.SharedUpdate(ctx)
 	c.ProcessCooking(ctx)

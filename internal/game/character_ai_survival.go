@@ -9,12 +9,13 @@ import (
 
 func (c *Character) handleSurvivalNeeds(ctx *SystemContext) bool {
 	if c.ActionState == ActorDrinking || c.ActionState == ActorEating || c.ActionState == ActorResting || c.ActionState == ActorBathing || c.ActionState == ActorRelieving { 
-		if c.Tick < 60 { return true } // Ensure at least 1 second of action
+		if c.Tick < 60 { return true } 
 	}
+
 	isStarving := c.State.Hunger > 90
 	isDehydrated := c.State.Thirst > 90
 	isHungry := c.State.Hunger > 70
-	isThirsty := c.State.Thirst > 70
+	isThirsty := c.State.Thirst > 60
 	isExhausted := c.State.Fatigue > 85
 	isBursting := c.State.BladderLevel > 85 || c.State.BowelLevel > 85
 	isDirty := c.State.Hygiene < 30
@@ -111,12 +112,27 @@ func (c *Character) handleSurvivalNeeds(ctx *SystemContext) bool {
 			}
 		}
 		if nTavern != nil {
-			if minTDist < 12.0 { // Large building radius
+			if minTDist < 12.0 { 
 				c.ActionState, c.Tick = ActorDrinking, 0
 				if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s is drinking in %s.", c.Name, nTavern.ID), LogNPC) }
 				return true
 			}
 			c.MoveTo(ctx, nTavern.X, nTavern.Y); return true
+		}
+		// Also seek River as FloorZone
+		var nRiver *FloorZone; minRDist := 400.0
+		if ctx.World != nil && ctx.World.CurrentMapType != nil {
+			for _, fz := range ctx.World.CurrentMapType.FloorZones {
+				if fz.Type == "river" || strings.Contains(strings.ToLower(fz.Name), "river") {
+					d := fz.DistanceTo(c.X, c.Y)
+					if d < minRDist { minRDist, nRiver = d, fz }
+				}
+			}
+		}
+		if nRiver != nil {
+			if minRDist < 2.0 { c.ActionState, c.Tick = ActorDrinking, 0; return true }
+			c.MoveTo(ctx, (nRiver.MinX+nRiver.MaxX)*0.5, (nRiver.MinY+nRiver.MaxY)*0.5)
+			return true
 		}
 		if c.CurrentTile == "water.png" || strings.Contains(c.CurrentTile, "water") {
 			c.ActionState, c.Tick = ActorDrinking, 0; return true

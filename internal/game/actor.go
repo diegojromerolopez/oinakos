@@ -12,9 +12,18 @@ func (a *Actor) SyncLifeStatus() {
 		a.State.HealthPoints, a.ActionState = threshold, ActorDead
 		return
 	}
+	
+	// CRITICAL: Survival actions (Drinking/Eating) take priority over the 'Incapacitated' state
+	// even if HealthPoints == 0 or UnconsciousTimer > 0. This allows characters to 'crawl' to sources.
+	if a.ActionState == ActorDrinking || a.ActionState == ActorEating {
+		return 
+	}
+
 	if a.State.HealthPoints <= 0 || a.UnconsciousTimer > 0 {
 		if a.ActionState != ActorIncapacitated { a.ActionState = ActorIncapacitated }
-	} else if a.ActionState == ActorIncapacitated { a.ActionState = ActorIdle }
+	} else if a.ActionState == ActorIncapacitated { 
+		a.ActionState = ActorIdle 
+	}
 }
 
 func (a *Actor) InitBodyStatus() {

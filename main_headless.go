@@ -114,9 +114,10 @@ func main() {
 				os.Exit(0)
 			}
 			
-			// 1 year check
+			// 10 year check
 			// 1 year = 360 days = 360 * 17280 ticks = 6,220,800 ticks
-			if ticks >= 6220800 {
+			// 10 years = 62,208,000 ticks
+			if ticks >= 62208000 {
 				log.Printf("SUCCESS: Character survived for 10 years (%d ticks)!", ticks)
 				p := g.GetPlayableCharacter()
 				if p != nil {

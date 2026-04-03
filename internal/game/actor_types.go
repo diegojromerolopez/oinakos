@@ -298,7 +298,10 @@ type Actor struct {
 	Relationships      map[string]float64
 	RomanticInterest   map[string]float64
 	Submission         map[string]float64
+	SexualOrientation  string 
 	Memories           []MemoryEvent
+	LastLoggedState    ActorState
+	LastLoggedHP       int
 	GroupSentiment     map[string]float64
 	IsPregnant         bool
 	GestationTicks     int
