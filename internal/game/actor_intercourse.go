@@ -224,6 +224,15 @@ func (a *Actor) mate(ctx *SystemContext, mate *Actor, practice string) {
 	a.State.Hygiene -= 10; mate.State.Hygiene -= 10
 	if a.State.Hygiene < 0 { a.State.Hygiene = 0 }; if mate.State.Hygiene < 0 { mate.State.Hygiene = 0 }
 
+	// POST-COITAL EXHAUSTION: Physical toll of the act
+	a.State.Fatigue += 40.0; mate.State.Fatigue += 40.0
+	if isViolent { mate.State.Fatigue += 30.0 } // Trauma-induced exhaustion
+	
+	// Force characters into Resting state to recover
+	a.ActionState = ActorResting
+	mate.ActionState = ActorResting
+	a.Tick, mate.Tick = 0, 0 // Reset animation/action timers
+
 	if practice != "vaginal" {
 		atomic.AddInt64(&ctx.World.Demographics.MatingActs, 1)
 		return
