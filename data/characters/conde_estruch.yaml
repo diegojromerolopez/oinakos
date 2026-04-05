@@ -6,7 +6,8 @@ description: "The 'Dracula of the Alto Ampurd\xE1n'. Wilfred Estruch was a 12th-
   \ knight who returned from death as a vampire to terrorize Llers Castle. A powerful\
   \ blood-drinking noble."
 state:
-  health_points: 100
+  health_points: 1000
+  max_health_points: 1000
   hunger: 0.0
   thirst: 0.0
   fatigue: 0.0

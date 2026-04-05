@@ -6,7 +6,8 @@ description: A mysterious Serbian noble who arrived in the port of Cartagena wit
   a cursed coffin. His voyage across Spain left a trail of unexplained deaths and
   whispers of the undead.
 state:
-  health_points: 100
+  health_points: 1000
+  max_health_points: 1000
   hunger: 0.0
   thirst: 0.0
   fatigue: 0.0
