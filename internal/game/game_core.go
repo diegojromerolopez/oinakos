@@ -3,10 +3,17 @@ package game
 import (
 	"image"
 	"io/fs"
+	"sync"
 	"sync/atomic"
 
 	"oinakos/internal/engine"
 )
+
+var GlobalHeadlessLogger func(string)
+
+func SetGlobalHeadlessLogger(f func(string)) {
+	GlobalHeadlessLogger = f
+}
 
 const (
 	WinMenuContinue = 0
@@ -97,6 +104,11 @@ type Game struct {
 	menuHandler      *MenuHandler
 	worldManager     *WorldManager
 	mechanicsManager *MechanicsManager
+
+	// Threading Infrastructure
+	workerWG         sync.WaitGroup
+	charStartChan    chan *SystemContext
+	charDoneChan     chan bool
 
 	LoadingProgress int32 
 	LoadingMessage  string

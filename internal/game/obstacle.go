@@ -69,11 +69,19 @@ func (o *Obstacle) Update() {
 	if o.CooldownTicks > 0 { o.CooldownTicks-- }
 	o.TickCounter++
 	for entity, ticks := range o.EffectTimers { if ticks > 0 { o.EffectTimers[entity] = ticks - 1 } }
-	if o.Archetype != nil && o.Archetype.IsCrop && o.GrowthStage < 2 {
-		growthLimit := o.Archetype.GrowthDuration
-		if growthLimit > 0 {
-			o.GrowthTicks++
-			if o.GrowthStage == 0 && o.GrowthTicks > growthLimit/2 { o.GrowthStage = 1 } else if o.GrowthStage == 1 && o.GrowthTicks >= growthLimit { o.GrowthStage = 2 }
+	if o.Archetype != nil {
+		if o.Archetype.IsCrop && o.GrowthStage < 2 {
+			growthLimit := o.Archetype.GrowthDuration
+			if growthLimit > 0 {
+				o.GrowthTicks++
+				if o.GrowthStage == 0 && o.GrowthTicks > growthLimit/2 { o.GrowthStage = 1 } else if o.GrowthStage == 1 && o.GrowthTicks >= growthLimit { o.GrowthStage = 2 }
+			}
+		}
+		if o.Archetype.ID == "defecation" && o.TickCounter > TicksPerMonth * 2 {
+			o.Alive = false
+		}
+		if o.Archetype.ID == "urination" && o.TickCounter > TicksPerDay * 2 {
+			o.Alive = false
 		}
 	}
 }

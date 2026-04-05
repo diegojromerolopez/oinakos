@@ -15,6 +15,7 @@ import (
 
 func DiscoverFonts(assets fs.FS) []string {
 	fonts := []string{}
+	if assets == nil { return []string{"default"} }
 	entries, err := fs.ReadDir(assets, "assets/fonts")
 	if err != nil {
 		return []string{"default"}
@@ -65,6 +66,10 @@ type Settings struct {
 	
 	// Adult Mode
 	AdultMode bool `yaml:"adult_mode"`
+	
+	// Performance
+	SimStep          int `yaml:"sim_step"`           // Ticks between biological updates
+	AIPerceptionStep int `yaml:"ai_perception_step"` // Ticks between AI spatial/awareness scans
 
 	// Keymap
 	Keymap map[string]string `yaml:"keymap"`
@@ -131,6 +136,8 @@ func DefaultSettings() *Settings {
 		OllamaLocalModel: "llama3",
 		WebGPUModel:      "tiny-llama-1.1b",
 		AdultMode:        true,
+		SimStep:          10,
+		AIPerceptionStep: 30,
 		Keymap: map[string]string{
 			"move_up":    "W",
 			"move_down":  "S",

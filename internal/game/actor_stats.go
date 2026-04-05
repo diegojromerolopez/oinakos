@@ -12,6 +12,10 @@ func (a *Actor) GetTotalDefense() int { return a.calculateStat(a.BaseDefense, a.
 
 func (a *Actor) SyncStats(objReg *ObjectRegistry) {
 	if a.Config == nil { return }
+	
+	// Performance optimization: skip sync if stats are stable
+	if a.StatsStable && a.Tick - a.LastSyncTick < 60 { return }
+	a.LastSyncTick = a.Tick; a.StatsStable = true
 
 	a.PrimaryAttributes.Strength = clampInt(a.PrimaryAttributes.Strength, 0, 100)
 	a.PrimaryAttributes.Dexterity = clampInt(a.PrimaryAttributes.Dexterity, 0, 100)

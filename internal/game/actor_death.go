@@ -67,7 +67,11 @@ func (a *Actor) applyKillAction(action KillAction, attacker ActorInterface, ctx 
 		if ok {
 			a.Config, a.UnconsciousTimer, a.ActionState = newConfig, 0, ActorIdle
 			a.State.HealthPoints = a.GetTotalMaxHealth(); a.InitBodyStatus()
-			if e.Alignment == "inherit" { a.Alignment = attacker.GetActor().Alignment }
+			if e.Alignment == "inherit" {
+				oldA := a.Alignment
+				a.Alignment = attacker.GetActor().Alignment
+				fmt.Printf("DEBUG: Transforming %s (addr %p) to %s | Alignment %v -> %v (Inherited from %s with alignment %v)\n", a.Name, a, targetID, oldA, a.Alignment, attacker.GetActor().Name, attacker.GetActor().Alignment)
+			}
 		}
 	}
 	if action.Type == "heal_attacker" || (action.Effect.Attacker != nil && action.Effect.Attacker.Heal > 0) {
@@ -84,6 +88,15 @@ func (a *Actor) SpawnDefecation(ctx *SystemContext) {
 	config := ctx.Registries.Obstacles.Archetypes["defecation"]
 	if config == nil { return }
 	id := fmt.Sprintf("waste_%d_%d", ctx.World.DayTick, int(a.X*100))
+	obs := NewObstacle(id, a.X, a.Y, config)
+	ctx.World.Obstacles = append(ctx.World.Obstacles, obs)
+}
+
+func (a *Actor) SpawnUrination(ctx *SystemContext) {
+	if ctx == nil || ctx.World == nil || ctx.Registries.Obstacles == nil { return }
+	config := ctx.Registries.Obstacles.Archetypes["urination"]
+	if config == nil { return }
+	id := fmt.Sprintf("piss_%d_%d", ctx.World.DayTick, int(a.X*100)+rand.Intn(100))
 	obs := NewObstacle(id, a.X, a.Y, config)
 	ctx.World.Obstacles = append(ctx.World.Obstacles, obs)
 }

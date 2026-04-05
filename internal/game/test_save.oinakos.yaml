@@ -30,6 +30,9 @@ player:
         max: 0
         rate: 0
     is_angry: false
+    is_hypersexual: false
+    thirst_max: 193
+    hydration_buffer: 0
     xp: 0
     level: 1
     kills: 0
@@ -75,6 +78,9 @@ characters:
         max: 0
         rate: 0
       is_angry: false
+      is_hypersexual: false
+      thirst_max: 193
+      hydration_buffer: 0
       level: 1
       behavior: ""
       alignment: 1

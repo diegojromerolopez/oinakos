@@ -30,13 +30,14 @@ func (r *CharacterRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, a
 }
 
 func (r *CharacterRegistry) createLoadJobs(assets fs.FS, archs *ArchetypeRegistry, permit map[string]bool) []*SpriteLoadJob {
+	if assets == nil { return nil }
 	var jobs []*SpriteLoadJob
 	for _, c := range r.Characters {
 		if c.StaticImage != nil || (permit != nil && !permit[c.ID] && !c.Playable) { continue }
 		lookup, hasAud := c.Archetype, false
 		if c.Gender != "" && !strings.Contains(c.Archetype, c.Gender) { if _, ok := archs.Archetypes[c.Archetype+"_"+c.Gender]; ok { lookup = c.Archetype + "_" + c.Gender } }
 		arch, _ := archs.Archetypes[lookup]
-		if c.AudioDir != "" { if entries, err := fs.ReadDir(assets, c.AudioDir); err == nil && len(entries) > 0 { hasAud = true } }
+		if assets != nil && c.AudioDir != "" { if entries, err := fs.ReadDir(assets, c.AudioDir); err == nil && len(entries) > 0 { hasAud = true } }
 		if hasAud { c.SoundID = c.ID } else if arch != nil { c.SoundID = lookup } else { c.SoundID = c.ID }
 		if c.AssetDir != "" {
 			add := func(f string, t *engine.Image, fb engine.Image) {

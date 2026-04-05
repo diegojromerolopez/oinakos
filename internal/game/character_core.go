@@ -13,7 +13,6 @@ type Character struct {
 	AttackCooldown int
 	AttackTimer    int
 
-	Behavior   BehaviorType
 	WanderDirX float64
 	WanderDirY float64
 	PatrolStartX, PatrolStartY float64

@@ -17,13 +17,15 @@ func NewArchetypeRegistry() *ArchetypeRegistry { return &ArchetypeRegistry{Arche
 
 func (r *ArchetypeRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, permitList map[string]bool, ls *LoadingState) {
 	for _, config := range r.Archetypes {
-		if config.AssetDir == "" { continue }
+		if assets == nil || config.AssetDir == "" { continue }
 		if entries, err := fs.ReadDir(assets, path.Join(config.AssetDir, "models")); err == nil {
 			config.Models = make(map[string]*ModelConfig)
 			for _, entry := range entries { if entry.IsDir() { config.Models[entry.Name()] = &ModelConfig{ID: entry.Name()} } }
 		}
 	}
-	if jobs := r.createLoadJobs(permitList); len(jobs) > 0 { loadSpritesParallel(assets, jobs, graphics, ls) }
+	if assets != nil {
+		if jobs := r.createLoadJobs(permitList); len(jobs) > 0 { loadSpritesParallel(assets, jobs, graphics, ls) }
+	}
 }
 
 func (r *ArchetypeRegistry) createLoadJobs(permitList map[string]bool) []*SpriteLoadJob {

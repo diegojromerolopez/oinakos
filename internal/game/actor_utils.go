@@ -17,10 +17,19 @@ func (a *Actor) GetCollisionCircle() engine.Circle {
 }
 
 func (a *Actor) checkCollisionAt(nx, ny float64, obstacles []*Obstacle) bool {
-	col := a.GetCollisionCircle()
-	col.X, col.Y = nx, ny
+	radius := 0.4
+	if a.Config != nil && a.Config.CollisionRadius > 0 { radius = a.Config.CollisionRadius }
+	
+	col := engine.Circle{X: nx, Y: ny, Radius: radius}
 	for _, o := range obstacles {
-		if o.Alive && o.Archetype != nil && !o.Archetype.Passable && engine.CheckCirclePolygonCollision(col, o.GetFootprint()) {
+		if !o.Alive || o.Archetype == nil || o.Archetype.Passable { continue }
+		
+		// Optimization: Cheap distance check before expensive polygon collision
+		dx, dy := nx-o.X, ny-o.Y
+		distSq := dx*dx + dy*dy
+		if distSq > 16.0 { continue } // Skip if further than 4.0 pedes
+		
+		if engine.CheckCirclePolygonCollision(col, o.GetFootprint()) {
 			return true
 		}
 	}

@@ -5,17 +5,43 @@ import (
 	"math/rand"
 )
 
+func filterExpiredItems(items []*ItemInstance) []*ItemInstance {
+	active := make([]*ItemInstance, 0, len(items))
+	for _, it := range items {
+		if it != nil {
+			if it.Config == nil || it.Config.MaxHours <= 0 || it.HoursLeft > 0 {
+				active = append(active, it)
+			}
+		}
+	}
+	return active
+}
+
+func filterExpiredSlots(slots map[string]*ItemInstance) {
+	for k, it := range slots {
+		if it != nil && it.Config != nil && it.Config.MaxHours > 0 && it.HoursLeft <= 0 {
+			delete(slots, k)
+		}
+	}
+}
+
 func (g *Game) updateItemExpiration(ctx *SystemContext) {
 	if g.World == nil { return }
 	for _, it := range g.World.Items { if it != nil { it.Update(ctx) } }
+	g.World.Items = filterExpiredItems(g.World.Items)
+
 	if g.playableCharacter != nil {
 		for _, it := range g.playableCharacter.Inventory { if it != nil { it.Update(ctx) } }
+		g.playableCharacter.Inventory = filterExpiredItems(g.playableCharacter.Inventory)
 		for _, it := range g.playableCharacter.Slots { if it != nil { it.Update(ctx) } }
+		filterExpiredSlots(g.playableCharacter.Slots)
 	}
 	for _, n := range g.characters {
 		if n != nil {
 			for _, it := range n.Inventory { if it != nil { it.Update(ctx) } }
+			n.Inventory = filterExpiredItems(n.Inventory)
 			for _, it := range n.Slots { if it != nil { it.Update(ctx) } }
+			filterExpiredSlots(n.Slots)
 		}
 	}
 }

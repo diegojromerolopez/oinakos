@@ -38,7 +38,7 @@ func (a *Actor) updateSanity(ctx *SystemContext) {
 	
 	if a.State.Sanity < 10 && a.Tick%600 == 0 && ctx != nil && ctx.World != nil {
 		ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{
-			Text: "Psychological Break!", X: a.X, Y: a.Y, Life: 60, Color: color.RGBA{255, 165, 0, 255},
+			Text: "Psychological Break!", X: a.X, Y: a.Y, Life: 60, Color: ColorHarm,
 		})
 	}
 }
@@ -100,8 +100,8 @@ func (a *Actor) Say(text string, ctx *SystemContext) {
 	a.LastReaction = text
 	a.ThoughtTimer = 180 // Show reflection for 3 seconds
 	
-	// Add floating text over head
-	if ctx.World != nil {
+	// Add floating text over head (Skip in simulation mode to avoid slice races)
+	if ctx.World != nil && (ctx.Settings == nil || !ctx.Settings.AISimulationMode) {
 		ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{
 			Text:  text,
 			X:     a.X,
@@ -111,8 +111,8 @@ func (a *Actor) Say(text string, ctx *SystemContext) {
 		})
 	}
 	
-	// Log to event log if it's significant
-	if ctx.Log != nil {
+	// Log to event log if it's significant (Skip in SIM to avoid I/O stall)
+	if ctx.Log != nil && (ctx.Settings == nil || !ctx.Settings.AISimulationMode) {
 		ctx.Log(fmt.Sprintf("%s: \"%s\"", a.Name, text), LogNPC)
 	}
 }

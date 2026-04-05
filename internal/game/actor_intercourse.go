@@ -5,6 +5,8 @@ import (
 	"math"
 	"math/rand"
 	"strings"
+	"sync/atomic"
+	"unsafe"
 )
 
 func (a *Actor) isWilling() bool {
@@ -19,17 +21,21 @@ func (a *Actor) updateBreeding(ctx *SystemContext) {
 	if ctx != nil && ctx.Settings != nil { adultMode = ctx.Settings.AdultMode }
 	if !adultMode && !a.Config.IsAnimal { return }
 
-	if a.MatingCooldown > 0 { a.MatingCooldown-- }
 	if a.IsPregnant {
 		a.GestationTicks--
 		if a.GestationTicks <= 0 { a.giveBirth(ctx) }
 		return
+	}
+	if a.MatingCooldown > 0 { 
+		a.MatingCooldown-- 
+		return 
 	}
 
 	if !a.Config.IsAnimal && a.Shift != ShiftLeisure && a.ActionState != ActorBerserk { return }
 
 	var mate *Actor
 	minDist := 10.0 // Increased interaction range for social density
+	if IsFastMode() { minDist = 15.0 } // Scale to match frame-skipping velocity
 	if IsDebugEnabled() && a.Tick%TicksPerHour == 0 { DebugLog("BREEDING-UPDATE: %s is searching (Shift:%d, Sanity:%.1f, Arousal:%.1f)", a.Name, a.Shift, a.State.Sanity, a.State.Arousal) }
 
 	for _, char := range ctx.World.Characters {
@@ -55,7 +61,7 @@ func (a *Actor) updateBreeding(ctx *SystemContext) {
 
 			if isService && !isViolent {
 				// Non-violent mating with courtesans REQUIRES money.
-				if a.Denarii >= 2 { canMate = true }
+				if a.Denarii >= 2 && other.isWilling() { canMate = true }
 			} else {
 				// 1. Arousal or Alcohol driven (Casual/Uninhibited)
 				isUninhibited := a.State.Arousal > 50 || other.State.Arousal > 50 || a.State.IsDrunk || other.State.IsDrunk
@@ -80,11 +86,11 @@ func (a *Actor) updateBreeding(ctx *SystemContext) {
 				}
 				// 6. CRIMINAL PREDATION
 				if !canMate && a.Behavior == BehaviorCriminal && other.IsAlive() && a.Name != other.Name {
-					canMate = true
+					if a.Config.IsAnimal == other.Config.IsAnimal { canMate = true }
 				}
 				// 7. HYPERSEXUAL COMPULSION (Mental Break result)
 				if !canMate && a.State.IsHypersexual && other.IsAlive() && a.Name != other.Name {
-					canMate = true
+					if a.Config.IsAnimal == other.Config.IsAnimal { canMate = true }
 				}
 			}
 
@@ -127,11 +133,20 @@ func (a *Actor) GetBioSex() string {
 }
 
 func (a *Actor) mate(ctx *SystemContext, mate *Actor, practice string) {
-	if a.GetBioSex() == "female" { return }
+	if a == nil || mate == nil { return }
+
+	// Deadlock prevention: Lock in order of memory address
+	if uintptr(unsafe.Pointer(a)) < uintptr(unsafe.Pointer(mate)) {
+		a.Lock(); defer a.Unlock()
+		mate.Lock(); defer mate.Unlock()
+	} else {
+		mate.Lock(); defer mate.Unlock()
+		a.Lock(); defer a.Unlock()
+	}
 
 	// SERVICE TRANSACTION (Elite Simulation: Economic Layer)
 	isService := mate.Config != nil && strings.Contains(mate.Config.ID, "courtesan")
-	isViolent := a.ActionState == ActorBerserk
+	isViolent := a.ActionState == ActorBerserk || a.Behavior == BehaviorCriminal
 	
 	if isService && !isViolent {
 		if a.Denarii < 2 {
@@ -199,7 +214,6 @@ func (a *Actor) mate(ctx *SystemContext, mate *Actor, practice string) {
 		mate.State.Sanity += 15.0
 	}
 
-
 	a.State.Arousal, mate.State.Arousal = 0, 0
 	
 	// TAVERN AS HYDRATION HUB: Successful social mating grants a hydration buffer (frozen thirst)
@@ -210,23 +224,45 @@ func (a *Actor) mate(ctx *SystemContext, mate *Actor, practice string) {
 	a.State.Hygiene -= 10; mate.State.Hygiene -= 10
 	if a.State.Hygiene < 0 { a.State.Hygiene = 0 }; if mate.State.Hygiene < 0 { mate.State.Hygiene = 0 }
 
-	if practice != "vaginal" { return }
+	if practice != "vaginal" {
+		atomic.AddInt64(&ctx.World.Demographics.MatingActs, 1)
+		return
+	}
 
 	var mother, father *Actor
 	if a.GetBioSex() == "female" && mate.GetBioSex() == "male" { mother, father = a, mate } else if a.GetBioSex() == "male" && mate.GetBioSex() == "female" { mother, father = mate, a }
-	if mother == nil || father == nil { return } 
-	if mother.IsTransexual || father.IsTransexual { return }
-
-	chance := (float64(mother.PrimaryAttributes.Health) * float64(father.PrimaryAttributes.Health)) / 10000.0
-	// Apply courtesan penalty/bonus (Balance: Courtesans get a 0.5 fertile modifier)
-	if mother.Config != nil && strings.Contains(mother.Config.ID, "courtesan") { chance *= 0.5 }
-
-	if rand.Float64() < chance && !mother.IsPregnant {
-		mother.IsPregnant, mother.FatherID = true, father.Name
-		mother.GestationTicks = 9 * TicksPerMonth
-		if mother.Config.IsAnimal { mother.GestationTicks = TicksPerMonth }
-		if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] is pregnant (F:%s)", mother.Name, father.Name), LogNPC) }
+	if mother == nil || father == nil { 
+		atomic.AddInt64(&ctx.World.Demographics.MatingActs, 1)
+		return 
+	} 
+	if mother.IsTransexual || father.IsTransexual { 
+		atomic.AddInt64(&ctx.World.Demographics.MatingActs, 1)
+		return 
 	}
+
+	// Actual pregnancy check
+	fertility := mother.GetFertilityMultiplier()
+	if rand.Float64() < (0.3 * fertility) {
+		mother.IsPregnant = true
+		mother.GestationTicks = 17280 // Standard gestation
+		mother.FatherID = father.Name
+		atomic.AddInt64(&ctx.World.Demographics.MatingPregancies, 1)
+		if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] is now PREGNANT with %s's child", mother.Name, father.Name), LogNPC) }
+	}
+	
+	atomic.AddInt64(&ctx.World.Demographics.MatingActs, 1)
+}
+
+func (a *Actor) GetFertilityMultiplier() float64 {
+	if a.GetBioSex() != "female" { return 1.0 }
+	age := a.State.Age.Current
+	if age < 18 { return 0.0 }
+	if age < 35 { return 1.0 }
+	if age < 45 {
+		// Linear decline 1.0 -> 0.2
+		return 1.0 - (age - 35) * (0.8 / 10.0)
+	}
+	return 0.0 // Menopause
 }
 
 func (a *Actor) giveBirth(ctx *SystemContext) {
@@ -260,5 +296,16 @@ func (a *Actor) giveBirth(ctx *SystemContext) {
 	child.SyncStats(ctx.Registries.Objects)
 	child.State.MaxHealthPoints /= 2; child.State.HealthPoints = child.State.MaxHealthPoints
 	ctx.World.Characters = append(ctx.World.Characters, child)
+	
+	a.IsPregnant = false
+	a.FatherID = ""
+	a.MatingCooldown = 6000 // Short recovery
+
+	if a.Config.IsAnimal {
+		atomic.AddInt64(&ctx.World.Demographics.BirthsAnimals, 1)
+	} else {
+		atomic.AddInt64(&ctx.World.Demographics.BirthsHumans, 1)
+	}
+
 	if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s]: has given birth to a child", a.Name), LogNPC) }
 }

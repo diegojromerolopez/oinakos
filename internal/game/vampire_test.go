@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -60,12 +61,15 @@ func TestVampireConversion(t *testing.T) {
 	victim.TakeDamage(1000, vampire, ctx)
 	// Transformation happens in die() -> applyKillAction()
 	// Force Idle state and sync for the test to ensure restoration is noticed.
-	victim.SyncStats(nil)
+	// victim.SyncStats(nil)
 	victim.State.HealthPoints = victim.GetTotalMaxHealth()
 	victim.ActionState = ActorIdle
 	victim.UnconsciousTimer = 0
 
 	// Assert
+	fmt.Printf("DEBUG: victim address = %p, &victim.Actor address = %p\n", victim, &victim.Actor)
+	fmt.Printf("DEBUG: AlignmentEnemy value = %v (%s)\n", AlignmentEnemy, AlignmentEnemy.String())
+	fmt.Printf("DEBUG: Test Asserting Alignment: victim.Alignment = %v (%s)\n", victim.Alignment, victim.Alignment.String())
 	if victim.Config.ID != "vampire_male" {
 		t.Errorf("Expected victim to be converted to vampire_male, got %s", victim.Config.ID)
 	}

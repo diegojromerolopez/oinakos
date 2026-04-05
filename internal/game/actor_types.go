@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"sync"
 	"oinakos/internal/engine"
 	"gopkg.in/yaml.v3"
 )
@@ -377,7 +378,17 @@ type Actor struct {
 	Scale              float64 // Visual scale (1.0 = normal)
 	LastCompanionTick  int  // Last time they had social companionship
 	LastGamblingTick   int  // Last time they played at the Fortune Home
+	
+	// Performance Caching
+	StatsStable        bool `yaml:"-"`
+	LastVisionTick     int  `yaml:"-"`
+	LastSyncTick       int  `yaml:"-"`
+	
+	mu                 sync.Mutex `yaml:"-"`
 }
+
+func (a *Actor) Lock() { a.mu.Lock() }
+func (a *Actor) Unlock() { a.mu.Unlock() }
 
 func (a *Actor) DistanceToObject(o *Obstacle) float64 {
 	return math.Sqrt(math.Pow(a.X-o.X, 2) + math.Pow(a.Y-o.Y, 2))

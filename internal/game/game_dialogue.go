@@ -9,6 +9,8 @@ import (
 )
 
 func (g *Game) LogEvent(text string, category LogCategory) {
+	if GlobalHeadlessLogger != nil { GlobalHeadlessLogger(text) }
+	
 	if len(g.EventLog) > 0 && g.EventLog[len(g.EventLog)-1].Text == text {
 		return
 	}

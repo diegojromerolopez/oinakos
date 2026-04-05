@@ -1,16 +1,20 @@
-id: doctor_male
-name: Doctor
+id: criminal_male
+name: Criminal
 gender: male
 names:
-- Galen
-- Avicenna
-- Mundinus
-- Vesalius
-behavior: trader
-group: Practitioners
+- Sikes
+- Fagin
+- Dodger
+- Clay
+- Grimm
+- Vane
+- Black
+- Thorne
+behavior: criminal
+group: Criminals
 state:
   health_points: 100
-  hunger: 0.0
+  hunger: 75.0
   thirst: 0.0
   fatigue: 0.0
   sanity: 100.0
@@ -25,22 +29,22 @@ state:
     max: 100
 attributes:
   strength:
-    min: 20
-    max: 20
-    mode: normal
-    mean: 20.0
-    sd: 0.0
-  health:
     min: 15
     max: 15
     mode: normal
     mean: 15.0
     sd: 0.0
-  dexterity:
-    min: 60
-    max: 60
+  health:
+    min: 10
+    max: 10
     mode: normal
-    mean: 60.0
+    mean: 10.0
+    sd: 0.0
+  dexterity:
+    min: 40
+    max: 40
+    mode: normal
+    mean: 40.0
     sd: 0.0
   intellect:
     min: 50
@@ -56,22 +60,28 @@ attributes:
     sd: 0.0
 stats:
   speed:
-    min: 0.035
-    max: 0.035
+    min: 0.025
+    max: 0.025
     mode: normal
-    mean: 0.04
+    mean: 0.03
+    sd: 0.0
+  attack_cooldown:
+    min: 80
+    max: 80
+    mode: normal
+    mean: 80.0
     sd: 0.0
   health_points:
-    min: 30
-    max: 30
+    min: 100
+    max: 100
     mode: normal
-    mean: 30.0
+    mean: 100.0
     sd: 0.0
   max_weight:
-    min: 150
-    max: 150
+    min: 100
+    max: 100
     mode: normal
-    mean: 150.0
+    mean: 100.0
     sd: 0.0
 abilities:
   punch:
@@ -161,26 +171,34 @@ abilities:
     yield: culture * 1.0
     parent_attribute: strength
 equipment:
-  head: doctor_hat
-  weapon: knife_sharp
-inventory:
-- medicine
-- medicine
-- apple
-- orange
-- wine_bottle
+  weapon: pitchfork
+inventory: []
+xp: 4
 dialogues:
   player_greetings:
-  - You look pale. Let me examine you.
-  - Science is the only cure for this age.
+  - Excuse me, sir.
+  - Good day.
   start_scenarios:
-  - weight: 0.6
-    text: An outbreak in Autumn! Most unpredictable. I have herbs that will help.
-    next: herb_talk
-  herb_talk:
-    text: Stay focused, stay hydrated. Take these if the fatigue sets in.
+  - weight: 0.7
+    text: Hard work today. The soil is dry... or is it the curse?
+    next: soil_talk
+  - weight: 0.3
+    text: Have you seen the knights? They've been restless lately.
+    next: knight_talk
+  soil_talk:
+    text: Nothing grows like it used to. We're all just waiting for the end.
     choices:
-    - text: Open Trade.
+    - text: Stay strong.
       next: exit
-    - text: Goodbye.
+    - text: Maybe I can help?
+      next: help_refuse
+  knight_talk:
+    text: They march back and forth. Searching for someone. Someone with red eyes.
+    choices:
+    - text: I'll keep a lookout.
+      next: exit
+  help_refuse:
+    text: Unless you can make it rain gold and water, there's nothing to be done.
+    choices:
+    - text: I see.
       next: exit

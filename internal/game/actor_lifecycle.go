@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/rand"
 	"strings"
+	"sync/atomic"
 )
 
 func (a *Actor) SharedUpdate(ctx *SystemContext) {
@@ -26,18 +27,24 @@ func (a *Actor) SharedUpdate(ctx *SystemContext) {
 		return 
 	}
 
-	a.updateNeeds(ctx)
-	a.updateSanity(ctx)
-	a.updateHusbandry(ctx)
-	a.updateOwnership(ctx)
-	a.updateMood(ctx)
-	a.updateBreeding(ctx)
-	a.updateMaintenance(ctx)
-	a.updateArousal(ctx)
-	a.updatePain(ctx)
-	a.updateScale(ctx)
-	a.updateAge(ctx)
-	a.updateGrief(ctx)
+	// Optimization: Run biological/psychological simulation less frequently in large steps
+	simStep := 10
+	if ctx != nil && ctx.Settings != nil && ctx.Settings.SimStep > 0 { simStep = ctx.Settings.SimStep }
+	
+	if a.Tick % simStep == 0 {
+		a.updateNeeds(ctx)
+		a.updateSanity(ctx)
+		a.updateHusbandry(ctx)
+		a.updateOwnership(ctx)
+		a.updateMood(ctx)
+		a.updateBreeding(ctx)
+		a.updateMaintenance(ctx)
+		a.updateArousal(ctx)
+		a.updatePain(ctx)
+		a.updateScale(ctx)
+		a.updateAge(ctx)
+		a.updateGrief(ctx)
+	}
 
 	// Psychotic Break (Psychosis)
 	if a.State.Sanity <= 0 && a.IsAlive() && a.ActionState != ActorIncapacitated {
@@ -109,8 +116,14 @@ func (a *Actor) updateDecay(ctx *SystemContext) {
 
 func (a *Actor) updateGrief(ctx *SystemContext) {
 	if a.GriefTicks > 0 {
-		a.GriefTicks--
-		a.State.Sanity -= 0.001 // Reduced from 0.05 to allow survival
+		simStep := 10
+		if ctx != nil && ctx.Settings != nil && ctx.Settings.SimStep > 0 { simStep = ctx.Settings.SimStep }
+		
+		loss := 0.001 * float64(simStep)
+		a.GriefTicks -= simStep
+		if a.GriefTicks < 0 { a.GriefTicks = 0 }
+		
+		a.State.Sanity -= loss
 		if a.GriefTicks % 600 == 0 && a.IsAlive() && ctx != nil && ctx.World != nil {
 			ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{ Text: "Mourning...", X: a.X, Y: a.Y, Life: 60, Color: ColorHarm })
 		}
@@ -123,7 +136,9 @@ func (a *Actor) TriggerSocialCascade(ctx *SystemContext) {
 		if other.ID == a.ID || !other.IsAlive() { continue }
 		sentiment := other.Actor.Relationships[a.ID]
 		if sentiment > 30.0 || other.Actor.ParentID == a.ID {
+			other.Actor.Lock()
 			other.Actor.GriefTicks += TicksPerDay * 3 
+			other.Actor.Unlock()
 			if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s is devastated by the death of %s.", other.Name, a.Name), LogWarning) }
 		}
 	}
@@ -159,6 +174,7 @@ func (a *Actor) updateAge(ctx *SystemContext) {
 				a.ActionState = ActorDead
 				a.TriggerSocialCascade(ctx)
 				if ctx != nil && ctx.Log != nil { ctx.Log(fmt.Sprintf("%s passed away of old age.", a.Name), LogNPC) }
+				atomic.AddInt64(&ctx.World.Demographics.DeathsNatural, 1)
 			}
 		}
 	}

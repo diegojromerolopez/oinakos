@@ -98,6 +98,30 @@ func NewGame(assets fs.FS, graphics engine.Graphics, initialMapID, initialMapTyp
 	g.playableCharacter = playableCharacter
 	g.archetypeRegistry = archetypeRegistry
 	g.mapTypeRegistry = mapTypeRegistry
+
+	// Initialize Multi-threading infrastructure
+	g.charStartChan = make(chan *SystemContext, 1)
+	g.charDoneChan = make(chan bool, 8)
+	
+	for i := 0; i < 8; i++ { // 8 Static Workers
+		workerID := i
+		go func() {
+			for ctx := range g.charStartChan {
+				charCount := len(g.characters)
+				chunkSize := (charCount + 7) / 8
+				start := workerID * chunkSize
+				end := start + chunkSize
+				if start < charCount {
+					if end > charCount { end = charCount }
+					subset := g.characters[start:end]
+					for _, n := range subset {
+						g.processCharacter(ctx, n)
+					}
+				}
+				g.charDoneChan <- true
+			}
+		}()
+	}
 	g.campaignRegistry = campaignRegistry
 	g.obstacleRegistry = obstacleRegistry
 	g.characterRegistry = characterRegistry

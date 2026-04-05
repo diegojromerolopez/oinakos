@@ -49,7 +49,7 @@ func (c *Character) executeAttack(ctx *SystemContext, isTargetPlayer bool, dx, d
 		if c.Weapon != nil && c.Weapon.IsRanged() && skill == "" {
 			if mag := math.Sqrt(dx*dx + dy*dy); mag > 0 {
 				pSpd := c.RawStats.ProjectileSpeed; if pSpd <= 0 { pSpd = 0.5 }
-				ctx.World.Projectiles = append(ctx.World.Projectiles, NewProjectile(c.X, c.Y, dx/mag, dy/mag, pSpd, c.GetTotalAttack(), false, 100.0))
+				ctx.World.AddProjectile(NewProjectile(c.X, c.Y, dx/mag, dy/mag, pSpd, c.GetTotalAttack(), false, 100.0))
 			}
 		} else { c.CheckAttackHits(ctx, skill) }
 	}

@@ -2,7 +2,7 @@ package game
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"math"
 	"strings"
 )
@@ -23,10 +23,13 @@ func (g *Game) updateAI() {
 				hungerLabel := "Hunger"
 				if isVampire { hungerLabel = "Bloodlust" }
 				
-				log.Printf("[AI] Decision for PLAYER: %s | Reasoning: %s | Loc: (%.1f, %.1f) | HP: %d/%d | %s(H): %.1f | Age: %.1f", 
+				msg := fmt.Sprintf("[AI] Decision for PLAYER: %s | Reasoning: %s | Loc: (%.1f, %.1f) | HP: %d/%d | %s(H): %.1f | Age: %.1f", 
 					a.Decision.ChosenOption, a.Decision.Reasoning, p.X, p.Y,
 					p.State.HealthPoints, p.State.MaxHealthPoints,
 					hungerLabel, p.State.Hunger, p.State.Age.Current)
+				
+				g.EventLog = append(g.EventLog, LogEntry{Ticks: g.Tick, Text: msg, Category: LogNPC})
+				
 				g.applyPlayerAIDecision(a.Decision)
 				p.LastAIDecisionTick = g.CurrentTick()
 			} else {
@@ -39,6 +42,11 @@ func (g *Game) updateAI() {
 		}
 	}
 	
+	// OPTIMIZATION: Only perform heavy perception scans based on settings (Default: 30 ticks = 2Hz)
+	perceptionStep := 30
+	if g.settings != nil && g.settings.AIPerceptionStep > 0 { perceptionStep = g.settings.AIPerceptionStep }
+	if g.Tick % perceptionStep != 0 { return }
+
 	interval := 60 
 	p := g.playableCharacter
 	isVampire := p.State.Age.Rate == 0

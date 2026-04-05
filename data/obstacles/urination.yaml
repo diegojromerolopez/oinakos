@@ -1,0 +1,14 @@
+id: urination
+name: Puddle of Urine
+type: static
+destructible: true
+description: A puddle of urine.
+health: 1
+passable: true
+is_hazard: true
+frame_count: 1
+actions:
+  - type: soiling
+    amount: 5
+    aura: 0.5
+    requires_interaction: false

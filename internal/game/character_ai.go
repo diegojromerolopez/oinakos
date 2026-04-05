@@ -63,7 +63,6 @@ func (c *Character) updateAI(ctx *SystemContext) {
 		if c.Tick >= 60 { 
 			if c.ActionState == ActorRelieving {
 				c.AlleviateProperly(ctx)
-				c.SpawnDefecation(ctx)
 			}
 			c.ActionState = ActorIdle 
 		}

@@ -2,6 +2,7 @@ package game
 
 import (
 	"image"
+	"sync"
 )
 const (
 	TicksPerSecond = 60
@@ -27,6 +28,30 @@ type World struct {
 	Game              *Game
 	Items             []*ItemInstance
 	State             WorldState
+	
+	mu                sync.Mutex
+	Demographics      SimulationStats
+}
+
+type SimulationStats struct {
+	BirthsHumans     int64
+	BirthsAnimals    int64
+	DeathsNatural    int64
+	DeathsViolent    int64
+	MatingActs       int64
+	MatingPregancies int64
+}
+
+func (w *World) AddProjectile(p *Projectile) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.Projectiles = append(w.Projectiles, p)
+}
+
+func (w *World) AddFloatingText(f *FloatingText) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.FloatingTexts = append(w.FloatingTexts, f)
 }
 
 type Season int

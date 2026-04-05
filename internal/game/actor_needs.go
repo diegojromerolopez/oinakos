@@ -243,5 +243,10 @@ func (a *Actor) updateNeeds(ctx *SystemContext) {
 	a.SyncLifeStatus()
 }
 
-func (a *Actor) AlleviateProperly(ctx *SystemContext) { a.State.BladderLevel, a.State.BowelLevel, a.State.Pain = 0, 0, 0 }
+func (a *Actor) AlleviateProperly(ctx *SystemContext) { 
+	if a.State.BowelLevel > 30 { a.SpawnDefecation(ctx) }
+	if a.State.BladderLevel > 30 { a.SpawnUrination(ctx) }
+	if a.State.BowelLevel <= 30 && a.State.BladderLevel <= 30 { a.SpawnUrination(ctx) }
+	a.State.BladderLevel, a.State.BowelLevel, a.State.Pain = 0, 0, 0 
+}
 func (a *Actor) TakeBath(ctx *SystemContext) { a.ActionState, a.Tick = ActorBathing, 0 }

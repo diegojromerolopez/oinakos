@@ -17,16 +17,22 @@ func (c *Character) Update(ctx *SystemContext) {
 	c.SharedUpdate(ctx)
 	c.ProcessCooking(ctx)
 	c.ProcessWorkshop(ctx)
+	
+	// Phase shifting to spread processing load across frames
+	phase := 0; if len(c.ID) > 0 { phase = int(c.ID[len(c.ID)-1]) }
+	
 	if c.IsPlayerControlled { c.updatePlayer(ctx) } else { 
-		if c.Tick%10 == 0 {
+		if (c.Tick + phase) % 60 == 0 {
 			c.updateAI(ctx)
 		}
-		c.ShareRumors(ctx)
+		if (c.Tick + phase) % 600 == 0 {
+			c.ShareRumors(ctx)
+		}
 	}
 }
 
 func (c *Character) ShareRumors(ctx *SystemContext) {
-	if c.Tick%300 != 0 { return } // Spread rumors periodically
+	// Logic moved inside the phased check in Update
 	for _, other := range ctx.World.Characters {
 		if other == c || !other.IsAlive() { continue }
 		dist := math.Sqrt(math.Pow(c.X-other.X, 2) + math.Pow(c.Y-other.Y, 2))
@@ -90,7 +96,6 @@ func (c *Character) updatePlayer(ctx *SystemContext) {
 		if c.Tick >= 60 {
 			if c.ActionState == ActorRelieving {
 				c.AlleviateProperly(ctx)
-				c.SpawnDefecation(ctx)
 			}
 			c.ActionState = ActorIdle
 		}
