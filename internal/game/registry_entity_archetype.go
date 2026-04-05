@@ -57,6 +57,7 @@ func (r *ArchetypeRegistry) LoadAll(assets fs.FS) error {
 				return nil 
 			}
 			if cfg.ID == "" { cfg.ID = varN }; sanitizeEntityConfig(&cfg, fpath)
+			if _, exists := r.Archetypes[cfg.ID]; exists { return nil }
 			cat := "archetypes"; if baseDir == "data/animals" { cat, cfg.IsAnimal = "animals", true }
 			cfg.AssetDir, cfg.AudioDir, cfg.SoundID = path.Join("assets/images", cat, subDir, varN), path.Join("assets/audio", cat, subDir, varN), cfg.ID
 			r.Archetypes[cfg.ID], r.IDs = &cfg, append(r.IDs, cfg.ID)

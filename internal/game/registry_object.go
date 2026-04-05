@@ -41,7 +41,7 @@ func (r *ObjectRegistry) LoadAll(assets fs.FS) error {
 		}
 
 		config.AssetDir = path.Join("assets/images/objects")
-		
+		if _, exists := r.Objects[config.ID]; exists { return nil }
 		r.Objects[config.ID] = &config
 		r.IDs = append(r.IDs, config.ID)
 		return nil

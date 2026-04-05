@@ -20,6 +20,7 @@ func (r *CharacterRegistry) LoadAll(assets fs.FS) error {
 	return forEachYAML(assets, "data/characters", func(fpath string, data []byte) error {
 		var cfg EntityConfig; if err := yaml.Unmarshal(data, &cfg); err != nil { return nil }
 		if cfg.ID == "" { cfg.ID = strings.TrimSuffix(filepath.Base(fpath), filepath.Ext(fpath)) }
+		if _, exists := r.Characters[cfg.ID]; exists { return nil }
 		sanitizeEntityConfig(&cfg, fpath); cfg.AssetDir, cfg.AudioDir, cfg.SoundID = path.Join("assets/images/characters", cfg.ID), path.Join("assets/audio/characters", cfg.ID), cfg.ID
 		if cfg.Playable { cfg.PlayableCharacter = cfg.ID }; r.Characters[cfg.ID], r.IDs = &cfg, append(r.IDs, cfg.ID); return nil
 	})

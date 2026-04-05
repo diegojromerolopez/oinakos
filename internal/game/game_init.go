@@ -73,6 +73,7 @@ func NewGame(assets fs.FS, graphics engine.Graphics, initialMapID, initialMapTyp
 		Graphics:         graphics,
 		silhouetteBuffer: graphics.NewImage(1280, 720),
 		mapLevel:         1,
+		isHUDVisible:     true,
 	}
 
 	g.Registries = &RegistryContainer{

@@ -244,6 +244,7 @@ func (r *CampaignRegistry) LoadAll(assets fs.FS) error {
 		if config.ID == "" {
 			config.ID = strings.TrimSuffix(filepath.Base(fpath), filepath.Ext(fpath))
 		}
+		if _, exists := r.Campaigns[config.ID]; exists { return nil }
 		r.Campaigns[config.ID] = &config
 		r.IDs = append(r.IDs, config.ID)
 		return nil

@@ -137,6 +137,11 @@ type Game struct {
 	particles        []*Particle
 	deathReason      string 
 	simulationMode   bool
+	isHUDVisible     bool 
+}
+
+func (g *Game) ToggleHUD() {
+	g.isHUDVisible = !g.isHUDVisible
 }
 
 func (g *Game) SetSimulationMode(enabled bool) {

@@ -72,7 +72,7 @@ func (r *ObstacleRegistry) LoadAll(assets fs.FS) error {
 		}
 
 		sanitizeObstacleArchetype(&config, fpath)
-
+		if _, exists := r.Archetypes[config.ID]; exists { return nil }
 		r.Archetypes[config.ID] = &config
 		r.IDs = append(r.IDs, config.ID)
 		return nil

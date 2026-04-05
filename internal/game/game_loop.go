@@ -99,6 +99,10 @@ func (g *Game) Update() error {
 		for _, ft := range g.floatingTexts { if ft.Update() { activeTexts = append(activeTexts, ft) } }; g.floatingTexts = activeTexts
 		pIsoX, pIsoY := engine.CartesianToIso(g.playableCharacter.X, g.playableCharacter.Y); g.camera.Follow(pIsoX, pIsoY, 0.1); g.updateOcclusion(); g.ensurePlayerNotStuck()
 	}
+	if g.input.IsMouseButtonJustPressed(engine.MouseButtonLeft) {
+		mx, my := g.input.MousePosition()
+		if mx >= 10 && mx <= 35 && my >= 70 && my <= 95 { g.ToggleHUD() }
+	}
 	if g.isInventoryOpen { g.menuHandler.updateInventoryScreen() } else if g.isTradeOpen { g.menuHandler.updateTradeScreen() } else if g.ActiveDialogue != nil { g.menuHandler.updateDialogueScreen() }
 	return nil
 }
