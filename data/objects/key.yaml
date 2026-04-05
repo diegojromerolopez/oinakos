@@ -1,0 +1,6 @@
+id: key
+name: Key
+type: key
+weight: 0.1
+description: A small key used to unlock a specific container.
+value: 10

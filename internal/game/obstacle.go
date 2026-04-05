@@ -25,6 +25,10 @@ type Obstacle struct {
 
 	Inventory   []*ItemInstance
 	TotalWeight float64
+	OwnerID     string
+	Locked      bool
+	LockHealth  int
+	LockBroken  bool
 }
 
 func (o *Obstacle) IsColliding(targetX, targetY, radius float64) bool {
@@ -49,7 +53,7 @@ func NewObstacle(id string, x, y float64, config *ObstacleArchetype) *Obstacle {
 		if weight > 0 && hp == 0 { hp = int(weight) }
 	}
 
-	return &Obstacle{
+	obs := &Obstacle{
 		ID:              id,
 		X:               x,
 		Y:               y,
@@ -59,9 +63,42 @@ func NewObstacle(id string, x, y float64, config *ObstacleArchetype) *Obstacle {
 		WeightLeft:      weight,
 		CooldownTicks:   0,
 		Alive:           true,
-		EffectTimers:    make(map[ActorInterface]int),
 		Inventory:       make([]*ItemInstance, 0),
+		OwnerID:         "",
+		Locked:          false,
+		LockHealth:      0,
 	}
+
+	if config != nil {
+		if config.OwnerID != "" {
+			obs.OwnerID = config.OwnerID
+		}
+		if config.LockResistance > 0 {
+			obs.Locked = true
+			obs.LockHealth = config.LockResistance
+		}
+	}
+	return obs
+}
+
+func (o *Obstacle) TryStash(it *ItemInstance) bool {
+	if it == nil { return false }
+	capacity := 0.0
+	if o.Archetype != nil { capacity = o.Archetype.MaxCapacity }
+	// If capacity is 0, this obstacle is not a container and cannot hold items
+	if capacity <= 0 { return false }
+	if o.TotalWeight + it.Weight > capacity { return false }
+	o.Inventory = append(o.Inventory, it)
+	o.TotalWeight += it.Weight
+	return true
+}
+
+func (o *Obstacle) TryRetrieve(index int) *ItemInstance {
+	if index < 0 || index >= len(o.Inventory) { return nil }
+	it := o.Inventory[index]
+	o.Inventory = append(o.Inventory[:index], o.Inventory[index+1:]...)
+	o.TotalWeight -= it.Weight
+	return it
 }
 
 func (o *Obstacle) Update() {

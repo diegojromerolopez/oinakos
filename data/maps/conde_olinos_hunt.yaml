@@ -173,13 +173,13 @@ obstacles:
 - archetype: well
   x: -2.0
   y: -9.0
-- archetype: personal_chest
+- archetype: chest
   x: -11.0
   y: 1.0
-- archetype: personal_chest
+- archetype: chest
   x: -9.0
   y: 8.0
-- archetype: personal_chest
+- archetype: chest
   x: -4.0
   y: 8.0
 - archetype: crop_wheat

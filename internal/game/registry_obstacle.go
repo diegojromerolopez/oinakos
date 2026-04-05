@@ -32,11 +32,18 @@ type ObstacleArchetype struct {
 	GrowthDuration int    `yaml:"growth_duration"`
 	Yield          string `yaml:"yield"`           // Object ID to drop when harvested
 
+	// Container & Ownership System
+	MaxCapacity    float64 `yaml:"max_capacity"` // Max weight it can hold
+	OwnerID        string  `yaml:"owner_id"`     // Optional default owner
+	LockResistance int     `yaml:"lock_resistance"`
+
 	// Environmental Hazard System
 	Passable       bool   `yaml:"passable"`  // If true, characters can walk over it
 	IsHazard       bool   `yaml:"is_hazard"` // If true, it can affect actor states (hygiene, health)
 
-	Image engine.Image `yaml:"-"`
+	Image       engine.Image `yaml:"-"`
+	OpenImage   engine.Image `yaml:"-"`
+	ClosedImage engine.Image `yaml:"-"`
 }
 
 func (a *ObstacleArchetype) IsWell() bool {
@@ -93,6 +100,22 @@ func (r *ObstacleRegistry) createLoadJobs(permitList map[string]bool) []*SpriteL
 			continue
 		}
 		if permitList != nil && !permitList[config.ID] && !config.IsWell() {
+			continue
+		}
+		if config.ID == "chest" {
+			jobs = append(jobs, &SpriteLoadJob{
+				Path: path.Join("assets/images/obstacles/chest", "open.png"),
+				Dest: &config.OpenImage,
+			})
+			jobs = append(jobs, &SpriteLoadJob{
+				Path: path.Join("assets/images/obstacles/chest", "closed.png"),
+				Dest: &config.ClosedImage,
+			})
+			// Still load the default Image as fallback or for shared logic
+			jobs = append(jobs, &SpriteLoadJob{
+				Path: path.Join("assets/images/obstacles/chest", "closed.png"),
+				Dest: &config.Image,
+			})
 			continue
 		}
 		imagePath := path.Join("assets/images/obstacles", config.ID+".png")

@@ -261,6 +261,182 @@ func (g *Game) DropSpecificItem(a *Actor, it *ItemInstance) bool {
 	return g.TryDrop(a, len(a.Inventory)-1)
 }
 
+func HasKeyFor(a *Actor, obs *Obstacle) bool {
+	if obs.OwnerID == "" {
+		return true // No owner, no key needed
+	}
+	if a.ID == obs.OwnerID || a.Name == obs.OwnerID {
+		return true // Owner always has access
+	}
+	// Check if character has a key in their inventory
+	for _, it := range a.Inventory {
+		if it != nil && it.Config != nil {
+			if it.Config.Type == "key" && it.TargetID == obs.ID {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (g *Game) TryUnlock(a *Actor, obs *Obstacle) bool {
+	if !obs.Locked { return true }
+	if HasKeyFor(a, obs) {
+		obs.Locked = false
+		if a == &g.playableCharacter.Actor { g.AddFloatingText("Unlocked!", a.X, a.Y, ColorHeal) }
+		if g.audio != nil { g.audio.PlayRandomSound("pickup") } 
+		return true
+	}
+	
+	unlocked := false
+	broken := false
+	locksmithDamage := int(a.GetAbilityYield("locksmith"))
+	if locksmithDamage > 0 {
+		obs.LockHealth -= locksmithDamage
+		if obs.LockHealth <= 0 {
+			unlocked = true
+			if a == &g.playableCharacter.Actor { g.AddFloatingText("Lock picked!", a.X, a.Y, ColorHeal) }
+		} else {
+			if a == &g.playableCharacter.Actor { g.AddFloatingText("Picking lock...", a.X, a.Y, color.RGBA{200, 200, 200, 255}) }
+		}
+	} else {
+		attack := a.GetTotalAttack()
+		obs.LockHealth -= attack
+		if obs.LockHealth <= 0 {
+			unlocked = true
+			broken = true
+			if a == &g.playableCharacter.Actor { g.AddFloatingText("Lock broken!", a.X, a.Y, ColorHarm) }
+		} else {
+			if a == &g.playableCharacter.Actor { g.AddFloatingText("Resists!", a.X, a.Y, ColorHarm) }
+		}
+	}
+	if unlocked { 
+		obs.Locked = false
+		if broken {
+			obs.LockBroken = true
+		}
+	}
+	return unlocked
+}
+
+func (g *Game) TryLock(a *Actor, obs *Obstacle) bool {
+	if obs.Locked { return false }
+	if obs.LockBroken {
+		if a == &g.playableCharacter.Actor { g.AddFloatingText("Lock is broken!", a.X, a.Y, ColorHarm) }
+		return false
+	}
+	if !HasKeyFor(a, obs) {
+		if a == &g.playableCharacter.Actor { g.AddFloatingText("Need key to lock!", a.X, a.Y, ColorHarm) }
+		return false
+	}
+	obs.Locked = true
+	// Reset health to archetype default if archetype exists
+	if obs.Archetype != nil {
+		obs.LockHealth = obs.Archetype.LockResistance
+	}
+	if a == &g.playableCharacter.Actor { g.AddFloatingText("Locked!", a.X, a.Y, ColorHeal) }
+	return true
+}
+
+func (g *Game) TryRepairObstacleLock(a *Actor, obs *Obstacle) bool {
+	if !obs.LockBroken { return false }
+	locksmithDamage := int(a.GetAbilityYield("locksmith"))
+	if locksmithDamage <= 0 {
+		if a == &g.playableCharacter.Actor { g.AddFloatingText("Only locksmiths can repair this!", a.X, a.Y, ColorHarm) }
+		return false
+	}
+	
+	// Repairing a broken lock might take some effort
+	obs.LockBroken = false
+	obs.Locked = false // Repaired, but starts unlocked
+	if obs.Archetype != nil {
+		obs.LockHealth = obs.Archetype.LockResistance
+	}
+	if a == &g.playableCharacter.Actor { g.AddFloatingText("Lock repaired!", a.X, a.Y, ColorHeal) }
+	return true
+}
+
+func (g *Game) TryDropToObstacle(a *Actor, index int, obs *Obstacle) bool {
+	if index < 0 || index >= len(a.Inventory) || obs == nil {
+		return false
+	}
+	
+	if obs.Locked && !g.TryUnlock(a, obs) { return false }
+	
+	it := a.Inventory[index]
+	if obs.TryStash(it) {
+		// Remove from equipped slots if there
+		for slot, equipped := range a.Slots {
+			if equipped == it {
+				delete(a.Slots, slot)
+				break
+			}
+		}
+		a.Inventory = append(a.Inventory[:index], a.Inventory[index+1:]...)
+		a.UpdateEffects()
+		
+		if a.Config.CrouchImage != nil {
+			a.ActionState = ActorCrouching
+			a.CrouchTimer = 30
+		}
+		
+		if a == &g.playableCharacter.Actor {
+			g.AddFloatingText(fmt.Sprintf("Stashed %s", it.Config.Name), a.X, a.Y, ColorHeal)
+		}
+		return true
+	} else if a == &g.playableCharacter.Actor {
+		g.AddFloatingText("Container full!", a.X, a.Y, ColorHarm)
+	}
+	return false
+}
+
+func (g *Game) TryPickupFromObstacle(a *Actor, obs *Obstacle, itemIndex int) bool {
+	if obs == nil || itemIndex < 0 || itemIndex >= len(obs.Inventory) {
+		return false
+	}
+
+	if obs.Locked && !g.TryUnlock(a, obs) { return false }
+
+	it := obs.Inventory[itemIndex]
+	
+	if a.GetTotalWeight()+it.Weight > a.MaxWeight {
+		if g.playableCharacter != nil && a == &g.playableCharacter.Actor {
+			g.AddFloatingText("Too heavy!", a.X, a.Y, ColorHarm)
+		}
+		return false
+	}
+
+	capacity := a.Config.MaxItems
+	if capacity == 0 { capacity = 20 }
+	if len(a.Inventory) >= capacity {
+		if g.playableCharacter != nil && a == &g.playableCharacter.Actor {
+			g.AddFloatingText("Inventory full!", a.X, a.Y, ColorHarm)
+		}
+		return false
+	}
+
+	// Remove from obstacle
+	it = obs.TryRetrieve(itemIndex)
+	if it == nil { return false }
+
+	// Add to actor
+	a.Inventory = append(a.Inventory, it)
+	a.UpdateEffects()
+	
+	if a.Config.CrouchImage != nil {
+		a.ActionState = ActorCrouching
+		a.CrouchTimer = 30
+	}
+	
+	if g.playableCharacter != nil && a == &g.playableCharacter.Actor {
+		g.AddFloatingText(fmt.Sprintf("Retrieved %s", it.Config.Name), a.X, a.Y, ColorHeal)
+		if g.audio != nil {
+			g.audio.PlayRandomSound("pickup")
+		}
+	}
+	return true
+}
+
 
 func (g *Game) AddFloatingText(text string, x, y float64, col color.Color) {
 	// Utility for picking logic

@@ -43,6 +43,9 @@ abilities:
   urban_pathing:
      yield: "survivalism * 1.5"
      parent_attribute: "intellect"
+  locksmith:
+     yield: "dexterity * 0.7 + intellect * 0.3"
+     parent_attribute: "dexterity"
 weapon:
   inline:
     name: Sicari

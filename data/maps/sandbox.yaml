@@ -79,10 +79,10 @@ obstacles:
 - archetype: well
   x: 0
   y: 0
-- archetype: personal_chest
+- archetype: chest
   x: 1
   y: 0
-- archetype: personal_chest
+- archetype: chest
   x: 5
   y: 5
 - archetype: crop_wheat

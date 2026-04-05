@@ -170,6 +170,7 @@ func (a *Actor) GetAbilityYield(abilityID string) float64 {
 	case "appraise": return float64(a.Trading) * 0.5
 	case "haul": return float64(a.PrimaryAttributes.Strength) * 0.01
 	case "sneak": return float64(a.PrimaryAttributes.Dexterity) * 1.0
+	case "locksmith": return float64(a.PrimaryAttributes.Dexterity) * 0.7 + float64(a.PrimaryAttributes.Intellect) * 0.3
 	case "steal": return float64(a.PrimaryAttributes.Dexterity) * 0.5
 	case "pray", "bury": return float64(a.Culture) * 0.3
 	case "teach": return float64(a.Culture) * 0.5

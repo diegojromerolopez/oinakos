@@ -1,5 +1,5 @@
-id: personal_chest
-name: Personal Chest
+id: chest
+name: Chest
 description: A durable wooden chest with iron lock. Essential for personal ownership.
 type: obstacle
 destructible: true
@@ -9,5 +9,5 @@ footprint:
   - {x: 0.4, y: -0.2}
   - {x: 0.4, y: 0.2}
   - {x: -0.4, y: 0.2}
-# The image I just generated
-custom_sprite: assets/images/objects/personal_chest_static.png
+max_capacity: 150.0
+lock_resistance: 500

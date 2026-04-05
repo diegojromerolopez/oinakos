@@ -16,6 +16,17 @@ func (o *Obstacle) Draw(screen engine.Image, vectorRenderer engine.VectorRendere
 	op := engine.NewDrawImageOptions()
 
 	img := o.Archetype.Image
+	if o.Archetype.ID == "chest" {
+		if o.Locked {
+			if o.Archetype.ClosedImage != nil {
+				img = o.Archetype.ClosedImage
+			}
+		} else {
+			if o.Archetype.OpenImage != nil {
+				img = o.Archetype.OpenImage
+			}
+		}
+	}
 	if img == nil {
 		return
 	}

@@ -14,6 +14,7 @@ type ItemInstance struct {
 	LiquidMax     float64 `json:"liquid_max"`     // Maximum volume (Leters)
 	Refillable    bool    `json:"refillable"`     // Can be refilled at water sources
 	DroppedBy  string  `json:"dropped_by,omitempty"`
+	TargetID   string  `json:"target_id,omitempty"`
 	X, Y, Z    float64
 	Pickable   bool
 }

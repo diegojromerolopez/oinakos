@@ -108,7 +108,7 @@ func (wm *WorldManager) AssignPersonalChests() {
 		
 		// Find nearest unassigned chest
 		for _, o := range g.obstacles {
-			if !o.Alive || o.Archetype == nil || o.Archetype.ID != "personal_chest" { continue }
+			if !o.Alive || o.Archetype == nil || o.Archetype.ID != "chest" { continue }
 			if assignedChests[o.ID] { continue }
 			
 			dist := math.Sqrt(math.Pow(c.X-o.X, 2) + math.Pow(c.Y-o.Y, 2))

@@ -508,7 +508,7 @@ obstacles:
 - archetype: apple_tree
   x: 10
   y: 0
-- archetype: personal_chest
+- archetype: chest
   x: 1
   y: 16
 - archetype: smithery
