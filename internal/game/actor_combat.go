@@ -2,7 +2,6 @@ package game
 
 import (
 	"fmt"
-	"image/color"
 	"math/rand"
 )
 
@@ -114,12 +113,17 @@ func (c *Character) hitCharacter(target *Actor, skill string, ctx *SystemContext
 	target.TakeDamage(finalDmg, c, ctx)
 	if skill == AttackPunch || skill == AttackKick || skill == AttackSlap { target.CausePain(float64(finalDmg)*1.5, ctx) }
 	if skill == "restrain" && c.CompetitiveContest(target, "dexterity", "strength") { target.UnconsciousTimer, target.ActionState = 300, ActorIncapacitated }
-	if skill != "" { c.ResolveAbilityEffects(skill, target, ctx) }
 	gain := 0.0; if skill == AttackSlap { gain = 3.0 + rand.Float64()*4.0 } else if skill == AttackPunch { gain = 1.0 + rand.Float64()*2.0 }
 	if gain > 0 {
 		if target.Submission == nil { target.Submission = make(map[string]float64) }
 		target.Submission[c.Name] += gain; if target.Submission[c.Name] > 100 { target.Submission[c.Name] = 100 }
-		if ctx != nil && ctx.World != nil { ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{ Text: fmt.Sprintf("+%.1f sub", gain), X: target.X, Y: target.Y - 1.5, Life: 60, Color: color.RGBA{200, 100, 255, 255} }) }
+	}
+	if c.Behavior == BehaviorCriminal && target.Denarii > 0 && rand.Float64() < 0.25 {
+		stolen := 1 + rand.Intn(3)
+		if stolen > target.Denarii { stolen = target.Denarii }
+		target.Denarii -= stolen; c.Denarii += stolen
+		c.State.Sanity += 10.0 // Criminal satisfaction gain
+		if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s robbed %d denarii from %s!", c.Name, stolen, target.Name), LogNPC) }
 	}
 	if ctx != nil && ctx.World != nil { ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{ Text: fmt.Sprintf("%d", finalDmg), X: target.X, Y: target.Y - 1, Life: 45, Color: ColorHarm }) }
 }

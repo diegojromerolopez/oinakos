@@ -57,13 +57,13 @@ func (a *Actor) SharedUpdate(ctx *SystemContext) {
 	if isWorking {
 		a.WorkTicks++
 		a.LeisureTicks = 0
-		if a.WorkTicks < 1800 { a.State.Sanity += 0.001 } 
-		if a.WorkTicks > 3600 { a.State.Sanity -= 0.01  } 
+		if a.WorkTicks < 1800 { a.State.Sanity += 0.0005 } // Pride in work
+		if a.WorkTicks > 7200 { a.State.Sanity -= 0.0001 } // Moderate stress (reduced from 0.01)
 	} else if isLeisure {
 		a.LeisureTicks++
 		a.WorkTicks = 0
-		if a.LeisureTicks < 3600 { a.State.Sanity += 0.005 } 
-		if a.LeisureTicks > 10800 { a.State.Sanity -= 0.005 } 
+		if a.LeisureTicks < 3600 { a.State.Sanity += 0.001 } // Rest recovery
+		// Removed long-leisure sanity penalty (0.005)
 
 		// DRUNK BEHAVIORAL SHIFTS
 		if a.State.IsDrunk && a.Tick%TicksPerHour == 0 {
@@ -95,8 +95,8 @@ func (a *Actor) updateDecay(ctx *SystemContext) {
 				if !other.IsAlive() || other.Actor.ID == a.ID { continue }
 				dist := math.Sqrt(math.Pow(a.X-other.X, 2) + math.Pow(a.Y-other.Y, 2))
 				if dist < radius {
-					other.Actor.State.Sanity -= 0.05
-					other.Actor.State.Hygiene -= 0.1
+					other.Actor.State.Sanity -= 0.005 // Reduced from 0.05
+					other.Actor.State.Hygiene -= 0.05 // Reduced from 0.1
 					if rand.Float64() < 0.0005 {
 						other.Actor.State.IsSick = true
 						if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s has been nauseated by the miasma of %s.", other.Name, a.Name), LogWarning) }
@@ -110,7 +110,7 @@ func (a *Actor) updateDecay(ctx *SystemContext) {
 func (a *Actor) updateGrief(ctx *SystemContext) {
 	if a.GriefTicks > 0 {
 		a.GriefTicks--
-		a.State.Sanity -= 0.05 
+		a.State.Sanity -= 0.001 // Reduced from 0.05 to allow survival
 		if a.GriefTicks % 600 == 0 && a.IsAlive() && ctx != nil && ctx.World != nil {
 			ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{ Text: "Mourning...", X: a.X, Y: a.Y, Life: 60, Color: ColorHarm })
 		}

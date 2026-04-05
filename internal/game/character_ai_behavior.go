@@ -222,6 +222,55 @@ func (c *Character) updateFarmer(ctx *SystemContext, obstacles []*Obstacle) {
 	c.updateWander(ctx, obstacles)
 }
 
+func (c *Character) updateCriminal(ctx *SystemContext, obstacles []*Obstacle) {
+	if c.TargetActor == nil || !c.TargetActor.IsAlive() {
+		// Criminals actively look for prey (Alone or Vulnerable)
+		var prey *Character; minD := 25.0
+		for _, other := range ctx.World.Characters {
+			if other == c || !other.IsAlive() { continue }
+			isVulnerable := other.State.Hunger > 60 || other.State.Thirst > 60 || other.State.Fatigue > 60 || other.State.IsDrunk
+			dist := math.Sqrt(math.Pow(c.X-other.X, 2) + math.Pow(c.Y-other.Y, 2))
+			if dist < minD && (isVulnerable || rand.Float64() < 0.1) {
+				prey = other; minD = dist
+			}
+		}
+		if prey != nil { c.TargetActor = &prey.Actor }
+	}
+
+	if c.TargetActor != nil {
+		dx, dy := c.TargetActor.X-c.X, c.TargetActor.Y-c.Y
+		dist := math.Sqrt(dx*dx + dy*dy)
+		if dist < 1.4 {
+			// Attack to rob or release arousal
+			if c.State.Arousal > 70 && c.ActionState != ActorIntercourse {
+				c.ActionState, c.Tick = ActorIntercourse, 0
+			} else if c.ActionState != ActorAttacking {
+				c.ActionState, c.Tick = ActorAttacking, 0
+			}
+		} else {
+			c.executeMovement(ctx, dx, dy, obstacles, false)
+		}
+		return
+	}
+
+	// If no prey, look for items to steal
+	if c.TargetItem == nil || !c.TargetItem.Pickable {
+		c.TargetItem = c.findLootTarget(ctx.World.Items)
+	}
+	if c.TargetItem != nil {
+		dx, dy := c.TargetItem.X-c.X, c.TargetItem.Y-c.Y
+		if math.Sqrt(dx*dx+dy*dy) < 1.2 {
+			ctx.World.Game.TryPickup(&c.Actor, c.TargetItem)
+			c.TargetItem = nil
+		} else {
+			c.executeMovement(ctx, dx, dy, obstacles, false)
+		}
+		return
+	}
+
+	c.updateWander(ctx, obstacles)
+}
+
 func (c *Character) updateChaotic(ctx *SystemContext, obstacles []*Obstacle) {
 	if c.TargetActor == nil || c.TargetActor.ActionState == ActorDead {
 		var nearest *Character
@@ -266,7 +315,7 @@ func (c *Character) updateChaotic(ctx *SystemContext, obstacles []*Obstacle) {
 
 func (c *Character) updateSleepCycle(ctx *SystemContext) {
 	if c.ActionState == ActorResting {
-		if c.State.Fatigue >= 100 { 
+		if c.State.Fatigue <= 0 { 
 			c.ActionState, c.Tick, c.LastAIReasoning = ActorIdle, 0, "Well rested!"
 		}
 		return

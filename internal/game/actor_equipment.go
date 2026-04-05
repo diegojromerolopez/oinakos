@@ -279,9 +279,11 @@ func (a *Actor) LoadEquipment(objRegistry *ObjectRegistry) {
 		}
 	}
 
-	for _, objID := range a.Config.Inventory {
-		if obj, ok := objRegistry.Objects[objID]; ok {
-			a.Inventory = append(a.Inventory, NewItemInstance(obj.ID, obj, a.X, a.Y))
+	for _, entry := range a.Config.Inventory {
+		if obj, ok := objRegistry.Objects[entry.ID]; ok {
+			for i := 0; i < entry.Count; i++ {
+				a.Inventory = append(a.Inventory, NewItemInstance(obj.ID, obj, a.X, a.Y))
+			}
 		}
 	}
 

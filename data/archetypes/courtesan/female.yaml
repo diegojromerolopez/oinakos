@@ -67,12 +67,6 @@ stats:
     max: 15
     mode: normal
     mean: 15.0
-    sd: 0.0
-    min: 25
-    max: 25
-    mode: normal
-    mean: 25.0
-    sd: 0.0
   max_weight:
     min: 70
     max: 70
@@ -83,6 +77,9 @@ abilities:
   punch:
     damage: melee_attack * 1.0
     parent_attribute: strength
+  mate:
+    yield: health * 0.25
+    parent_attribute: health
   slap:
     damage: melee_attack * 0.4
     parent_attribute: dexterity

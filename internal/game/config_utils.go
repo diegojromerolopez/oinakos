@@ -15,7 +15,7 @@ func forEachYAML(assets fs.FS, baseDir string, callback func(fpath string, data 
 	if assets != nil {
 		fs.WalkDir(assets, baseDir, func(fpath string, d fs.DirEntry, err error) error {
 			if err != nil {
-				return nil // Skip if not found in embedded
+				return nil
 			}
 			if d.IsDir() || (filepath.Ext(fpath) != ".yaml" && filepath.Ext(fpath) != ".yml") {
 				return nil
@@ -28,8 +28,50 @@ func forEachYAML(assets fs.FS, baseDir string, callback func(fpath string, data 
 		})
 	}
 
-	// 2. Local oinakos/data overrides
+	// 2. Local data overrides (with path discovery)
+	foundPath := baseDir
+	if _, err := os.Stat(foundPath); err != nil {
+		// Try walking up to 3 levels up to find the project root
+		candidate := filepath.Join("../..", baseDir)
+		if _, err := os.Stat(candidate); err == nil {
+			foundPath = candidate
+		} else {
+			candidate = filepath.Join("..", baseDir)
+			if _, err := os.Stat(candidate); err == nil {
+				foundPath = candidate
+			}
+		}
+	}
+
+	if _, err := os.Stat(foundPath); err == nil {
+		filepath.WalkDir(foundPath, func(fpath string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return nil
+			}
+			if d.IsDir() || (filepath.Ext(fpath) != ".yaml" && filepath.Ext(fpath) != ".yml") {
+				return nil
+			}
+			data, err := os.ReadFile(fpath)
+			if err == nil {
+				callback(fpath, data)
+			}
+			return nil
+		})
+	}
+
+	// 3. Optional 'oinakos/' prefixed local data...
 	localBaseDir := filepath.Join("oinakos", baseDir)
+	if _, err := os.Stat(localBaseDir); err != nil {
+		candidate := filepath.Join("../..", "oinakos", baseDir)
+		if _, err := os.Stat(candidate); err == nil {
+			localBaseDir = candidate
+		} else {
+			candidate = filepath.Join("..", "oinakos", baseDir)
+			if _, err := os.Stat(candidate); err == nil {
+				localBaseDir = candidate
+			}
+		}
+	}
 	if _, err := os.Stat(localBaseDir); err == nil {
 		filepath.WalkDir(localBaseDir, func(fpath string, d fs.DirEntry, err error) error {
 			if err != nil || d.IsDir() || (filepath.Ext(fpath) != ".yaml" && filepath.Ext(fpath) != ".yml") {

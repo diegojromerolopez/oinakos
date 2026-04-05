@@ -9,13 +9,13 @@ import (
 // HandleSocial manages non-combat interactions with nearby NPCs.
 func (c *Character) HandleSocial(ctx *SystemContext) {
 	// Don't interact every tick
-	if c.Tick%180 != 0 { return }
+	if c.Tick%60 != 0 { return }
 
 	for _, other := range ctx.World.Characters {
 		if other == c || !other.IsAlive() { continue }
 		
 		dist := math.Sqrt(math.Pow(c.X-other.X, 2) + math.Pow(c.Y-other.Y, 2))
-		if dist > 3.0 { continue }
+		if dist > 8.0 { continue }
 
 		// 1. Check existing relationship (adjusted for hygiene)
 		sentiment := c.GetEffectiveSentiment(&other.Actor)

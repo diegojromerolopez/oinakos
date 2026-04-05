@@ -11,7 +11,6 @@ attributes:
   intellect: { min: 20, max: 20, mode: normal, mean: 20, sd: 0 }
   wisdom: { min: 40, max: 40, mode: normal, mean: 40, sd: 0 }
 stats:
-  health_points: { min: 40, max: 40, mode: normal, mean: 40, sd: 0 }
   health_points: { min: 80, max: 80, mode: normal, mean: 80, sd: 0 }
   speed: { min: 0.08, max: 0.10, mode: normal, mean: 0.09, sd: 0.01 }
   attack_cooldown: { min: 90, max: 90, mode: normal, mean: 90, sd: 0 }

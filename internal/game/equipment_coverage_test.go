@@ -69,7 +69,7 @@ func TestActor_EquipmentCoverage(t *testing.T) {
 	// 4. LoadEquipment
 	p.Config = &EntityConfig{
 		Equipment: map[string]string{"torso": "armor"},
-		Inventory: []string{"sword"},
+		Inventory: []InventoryConfigEntry{{ID: "sword", Count: 1}},
 	}
 	p.LoadEquipment(ctx.Registries.Objects)
 	if p.Slots["torso"] == nil { t.Error("Failed to load equipment") }

@@ -41,12 +41,7 @@ stats:
     mode: normal
     mean: 0.5
     sd: 0.0
-  is_milkable:
-    min: true
-    max: true
-    mode: normal
-    mean: 1.0
-    sd: 0.0
+  is_milkable: true
   milk_cooldown:
     min: 7200
     max: 7200

@@ -72,12 +72,6 @@ stats:
     max: 40
     mode: normal
     mean: 40.0
-    sd: 0.0
-    min: 60
-    max: 60
-    mode: normal
-    mean: 60.0
-    sd: 0.0
   max_weight:
     min: 250
     max: 250

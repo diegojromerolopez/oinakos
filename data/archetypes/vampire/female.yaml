@@ -78,12 +78,6 @@ stats:
     max: 55
     mode: normal
     mean: 55.0
-    sd: 0.0
-    min: 85
-    max: 85
-    mode: normal
-    mean: 85.0
-    sd: 0.0
 abilities:
   punch:
     damage: melee_attack * 1.0

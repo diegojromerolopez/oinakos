@@ -59,7 +59,7 @@ func (c *Character) updateAI(ctx *SystemContext) {
 		}
 	}
 
-	if c.ActionState == ActorDrinking || c.ActionState == ActorEating || c.ActionState == ActorResting || c.ActionState == ActorRelieving || c.ActionState == ActorChopping || c.ActionState == ActorDigging || c.ActionState == ActorForaging || c.ActionState == ActorFeeding || c.ActionState == ActorBathing || c.ActionState == ActorCrouching {
+	if c.ActionState == ActorDrinking || c.ActionState == ActorEating || c.ActionState == ActorRelieving || c.ActionState == ActorChopping || c.ActionState == ActorDigging || c.ActionState == ActorForaging || c.ActionState == ActorFeeding || c.ActionState == ActorCrouching {
 		if c.Tick >= 60 { 
 			if c.ActionState == ActorRelieving {
 				c.AlleviateProperly(ctx)
@@ -154,7 +154,7 @@ func (c *Character) updateAI(ctx *SystemContext) {
 		attackRange := 1.4
 		if c.RawStats.AttackRange > 0 { attackRange = c.RawStats.AttackRange }
 		if c.Weapon != nil { attackRange = c.Weapon.GetMaxDistance() }
-		canAttack := (c.TargetActor != nil && c.Alignment != c.TargetActor.Alignment) || c.Behavior == BehaviorChaotic || c.Behavior == BehaviorNpcFighter
+		canAttack := (c.TargetActor != nil && c.Alignment != c.TargetActor.Alignment) || c.Behavior == BehaviorChaotic
 		if dist < attackRange && canAttack { 
 			if dist < attackRange*0.5 && c.Weapon != nil && c.Weapon.IsRanged() { 
 				c.executeMovement(ctx, dx, dy, ctx.World.Obstacles, true) 
@@ -169,11 +169,34 @@ func (c *Character) updateAI(ctx *SystemContext) {
 	}
 
 	// 3. Behavior Layer (Map Goals / Roles)
+	// PROTECTED STATES: Do not wander if we are busy with long-running tasks or survival relief
+	isBusy := c.ActionState != ActorIdle && c.ActionState != ActorWalking && c.ActionState != ActorBerserk
+	if isBusy { return }
+
 	if isAIPlayer {
-		if c.WanderDirX != 0 || c.WanderDirY != 0 {
-			c.executeMovement(ctx, c.WanderDirX, c.WanderDirY, ctx.World.Obstacles, false)
-		} else {
-			c.ActionState = ActorIdle
+		// SOCIAL MAGNET: Gravitate toward Tavern during leisure
+		isLeisure := ctx.World.DayTick >= TicksPerShift && ctx.World.DayTick < TicksPerShift*2
+		if isLeisure && (c.ActionState == ActorIdle || c.ActionState == ActorWalking) {
+			var hub *Obstacle; minD := 100.0
+			for _, o := range ctx.World.Obstacles {
+				if o.Alive && (strings.Contains(strings.ToLower(o.ID), "tavern") || strings.Contains(strings.ToLower(o.ID), "market")) {
+					d := math.Sqrt(math.Pow(c.X-o.X, 2) + math.Pow(c.Y-o.Y, 2))
+					if d < minD { minD, hub = d, o }
+				}
+			}
+			if hub != nil && minD > 4.0 {
+				if IsDebugEnabled() && c.Tick%600 == 0 { DebugLog("%s gravitating to hub %s (dist %.1f)", c.Name, hub.ID, minD) }
+				c.executeMovement(ctx, hub.X-c.X, hub.Y-c.Y, ctx.World.Obstacles, false)
+				return
+			}
+		}
+
+		if c.ActionState == ActorIdle || c.ActionState == ActorWalking {
+			if c.WanderDirX != 0 || c.WanderDirY != 0 {
+				c.executeMovement(ctx, c.WanderDirX, c.WanderDirY, ctx.World.Obstacles, false)
+			} else {
+				c.ActionState = ActorIdle
+			}
 		}
 	} else {
 		obstacles := ctx.World.Obstacles
@@ -185,6 +208,7 @@ func (c *Character) updateAI(ctx *SystemContext) {
 		case BehaviorPatrol: c.updatePatrol(ctx, obstacles)
 		case BehaviorChaos: c.updateChaotic(ctx, obstacles)
 		case BehaviorTrader: c.updateWander(ctx, obstacles)
+		case BehaviorCriminal: c.updateCriminal(ctx, obstacles)
 		case BehaviorHunter: c.updateChaotic(ctx, obstacles) // Fallback for hunters searching
 		case BehaviorWander: 
 			if c.Alignment == AlignmentAlly && ctx.World.PlayableCharacter != nil {

@@ -36,7 +36,13 @@ func (a *Actor) die(attacker ActorInterface, ctx *SystemContext) {
 		if act := attacker.GetActor(); act != nil {
 			act.Kills++; if a.Config != nil {
 				// Guilt Penalty: Killing humanoids (non-animals) harms the killer's sanity
-				if !a.Config.IsAnimal { act.State.Sanity -= 20.0 }
+				if !a.Config.IsAnimal { 
+					penalty := 20.0
+					if act.Behavior == BehaviorCriminal || act.ActionState == ActorBerserk {
+						penalty = 5.0 // Hardened/Psychotic characters suffer less guilt
+					}
+					act.State.Sanity -= penalty 
+				}
 				act.MapKills[a.Config.ID]++; xp := a.Config.XP
 				if xp <= 0 { xp = 1 }; act.AddXP(xp)
 			}

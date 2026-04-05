@@ -21,6 +21,7 @@ var (
 	debug          bool
 	fastMode       bool
 	durationSec    int
+	lastLoggedEvent int
 )
 
 const HeadlessVersion = "1.0.0-headless"
@@ -69,8 +70,8 @@ func main() {
 	
 	g.TriggerMapLoad()
 	
-	// Wait a bit for the world to populate
-	time.Sleep(3 * time.Second)
+	// Wait a tiny bit for the world to populate
+	time.Sleep(100 * time.Millisecond)
 	
 	// Disable external AI
 	g.SetAIManager(nil)
@@ -81,7 +82,7 @@ func main() {
 
 	updatesPerTick := 1
 	if fastMode {
-		updatesPerTick = 5000 
+		updatesPerTick = 50000 
 	}
 
 	ticks := 0
@@ -117,7 +118,7 @@ func main() {
 			// 10 year check
 			// 1 year = 360 days = 360 * 17280 ticks = 6,220,800 ticks
 			// 10 years = 62,208,000 ticks
-			if ticks >= 62208000 {
+			if ticks >= 62208000 { // 10 Years
 				log.Printf("SUCCESS: Character survived for 10 years (%d ticks)!", ticks)
 				p := g.GetPlayableCharacter()
 				if p != nil {
@@ -127,24 +128,23 @@ func main() {
 				}
 				os.Exit(0)
 			}
+			if ticks%500000 == 0 { // Approximately Monthly
+				p := g.GetPlayableCharacter()
+				if p != nil {
+					charCount := len(g.World.Characters)
+					log.Printf("[SIM] Month-ish: %d | Ticks: %d | Pop: %d | Shift: %d", ticks/500000, ticks, charCount, p.Shift)
+				}
+				// Print new event log entries
+				events := g.EventLog
+				for i := lastLoggedEvent; i < len(events); i++ {
+					log.Printf("[EVENT] %s", events[i].Text)
+				}
+				lastLoggedEvent = len(events)
+			}
 		}
 
-		if time.Since(lastLogTime) > 10*time.Second {
-			p := g.GetPlayableCharacter()
-			if p != nil {
-				charCount := len(g.World.Characters)
-				obsCount := len(g.World.Obstacles)
-				piglets := 0
-				matures := 0
-				for _, c := range g.World.Characters {
-					if strings.Contains(strings.ToLower(c.Config.ID), "piglet") { piglets++ }
-				}
-				for _, o := range g.World.Obstacles {
-					if o.Alive && o.Archetype != nil && o.Archetype.IsCrop && o.GrowthStage >= 2 { matures++ }
-				}
-				log.Printf("[SIM] Progress: %d ticks | Age: %.2f | Hunger: %.1f | Thirst: %.1f | Pop: %d (%d piglets) | Mature Crops: %d | Obs: %d", 
-					ticks, p.State.Age.Current, p.State.Hunger, p.State.Thirst, charCount, piglets, matures, obsCount)
-			}
+		if time.Since(lastLogTime) > 60*time.Second {
+			log.Printf("[SIM] Still running... Ticks=%d", ticks)
 			lastLogTime = time.Now()
 		}
 

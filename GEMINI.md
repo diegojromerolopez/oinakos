@@ -18,6 +18,9 @@ Oinakos is a performance-optimized, infinite isometric action RPG and biological
   - **Isometric**: Rendering only. `isoX = (x - y)`, `isoY = (x + y) * 0.5`.
 - **Simulation Timing**: Locked at **60 TPS**. 1 day = 17,280 ticks. 1 year = 360 days (standard).
 - **Headless Mode**: Triggered via `go run -tags headless .` or `make run-headless`. Uses `MockGraphics` and `MockInput` to run the simulation without a window.
+- **Long-term Simulation**: To run an autonomous simulation that logs to a file for AI agent analysis:
+  `go run -tags headless . -fast -debug > simulation_1year.log 2>&1`
+  *Use `-fast` for $10\times$ speed and `-debug` for detailed biological/breeding logs.*
 - **Adult Mode**: Toggleable in `settings.yml`. Enables arousal, physical trauma, and mature interaction mechanics.
 
 ---

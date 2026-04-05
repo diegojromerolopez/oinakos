@@ -2,6 +2,7 @@ package game
 
 import (
 	"io/fs"
+	"log"
 	"path"
 	"path/filepath"
 	"strings"
@@ -49,13 +50,18 @@ func (r *ArchetypeRegistry) LoadAll(assets fs.FS) error {
 		_ = forEachYAML(assets, baseDir, func(fpath string, data []byte) error {
 			relP, _ := filepath.Rel(baseDir, fpath); subDir, varN := filepath.Dir(relP), strings.TrimSuffix(filepath.Base(fpath), filepath.Ext(fpath))
 			if subDir == "." { subDir = "" }
-			var cfg Archetype; if err := yaml.Unmarshal(data, &cfg); err != nil { return nil }
+			var cfg Archetype; if err := yaml.Unmarshal(data, &cfg); err != nil {
+				log.Printf("ERROR: Failed to unmarshal %s: %v", fpath, err)
+				return nil 
+			}
 			if cfg.ID == "" { cfg.ID = varN }; sanitizeEntityConfig(&cfg, fpath)
 			cat := "archetypes"; if baseDir == "data/animals" { cat, cfg.IsAnimal = "animals", true }
 			cfg.AssetDir, cfg.AudioDir, cfg.SoundID = path.Join("assets/images", cat, subDir, varN), path.Join("assets/audio", cat, subDir, varN), cfg.ID
-			r.Archetypes[cfg.ID], r.IDs = &cfg, append(r.IDs, cfg.ID); return nil
+			r.Archetypes[cfg.ID], r.IDs = &cfg, append(r.IDs, cfg.ID)
+			return nil
 		})
 	}
+	log.Printf("DEBUG: Archetype Registry loaded %d entries", len(r.IDs))
 	return nil
 }
 func (r *ArchetypeRegistry) CountAssets(p map[string]bool) int { return len(r.createLoadJobs(p)) }

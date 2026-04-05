@@ -17,7 +17,6 @@ func (r *CharacterRegistry) PlayableIDs() []string {
 }
 
 func (r *CharacterRegistry) LoadAll(assets fs.FS) error {
-	if assets == nil { return nil }
 	return forEachYAML(assets, "data/characters", func(fpath string, data []byte) error {
 		var cfg EntityConfig; if err := yaml.Unmarshal(data, &cfg); err != nil { return nil }
 		if cfg.ID == "" { cfg.ID = strings.TrimSuffix(filepath.Base(fpath), filepath.Ext(fpath)) }

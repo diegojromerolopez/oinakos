@@ -28,9 +28,6 @@ func (r *ObjectRegistry) Get(id string) *ObjectConfig {
 }
 
 func (r *ObjectRegistry) LoadAll(assets fs.FS) error {
-	if assets == nil {
-		return nil
-	}
 	const baseDir = "data/objects"
 	return forEachYAML(assets, baseDir, func(fpath string, data []byte) error {
 		var config ObjectConfig

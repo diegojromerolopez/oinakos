@@ -226,9 +226,6 @@ func NewCampaignRegistry() *CampaignRegistry {
 }
 
 func (r *CampaignRegistry) LoadAll(assets fs.FS) error {
-	if assets == nil {
-		return nil
-	}
 	const campaignDir = "data/campaigns"
 	return forEachYAML(assets, campaignDir, func(fpath string, data []byte) error {
 		normalizedPath := filepath.ToSlash(fpath)
@@ -261,9 +258,6 @@ func NewMapTypeRegistry() *MapTypeRegistry {
 }
 
 func (r *MapTypeRegistry) LoadAll(assets fs.FS) error {
-	if assets == nil {
-		return nil
-	}
 	dirs := []string{"data/map_types", "data/maps", "data/campaigns"}
 	for _, loadDir := range dirs {
 		forEachYAML(assets, loadDir, func(fpath string, data []byte) error {

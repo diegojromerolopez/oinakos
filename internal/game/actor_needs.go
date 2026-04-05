@@ -54,10 +54,10 @@ func (a *Actor) updateNeeds(ctx *SystemContext) {
 	for _, other := range ctx.World.Characters {
 		if other.GetActor() != a && other.IsAlive() {
 			dist := math.Sqrt(math.Pow(a.X-other.X, 2) + math.Pow(a.Y-other.Y, 2))
-			if dist < 15.0 { isAlone = false; break }
+			if dist < 30.0 { isAlone = false; break }
 		}
 	}
-	if isAlone && isNight { a.State.Sanity -= 0.005 }
+	if isAlone && isNight { a.State.Sanity -= 0.0001 } // Reduced from 0.005 to prevent overnight insanity
 	if a.State.Fatigue > 80 { a.State.Sanity -= 0.002 } // Cognitive exhaustion
  
 	// Spiritual Healing

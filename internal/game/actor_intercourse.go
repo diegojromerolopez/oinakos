@@ -9,7 +9,7 @@ import (
 
 func (a *Actor) isWilling() bool {
 	if a.SexualOrientation == "asexual" { return false }
-	return a.IsAlive() && a.State.Sanity > 20 && a.MatingCooldown <= 0 && !a.IsPregnant
+	return a.IsAlive() && a.State.Sanity >= 0 && a.MatingCooldown <= 0 && !a.IsPregnant
 }
 
 func (a *Actor) updateBreeding(ctx *SystemContext) {
@@ -29,7 +29,9 @@ func (a *Actor) updateBreeding(ctx *SystemContext) {
 	if !a.Config.IsAnimal && a.Shift != ShiftLeisure && a.ActionState != ActorBerserk { return }
 
 	var mate *Actor
-	minDist := 4.0 // Increased interaction range for social density
+	minDist := 10.0 // Increased interaction range for social density
+	if IsDebugEnabled() && a.Tick%TicksPerHour == 0 { DebugLog("BREEDING-UPDATE: %s is searching (Shift:%d, Sanity:%.1f, Arousal:%.1f)", a.Name, a.Shift, a.State.Sanity, a.State.Arousal) }
+
 	for _, char := range ctx.World.Characters {
 		other := &char.Actor
 		if other.Name == a.Name || !other.IsAlive() { continue }
@@ -49,7 +51,7 @@ func (a *Actor) updateBreeding(ctx *SystemContext) {
 			
 			// PROFESSIONAL GATE (Elite Simulation: Economic Requirement)
 			isService := other.Config != nil && strings.Contains(other.Config.ID, "courtesan")
-			isViolent := a.ActionState == ActorBerserk
+			isViolent := a.ActionState == ActorBerserk || a.Behavior == BehaviorCriminal
 
 			if isService && !isViolent {
 				// Non-violent mating with courtesans REQUIRES money.
@@ -87,7 +89,9 @@ func (a *Actor) updateBreeding(ctx *SystemContext) {
 			}
 
 			if canMate {
-				if d := math.Sqrt(math.Pow(a.X-other.X, 2)+math.Pow(a.Y-other.Y, 2)); d < minDist { mate = other; break }
+				dist := math.Sqrt(math.Pow(a.X-other.X, 2)+math.Pow(a.Y-other.Y, 2))
+				if IsDebugEnabled() && a.Tick%600 == 0 { DebugLog("BREEDING-CANDIDATE: %s found %s at %.1f pedes", a.Name, other.Name, dist) }
+				if dist < minDist { mate = other; break }
 			}
 		}
 	}
@@ -104,6 +108,11 @@ func (a *Actor) updateBreeding(ctx *SystemContext) {
 
 func (a *Actor) isBioOpposite(other *Actor) bool {
 	if a.Config == nil || other.Config == nil { return false }
+	// Humans / NPC can mate within the same broad species (non-animals)
+	if !a.Config.IsAnimal && !other.Config.IsAnimal {
+		return a.GetBioSex() != other.GetBioSex()
+	}
+	// Animals must be of the same species ID
 	if a.Config.ID != other.Config.ID { return false }
 	return a.GetBioSex() != other.GetBioSex()
 }
@@ -146,13 +155,17 @@ func (a *Actor) mate(ctx *SystemContext, mate *Actor, practice string) {
 
 	if practice == "vaginal" {
 		f := a; if a.GetBioSex() == "male" { f = mate }
-		if f.State.Arousal < 30 && !a.Config.IsAnimal {
+		// Only cause pain/trauma if the participant was UNWILLING.
+		if f.State.Arousal < 30 && !a.Config.IsAnimal && !f.isWilling() {
 			f.CausePain(40.0, ctx)
 			if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] receives severe physical trauma (assault)", f.Name), LogNPC) }
 		}
 	} else if practice == "anal" {
-		mate.CausePain(30.0, ctx)
-		if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] receives severe physical trauma from anal assault", mate.Name), LogNPC) }
+		// Only cause pain if unwilling or specifically hostile
+		if !mate.isWilling() || isViolent {
+			mate.CausePain(30.0, ctx)
+			if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] receives physical trauma from forced intercourse", mate.Name), LogNPC) }
+		}
 	}
 
 	// BLACKOUT MEMORY LOSS: If both were drunk, they gain NO relationship from the act
@@ -166,15 +179,24 @@ func (a *Actor) mate(ctx *SystemContext, mate *Actor, practice string) {
 	if isViolent {
 		if mate.Relationships == nil { mate.Relationships = make(map[string]float64) }
 		mate.Relationships[a.ID] -= 50.0 // Massive relationship damage
-		mate.State.Sanity -= 20.0        // Deep emotional trauma
+		mate.State.Sanity -= 10.0        // Emotional trauma (reduced from 20)
 		mate.ModifySubmission(a.ID, 25.0) // Submission as a trauma response
 		mate.AddMemory(mate.Tick, "trauma", a.Name, -50.0)
 		
 		// Probability of acute mental break leading to depression
-		if rand.Float64() < 0.25 {
-			mate.State.Sanity -= 25.0
+		if rand.Float64() < 0.15 {
+			mate.State.Sanity -= 15.0
 			if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] has suffered a complete mental breakdown after the assault.", mate.Name), LogWarning) }
 		}
+
+		// PREDATOR REWARD: Criminal gain satisfaction/dominance from the act
+		a.State.Sanity += 30.0
+		a.State.Fatigue -= 20.0
+		if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s feels empowered by their dominance over %s.", a.Name, mate.Name), LogNPC) }
+	} else {
+		// Consensual mating REWARDS sanity
+		a.State.Sanity += 15.0
+		mate.State.Sanity += 15.0
 	}
 
 
@@ -195,8 +217,9 @@ func (a *Actor) mate(ctx *SystemContext, mate *Actor, practice string) {
 	if mother == nil || father == nil { return } 
 	if mother.IsTransexual || father.IsTransexual { return }
 
-	chance := mother.GetAbilityYield("mate")
-	if mother.Config != nil && strings.Contains(mother.Config.ID, "courtesan") { chance *= 0.2 }
+	chance := (float64(mother.PrimaryAttributes.Health) * float64(father.PrimaryAttributes.Health)) / 10000.0
+	// Apply courtesan penalty/bonus (Balance: Courtesans get a 0.5 fertile modifier)
+	if mother.Config != nil && strings.Contains(mother.Config.ID, "courtesan") { chance *= 0.5 }
 
 	if rand.Float64() < chance && !mother.IsPregnant {
 		mother.IsPregnant, mother.FatherID = true, father.Name

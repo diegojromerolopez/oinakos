@@ -249,6 +249,13 @@ inhabitants:
   y: 20
   alignment: neutral
   behavior: behavior_criminal
+- name: Marca
+  archetype: criminal_male
+  npc_id: marca
+  x: 5
+  y: 15
+  alignment: neutral
+  behavior: criminal
 - archetype: peasant_male
   x: 30
   y: 10

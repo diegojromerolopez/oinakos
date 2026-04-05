@@ -2,7 +2,6 @@ package game
 
 import (
 	"fmt"
-	"log"
 	"math"
 	"strings"
 
@@ -13,18 +12,15 @@ func (c *Character) Update(ctx *SystemContext) {
 	c.Tick++
 	c.AttackTimer++
 	if (c.ID == "oinakos" || c.ID == "hero") {
-		significantChange := c.ActionState != c.LastLoggedState || math.Abs(float64(c.State.HealthPoints-c.LastLoggedHP)) > 10
-		if significantChange {
-			log.Printf("[SIM-HERO] WorldTick: %d | HP: %d/%d | H:%.1f T:%.1f | State: %s | Inv(%d)", 
-				ctx.World.Game.Tick, c.State.HealthPoints, c.State.MaxHealthPoints, c.State.Hunger, c.State.Thirst, c.ActionState, len(c.Inventory))
-			c.LastLoggedState, c.LastLoggedHP = c.ActionState, c.State.HealthPoints
-		}
+		c.LastLoggedState, c.LastLoggedHP = c.ActionState, c.State.HealthPoints
 	}
 	c.SharedUpdate(ctx)
 	c.ProcessCooking(ctx)
 	c.ProcessWorkshop(ctx)
 	if c.IsPlayerControlled { c.updatePlayer(ctx) } else { 
-		c.updateAI(ctx)
+		if c.Tick%10 == 0 {
+			c.updateAI(ctx)
+		}
 		c.ShareRumors(ctx)
 	}
 }
@@ -79,7 +75,11 @@ func (c *Character) updatePlayer(ctx *SystemContext) {
 	if c.HitTimer > 0 { c.HitTimer-- }
 	if c.ActionState == ActorAttacking {
 		if c.Tick == 15 { c.CheckAttackHits(ctx, c.PendingSkill) }
-		if c.Tick >= 30 { c.ActionState = ActorIdle; c.PendingSkill = "" }
+		if c.Tick >= 30 { 
+			c.ActionState = ActorIdle
+			if c.State.Sanity <= 0 { c.ActionState = ActorBerserk }
+			c.PendingSkill = "" 
+		}
 		return
 	}
 	if c.ActionState == ActorDrinking || c.ActionState == ActorEating {

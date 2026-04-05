@@ -160,6 +160,9 @@ func (wm *WorldManager) LoadMapLevel() {
 		var config *EntityConfig; var ok bool
 		id := ps.NPC; if ps.NPCID != "" { id = ps.NPCID }
 		if id != "" { config, ok = g.characterRegistry.Characters[id] } else if ps.Archetype != "" { config, ok = g.archetypeRegistry.Archetypes[ps.Archetype] }
+		
+		if !ok && IsDebugEnabled() { DebugLog("NPC-LOAD-FAIL: Could not find config for %s/%s (Archetype:%s, NPC:%s)", ps.Name, ps.ID, ps.Archetype, ps.NPC) }
+
 		if ok {
 			npc := NewCharacter(ps.X, ps.Y, config, g.mapLevel, false, g.Registries.Objects)
 			npc.Alignment, npc.MustSurvive, npc.IsTarget = ps.Alignment, ps.MustSurvive, ps.IsTarget
@@ -178,6 +181,7 @@ func (wm *WorldManager) LoadMapLevel() {
 			case "behavior_criminal": npc.Behavior = BehaviorCriminal
 			}
 			g.characters = append(g.characters, npc)
+			if IsDebugEnabled() && len(g.characters) < 10 { DebugLog("NPC-LOADED: %s (%s)", npc.Name, ps.Archetype) }
 		}
 	}
 
@@ -185,7 +189,9 @@ func (wm *WorldManager) LoadMapLevel() {
 		if po.Disabled { continue }
 		if config, ok := g.obstacleRegistry.Archetypes[po.Archetype]; ok {
 			px, py := 0.0, 0.0; if po.X != nil { px = *po.X }; if po.Y != nil { py = *po.Y }
-			g.obstacles = append(g.obstacles, NewObstacle(po.ID, px, py, config))
+			id := po.ID
+			if id == "" { id = fmt.Sprintf("%s_%d_%d", po.Archetype, int(px), int(py)) }
+			g.obstacles = append(g.obstacles, NewObstacle(id, px, py, config))
 		}
 		if i%10 == 0 { runtime.Gosched() }
 	}

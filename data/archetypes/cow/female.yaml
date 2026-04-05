@@ -58,12 +58,6 @@ stats:
     max: 25
     mode: normal
     mean: 25.0
-    sd: 0.0
-    min: 40
-    max: 40
-    mode: normal
-    mean: 40.0
-    sd: 0.0
   speed:
     min: 0.01
     max: 0.01

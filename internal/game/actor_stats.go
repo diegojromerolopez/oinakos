@@ -44,7 +44,7 @@ func (a *Actor) SyncStats(objReg *ObjectRegistry) {
 
 	str, dex, hlt, itl, wis := float64(a.PrimaryAttributes.Strength)*pMult, float64(a.PrimaryAttributes.Dexterity)*pMult, float64(a.PrimaryAttributes.Health)*pMult, float64(a.PrimaryAttributes.Intellect)*mMult, float64(a.PrimaryAttributes.Wisdom)*mMult
 
-	if a.RawStats.BaseAttack > 0 { a.BaseAttack = int(float64(a.RawStats.BaseAttack) * pMult) } else { a.BaseAttack = int(str * 2); fmt.Printf("DEBUG: SyncStats str=%v pMult=%v BaseAttack=%v a.PrimaryAttributes.Strength=%v\n", str, pMult, a.BaseAttack, a.PrimaryAttributes.Strength) }
+	if a.RawStats.BaseAttack > 0 { a.BaseAttack = int(float64(a.RawStats.BaseAttack) * pMult) } else { a.BaseAttack = int(str * 2) }
 	if a.RawStats.BaseDefense > 0 { a.BaseDefense = int(float64(a.RawStats.BaseDefense) * pMult) } else { a.BaseDefense = int(dex*1.5 + hlt*1.0) }
 	
 	a.RangedAttack, a.CriticalChance = int(dex * 2), str * 0.005

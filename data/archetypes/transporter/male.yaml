@@ -2,7 +2,10 @@ id: transporter_male
 name: Transporter
 gender: male
 names:
-- Auriga- Vector- Vexillariusbehavior: trader
+- Auriga
+- Vector
+- Vexillarius
+behavior: trader
 group: Practitioners
 state:
   health_points: 100
@@ -62,12 +65,6 @@ stats:
     max: 30
     mode: normal
     mean: 30.0
-    sd: 0.0
-    min: 40
-    max: 40
-    mode: normal
-    mean: 40.0
-    sd: 0.0
   max_weight:
     min: 150
     max: 150

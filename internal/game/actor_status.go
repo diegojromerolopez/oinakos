@@ -49,8 +49,14 @@ func (a *Actor) updateArousal(ctx *SystemContext) {
 	// Monthly arousal cycle
 	growth := 0.000192; if ctx != nil && ctx.World != nil && ctx.World.State.Season == SeasonSpring { growth *= 1.5 }
 	if a.State.IsHypersexual { growth *= 3.0 } // 3x growth rate for hypersexual trait
+
+	decay := 0.00005 // Baseline decay
+	if a.State.Sanity < 20 { decay *= 4.0 } // Lower interest when depressed
+	if a.State.Hunger > 80 || a.State.Thirst > 80 { decay *= 2.0 } // Survival over mating
 	
-	a.State.Arousal += growth
+	a.State.Arousal += (growth - decay)
+	if a.State.Arousal < 0 { a.State.Arousal = 0 }
+	if a.State.Arousal > 100 { a.State.Arousal = 100 }
 
 	if a.State.Arousal >= 100 {
 		a.ArousalTimer++
