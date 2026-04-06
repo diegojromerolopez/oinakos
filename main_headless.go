@@ -195,12 +195,7 @@ func main() {
 					asyncLog(fmt.Sprintf("[SIM] Month: %d | Ticks: %d | Population: %d | Births: %d | Deaths(Nat/Viol): %d/%d | Mating: %d (%d Preg)", 
 						ticks/500000, ticks, charCount, d.BirthsHumans, d.DeathsNatural, d.DeathsViolent, d.MatingActs, d.MatingPregancies))
 				}
-				// Print new event log entries
-				events := g.EventLog
-				for i := lastLoggedEvent; i < len(events); i++ {
-					asyncLog(fmt.Sprintf("[EVENT] %s", events[i].Text))
-				}
-				lastLoggedEvent = len(events)
+				lastLoggedEvent = len(g.EventLog)
 			}
 		}
 

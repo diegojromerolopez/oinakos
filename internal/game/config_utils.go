@@ -11,78 +11,53 @@ import (
 // forEachYAML iterates over YAML files in a base directory from both the embedded FS
 // and the local oinakos/data override directory.
 func forEachYAML(assets fs.FS, baseDir string, callback func(fpath string, data []byte) error) error {
+	visitedPaths := make(map[string]bool)
+
 	// 1. Embedded assets
 	if assets != nil {
 		fs.WalkDir(assets, baseDir, func(fpath string, d fs.DirEntry, err error) error {
-			if err != nil {
-				return nil
-			}
-			if d.IsDir() || (filepath.Ext(fpath) != ".yaml" && filepath.Ext(fpath) != ".yml") {
-				return nil
-			}
-			data, err := fs.ReadFile(assets, fpath)
-			if err == nil {
-				callback(fpath, data)
-			}
-			return nil
-		})
-	}
-
-	// 2. Local data overrides (with path discovery)
-	foundPath := baseDir
-	if _, err := os.Stat(foundPath); err != nil {
-		// Try walking up to 3 levels up to find the project root
-		candidate := filepath.Join("../..", baseDir)
-		if _, err := os.Stat(candidate); err == nil {
-			foundPath = candidate
-		} else {
-			candidate = filepath.Join("..", baseDir)
-			if _, err := os.Stat(candidate); err == nil {
-				foundPath = candidate
-			}
-		}
-	}
-
-	if _, err := os.Stat(foundPath); err == nil {
-		filepath.WalkDir(foundPath, func(fpath string, d fs.DirEntry, err error) error {
-			if err != nil {
-				return nil
-			}
-			if d.IsDir() || (filepath.Ext(fpath) != ".yaml" && filepath.Ext(fpath) != ".yml") {
-				return nil
-			}
-			data, err := os.ReadFile(fpath)
-			if err == nil {
-				callback(fpath, data)
-			}
-			return nil
-		})
-	}
-
-	// 3. Optional 'oinakos/' prefixed local data...
-	localBaseDir := filepath.Join("oinakos", baseDir)
-	if _, err := os.Stat(localBaseDir); err != nil {
-		candidate := filepath.Join("../..", "oinakos", baseDir)
-		if _, err := os.Stat(candidate); err == nil {
-			localBaseDir = candidate
-		} else {
-			candidate = filepath.Join("..", "oinakos", baseDir)
-			if _, err := os.Stat(candidate); err == nil {
-				localBaseDir = candidate
-			}
-		}
-	}
-	if _, err := os.Stat(localBaseDir); err == nil {
-		filepath.WalkDir(localBaseDir, func(fpath string, d fs.DirEntry, err error) error {
 			if err != nil || d.IsDir() || (filepath.Ext(fpath) != ".yaml" && filepath.Ext(fpath) != ".yml") {
 				return nil
 			}
-			data, err := os.ReadFile(fpath)
+			fbase := filepath.Base(fpath)
+			if visitedPaths[fbase] { return nil }
+
+			data, err := fs.ReadFile(assets, fpath)
 			if err == nil {
+				visitedPaths[fbase] = true
 				callback(fpath, data)
 			}
 			return nil
 		})
+	}
+
+	// Candidates for local search
+	candidates := []string{
+		baseDir,
+		filepath.Join("..", baseDir),
+		filepath.Join("../..", baseDir),
+		filepath.Join("oinakos", baseDir),
+		filepath.Join("..", "oinakos", baseDir),
+		filepath.Join("../..", "oinakos", baseDir),
+	}
+
+	for _, cand := range candidates {
+		if _, err := os.Stat(cand); err == nil {
+			filepath.WalkDir(cand, func(fpath string, d fs.DirEntry, err error) error {
+				if err != nil || d.IsDir() || (filepath.Ext(fpath) != ".yaml" && filepath.Ext(fpath) != ".yml") {
+					return nil
+				}
+				fbase := filepath.Base(fpath)
+				if visitedPaths[fbase] { return nil }
+
+				data, err := os.ReadFile(fpath)
+				if err == nil {
+					visitedPaths[fbase] = true
+					callback(fpath, data)
+				}
+				return nil
+			})
+		}
 	}
 	return nil
 }

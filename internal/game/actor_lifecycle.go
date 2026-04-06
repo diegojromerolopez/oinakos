@@ -216,50 +216,91 @@ func (a *Actor) updateScale(ctx *SystemContext) {
 }
 
 func (a *Actor) updateIllness(ctx *SystemContext) {
-	if ctx == nil || ctx.World == nil { return }
-	
-	if a.State.IsSeptic && a.Tick%600 == 0 {
-		a.State.HealthPoints -= 2
-		ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{ Text: "Septic Pain!", X: a.X, Y: a.Y, Life: 45, Color: ColorHarm })
+	if ctx == nil || ctx.World != nil {
+		// Recovery logic for non-flu sickness
+		if a.SicknessTicks > 0 {
+			a.SicknessTicks--
+			if a.Sickness == "stomach sickness" {
+				a.State.Sanity -= 0.0001; a.State.Pain += 0.0002
+				if a.Tick%600 == 0 { ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{ Text: "Stomach Cramps!", X: a.X, Y: a.Y, Life: 45, Color: ColorHarm }) }
+			}
+			if a.SicknessTicks == 0 {
+				if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s recovered from %s.", a.Name, a.Sickness), LogInfo) }
+				a.Sickness = ""; if a.FluTicks <= 0 { a.State.IsSick = false }
+			}
+		}
 	}
 
 	if a.FluTicks > 0 {
-		a.FluTicks--; a.State.Fatigue += 0.02
-		if a.State.Fatigue > 95 && a.Tick%180 == 0 {
-			a.State.HealthPoints -= 1
-			ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{ Text: "-Exhausted-", X: a.X, Y: a.Y, Life: 60, Color: ColorHarm })
+		a.FluTicks--
+		a.State.Fatigue += 0.03 // Increased fatigue drain
+		
+		// Increased Lethality: Damage health over time
+		// Base damage: 1 HP every 300 ticks (approx every 5 seconds)
+		// More damage if already exhausted
+		damageInterval := 300
+		if a.State.Fatigue > 80 { damageInterval = 150 }
+		
+		if a.Tick % damageInterval == 0 {
+			// Health Roll: Can they resist the symptoms this interval?
+			// Pathogen Strength ~ 40
+			roll := rand.Intn(100)
+			if roll > a.PrimaryAttributes.Health {
+				a.State.HealthPoints -= 1
+				if ctx.World != nil {
+					color := ColorHarm
+					if a.State.HealthPoints < 20 { color = ColorWarn }
+					ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{ Text: "Fever Burn", X: a.X, Y: a.Y, Life: 60, Color: color })
+				}
+			}
 		}
-		if a.Tick%600 == 0 {
+
+		// Contagion logic
+		if a.Tick%600 == 0 && ctx != nil && ctx.World != nil {
 			radius := 4.0
 			for _, other := range ctx.World.Characters {
 				if other.Actor.FluTicks > 0 || !other.IsAlive() || other.ID == a.ID { continue }
 				dist := math.Sqrt(math.Pow(a.X-other.X, 2) + math.Pow(a.Y-other.Y, 2))
-				if dist < radius && rand.Float64() < 0.12 {
-					if IsDebugEnabled() { DebugLog("Contagion TRIGGERED from %s to %s", a.Name, other.Name) }
-					other.Actor.FluTicks = 86400 * 3; other.Actor.State.IsSick = true
-					if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s caught fever from %s!", other.Name, a.Name), LogWarning) }
+				if dist < radius {
+					// Pathogen exposure
+					exposureChance := 0.15
+					if rand.Float64() < exposureChance {
+						// IMMUNITY / HEALTH ROLL
+						// Pathogen Lethality vs Actor Health
+						pathogenStrength := 45 + rand.Intn(20) // Base lethality 45-65
+						healthRoll := rand.Intn(a.PrimaryAttributes.Health + 20) // Health with some variance
+						
+						if healthRoll > pathogenStrength {
+							// Immune or very mild
+							if rand.Float64() < 0.7 {
+								if IsDebugEnabled() { DebugLog("%s resisted contagion through strong health", other.Name) }
+								continue // Totally immune this exposure
+							}
+							other.Actor.FluTicks = 17280 // Only 1 day
+						} else {
+							other.Actor.FluTicks = (3 + rand.Intn(7)) * 17280 // 3-10 days
+						}
+						
+						other.Actor.State.IsSick = true
+						if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s caught fever from %s!", other.Name, a.Name), LogWarning) }
+					}
 				}
 			}
 		}
-		if a.FluTicks <= 0 && a.SicknessTicks <= 0 { a.State.IsSick = false }
+		if a.FluTicks <= 0 { a.State.IsSick = false }
 	} else {
+		// Spontaneous development
 		chance := 0.000005
-		if ctx.World.State.Season == SeasonAutumn { chance *= 10 }
+		if ctx != nil && ctx.World != nil && ctx.World.State.Season == SeasonAutumn { chance *= 10 }
 		if rand.Float64() < chance {
-			a.FluTicks = (3 + rand.Intn(5)) * 17280; a.State.IsSick = true
-			if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s has developed a fever.", a.Name), LogWarning) }
-		}
-	}
-
-	if a.SicknessTicks > 0 {
-		a.SicknessTicks--
-		if a.Sickness == "stomach sickness" {
-			a.State.Sanity -= 0.00005; a.State.Pain += 0.0001
-			if a.Tick%600 == 0 { ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{ Text: "Stomach Cramps!", X: a.X, Y: a.Y, Life: 45, Color: ColorHarm }) }
-		}
-		if a.SicknessTicks == 0 {
-			if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s recovered from %s.", a.Name, a.Sickness), LogInfo) }
-			a.Sickness = ""; if a.FluTicks <= 0 { a.State.IsSick = false }
+			// Initial health roll for patient zero
+			if rand.Intn(a.PrimaryAttributes.Health) < 30 {
+				a.FluTicks = (5 + rand.Intn(10)) * 17280; a.State.IsSick = true
+				if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s has developed a SEVERE fever.", a.Name), LogWarning) }
+			} else {
+				a.FluTicks = (2 + rand.Intn(4)) * 17280; a.State.IsSick = true
+				if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s has developed a mild fever.", a.Name), LogWarning) }
+			}
 		}
 	}
 }

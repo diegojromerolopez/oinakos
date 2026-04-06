@@ -98,8 +98,24 @@ func (a *Actor) updateBreeding(ctx *SystemContext) {
 				dist := math.Sqrt(math.Pow(a.X-other.X, 2)+math.Pow(a.Y-other.Y, 2))
 				if IsDebugEnabled() && a.Tick%600 == 0 { DebugLog("BREEDING-CANDIDATE: %s found %s at %.1f pedes", a.Name, other.Name, dist) }
 				if dist < minDist { mate = other; break }
+				
+				// IMPROVEMENT: If searching and found a mate, move towards them!
+				if a.Config.IsAnimal && dist < 100.0 && a.ActionState == ActorIdle {
+					a.TargetActor = other
+					// Setting target to move towards
+				}
 			}
 		}
+	}
+
+	if mate == nil && a.TargetActor != nil && a.TargetActor.IsAlive() && a.Config.IsAnimal {
+		// Just setting the TargetActor is enough; the Character AI will 
+		// handle movement in findTarget() -> executeMovement() during the next tick.
+		// We set ActionState to ActorIdle to ensure we aren't 'busy' so movement can trigger.
+		if a.ActionState == ActorIdle || a.ActionState == ActorWalking {
+			a.ActionState = ActorIdle
+		}
+		return
 	}
 
 	if mate != nil {
@@ -251,9 +267,17 @@ func (a *Actor) mate(ctx *SystemContext, mate *Actor, practice string) {
 
 	// Actual pregnancy check
 	fertility := mother.GetFertilityMultiplier()
-	if rand.Float64() < (0.3 * fertility) {
+	chance := 0.3 * fertility
+	if mother.Config.IsAnimal { 
+		chance = 0.8 * fertility // Animals conceive more reliably
+	}
+
+	if rand.Float64() < chance {
 		mother.IsPregnant = true
-		mother.GestationTicks = 17280 // Standard gestation
+		mother.GestationTicks = 0
+		if mother.Config.IsAnimal { 
+			mother.State.Age.Max = 1.0 * float64(TicksPerMonth) // Set gestation for animals
+		}
 		mother.FatherID = father.Name
 		atomic.AddInt64(&ctx.World.Demographics.MatingPregancies, 1)
 		if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] is now PREGNANT with %s's child", mother.Name, father.Name), LogNPC) }

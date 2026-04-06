@@ -220,6 +220,11 @@ func (c *Character) handleSurvivalNeeds(ctx *SystemContext) bool {
 
 	// 6. Rest
 	if isExhausted && c.ActionState == ActorIdle {
+		// CRITICAL FIX: If fatigue is extreme (>95), don't look for a bed, just rest NOW.
+		if c.State.Fatigue > 95 {
+			c.ActionState, c.Tick = ActorResting, 0; return true
+		}
+
 		var nRest *Obstacle; minDist := 50.0
 		for _, o := range ctx.World.Obstacles {
 			id := strings.ToLower(o.ID)
