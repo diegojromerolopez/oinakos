@@ -170,7 +170,7 @@ func (c *Character) handleSurvivalNeeds(ctx *SystemContext) bool {
 		hasIngredients, hasPot := false, false
 		for _, it := range c.Inventory {
 			if it == nil || it.Config == nil { continue }
-			if it.Config.ID == "raw_meat" || it.Config.ID == "cabbage" { hasIngredients = true }
+			if it.Config.ID == "raw_meat" || strings.HasPrefix(it.Config.ID, "raw_meat_") || it.Config.ID == "cabbage" { hasIngredients = true }
 			if it.Config.ID == "cooking_pot" { hasPot = true }
 		}
 		if hasIngredients && hasPot {
@@ -274,7 +274,7 @@ func (c *Character) handleSurvivalNeeds(ctx *SystemContext) bool {
 
 		// 8b. Seek Cooking (If has raw meat)
 		hasRawFood := false
-		for _, it := range c.Inventory { if it != nil && it.Config != nil && it.Config.ID == "raw_meat" { hasRawFood = true; break } }
+		for _, it := range c.Inventory { if it != nil && it.Config != nil && (it.Config.ID == "raw_meat" || strings.HasPrefix(it.Config.ID, "raw_meat_")) { hasRawFood = true; break } }
 		if hasRawFood {
 			var nFire *Obstacle; minFireDist := searchRadius
 			for _, o := range ctx.World.Obstacles {

@@ -87,13 +87,13 @@ func (r *ObstacleRegistry) LoadAll(assets fs.FS) error {
 }
 
 func (r *ObstacleRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, permitList map[string]bool, ls *LoadingState) {
-	jobs := r.createLoadJobs(permitList)
+	jobs := r.createLoadJobs(assets, permitList)
 	if len(jobs) > 0 {
 		loadSpritesParallel(assets, jobs, graphics, ls)
 	}
 }
 
-func (r *ObstacleRegistry) createLoadJobs(permitList map[string]bool) []*SpriteLoadJob {
+func (r *ObstacleRegistry) createLoadJobs(assets fs.FS, permitList map[string]bool) []*SpriteLoadJob {
 	var jobs []*SpriteLoadJob
 	for _, config := range r.Archetypes {
 		if config.Image != nil {
@@ -102,22 +102,25 @@ func (r *ObstacleRegistry) createLoadJobs(permitList map[string]bool) []*SpriteL
 		if permitList != nil && !permitList[config.ID] && !config.IsWell() {
 			continue
 		}
-		if config.ID == "chest" {
-			jobs = append(jobs, &SpriteLoadJob{
-				Path: path.Join("assets/images/obstacles/chest", "open.png"),
-				Dest: &config.OpenImage,
-			})
-			jobs = append(jobs, &SpriteLoadJob{
-				Path: path.Join("assets/images/obstacles/chest", "closed.png"),
-				Dest: &config.ClosedImage,
-			})
-			// Still load the default Image as fallback or for shared logic
-			jobs = append(jobs, &SpriteLoadJob{
-				Path: path.Join("assets/images/obstacles/chest", "closed.png"),
-				Dest: &config.Image,
-			})
-			continue
+		// Generic support for obstacles with multiple states (e.g. chest/open.png and chest/closed.png)
+		folderPath := path.Join("assets/images/obstacles", config.ID)
+		if info, err := fs.Stat(assets, folderPath); err == nil && info.IsDir() {
+			openPath := path.Join(folderPath, "open.png")
+			closedPath := path.Join(folderPath, "closed.png")
+
+			if _, err := fs.Stat(assets, openPath); err == nil {
+				jobs = append(jobs, &SpriteLoadJob{Path: openPath, Dest: &config.OpenImage})
+			}
+			if _, err := fs.Stat(assets, closedPath); err == nil {
+				jobs = append(jobs, &SpriteLoadJob{Path: closedPath, Dest: &config.ClosedImage})
+				// Use closed as default
+				jobs = append(jobs, &SpriteLoadJob{Path: closedPath, Dest: &config.Image})
+			}
+			if config.Image != nil || len(jobs) > 0 {
+				continue
+			}
 		}
+
 		imagePath := path.Join("assets/images/obstacles", config.ID+".png")
 		jobs = append(jobs, &SpriteLoadJob{
 			Path: imagePath,
@@ -127,6 +130,6 @@ func (r *ObstacleRegistry) createLoadJobs(permitList map[string]bool) []*SpriteL
 	return jobs
 }
 
-func (r *ObstacleRegistry) CountAssets(permitList map[string]bool) int {
-	return len(r.createLoadJobs(permitList))
+func (r *ObstacleRegistry) CountAssets(assets fs.FS, permitList map[string]bool) int {
+	return len(r.createLoadJobs(assets, permitList))
 }

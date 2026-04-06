@@ -3,6 +3,7 @@ package game
 import (
 	"io/fs"
 	"log"
+	"math/rand"
 	"path"
 	"path/filepath"
 	"strings"
@@ -76,4 +77,30 @@ func (r *ObjectRegistry) createLoadJobs(permitList map[string]bool) []*SpriteLoa
 
 func (r *ObjectRegistry) CountAssets(permitList map[string]bool) int {
 	return len(r.createLoadJobs(permitList))
+}
+
+// RandomVariantID returns a random variant config for a base ID (e.g. "raw_meat").
+// It looks for IDs like "raw_meat_1", "raw_meat_2", etc. in the registry.
+// If no variants are found, it falls back to the base ID itself.
+func (r *ObjectRegistry) RandomVariantID(baseID string) (string, *ObjectConfig) {
+	var variants []*ObjectConfig
+	prefix := baseID + "_"
+	for _, cfg := range r.Objects {
+		if strings.HasPrefix(cfg.ID, prefix) {
+			// Ensure the suffix is purely numeric
+			suffix := cfg.ID[len(prefix):]
+			allDigits := len(suffix) > 0
+			for _, ch := range suffix {
+				if ch < '0' || ch > '9' { allDigits = false; break }
+			}
+			if allDigits {
+				variants = append(variants, cfg)
+			}
+		}
+	}
+	if len(variants) == 0 {
+		return baseID, r.Objects[baseID]
+	}
+	chosen := variants[rand.Intn(len(variants))]
+	return chosen.ID, chosen
 }

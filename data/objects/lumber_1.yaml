@@ -1,8 +1,9 @@
-name: Large Lumber
-description: A heavy stacked pile of solid lumber.
-weight: 2.0
+id: lumber_1
+name: Lumber
+description: A solid piece of processed lumber.
+weight: 1.5
 type: material
-value: 5
+value: 3
 footprint:
 - x: -5.0
   y: -5.0

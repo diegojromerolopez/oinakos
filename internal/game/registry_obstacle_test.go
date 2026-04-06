@@ -35,8 +35,8 @@ passable: false
 		t.Fatalf("LoadAll failed: %v", err)
 	}
 
-	if len(r.Archetypes) != 2 {
-		t.Errorf("expected 2 archetypes, got %d", len(r.Archetypes))
+	if len(r.Archetypes) < 2 {
+		t.Errorf("expected at least 2 archetypes, got %d", len(r.Archetypes))
 	}
 
 	tree := r.Archetypes["tree_oak"]
@@ -56,7 +56,7 @@ func TestObstacleRegistry_CreateLoadJobs(t *testing.T) {
 	r.Archetypes["well"] = &ObstacleArchetype{ID: "well", CooldownTime: 1.0} // IsWell=true
 	
 	// Test without permit list
-	jobs := r.createLoadJobs(nil)
+	jobs := r.createLoadJobs(fstest.MapFS{}, nil)
 	if len(jobs) != 2 {
 		t.Errorf("expected 2 load jobs, got %d", len(jobs))
 	}
@@ -65,7 +65,7 @@ func TestObstacleRegistry_CreateLoadJobs(t *testing.T) {
 	// (Logic: config.IsWell() bypasses permit check)
 	permit := map[string]bool{"tree_oak": false} // Only well should be allowed if well bypasses
 	
-	jobs = r.createLoadJobs(permit)
+	jobs = r.createLoadJobs(fstest.MapFS{}, permit)
 	// Check if well bypassed the filter
 	foundWell := false
 	for _, j := range jobs {

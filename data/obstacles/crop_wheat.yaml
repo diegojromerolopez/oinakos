@@ -9,8 +9,8 @@ plant_season: SPRING
 harvest_season: AUTUMN
 growth_duration: 34560 # 2 days (approx 10 mins IRT)
 yield: wheat
-frame_count: 3
-frames_per_row: 3
+frame_count: 4
+frames_per_row: 2
 animation_speed: 0
 footprint:
 - {x: -0.4, y: -0.4}

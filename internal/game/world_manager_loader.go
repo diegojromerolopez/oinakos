@@ -53,7 +53,7 @@ func (wm *WorldManager) LoadMapAssets() {
 	}
 
 	charImgCount := g.characterRegistry.CountAssets(g.assets, g.archetypeRegistry, characterFilter)
-	obsImgCount := g.obstacleRegistry.CountAssets(obstacleFilter)
+	obsImgCount := g.obstacleRegistry.CountAssets(g.assets, obstacleFilter)
 	ls.Total = int32((len(audioJobs) + charImgCount + obsImgCount) * 2)
 	atomic.StoreInt32(&g.LoadingProgress, 0)
 	if len(audioJobs) > 0 { loadAudioParallel(g.assets, audioJobs, ls) }

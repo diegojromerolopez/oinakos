@@ -134,8 +134,9 @@ func (c *Character) executeButchery(target *Actor, ctx *SystemContext) {
 	if yield <= 0 { yield = 1.0 } // Minimum yield if success checked elsewhere
 	target.MeatQuantity -= yield
 	if target.MeatQuantity <= 0 || int(target.MeatQuantity+yield)/5 > int(target.MeatQuantity)/5 {
-		if cfg := ctx.Registries.Objects.Get("raw_meat"); cfg != nil {
-			meat := NewItemInstance("raw_meat", cfg, target.X+rand.Float64()-0.5, target.Y+rand.Float64()-0.5)
+		_, meatCfg := ctx.Registries.Objects.RandomVariantID("raw_meat")
+		if meatCfg != nil {
+			meat := NewItemInstance(meatCfg.ID, meatCfg, target.X+rand.Float64()-0.5, target.Y+rand.Float64()-0.5)
 			ctx.World.Items = append(ctx.World.Items, meat)
 		}
 	}

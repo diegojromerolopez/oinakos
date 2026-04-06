@@ -64,6 +64,7 @@ func NewObstacle(id string, x, y float64, config *ObstacleArchetype) *Obstacle {
 		CooldownTicks:   0,
 		Alive:           true,
 		Inventory:       make([]*ItemInstance, 0),
+		EffectTimers:    make(map[ActorInterface]int),
 		OwnerID:         "",
 		Locked:          false,
 		LockHealth:      0,

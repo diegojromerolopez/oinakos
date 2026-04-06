@@ -1,0 +1,17 @@
+id: player_chest
+name: Personal Chest
+description: A private, heavy chest for storing valuables. Extra reinforced.
+type: obstacle
+destructible: true
+health: 100
+footprint:
+  - x: -3.41
+    y: -2.47
+  - x: 1.06
+    y: -2.44
+  - x: 1.27
+    y: 0.48
+  - x: -3.0
+    y: 0.44
+max_capacity: 300.0
+lock_resistance: 1000

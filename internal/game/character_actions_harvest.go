@@ -52,13 +52,25 @@ func (c *Character) CheckAttackHits(ctx *SystemContext, skill string) {
 			yield := c.GetAbilityYield("chop"); pEff := p + int(yield*0.5); if c.ActionState == ActorChopping { pEff *= 5 }
 			o.WeightLeft -= float64(pEff); if o.WeightLeft < 0 { o.WeightLeft = 0 }
 			
-			// Drop wood item
-			if wood := ctx.Registries.Objects.Objects["wood"]; wood != nil {
-				it := NewItemInstance(wood.ID, wood, o.X, o.Y)
+			// Drop a random lumber variant per chop hit
+			_, lumberCfg := ctx.Registries.Objects.RandomVariantID("lumber")
+			if lumberCfg == nil { lumberCfg = ctx.Registries.Objects.Objects["lumber"] }
+			if lumberCfg == nil { lumberCfg = ctx.Registries.Objects.Objects["wood"] }
+			if lumberCfg != nil {
+				it := NewItemInstance(lumberCfg.ID, lumberCfg, o.X, o.Y)
 				ctx.World.Items = append(ctx.World.Items, it)
 			}
-			
-			if o.WeightLeft <= 0 { o.Alive = false }
+
+			if o.WeightLeft <= 0 {
+				o.Alive = false
+				// Drop a random stump variant when tree falls
+				_, stumpCfg := ctx.Registries.Objects.RandomVariantID("stump")
+				if stumpCfg == nil { stumpCfg = ctx.Registries.Objects.Objects["stump"] }
+				if stumpCfg != nil {
+					it := NewItemInstance(stumpCfg.ID, stumpCfg, o.X, o.Y)
+					ctx.World.Items = append(ctx.World.Items, it)
+				}
+			}
 			hitSomething = true
 		} else if o.Archetype.IsCrop && c.ActionState == ActorChopping && o.GrowthStage >= 2 {
 			o.Alive = false

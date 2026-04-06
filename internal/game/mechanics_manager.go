@@ -64,6 +64,7 @@ func (mm *MechanicsManager) UpdateProximityEffects(ctx *SystemContext) {
 				}
 				if !inRange { continue }
 				if action.Type == ActionHarm {
+					if o.EffectTimers == nil { o.EffectTimers = make(map[ActorInterface]int) }
 					if o.EffectTimers[entity] <= 0 {
 						switch e := entity.(type) {
 						case *Character: e.TakeDamage(action.Amount, nil, ctx)
@@ -82,6 +83,7 @@ func (mm *MechanicsManager) UpdateProximityEffects(ctx *SystemContext) {
 							allowed = false
 						}
 					}
+					if o.EffectTimers == nil { o.EffectTimers = make(map[ActorInterface]int) }
 					if allowed && o.EffectTimers[entity] <= 0 {
 						switch e := entity.(type) {
 						case *Character: e.Heal(action.Amount)

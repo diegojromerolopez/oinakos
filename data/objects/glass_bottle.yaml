@@ -1,0 +1,9 @@
+id: glass_bottle
+name: Glass Bottle
+type: consumable
+weight: 0.5
+value: 5
+description: An empty glass bottle. Can be used to store liquids.
+primary_color: "#FF1493"
+refillable: true
+max_liquid: 1.0

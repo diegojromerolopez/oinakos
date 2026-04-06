@@ -1,0 +1,15 @@
+id: lumber_2
+name: Lumber
+description: A solid piece of processed lumber.
+weight: 1.5
+type: material
+value: 3
+footprint:
+- x: -5.0
+  y: -5.0
+- x: 5.0
+  y: -5.0
+- x: 5.0
+  y: 5.0
+- x: -5.0
+  y: 5.0

@@ -1,0 +1,17 @@
+id: chest_2
+name: Iron Bound Chest
+description: A reinforced iron-bound chest with brass trim. Very high lock resistance.
+type: obstacle
+destructible: true
+health: 150
+footprint:
+  - x: -2.7
+    y: -3.3
+  - x: 0.23
+    y: -3.17
+  - x: 0.27
+    y: 0.92
+  - x: -2.52
+    y: 0.95
+max_capacity: 500.0
+lock_resistance: 2000

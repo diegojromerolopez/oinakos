@@ -70,7 +70,7 @@ func (gr *GameRenderer) LoadAssets(assets fs.FS) {
 			obstacleFilter[o.Archetype.ID] = true
 		}
 	}
-	total += g.obstacleRegistry.CountAssets(obstacleFilter)
+	total += g.obstacleRegistry.CountAssets(assets, obstacleFilter)
 	// Filtered NPCs
 	npcFilter := make(map[string]bool)
 	if g.World != nil {

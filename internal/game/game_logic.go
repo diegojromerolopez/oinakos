@@ -5,6 +5,7 @@ import (
 	"image/color"
 	"math"
 	"math/rand"
+	"strings"
 
 	"oinakos/internal/engine"
 )
@@ -89,10 +90,14 @@ func (g *Game) tryUnloading() {
 	for _, item := range pc.Inventory {
 		if item == nil || item.Config == nil { continue }
 		switch item.Config.ID {
-		case "wood", "lumber", "lumber2", "iron_ore", "copper_ore", "gold_ore", "silver_ore":
+		case "wood", "iron_ore", "copper_ore", "gold_ore", "silver_ore":
 			unloadedCount++
 		default:
-			newInventory = append(newInventory, item)
+			if item.Config.ID == "lumber" || strings.HasPrefix(item.Config.ID, "lumber_") || strings.HasPrefix(item.Config.ID, "stump_") {
+				unloadedCount++
+			} else {
+				newInventory = append(newInventory, item)
+			}
 		}
 	}
 

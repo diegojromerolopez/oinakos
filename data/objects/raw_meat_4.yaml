@@ -1,0 +1,19 @@
+id: raw_meat_4
+name: Raw Meat
+type: consumable
+max_hours: 500
+description: A piece of raw animal meat. It can be eaten for energy, but it's better cooked.
+weight: 2.0
+hunger: 15.0
+energy: 5.0
+health: 2.0
+value: 5
+footprint:
+  - x: -3.0
+    y: -3.0
+  - x: -0.81
+    y: -3.06
+  - x: -0.25
+    y: 0.06
+  - x: -2.14
+    y: -0.05

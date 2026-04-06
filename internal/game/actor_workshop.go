@@ -24,7 +24,7 @@ func (c *Character) ProcessCooking(ctx *SystemContext) {
 	foundMeat, foundVeg := -1, -1
 	for i, it := range c.Inventory {
 		if it == nil || it.Config == nil { continue }
-		if it.Config.ID == "raw_meat" && foundMeat == -1 { foundMeat = i }
+		if (it.Config.ID == "raw_meat" || strings.HasPrefix(it.Config.ID, "raw_meat_")) && foundMeat == -1 { foundMeat = i }
 		if (it.Config.ID == "cabbage" || it.Config.ID == "turnip" || it.Config.ID == "apple" || it.Config.ID == "pear") && foundVeg == -1 { foundVeg = i }
 	}
 
