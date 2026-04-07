@@ -34,6 +34,8 @@ func TestCharacterRegistry_CreateLoadJobs(t *testing.T) {
 	fsys := fstest.MapFS{
 		"assets/audio/characters/hero/attack_1.wav": &fstest.MapFile{Data: []byte("wav")},
 		"assets/images/characters/hero/static.png":  &fstest.MapFile{Data: []byte("png")},
+		"assets/images/characters/hero/attack.png":  &fstest.MapFile{Data: []byte("png")},
+		"assets/images/characters/hero/hit.png":     &fstest.MapFile{Data: []byte("png")},
 	}
 	
 	archReg := NewArchetypeRegistry()
@@ -55,9 +57,18 @@ func TestCharacterRegistry_CreateLoadJobs(t *testing.T) {
 	charReg.ProcessInheritance(archReg)
 	jobs := charReg.createLoadJobs(fsys, archReg, nil)
 	
-	// Hero has at least 1 local image (static.png) and 11 fallbacks to archetype or nil
-	if len(jobs) == 0 {
-		t.Error("expected at least one load job")
+	// Hero has at least 1 local image (static.png) and several other jobs including attack.png
+	foundAttack := false
+	for _, job := range jobs {
+		if job.Path == "assets/images/characters/hero/attack.png" {
+			foundAttack = true; break
+		}
+	}
+	if !foundAttack {
+		t.Error("expected attack.png job for hero character")
+	}
+	if len(jobs) < 2 {
+		t.Errorf("expected multiple load jobs, got %d", len(jobs))
 	}
 	
 	hero := charReg.Characters["hero"]

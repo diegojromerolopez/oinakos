@@ -53,10 +53,10 @@ func (e *InventoryConfigEntry) UnmarshalYAML(v *yaml.Node) error {
 type EntityConfig struct {
 	ID string `yaml:"id"`; Name string `yaml:"name"`; Names []string `yaml:"names"`; Archetype string `yaml:"archetype,omitempty"`; Behavior string `yaml:"behavior"`; Attributes PrimaryAttributeConfig `yaml:"attributes"`; Stats EntityStatsConfig `yaml:"stats"`; Skills map[string]IntInterval `yaml:"skills,omitempty"`; State State `yaml:"state,omitempty"`; Actions *ActionConfig `yaml:"actions,omitempty"`; Abilities map[string]Ability `yaml:"abilities,omitempty"`; Weapon WeaponConfig `yaml:"weapon"`; CollisionRadius float64 `yaml:"collision_radius,omitempty"`
 	Footprint []FootprintPoint `yaml:"footprint"`; Description string `yaml:"description,omitempty"`; Unique bool `yaml:"unique,omitempty"`; Gender string `yaml:"gender,omitempty"`; IsTransexual bool `yaml:"transexual,omitempty"`; SexualOrientation string `yaml:"sexual_orientation,omitempty"`; SoundID string `yaml:"-"`; PlayableCharacter string `yaml:"-"`; PrimaryColor string `yaml:"primary_color,omitempty"`; SecondaryColor string `yaml:"secondary_color,omitempty"`; XP int `yaml:"xp,omitempty"`; Group string `yaml:"group,omitempty"`; LeaderID string `yaml:"leader,omitempty"`; MustSurvive bool `yaml:"must_survive,omitempty"`; Playable bool `yaml:"playable,omitempty"`; MaxItems int `yaml:"max_items,omitempty"`; Equipment map[string]string `yaml:"equipment,omitempty"`; Inventory []InventoryConfigEntry `yaml:"inventory,omitempty"`; Denarii int `yaml:"denarii,omitempty"`
-	AssetDir, AudioDir string `yaml:"-"`; StaticImage, BackImage, CorpseImage, CrouchImage, AttackImage, Attack1Image, Attack2Image, HitImage, Hit1Image, Hit2Image, ChoppingImage, DiggingImage, PregnantImage, CookingImage engine.Image `yaml:"-"`
+	AssetDir, AudioDir string `yaml:"-"`; StaticImage, BackImage, CorpseImage, CrouchImage, AttackImage, Attack1Image, Attack2Image, HitImage, Hit1Image, Hit2Image, ChoppingImage, DiggingImage, PregnantImage, CookingImage, RestingImage engine.Image `yaml:"-"`
 	Meat int `yaml:"meat,omitempty"`; IsAnimal bool `yaml:"is_animal,omitempty"`; CachedBaseFootprint *engine.Polygon `yaml:"-"`; Dialogues *DialogueRoot `yaml:"dialogues,omitempty"`; Models map[string]*ModelConfig `yaml:"-"`
 }
 
 type ModelConfig struct {
-	ID string; StaticImage, BackImage, CorpseImage, CrouchImage, AttackImage, HitImage, PregnantImage, CookingImage engine.Image
+	ID string; StaticImage, BackImage, CorpseImage, CrouchImage, AttackImage, HitImage, PregnantImage, CookingImage, RestingImage engine.Image
 }

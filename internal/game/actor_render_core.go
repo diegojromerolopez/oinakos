@@ -21,7 +21,8 @@ func DrawActorGetSprite(a *Actor) engine.Image {
 	if a.ActionState == ActorAttacking { if mod != nil && mod.AttackImage != nil { return mod.AttackImage }; if img := conf.PickAttackImage(a.Tick / 30); img != nil { return img } }
 	if a.ActionState == ActorChopping { if conf.ChoppingImage != nil { return conf.ChoppingImage }; if mod != nil && mod.AttackImage != nil { return mod.AttackImage }; if img := conf.PickAttackImage(a.Tick / 30); img != nil { return img } }
 	if a.ActionState == ActorDigging { if conf.DiggingImage != nil { return conf.DiggingImage }; if mod != nil && mod.AttackImage != nil { return mod.AttackImage }; if img := conf.PickAttackImage(a.Tick / 30); img != nil { return img } }
-	if a.ActionState == ActorCrouching || a.ActionState == ActorResting { if mod != nil && mod.CrouchImage != nil { return mod.CrouchImage }; if img := conf.CrouchImage; img != nil { return img }; if mod != nil && mod.StaticImage != nil { return mod.StaticImage }; return conf.StaticImage }
+	if a.ActionState == ActorResting { if mod != nil && mod.RestingImage != nil { return mod.RestingImage }; if img := conf.RestingImage; img != nil { return img }; if mod != nil && mod.StaticImage != nil { return mod.StaticImage }; return conf.StaticImage }
+	if a.ActionState == ActorCrouching { if mod != nil && mod.CrouchImage != nil { return mod.CrouchImage }; if img := conf.CrouchImage; img != nil { return img }; if mod != nil && mod.StaticImage != nil { return mod.StaticImage }; return conf.StaticImage }
 	if a.ActionState == ActorCooking { if mod != nil && mod.CookingImage != nil { return mod.CookingImage }; if conf.CookingImage != nil { return conf.CookingImage }; if mod != nil && mod.StaticImage != nil { return mod.StaticImage }; return conf.StaticImage }
 	return dS
 }

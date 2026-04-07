@@ -44,12 +44,21 @@ func (r *CharacterRegistry) createLoadJobs(assets fs.FS, archs *ArchetypeRegistr
 			add := func(f string, t *engine.Image, fb engine.Image) {
 				if _, err := fs.Stat(assets, path.Join(c.AssetDir, f)); err == nil { jobs = append(jobs, &SpriteLoadJob{Path: path.Join(c.AssetDir, f), Dest: t}) } else if fb != nil { *t = fb }
 			}
-			fArch, bArch, crArch, cArch, pArch, ckArch := engine.Image(nil), engine.Image(nil), engine.Image(nil), engine.Image(nil), engine.Image(nil), engine.Image(nil)
-			if arch != nil { fArch, bArch, crArch, cArch, pArch, ckArch = arch.StaticImage, arch.BackImage, arch.CorpseImage, arch.CrouchImage, arch.PregnantImage, arch.CookingImage }
-			add("static.png", &c.StaticImage, fArch); add("back.png", &c.BackImage, bArch); add("corpse.png", &c.CorpseImage, crArch); add("crouch.png", &c.CrouchImage, cArch); add("pregnant.png", &c.PregnantImage, pArch); add("cooking.png", &c.CookingImage, ckArch)
-			for _, f := range []string{"attack.png", "attack1.png", "attack2.png", "hit.png", "hit1.png", "hit2.png", "chopping.png", "digging.png"} {
-				dest := []*engine.Image{&c.AttackImage, &c.Attack1Image, &c.Attack2Image, &c.HitImage, &c.Hit1Image, &c.Hit2Image, &c.ChoppingImage, &c.DiggingImage}[len(jobs)%8] // Placeholder for logic
-				_ = f; _ = dest // Simplified for brevity in this split
+			fArch, bArch, crArch, cArch, pArch, ckArch, rArch := engine.Image(nil), engine.Image(nil), engine.Image(nil), engine.Image(nil), engine.Image(nil), engine.Image(nil), engine.Image(nil)
+			if arch != nil { fArch, bArch, crArch, cArch, pArch, ckArch, rArch = arch.StaticImage, arch.BackImage, arch.CorpseImage, arch.CrouchImage, arch.PregnantImage, arch.CookingImage, arch.RestingImage }
+			add("static.png", &c.StaticImage, fArch); add("back.png", &c.BackImage, bArch); add("corpse.png", &c.CorpseImage, crArch); add("crouch.png", &c.CrouchImage, cArch); add("pregnant.png", &c.PregnantImage, pArch); add("cooking.png", &c.CookingImage, ckArch); add("resting.png", &c.RestingImage, rArch)
+			
+			// Combat and interaction images with archetypal fallbacks
+			cFiles := []string{"attack.png", "attack1.png", "attack2.png", "hit.png", "hit1.png", "hit2.png", "chopping.png", "digging.png"}
+			cDests := []*engine.Image{&c.AttackImage, &c.Attack1Image, &c.Attack2Image, &c.HitImage, &c.Hit1Image, &c.Hit2Image, &c.ChoppingImage, &c.DiggingImage}
+			var cArchs []engine.Image
+			if arch != nil {
+				cArchs = []engine.Image{arch.AttackImage, arch.Attack1Image, arch.Attack2Image, arch.HitImage, arch.Hit1Image, arch.Hit2Image, arch.ChoppingImage, arch.DiggingImage}
+			} else {
+				cArchs = make([]engine.Image, len(cFiles))
+			}
+			for i, f := range cFiles {
+				add(f, cDests[i], cArchs[i])
 			}
 		}
 	}

@@ -4,6 +4,8 @@ description: A crackling fire perfect for cooking and warmth.
 health_points: 100
 collision_radius: 0.5
 sprite: campfire.png
+frame_count: 4
+animation_speed: 8
 primary_color: "#FF4500"
 light_radius: 5.0
 tags: ["heat", "light"]
