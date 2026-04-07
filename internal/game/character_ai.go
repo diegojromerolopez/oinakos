@@ -18,6 +18,11 @@ func (c *Character) updateAI(ctx *SystemContext) {
 		if atSource { c.ActionState, c.Tick = ActorDrinking, 0; return }
 	}
 
+	if c.LifeStage == StageBaby {
+		c.updateBabyAI(ctx, ctx.World.Obstacles)
+		return
+	}
+
 	if c.TargetActor != nil && !c.TargetActor.IsAlive() { c.TargetActor = nil }
 	
 	// CRITICAL FIX: If we are already EATING or DRINKING, we must FINISH the action

@@ -85,17 +85,10 @@ func NewGame(assets fs.FS, graphics engine.Graphics, initialMapID, initialMapTyp
 		Objects:    objectRegistry,
 	}
 
-	g.World = &World{
-		PlayableCharacter: playableCharacter,
-		Characters:        nil,
-		Obstacles:         nil,
-		Projectiles:       nil,
-		FloatingTexts:     nil,
-		CurrentMapType:    &selectedMapType,
-		ExploredTiles:     make(map[image.Point]bool),
-		Items:             nil,
-	}
-
+	g.World = NewWorld()
+	g.World.PlayableCharacter = playableCharacter
+	g.World.CurrentMapType = &selectedMapType
+	g.World.Game = g
 	g.playableCharacter = playableCharacter
 	g.archetypeRegistry = archetypeRegistry
 	g.mapTypeRegistry = mapTypeRegistry

@@ -4,7 +4,7 @@ type: simulation
 width_px: 5120
 height_px: 5120
 level: 1
-play_time: 0
+start_hour: 10
 floor_tile: grass.png
 player:
   x: 0

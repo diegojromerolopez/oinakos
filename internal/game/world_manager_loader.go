@@ -87,6 +87,16 @@ func (wm *WorldManager) LoadMapLevel() {
 	g.currentMapType.SeedMinerals(int64(g.mapLevel) + time.Now().UnixNano())
 	g.playTime = 0; g.characters = make([]*Character, 0); g.obstacles = make([]*Obstacle, 0); g.floatingTexts = make([]*FloatingText, 0)
 	
+	// Initialize world time based on map config
+	if g.World == nil { g.World = NewWorld() }
+	if g.currentMapType.StartHour > 0 || g.currentMapType.StartTicks > 0 {
+		g.World.State.Hour = g.currentMapType.StartHour
+		g.World.State.Ticks = g.currentMapType.StartTicks
+	} else if g.World.State.Hour == 0 && g.World.State.Ticks == 0 {
+		// Default to Noon if not specified and not already set
+		g.World.State.Hour = 12
+	}
+
 	weatherStr := strings.ToLower(g.currentMapType.Weather)
 	if weatherStr == "random" {
 		r := rand.Float64()

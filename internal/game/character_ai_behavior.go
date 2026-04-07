@@ -380,3 +380,33 @@ func (c *Character) updateArtisan(ctx *SystemContext, obstacles []*Obstacle) {
 	}
 	c.updateWander(ctx, obstacles)
 }
+
+func (c *Character) updateBabyAI(ctx *SystemContext, obstacles []*Obstacle) {
+	// Find parent
+	var parent *Character
+	if ctx.World != nil {
+		for _, other := range ctx.World.Characters {
+			if !other.IsAlive() { continue }
+			isMother := c.ParentID != "" && other.Name == c.ParentID
+			isFather := c.FatherID != "" && other.Name == c.FatherID
+			if isMother || isFather {
+				parent = other
+				break
+			}
+		}
+	}
+
+	if parent != nil {
+		// Stick to parent position (Simulate being carried)
+		c.X, c.Y = parent.X, parent.Y
+		c.ActionState = ActorIdle
+	} else {
+		// If no parent found, baby just stays stuck and cries occasionally
+		if c.Tick%600 == 0 && rand.Float64() < 0.1 {
+			c.Say("Waaaaaah!", ctx)
+		}
+		c.ActionState = ActorIdle
+	}
+}
+
+

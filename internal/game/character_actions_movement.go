@@ -37,6 +37,7 @@ func (c *Character) ExecutePathTo(ctx *SystemContext, tx, ty float64) {
 }
 
 func (c *Character) executeMovement(ctx *SystemContext, dx, dy float64, obstacles []*Obstacle, flee bool) {
+	if c.LifeStage == StageBaby { return }
 	if c.ActionState == ActorIncapacitated && c.ActionState != ActorBerserk { return }
 	mag := math.Sqrt(dx*dx + dy*dy)
 	if mag < 0.01 { return }

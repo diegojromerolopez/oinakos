@@ -1,10 +1,8 @@
 package main
 
 import (
-	"io/fs"
 	"log"
 	"os"
-	"path/filepath"
 
 	"gopkg.in/yaml.v3"
 	"oinakos/internal/game"
@@ -74,40 +72,3 @@ func (v *Viewer) saveToYAML(ee *EditorEntity) {
 	log.Println("Footprint saved to", ee.YamlPath)
 }
 
-func findArchetypeYAML(id string) string {
-	baseDir := "data/archetypes"
-	var found string
-	localBaseDir := filepath.Join("oinakos", baseDir)
-	if _, statErr := os.Stat(localBaseDir); statErr == nil {
-		filepath.WalkDir(localBaseDir, func(fpath string, d fs.DirEntry, err error) error {
-			if err != nil || d.IsDir() { return nil }
-			if filepath.Ext(fpath) == ".yaml" || filepath.Ext(fpath) == ".yml" {
-				data, err := os.ReadFile(fpath)
-				if err == nil && containsID(data, id) {
-					found = fpath
-					return filepath.SkipAll
-				}
-			}
-			return nil
-		})
-	}
-	if found != "" { return found }
-	filepath.WalkDir(baseDir, func(fpath string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() { return nil }
-		if filepath.Ext(fpath) == ".yaml" || filepath.Ext(fpath) == ".yml" {
-			data, err := os.ReadFile(fpath)
-			if err == nil && containsID(data, id) {
-				found = fpath
-				return filepath.SkipAll
-			}
-		}
-		return nil
-	})
-	return found
-}
-
-func containsID(data []byte, id string) bool {
-	var m struct { ID string `yaml:"id"` }
-	yaml.Unmarshal(data, &m)
-	return m.ID == id
-}

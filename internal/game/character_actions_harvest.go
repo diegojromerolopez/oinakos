@@ -18,14 +18,25 @@ func (c *Character) CheckAttackHits(ctx *SystemContext, skill string) {
 	if c.ActionState == ActorChopping || c.ActionState == ActorDigging || c.ActionState == ActorForaging { hitCircle = engine.Circle{X: c.X, Y: c.Y, Radius: attackDist}
 	} else { avgX, avgY = (c.X+atX)*0.5, (c.Y+atY)*0.5; hitCircle = engine.Circle{X: avgX, Y: avgY, Radius: attackDist * 0.75} }
 	
-	targets := ctx.World.Characters; if ctx.World.PlayableCharacter != nil {
-		found := false; for _, t := range targets { if t == ctx.World.PlayableCharacter { found = true; break } }
-		if !found { targets = append([]*Character{ctx.World.PlayableCharacter}, targets...) }
+	var closestTarget *Character
+	minDist := hitCircle.Radius
+	targets := ctx.World.Characters
+	if ctx.World.PlayableCharacter != nil {
+		targets = append([]*Character{ctx.World.PlayableCharacter}, targets...)
 	}
+
 	for _, target := range targets {
-		if target == c || (target.Alignment == c.Alignment && !c.IsPlayerControlled) || (!target.IsAlive() && c.ActionState != ActorChopping) { continue }
+		if target == nil || target == c || (target.Alignment == c.Alignment && !c.IsPlayerControlled) || (!target.IsAlive() && c.ActionState != ActorChopping) { continue }
 		checkX, checkY := avgX, avgY; if c.ActionState == ActorChopping || c.ActionState == ActorDigging || c.ActionState == ActorForaging { checkX, checkY = c.X, c.Y }
-		if math.Sqrt(math.Pow(checkX-target.X, 2)+math.Pow(checkY-target.Y, 2)) < hitCircle.Radius { c.hitCharacter(&target.Actor, skill, ctx); hitSomething = true }
+		dist := math.Sqrt(math.Pow(checkX-target.X, 2)+math.Pow(checkY-target.Y, 2))
+		if dist < minDist {
+			minDist = dist
+			closestTarget = target
+		}
+	}
+	if closestTarget != nil {
+		c.hitCharacter(&closestTarget.Actor, skill, ctx)
+		hitSomething = true
 	}
 	
 	var bestTarget *Obstacle; bestDist := 999.0

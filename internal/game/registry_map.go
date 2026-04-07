@@ -41,6 +41,8 @@ type MapType struct {
 	TargetPointRaw  *TargetPointConfig `yaml:"target_point"` // Optional YAML-supplied target point
 	Player          *TargetPointConfig `yaml:"player,omitempty"`
 	Weather         string             `yaml:"weather"`
+	StartHour       int                `yaml:"start_hour"`
+	StartTicks      int                `yaml:"start_ticks"`
 	MapWidth        float64            `yaml:"-"` // Cartesian width
 	MapHeight       float64            `yaml:"-"` // Cartesian height
 

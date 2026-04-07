@@ -9,8 +9,32 @@ import (
 func (c *Character) TakeDamage(amount int, attacker ActorInterface, ctx *SystemContext) {
 	oldCfg := c.Config
 	c.Actor.TakeDamage(amount, attacker, ctx)
+	
+	if c.LifeStage == StageBaby && attacker != nil && attacker.GetActor() != nil {
+		c.triggerParentRetaliation(attacker.GetActor(), ctx)
+	}
+
 	if c.IsAlive() && !c.IsPlayerControlled && c.Config == oldCfg {
-		c.handleAIReaction(attacker, ctx)
+		if c.LifeStage != StageBaby {
+			c.handleAIReaction(attacker, ctx)
+		}
+	}
+}
+
+func (c *Character) triggerParentRetaliation(attacker *Actor, ctx *SystemContext) {
+	if ctx == nil || ctx.World == nil { return }
+	for _, other := range ctx.World.Characters {
+		if !other.IsAlive() { continue }
+		isMother := c.ParentID != "" && other.Name == c.ParentID
+		isFather := c.FatherID != "" && other.Name == c.FatherID
+		if isMother || isFather {
+			other.TargetActor = attacker
+			other.Alignment = AlignmentEnemy
+			other.Behavior = BehaviorKnightHunter
+			if ctx.Log != nil {
+				ctx.Log(fmt.Sprintf("%s's parent %s is retaliating against %s!", c.Name, other.Name, attacker.Name), LogWarning)
+			}
+		}
 	}
 }
 
@@ -35,6 +59,7 @@ func (c *Character) handleAIReaction(attacker ActorInterface, ctx *SystemContext
 }
 
 func (c *Character) executeAttack(ctx *SystemContext, isTargetPlayer bool, dx, dy float64) {
+	if c.LifeStage == StageBaby { return }
 	if IsDebugEnabled() { DebugLog("NPC [%s] EXECUTE ATTACK on Target (Player: %v)", c.Name, isTargetPlayer) }
 	if c.ActionState == ActorIncapacitated { return }
 	if c.ActionState != ActorAttacking {
@@ -62,3 +87,4 @@ func (c *Character) executeAttack(ctx *SystemContext, isTargetPlayer bool, dx, d
 }
 
 func gLog(ctx *SystemContext, msg string) { if ctx.Log != nil { ctx.Log(msg, LogNPC) } }
+

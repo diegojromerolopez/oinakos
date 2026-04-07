@@ -89,10 +89,10 @@ dist: build-wasm
 	@echo "Dist files prepared in $(DIST_DIR)/: index.html (inlined JS) and oinakos.wasm"
 
 run: build
-	./$(BIN_DIR)/$(APP_NAME)
+	./$(BIN_DIR)/$(APP_NAME) $(if $(MAP),-map $(MAP)) $(if $(MAP_TYPE),-map-type $(MAP_TYPE)) $(if $(HERO),-hero $(HERO))
 
 run-debug: build
-	./$(BIN_DIR)/$(APP_NAME) -debug
+	./$(BIN_DIR)/$(APP_NAME) -debug $(if $(MAP),-map $(MAP)) $(if $(MAP_TYPE),-map-type $(MAP_TYPE)) $(if $(HERO),-hero $(HERO))
 run-headless:
 	@echo "Running Headless Simulation..."
 	$(GORUN) -tags headless .
