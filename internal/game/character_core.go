@@ -177,6 +177,7 @@ func NewCharacter(x, y float64, config *EntityConfig, level int, isPlayer bool, 
 	}
 
 	c.State.Age = AgeState{Current: ageYears, Rate: ageRate, Max: ageMax}
+	if c.State.Age.Rate <= 0 { c.State.Age.Rate = 1.0 } // Global Aging Fix: Ensure everyone ages by default
 
 	// Enforce 18+ for adults/elders
 	if c.LifeStage == StageAdult || c.LifeStage == StageElder {

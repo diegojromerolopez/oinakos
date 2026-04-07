@@ -1,0 +1,8 @@
+id: barley
+name: Barley
+type: consumable
+weight: 0.1
+value: 4
+description: A bundle of harvested barley. Common for brewing and simple breads.
+hunger: 4
+primary_color: "#DEB887"

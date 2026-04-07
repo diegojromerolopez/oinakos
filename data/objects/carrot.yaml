@@ -1,0 +1,9 @@
+id: carrot
+name: White Carrot
+type: consumable
+weight: 0.3
+value: 10
+description: A pale, earthy carrot. A nutritious root vegetable.
+hunger: 15
+thirst: 5
+primary_color: "#FDF5E6"

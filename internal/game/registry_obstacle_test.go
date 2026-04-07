@@ -27,6 +27,14 @@ cooldown_time: 15.0
 passable: false
 `),
 		},
+		"data/obstacles/crop_wheat.yaml": {
+			Data: []byte(`
+id: crop_wheat
+name: Wheat Field
+plant_season: SPRING
+growth_duration: 1000
+`),
+		},
 	}
 
 	r := NewObstacleRegistry()
@@ -35,8 +43,8 @@ passable: false
 		t.Fatalf("LoadAll failed: %v", err)
 	}
 
-	if len(r.Archetypes) < 2 {
-		t.Errorf("expected at least 2 archetypes, got %d", len(r.Archetypes))
+	if len(r.Archetypes) < 3 {
+		t.Errorf("expected 3 archetypes, got %d", len(r.Archetypes))
 	}
 
 	tree := r.Archetypes["tree_oak"]
@@ -47,6 +55,11 @@ passable: false
 	well := r.Archetypes["well"]
 	if well == nil || !well.IsWell() {
 		t.Error("well was not correctly identified as a well")
+	}
+
+	crop := r.Archetypes["crop_wheat"]
+	if crop == nil || !crop.IsCrop {
+		t.Error("crop_wheat was not correctly identified as a crop (ID prefix rule failed)")
 	}
 }
 

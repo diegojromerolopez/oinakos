@@ -1,0 +1,8 @@
+id: rye
+name: Rye
+type: consumable
+weight: 0.15
+value: 6
+description: Dark, hardy harvested rye. Makes for dense, nutritious bread.
+hunger: 6
+primary_color: "#8B4513"

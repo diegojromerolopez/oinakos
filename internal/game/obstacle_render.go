@@ -17,7 +17,13 @@ func (o *Obstacle) Draw(screen engine.Image, vectorRenderer engine.VectorRendere
 
 	img := o.Archetype.Image
 	// Generic support for state-specific images (e.g. open/closed)
-	if o.Locked {
+	if o.Archetype.IsCrop {
+		if o.GrowthStage >= 2 && o.Archetype.ReadyImage != nil {
+			img = o.Archetype.ReadyImage
+		} else if o.Archetype.GrowingImage != nil {
+			img = o.Archetype.GrowingImage
+		}
+	} else if o.Locked {
 		if o.Archetype.ClosedImage != nil {
 			img = o.Archetype.ClosedImage
 		}

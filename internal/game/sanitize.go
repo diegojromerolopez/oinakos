@@ -3,6 +3,7 @@ package game
 import (
 	"log"
 	"strconv"
+	"strings"
 )
 
 // HexToRGBA converts a hex string like "#FF00FF" to [4]float32 RGBA components (0.0 to 1.0).
@@ -105,6 +106,9 @@ func sanitizeObstacleArchetype(c *ObstacleArchetype, source string) {
 	if c.CooldownTime < 0 {
 		log.Printf("Warning [%s]: obstacle %q has cooldown_time=%v, clamping to 0", source, c.ID, c.CooldownTime)
 		c.CooldownTime = 0
+	}
+	if strings.HasPrefix(c.ID, "crop_") {
+		c.IsCrop = true
 	}
 }
 

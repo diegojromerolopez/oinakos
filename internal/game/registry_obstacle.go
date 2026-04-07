@@ -26,7 +26,7 @@ type ObstacleArchetype struct {
 	AnimationSpeed int                    `yaml:"animation_speed"` // Ticks per frame
 	Actions        []ObstacleActionConfig `yaml:"actions,omitempty"`
 
-	IsCrop         bool   `yaml:"is_crop"`
+	IsCrop         bool   `yaml:"-"`
 	PlantSeason    string `yaml:"plant_season"`   // e.g. "SPRING"
 	HarvestSeason  string `yaml:"harvest_season"` // e.g. "AUTUMN"
 	GrowthDuration int    `yaml:"growth_duration"`
@@ -44,6 +44,8 @@ type ObstacleArchetype struct {
 	Image       engine.Image `yaml:"-"`
 	OpenImage   engine.Image `yaml:"-"`
 	ClosedImage engine.Image `yaml:"-"`
+	GrowingImage engine.Image `yaml:"-"`
+	ReadyImage   engine.Image `yaml:"-"`
 }
 
 func (a *ObstacleArchetype) IsWell() bool {
@@ -107,6 +109,8 @@ func (r *ObstacleRegistry) createLoadJobs(assets fs.FS, permitList map[string]bo
 		if info, err := fs.Stat(assets, folderPath); err == nil && info.IsDir() {
 			openPath := path.Join(folderPath, "open.png")
 			closedPath := path.Join(folderPath, "closed.png")
+			growingPath := path.Join(folderPath, "growing.png")
+			readyPath := path.Join(folderPath, "ready.png")
 
 			if _, err := fs.Stat(assets, openPath); err == nil {
 				jobs = append(jobs, &SpriteLoadJob{Path: openPath, Dest: &config.OpenImage})
@@ -116,6 +120,13 @@ func (r *ObstacleRegistry) createLoadJobs(assets fs.FS, permitList map[string]bo
 				// Use closed as default
 				jobs = append(jobs, &SpriteLoadJob{Path: closedPath, Dest: &config.Image})
 			}
+			if _, err := fs.Stat(assets, growingPath); err == nil {
+				jobs = append(jobs, &SpriteLoadJob{Path: growingPath, Dest: &config.GrowingImage})
+			}
+			if _, err := fs.Stat(assets, readyPath); err == nil {
+				jobs = append(jobs, &SpriteLoadJob{Path: readyPath, Dest: &config.ReadyImage})
+			}
+
 			if config.Image != nil || len(jobs) > 0 {
 				continue
 			}

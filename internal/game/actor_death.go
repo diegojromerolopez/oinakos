@@ -4,10 +4,20 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
+	"sync/atomic"
 )
 
 func (a *Actor) die(attacker ActorInterface, ctx *SystemContext) {
+	if a.ActionState == ActorDead { return } // Prevent double count
 	a.ActionState = ActorDead
+	
+	if ctx != nil && ctx.World != nil {
+		if attacker != nil {
+			atomic.AddInt64(&ctx.World.Demographics.DeathsViolent, 1)
+		} else {
+			atomic.AddInt64(&ctx.World.Demographics.DeathsNatural, 1)
+		}
+	}
 	if ctx != nil && ctx.World != nil {
 		var heir *Character
 		for _, char := range ctx.World.Characters { if char.ParentID == a.Name && char.IsAlive() { heir = char; break } }

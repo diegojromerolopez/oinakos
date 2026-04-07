@@ -159,6 +159,26 @@ inhabitants:
   y: 22
   alignment: neutral
   behavior: farmer
+- archetype: peasant_male
+  x: 45
+  y: -25
+  alignment: neutral
+  behavior: farmer
+- archetype: peasant_female
+  x: 35
+  y: -25
+  alignment: neutral
+  behavior: farmer
+- archetype: peasant_female
+  x: -45
+  y: 15
+  alignment: neutral
+  behavior: farmer
+- archetype: peasant_male
+  x: -35
+  y: 15
+  alignment: neutral
+  behavior: farmer
 - archetype: farmer_merchant
   x: 0
   y: 17
@@ -607,5 +627,70 @@ obstacles:
 - archetype: rock_5
   x: -22
   y: -10
+# East Farm Crops
+- archetype: crop_wheat
+  x: 32
+  y: -28
+- archetype: crop_wheat
+  x: 34
+  y: -28
+- archetype: crop_wheat
+  x: 32
+  y: -26
+- archetype: crop_barley
+  x: 38
+  y: -28
+- archetype: crop_barley
+  x: 40
+  y: -28
+- archetype: crop_barley
+  x: 38
+  y: -26
+- archetype: crop_rye
+  x: 44
+  y: -28
+- archetype: crop_rye
+  x: 46
+  y: -28
+- archetype: crop_rye
+  x: 44
+  y: -26
+# West Farm Crops
+- archetype: crop_cabbage
+  x: -48
+  y: 12
+- archetype: crop_cabbage
+  x: -46
+  y: 12
+- archetype: crop_cabbage
+  x: -48
+  y: 14
+- archetype: crop_turnip
+  x: -42
+  y: 12
+- archetype: crop_turnip
+  x: -40
+  y: 12
+- archetype: crop_turnip
+  x: -42
+  y: 14
+- archetype: crop_lentils
+  x: -48
+  y: 18
+- archetype: crop_lentils
+  x: -46
+  y: 18
+- archetype: crop_lentils
+  x: -48
+  y: 20
+- archetype: crop_carrot
+  x: -42
+  y: 18
+- archetype: crop_carrot
+  x: -40
+  y: 18
+- archetype: crop_carrot
+  x: -42
+  y: 20
 objects: []
 weather: clear

@@ -281,6 +281,7 @@ type Actor struct {
 	
 	AgeTicks         float64
 	LifeStage        string 
+	MortalityChecked bool 
 	
 	BaseAttack         int
 	RangedAttack       int     

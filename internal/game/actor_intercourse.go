@@ -274,9 +274,10 @@ func (a *Actor) mate(ctx *SystemContext, mate *Actor, practice string) {
 
 	if rand.Float64() < chance {
 		mother.IsPregnant = true
-		mother.GestationTicks = 0
 		if mother.Config.IsAnimal { 
-			mother.State.Age.Max = 1.0 * float64(TicksPerMonth) // Set gestation for animals
+			mother.GestationTicks = int(TicksPerMonth) // 1 month for animals
+		} else {
+			mother.GestationTicks = int(TicksPerMonth * 9) // 9 months for humans
 		}
 		mother.FatherID = father.Name
 		atomic.AddInt64(&ctx.World.Demographics.MatingPregancies, 1)
