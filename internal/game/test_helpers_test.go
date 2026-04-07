@@ -96,29 +96,6 @@ func setupTestGame() *Game {
 	g.characters = []*Character{g.playableCharacter}
 	g.World.Characters = g.characters
 
-	// Initialize Multi-threading infrastructure for tests
-	g.charStartChan = make(chan *SystemContext, 1)
-	g.charDoneChan = make(chan bool, 8)
-	for i := 0; i < 8; i++ {
-		workerID := i
-		go func() {
-			for ctx := range g.charStartChan {
-				charCount := len(g.characters)
-				chunkSize := (charCount + 7) / 8
-				start := workerID * chunkSize
-				end := start + chunkSize
-				if start < charCount {
-					if end > charCount { end = charCount }
-					subset := g.characters[start:end]
-					for _, n := range subset {
-						g.processCharacter(ctx, n)
-					}
-				}
-				g.charDoneChan <- true
-			}
-		}()
-	}
-
 	return g
 }
 

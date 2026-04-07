@@ -8,10 +8,13 @@ import (
 
 func (a *Actor) updateSanity(ctx *SystemContext) {
 	// Sanity drains from physical misery (now at 90+)
-	if a.State.Hunger > 90 { a.State.Sanity -= 0.00001 }
-	if a.State.Thirst > 90 { a.State.Sanity -= 0.00002 }
-	if a.State.Fatigue > 90 { a.State.Sanity -= 0.00001 }
+	if a.State.Fatigue > 90 { a.State.Sanity -= 0.0001 }
 	if a.FluTicks > 0 { a.State.Sanity -= 0.00005 }
+	
+	// PASSIVE RECOVERY: Stable characters recover sanity slowly
+	if a.State.Hunger < 40 && a.State.Thirst < 40 && a.State.Fatigue < 60 && a.IsAlive() {
+		a.State.Sanity += 0.0005
+	}
 	
 	// Thermal stress affects mood
 	if a.BodyTemperature < 32.0 || a.BodyTemperature > 40.0 {

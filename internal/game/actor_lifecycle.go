@@ -102,14 +102,14 @@ func (a *Actor) updateDecay(ctx *SystemContext) {
 	if a.RotTicks > TicksPerDay {
 		if a.Tick%600 == 0 { a.LastReaction = "ROTTEN" }
 		
-		if ctx.World != nil {
+		if a.Tick%60 == 0 && ctx.World != nil {
 			radius := 4.0
 			for _, other := range ctx.World.Characters {
 				if !other.IsAlive() || other.Actor.ID == a.ID { continue }
 				dist := math.Sqrt(math.Pow(a.X-other.X, 2) + math.Pow(a.Y-other.Y, 2))
 				if dist < radius {
-					other.Actor.State.Sanity -= 0.005 // Reduced from 0.05
-					other.Actor.State.Hygiene -= 0.05 // Reduced from 0.1
+					other.Actor.State.Sanity -= 0.005 
+					other.Actor.State.Hygiene -= 0.05 
 					if rand.Float64() < 0.0005 {
 						other.Actor.State.IsSick = true
 						if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s has been nauseated by the miasma of %s.", other.Name, a.Name), LogWarning) }

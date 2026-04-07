@@ -31,10 +31,10 @@ func (a *Actor) updateNeeds(ctx *SystemContext) {
 	physResilience := 1.0 - (float64(a.PrimaryAttributes.Health)*0.0055 + float64(a.PrimaryAttributes.Strength)*0.002)
 	if physResilience < 0.25 { physResilience = 0.25 }
 
-	// BASE RATES (Tuned for ~12hr survival window at average stats)
-	a.State.Hunger += 0.05 * decayMultiplier * weatherPenalty * pMult * physResilience
+	// BASE RATES (Balanced for long-term autonomous survival)
+	a.State.Hunger += 0.015 * decayMultiplier * weatherPenalty * pMult * physResilience
 	if a.State.HydrationBuffer <= 0 {
-		a.State.Thirst += 0.35 * decayMultiplier * weatherPenalty * pMult * physResilience
+		a.State.Thirst += 0.025 * decayMultiplier * weatherPenalty * pMult * physResilience
 	}
 	
 	fMult := 1.0; if a.IsPregnant { fMult = 1.25 } // Reduced pregnancy fatigue strain
@@ -77,7 +77,7 @@ func (a *Actor) updateNeeds(ctx *SystemContext) {
 	a.State.Fatigue += 0.0016 * decayMultiplier * weatherPenalty * fMult * circadianMult * sanityPenalty
 
 	// Forced Collapse (Natural Human Limit)
-	if a.State.Fatigue >= 100 && a.ActionState != ActorResting {
+	if a.State.Fatigue >= 95 && a.ActionState != ActorResting {
 		a.ActionState, a.Tick = ActorResting, 0
 		a.State.Hygiene -= 20 
 		a.Say("I... can't... stay... awake...", ctx)

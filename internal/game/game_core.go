@@ -3,7 +3,6 @@ package game
 import (
 	"image"
 	"io/fs"
-	"sync"
 	"sync/atomic"
 
 	"oinakos/internal/engine"
@@ -15,6 +14,7 @@ func SetGlobalHeadlessLogger(f func(string)) {
 	GlobalHeadlessLogger = f
 }
 
+
 const (
 	WinMenuContinue = 0
 	WinMenuQuit     = 1
@@ -22,32 +22,32 @@ const (
 
 type Game struct {
 	width, height     int
-	playableCharacter     *Character
+	playableCharacter *Character
 	playerConfig      *EntityConfig
 	obstacles         []*Obstacle
 	characters        []*Character
 	projectiles       []*Projectile
 	isGameOver        bool
 	isMapWon          bool
-	isGameWon         bool 
-	mapWonMenuIndex   int  
+	isGameWon         bool
+	mapWonMenuIndex   int
 	isPaused          bool
 	currentMapType    MapType
-	mapLevel          int       
-	currentCampaign   *Campaign 
-	campaignIndex     int       
-	isCampaign        bool      
-	isMainMenu        bool      
-	mainMenuIndex     int       
-	isAboutScreen     bool      
-	isSettingsScreen  bool      
-	isKeymapScreen    bool      
-	isInventoryOpen   bool      
-	ActiveBook        *ItemInstance 
-	isCampaignSelect  bool      
-	campaignMenuIndex int       
-	keymapSelectedIndex int     
-	remappingAction   string    
+	mapLevel          int
+	currentCampaign   *Campaign
+	campaignIndex     int
+	isCampaign        bool
+	isMainMenu        bool
+	mainMenuIndex     int
+	isAboutScreen     bool
+	isSettingsScreen  bool
+	isKeymapScreen    bool
+	isInventoryOpen   bool
+	ActiveBook        *ItemInstance
+	isCampaignSelect  bool
+	campaignMenuIndex int
+	keymapSelectedIndex int
+	remappingAction   string
 	initialMapTypeID  string
 	debug             bool
 
@@ -73,14 +73,14 @@ type Game struct {
 	audio                     AudioManager
 
 	isMenuOpen       bool
-	menuIndex        int 
+	menuIndex        int
 	loadDialogActive bool
 	loadPathInput    string
 
 	isCharacterSelect  bool
 	characterMenuIndex int
 	saveMessage        string
-	saveMessageTimer   int 
+	saveMessageTimer   int
 
 	settings *Settings
 	settingsFontIndex  int
@@ -96,7 +96,7 @@ type Game struct {
 	ExploredTiles map[image.Point]bool
 
 	isQuitConfirmationOpen bool
-	quitConfirmationIndex  int 
+	quitConfirmationIndex  int
 
 	World      *World
 	Registries *RegistryContainer
@@ -105,12 +105,7 @@ type Game struct {
 	worldManager     *WorldManager
 	mechanicsManager *MechanicsManager
 
-	// Threading Infrastructure
-	workerWG         sync.WaitGroup
-	charStartChan    chan *SystemContext
-	charDoneChan     chan bool
-
-	LoadingProgress int32 
+	LoadingProgress int32
 	LoadingMessage  string
 	Version         string
 
@@ -119,7 +114,7 @@ type Game struct {
 	LogScrollOffset int
 	IsDraggingLog   bool
 	LogUIState      DialogueUIState
-	
+
 	ActiveTrader    *Character
 	isTradeOpen     bool
 
@@ -135,9 +130,9 @@ type Game struct {
 	isDraggingPinnedUI   bool
 	dragPinnedOffsetX, dragPinnedOffsetY int
 	particles        []*Particle
-	deathReason      string 
+	deathReason      string
 	simulationMode   bool
-	isHUDVisible     bool 
+	isHUDVisible     bool
 }
 
 func (g *Game) ToggleHUD() {
@@ -186,7 +181,6 @@ func (g *Game) GetContext() *SystemContext {
 	}
 }
 
-
 func (g *Game) BypassMenu() {
 	g.isMainMenu = false
 	g.isCharacterSelect = false
@@ -232,6 +226,6 @@ func (g *Game) SetCurrentMapType(m *MapType) {
 
 func (g *Game) TriggerMapLoad() {
 	if g.worldManager != nil {
-		go g.worldManager.LoadMapLevel()
+		g.worldManager.LoadMapLevel()
 	}
 }
