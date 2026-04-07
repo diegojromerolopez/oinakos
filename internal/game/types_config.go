@@ -18,6 +18,7 @@ func stringsContains(s, substr string) bool { for i := 0; i < len(s)-len(substr)
 
 type ObjectConfig struct {
 	ID string `yaml:"id"`; Name string `yaml:"name"`; Description string `yaml:"description,omitempty"`; Weight float64 `yaml:"weight"`; Type string `yaml:"type"`; Category string `yaml:"category,omitempty"`; Value int `yaml:"value"`; Unique bool `yaml:"unique,omitempty"`; Resistance int `yaml:"resistance,omitempty"`; Content string `yaml:"content,omitempty"`; Consumable bool `yaml:"consumable,omitempty"`; Combat *Weapon `yaml:"combat,omitempty"`; Slot string `yaml:"slot,omitempty"`; Effects map[string]StatEffect `yaml:"effects,omitempty"`; Hunger float64 `yaml:"hunger,omitempty"`; Thirst float64 `yaml:"thirst,omitempty"`; Fatigue float64 `yaml:"fatigue,omitempty"`; Energy float64 `yaml:"energy,omitempty"`; ClearSick bool `yaml:"clear_sick,omitempty"`; MaxHours float64 `yaml:"max_hours,omitempty"`; MaxLiquid float64 `yaml:"max_liquid,omitempty"`; Refillable bool `yaml:"refillable,omitempty"`; IsAlcoholic bool `yaml:"is_alcoholic,omitempty"`
+	LightRadius float64 `yaml:"light_radius,omitempty"`; IsTorch bool `yaml:"is_torch,omitempty"`
 	AssetDir string `yaml:"-"`; Sprite engine.Image `yaml:"-"`; Footprint []FootprintPoint `yaml:"footprint,omitempty"`
 }
 

@@ -9,13 +9,13 @@ import (
 
 func TestForEachYAML(t *testing.T) {
 	fsys := fstest.MapFS{
-		"data/map_types/test.yaml": &fstest.MapFile{Data: []byte("id: test")},
-		"data/map_types/other.yml":  &fstest.MapFile{Data: []byte("id: other")},
-		"data/map_types/ignore.txt": &fstest.MapFile{Data: []byte("ignore")},
+		"data/test_map_types/test.yaml": &fstest.MapFile{Data: []byte("id: test")},
+		"data/test_map_types/other.yml":  &fstest.MapFile{Data: []byte("id: other")},
+		"data/test_map_types/ignore.txt": &fstest.MapFile{Data: []byte("ignore")},
 	}
 	
 	count := 0
-	err := forEachYAML(fsys, "data/map_types", func(fpath string, data []byte) error {
+	err := forEachYAML(fsys, "data/test_map_types", func(fpath string, data []byte) error {
 		count++
 		return nil
 	})
@@ -24,7 +24,7 @@ func TestForEachYAML(t *testing.T) {
 		t.Fatalf("forEachYAML failed: %v", err)
 	}
 	if count != 2 {
-		t.Errorf("expected 2 YAML files, got %d", count)
+		t.Errorf("expected 2 YAML files from mock FS, got %d", count)
 	}
 }
 

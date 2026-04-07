@@ -19,7 +19,7 @@ func TestSickness_Mechanics(t *testing.T) {
 	t.Run("Flu - Fatigue and HP Drain", func(t *testing.T) {
 		a := &Actor{Name: "Flu Patient", State: State{HealthPoints: 100, Fatigue: 96}}
 		a.FluTicks = 100
-		a.Tick = 180
+		a.Tick = 300
 		// Should increase fatigue and drain HP because fatigue > 95
 		a.updateIllness(ctx)
 		if a.State.Fatigue <= 96 { t.Errorf("Flu should increase fatigue") }

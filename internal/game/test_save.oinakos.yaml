@@ -28,7 +28,7 @@ player:
     age:
         current: 0
         max: 0
-        rate: 0
+        rate: 1
     is_angry: false
     is_hypersexual: false
     thirst_max: 193
@@ -76,7 +76,7 @@ characters:
       age:
         current: 0
         max: 0
-        rate: 0
+        rate: 1
       is_angry: false
       is_hypersexual: false
       thirst_max: 193

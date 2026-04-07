@@ -59,6 +59,7 @@ func TestVampireConversion(t *testing.T) {
 
 	// Act: Victim takes lethal damage from vampire
 	victim.TakeDamage(1000, vampire, ctx)
+	fmt.Printf("DEBUG: Immediately after TakeDamage, victim.Actor.Alignment = %v (%d) at addr %p, &victim.Alignment addr = %p\n", victim.Actor.Alignment, int(victim.Actor.Alignment), &victim.Actor.Alignment, &victim.Alignment)
 	// Transformation happens in die() -> applyKillAction()
 	// Force Idle state and sync for the test to ensure restoration is noticed.
 	// victim.SyncStats(nil)
@@ -68,13 +69,14 @@ func TestVampireConversion(t *testing.T) {
 
 	// Assert
 	fmt.Printf("DEBUG: victim address = %p, &victim.Actor address = %p\n", victim, &victim.Actor)
-	fmt.Printf("DEBUG: AlignmentEnemy value = %v (%s)\n", AlignmentEnemy, AlignmentEnemy.String())
-	fmt.Printf("DEBUG: Test Asserting Alignment: victim.Alignment = %v (%s)\n", victim.Alignment, victim.Alignment.String())
+	fmt.Printf("DEBUG: AlignmentEnemy value = %v (%d) (%s)\n", AlignmentEnemy, int(AlignmentEnemy), AlignmentEnemy.String())
+	fmt.Printf("DEBUG: Test Asserting Alignment: victim.Alignment = %v (%d) (%s)\n", victim.Actor.Alignment, int(victim.Actor.Alignment), victim.Actor.Alignment.String())
 	if victim.Config.ID != "vampire_male" {
 		t.Errorf("Expected victim to be converted to vampire_male, got %s", victim.Config.ID)
 	}
-	if victim.Alignment != AlignmentEnemy {
-		t.Errorf("Expected converted vampire to inherit alignment ENEMY, got %v", victim.Alignment)
+	fmt.Printf("DEBUG: Test victim.Actor addr = %p, &victim.Actor.Alignment addr = %p\n", &victim.Actor, &victim.Actor.Alignment)
+	if victim.Actor.Alignment != AlignmentEnemy {
+		t.Errorf("Expected converted vampire to inherit alignment ENEMY, got %v", victim.Actor.Alignment)
 	}
 	if victim.ActionState != ActorIdle {
 		t.Errorf("Expected converted vampire to be Idle, got %v", victim.ActionState)

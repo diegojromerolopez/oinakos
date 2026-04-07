@@ -100,6 +100,7 @@ func TestAgeTransitions(t *testing.T) {
 		Actor: Actor{
 			LifeStage: StageBaby,
 			AgeTicks: 0,
+			MortalityChecked: true, // skip infant mortality roll — we're testing stage transitions only
 			State: State{ Age: AgeState{ Rate: 1.0 } },
 			Config: &EntityConfig{ ID: "baby", Archetype: "baby/male" },
 		},

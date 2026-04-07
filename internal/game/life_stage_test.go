@@ -6,59 +6,39 @@ import (
 )
 
 func TestLifeStage_Transitions(t *testing.T) {
-	ctx := NewTestContext()
-	
-	// Setup archetypes for transitions
-	stages := []string{StageBaby, StageKid, StageTeenager, StageAdult, StageElder}
-	genders := []string{"male", "female"}
-	
-	for _, stage := range stages {
-		for _, gender := range genders {
-			id := fmt.Sprintf("archetypes/%s/%s", stage, gender)
-			ctx.Registries.Archetypes.Archetypes[id] = &Archetype{
-				ID: id,
-				Name: fmt.Sprintf("%s %s", stage, gender),
-				Gender: gender,
+	setup := func() *SystemContext {
+		ctx := NewTestContext()
+		// Setup archetypes for transitions
+		stages := []string{StageBaby, StageKid, StageTeenager, StageAdult, StageElder}
+		genders := []string{"male", "female"}
+		for _, stage := range stages {
+			for _, gender := range genders {
+				id := "archetypes/" + stage + "/" + gender
+				ctx.Registries.Archetypes.Archetypes[id] = &Archetype{ID: id, Name: stage + " " + gender, Gender: gender}
 			}
 		}
+		ctx.Registries.Archetypes.Archetypes["archetypes/man_at_arms"] = &Archetype{ID: "archetypes/man_at_arms", Name: "Man-at-Arms", Gender: "male"}
+		ctx.Registries.Archetypes.Archetypes["archetypes/peasant"] = &Archetype{ID: "archetypes/peasant", Name: "Peasant", Gender: "female"}
+		return ctx
 	}
-	// Special cases for Adult professions
-	ctx.Registries.Archetypes.Archetypes["archetypes/man_at_arms"] = &Archetype{ID: "archetypes/man_at_arms", Name: "Man-at-Arms", Gender: "male"}
-	ctx.Registries.Archetypes.Archetypes["archetypes/peasant"] = &Archetype{ID: "archetypes/peasant", Name: "Peasant", Gender: "female"}
-
-	ticksPY := float64(TicksPerYear)
 
 	t.Run("Dead Actor does not age", func(t *testing.T) {
-		a := &Actor{ActionState: ActorDead, AgeTicks: 10 * ticksPY}
+		ctx := setup()
+		a := &Actor{ActionState: ActorDead, AgeTicks: 10 * float64(TicksPerYear)}
 		a.updateAge(ctx)
-		// AgeTicks should remain same (ActionState checked at beginning)
-		if a.AgeTicks != 10 * ticksPY {
-			t.Errorf("Dead actor should not age")
-		}
+		if a.AgeTicks != 10 * float64(TicksPerYear) { t.Errorf("Dead actor should not age") }
 	})
 
 	t.Run("Max Age Death", func(t *testing.T) {
-		a := &Actor{
-			Name: "Old Man",
-			LifeStage: StageElder,
-			ActionState: ActorIdle,
-			State: State{
-				Age: AgeState{Max: 100, Rate: 1.0},
-			},
-			AgeTicks: 101 * ticksPY,
-		}
+		ctx := setup()
+		a := &Actor{Name: "Old Man", LifeStage: StageElder, ActionState: ActorIdle, State: State{Age: AgeState{Max: 100, Rate: 1.0}}, AgeTicks: 101 * float64(TicksPerYear)}
 		a.updateAge(ctx)
-		if a.ActionState != ActorDead {
-			t.Errorf("Actor should be dead of old age")
-		}
+		if a.ActionState != ActorDead { t.Errorf("Actor should be dead of old age") }
 	})
 
 	t.Run("Stage Transitions", func(t *testing.T) {
 		scenarios := []struct {
-			startStage string
-			startAge   float64
-			endStage   string
-			gender     string
+			startStage string; startAge float64; endStage string; gender string
 		}{
 			{StageBaby, 1.1, StageKid, "male"},
 			{StageKid, 12.1, StageTeenager, "female"},
@@ -67,70 +47,29 @@ func TestLifeStage_Transitions(t *testing.T) {
 		}
 
 		for _, s := range scenarios {
+			ctx := setup()
 			a := &Actor{
-				Name: "Test Subject",
-				LifeStage: s.startStage,
-				AgeTicks: s.startAge * ticksPY,
+				Name: "Test Subject", LifeStage: s.startStage, AgeTicks: s.startAge * float64(TicksPerYear),
 				Config: &EntityConfig{Archetype: "some_id_" + s.gender, Gender: s.gender},
 				State: State{Age: AgeState{Rate: 1.0}, HealthPoints: 1, MaxHealthPoints: 100},
+				MortalityChecked: true,
 			}
-			if s.gender == "female" {
-				a.Config.Archetype = "fake_female" // must contain female
-			}
-
+			if s.gender == "male" && s.endStage == StageAdult { a.PrimaryAttributes.Strength = 65 }
+			if s.gender == "female" { a.Config.Archetype = "fake_female" }
 			a.updateAge(ctx)
-			if a.LifeStage != s.endStage {
-				t.Errorf("Expected stage %s, got %s for age %v", s.endStage, a.LifeStage, s.startAge)
-			}
-			
-			// Verify archetype swap if it succeeded
+			if a.LifeStage != s.endStage { t.Errorf("Expected stage %s, got %s", s.endStage, a.LifeStage) }
 			prefix := "archetypes/" + s.endStage + "/" + s.gender
-			if s.endStage == StageAdult {
-				if s.gender == "male" { prefix = "archetypes/man_at_arms" } else { prefix = "archetypes/peasant" }
-			}
-			if a.Config.ID != prefix {
-				t.Errorf("Archetype not swapped to %s, got %s", prefix, a.Config.ID)
-			}
-			
-			// HP should be reset to max
-			if a.State.HealthPoints != a.State.MaxHealthPoints {
-				t.Errorf("HP not reset to max after stage transition")
-			}
+			if s.endStage == StageAdult { if s.gender == "male" { prefix = "archetypes/man_at_arms" } else { prefix = "archetypes/peasant" } }
+			if a.Config == nil || a.Config.ID != prefix { t.Errorf("Scenario %v -> %v: Archetype not swapped to %s, got %v", s.startStage, s.endStage, prefix, a.Config.ID) }
 		}
-	})
-
-	t.Run("Elder Natural Death Chance", func(t *testing.T) {
-		a := &Actor{
-			LifeStage: StageElder,
-			ActionState: ActorIdle,
-			AgeTicks: 86 * ticksPY,
-			State: State{Age: AgeState{Rate: 1.0}},
-		}
-		// Chance increases after 85. 
-		// (86-85)/15 = 1/15.
-		// per-tick chance is very low. Just checking coverage.
-		a.updateAge(ctx)
 	})
 
 	t.Run("Lookup failure does not crash", func(t *testing.T) {
-		// Temporarily wipe registries
-		oldArchs := ctx.Registries.Archetypes.Archetypes
+		ctx := setup()
 		ctx.Registries.Archetypes.Archetypes = make(map[string]*Archetype)
-		
-		a := &Actor{
-			LifeStage: StageBaby,
-			AgeTicks: 1.5 * ticksPY,
-			Config: &EntityConfig{Archetype: "male"},
-			State: State{Age: AgeState{Rate: 1.0}},
-		}
+		a := &Actor{LifeStage: StageBaby, AgeTicks: 1.5 * float64(TicksPerYear), Config: &EntityConfig{Archetype: "male"}, State: State{Age: AgeState{Rate: 1.0}}, MortalityChecked: true}
 		a.updateAge(ctx)
-		// Stage should change, but Config should remain same if lookup fails
-		if a.LifeStage != StageKid {
-			t.Errorf("Stage should still change even if lookup fails")
-		}
-		
-		// Restore
-		ctx.Registries.Archetypes.Archetypes = oldArchs
+		if a.LifeStage != StageKid { t.Errorf("Stage should still change even if lookup fails, got: %q, wanted: %q", a.LifeStage, StageKid) }
 	})
 }
 

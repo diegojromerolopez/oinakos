@@ -295,6 +295,9 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 			t.draw()
 		}
 
+		// Light zones pass
+		gr.drawLightZones(screen, offsetX, offsetY)
+
 		// UI Pass: Draw character and NPC UI on top (always visible)
 		for _, n := range g.characters {
 			isoX, isoY := engine.CartesianToIsoZ(n.X, n.Y, n.Z)
@@ -385,6 +388,7 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 		} else {
 			gr.drawFog(screen)
 			gr.drawTimeOverlay(screen)
+			gr.drawLightZones(screen, offsetX, offsetY) // Light cuts through darkness
 			gr.drawWeather(screen)
 			gr.drawHUD(screen)
 			gr.drawDialogueBox(screen)

@@ -8,14 +8,44 @@ player:
   archetype: ""
   x: 0
   "y": 0
-  health: 100
-  max_health: 100
+  health_points: 100
+  max_health_points: 100
+  sanity: 0
+  hunger: 0
+  thirst: 0
+  fatigue: 0
+  bladder_level: 0
+  bowel_level: 0
+  hygiene: 0
+  arousal: 0
+  is_drunk: false
+  alcohol_level: 0
+  pain: 0
+  is_sick: false
+  is_septic: false
+  is_poisoned: false
+  is_conscious: false
+  age:
+    current: 0
+    max: 0
+    rate: 0
+  is_angry: false
+  is_hypersexual: false
+  thirst_max: 0
+  hydration_buffer: 0
   xp: 0
   level: 1
   kills: 0
   map_kills: {}
-  base_attack: 10
-  base_defense: 5
-  weapon: ""
-npcs: []
+  strength: 50
+  dexterity: 50
+  health: 50
+  intellect: 50
+  wisdom: 50
+  base_attack: 0
+  base_defense: 0
+  base_protection: 0
+  denarii: 0
+  weapon: null
+characters: []
 obstacles: []

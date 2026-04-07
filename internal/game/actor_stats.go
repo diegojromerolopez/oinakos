@@ -14,7 +14,7 @@ func (a *Actor) SyncStats(objReg *ObjectRegistry) {
 	if a.Config == nil { return }
 	
 	// Performance optimization: skip sync if stats are stable
-	if a.StatsStable && a.Tick - a.LastSyncTick < 60 { return }
+	if a.StatsStable && a.Tick - a.LastSyncTick < 60 && a.Tick > 0 { return }
 	a.LastSyncTick = a.Tick; a.StatsStable = true
 
 	a.PrimaryAttributes.Strength = clampInt(a.PrimaryAttributes.Strength, 0, 100)

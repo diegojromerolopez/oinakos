@@ -32,9 +32,9 @@ func (a *Actor) updateNeeds(ctx *SystemContext) {
 	if physResilience < 0.25 { physResilience = 0.25 }
 
 	// BASE RATES (Tuned for ~12hr survival window at average stats)
-	a.State.Hunger += 0.00005 * decayMultiplier * weatherPenalty * pMult * physResilience
+	a.State.Hunger += 0.05 * decayMultiplier * weatherPenalty * pMult * physResilience
 	if a.State.HydrationBuffer <= 0 {
-		a.State.Thirst += 0.00035 * decayMultiplier * weatherPenalty * pMult * physResilience
+		a.State.Thirst += 0.35 * decayMultiplier * weatherPenalty * pMult * physResilience
 	}
 	
 	fMult := 1.0; if a.IsPregnant { fMult = 1.25 } // Reduced pregnancy fatigue strain
@@ -213,7 +213,7 @@ func (a *Actor) updateNeeds(ctx *SystemContext) {
 		a.State.BladderLevel -= 2.0
 		a.State.BowelLevel -= 1.0
 		if a.State.BladderLevel <= 0 && a.State.BowelLevel <= 0 {
-			a.State.BladderLevel, a.State.BowelLevel = 0, 0
+			a.State.BladderLevel, a.State.BowelLevel, a.State.Pain = 0, 0, 0
 			a.ActionState = ActorIdle
 		}
 	} else if a.ActionState == ActorSocializing {
@@ -226,6 +226,32 @@ func (a *Actor) updateNeeds(ctx *SystemContext) {
 		a.State.Sanity += 0.1
 		if a.Tick%600 == 0 {
 			if rand.Float64() < 0.2 { a.ActionState = ActorIdle }
+		}
+	}
+
+	// Torch Lighting & Depletion (Moved outside the mutually exclusive chain)
+	isNearOil, ctxActive := false, ctx != nil && ctx.World != nil
+	if ctxActive {
+		for _, o := range ctx.World.Obstacles {
+			id, archID := "", ""
+			if o.Archetype != nil { archID = strings.ToLower(o.Archetype.ID) }
+			id = strings.ToLower(o.ID)
+			if strings.Contains(id, "oil") || strings.Contains(archID, "oil") {
+				if d := math.Sqrt(math.Pow(a.X-o.X, 2) + math.Pow(a.Y-o.Y, 2)); d < 3.0 { isNearOil = true; break }
+			}
+		}
+	}
+
+	for _, it := range a.Inventory {
+		if it != nil && it.Config != nil && it.Config.IsTorch {
+			if isNearOil && it.HoursLeft <= 0 { it.HoursLeft = it.Config.MaxHours }
+			if it.HoursLeft > 0 { it.HoursLeft -= (1.0 / 720.0); if it.HoursLeft < 0 { it.HoursLeft = 0 } }
+		}
+	}
+	for _, it := range a.Slots {
+		if it != nil && it.Config != nil && it.Config.IsTorch {
+			if isNearOil && it.HoursLeft <= 0 { it.HoursLeft = it.Config.MaxHours }
+			if it.HoursLeft > 0 { it.HoursLeft -= (1.0 / 720.0); if it.HoursLeft < 0 { it.HoursLeft = 0 } }
 		}
 	}
 

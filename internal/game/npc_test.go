@@ -320,6 +320,7 @@ func TestNPC_RangedAttack(t *testing.T) {
 			AttackCooldown: IntInterval{Min: 60, Max: 60},
 		}, Behavior: "hunter"}
 	n := NewCharacter(0, 0, arch, 1, false, nil)
+	n.Alignment = AlignmentEnemy // NPC must be hostile so canAttack check passes
 	n.State.HealthPoints = 100
 	n.TargetActor = &mc.Actor
 	n.Slots = make(map[string]*ItemInstance)

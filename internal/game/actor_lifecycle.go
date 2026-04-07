@@ -88,11 +88,7 @@ func (a *Actor) SharedUpdate(ctx *SystemContext) {
 	a.SyncState()
 	
 	// Natural Death Check: If state updates (needs, illness) caused death, trigger die()
-	if !a.IsAlive() && a.ActionState != ActorDead {
-		// This handles the transition from another state to Dead
-		a.die(nil, ctx)
-	} else if a.State.HealthPoints <= a.GetDeathThreshold() && a.ActionState != ActorDead {
-		// Direct HP threshold check
+	if a.State.HealthPoints <= a.GetDeathThreshold() && a.ActionState != ActorDead {
 		a.die(nil, ctx)
 	}
 
@@ -174,7 +170,7 @@ func (a *Actor) updateAge(ctx *SystemContext) {
 			a.ActionState = ActorDead
 			a.TriggerSocialCascade(ctx)
 			if ctx != nil && ctx.Log != nil { ctx.Log(fmt.Sprintf("%s has passed away in infancy.", a.Name), LogNPC) }
-			atomic.AddInt64(&ctx.World.Demographics.DeathsNatural, 1)
+			if ctx != nil && ctx.World != nil { atomic.AddInt64(&ctx.World.Demographics.DeathsNatural, 1) }
 			return
 		}
 	}
@@ -197,7 +193,7 @@ func (a *Actor) updateAge(ctx *SystemContext) {
 				a.ActionState = ActorDead
 				a.TriggerSocialCascade(ctx)
 				if ctx != nil && ctx.Log != nil { ctx.Log(fmt.Sprintf("%s passed away of old age.", a.Name), LogNPC) }
-				atomic.AddInt64(&ctx.World.Demographics.DeathsNatural, 1)
+				if ctx != nil && ctx.World != nil { atomic.AddInt64(&ctx.World.Demographics.DeathsNatural, 1) }
 			}
 		}
 	}
@@ -252,6 +248,10 @@ func (a *Actor) updateIllness(ctx *SystemContext) {
 			if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s recovered from %s.", a.Name, a.Sickness), LogInfo) }
 			a.Sickness = ""; if a.FluTicks <= 0 { a.State.IsSick = false }
 		}
+	}
+	if a.State.IsSeptic && a.Tick%600 == 0 && a.IsAlive() {
+		a.State.HealthPoints -= 5
+		if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s is suffering from SEPTIC SHOCK!", a.Name), LogNPC) }
 	}
 
 	// Calculate Resistance Bonus

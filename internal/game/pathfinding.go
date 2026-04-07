@@ -45,6 +45,9 @@ func (g *Game) FindAStarPath(startX, startY, endX, endY float64) []engine.Point 
 	sX, sY := int(math.Floor(startX/gridSize)), int(math.Floor(startY/gridSize))
 	eX, eY := int(math.Floor(endX/gridSize)), int(math.Floor(endY/gridSize))
 	if sX == eX && sY == eY { return nil }
+	
+	dist := math.Sqrt(math.Pow(startX-endX, 2) + math.Pow(startY-endY, 2))
+	if dist > 500.0 { return nil } // Limit AI pathfinding distance per request
 
 	// Optimization: Direct Line-of-Sight check
 	if g.isPathClear(startX, startY, endX, endY) {

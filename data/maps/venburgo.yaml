@@ -692,5 +692,20 @@ obstacles:
 - archetype: crop_carrot
   x: -42
   y: 20
-objects: []
+- archetype: oil_well
+  x: 15
+  y: 15
+objects:
+- id: torch_1
+  archetype: torch
+  x: 14
+  y: 14
+- id: torch_2
+  archetype: torch
+  x: 16
+  y: 14
+- id: torch_3
+  archetype: torch
+  x: 14
+  y: 16
 weather: clear

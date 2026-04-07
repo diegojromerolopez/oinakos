@@ -6,8 +6,15 @@ Oinakos is a performance-optimized, infinite isometric action RPG and biological
 
 - **Strict File Limit**: **IMPERATIVE**. No source file may exceed **500 lines**. If an edit would push a file over this limit, you **MUST** refactor and split it before proceeding.
 - **Dependency Isolation**: `internal/game` MUST NEVER import `ebiten`. All graphics/input must stay behind the `engine` interfaces.
-- **Simulation Integrity**: All logic must be testable in **Headless Mode** (`-tags test` or `-tags headless`).
-- **Test Coverage**: Every fix you do needs to be covered by a test.
+- **YAML Integrity**: Every time you add or delete YAML files in `data/`, you MUST update or verify `TestForEachYAML` to reflect the expected file count or structure.
+- **Simulation Integrity**:
+  - All logic must be testable in **Headless Mode** (`-tags test` or `-tags headless`).
+  - When in doubt, if the simulation fails or crashes, fix it according to the behavior of the real world.
+- **Tests**:
+  - If you add a new feature, add a test for it.
+  - Tests must pass after each change.
+  - Every fix you do needs to be covered by a test.
+  - If a test fails, fix it before proceeding.
 
 ---
 

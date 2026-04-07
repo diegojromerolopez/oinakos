@@ -192,6 +192,8 @@ func (a *Actor) mate(ctx *SystemContext, mate *Actor, practice string) {
 			if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] receives severe physical trauma (assault)", f.Name), LogNPC) }
 		}
 	} else if practice == "anal" {
+		isBioMale := a.GetBioSex() == "male"
+		if !isBioMale { return } // Females cannot perform anal practice by default
 		// Only cause pain if unwilling or specifically hostile
 		if !mate.isWilling() || isViolent {
 			mate.CausePain(30.0, ctx)
@@ -250,18 +252,18 @@ func (a *Actor) mate(ctx *SystemContext, mate *Actor, practice string) {
 	a.Tick, mate.Tick = 0, 0 // Reset animation/action timers
 
 	if practice != "vaginal" {
-		atomic.AddInt64(&ctx.World.Demographics.MatingActs, 1)
+		if ctx.World != nil { atomic.AddInt64(&ctx.World.Demographics.MatingActs, 1) }
 		return
 	}
 
 	var mother, father *Actor
 	if a.GetBioSex() == "female" && mate.GetBioSex() == "male" { mother, father = a, mate } else if a.GetBioSex() == "male" && mate.GetBioSex() == "female" { mother, father = mate, a }
 	if mother == nil || father == nil { 
-		atomic.AddInt64(&ctx.World.Demographics.MatingActs, 1)
+		if ctx.World != nil { atomic.AddInt64(&ctx.World.Demographics.MatingActs, 1) }
 		return 
 	} 
 	if mother.IsTransexual || father.IsTransexual { 
-		atomic.AddInt64(&ctx.World.Demographics.MatingActs, 1)
+		if ctx.World != nil { atomic.AddInt64(&ctx.World.Demographics.MatingActs, 1) }
 		return 
 	}
 
@@ -280,11 +282,11 @@ func (a *Actor) mate(ctx *SystemContext, mate *Actor, practice string) {
 			mother.GestationTicks = int(TicksPerMonth * 9) // 9 months for humans
 		}
 		mother.FatherID = father.Name
-		atomic.AddInt64(&ctx.World.Demographics.MatingPregancies, 1)
+		if ctx.World != nil { atomic.AddInt64(&ctx.World.Demographics.MatingPregancies, 1) }
 		if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] is now PREGNANT with %s's child", mother.Name, father.Name), LogNPC) }
 	}
 	
-	atomic.AddInt64(&ctx.World.Demographics.MatingActs, 1)
+	if ctx.World != nil { atomic.AddInt64(&ctx.World.Demographics.MatingActs, 1) }
 }
 
 func (a *Actor) GetFertilityMultiplier() float64 {
@@ -335,10 +337,12 @@ func (a *Actor) giveBirth(ctx *SystemContext) {
 	a.FatherID = ""
 	a.MatingCooldown = 6000 // Short recovery
 
-	if a.Config.IsAnimal {
-		atomic.AddInt64(&ctx.World.Demographics.BirthsAnimals, 1)
-	} else {
-		atomic.AddInt64(&ctx.World.Demographics.BirthsHumans, 1)
+	if ctx.World != nil {
+		if a.Config.IsAnimal {
+			atomic.AddInt64(&ctx.World.Demographics.BirthsAnimals, 1)
+		} else {
+			atomic.AddInt64(&ctx.World.Demographics.BirthsHumans, 1)
+		}
 	}
 
 	if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s]: has given birth to a child", a.Name), LogNPC) }

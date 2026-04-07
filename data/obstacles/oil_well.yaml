@@ -1,0 +1,8 @@
+id: oil_well
+name: Oil Well
+description: A crack in the ground where thick oil seeps out.
+type: resource
+health_points: 1000
+collision_radius: 0.8
+sprite: oil_well.png
+tags: ["oil", "resource"]

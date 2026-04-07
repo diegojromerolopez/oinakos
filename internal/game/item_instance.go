@@ -29,6 +29,9 @@ func NewItemInstance(id string, config *ObjectConfig, x, y float64) *ItemInstanc
 		res = config.Resistance
 		weight = config.Weight
 		hours = config.MaxHours
+		if config.IsTorch {
+			hours = 0 // Starts unlit
+		}
 		liquidMax = config.MaxLiquid
 		refillable = config.Refillable
 	}

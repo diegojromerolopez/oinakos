@@ -9,7 +9,7 @@ func (a *Actor) SyncLifeStatus() {
 	if a.ActionState == ActorDead { return }
 	threshold := a.GetDeathThreshold()
 	if a.State.HealthPoints <= threshold {
-		a.State.HealthPoints, a.ActionState = threshold, ActorDead
+		a.State.HealthPoints = threshold
 		return
 	}
 	
@@ -50,8 +50,8 @@ func (a *Actor) SyncState() {
 	a.State.AlcoholLevel = clampFloat(a.State.AlcoholLevel, 0, 100)
 	a.IsConscious = a.State.IsConscious
 
-	if a.State.HealthPoints <= a.GetDeathThreshold() && a.ActionState != ActorDead {
-		a.ActionState = ActorDead
+	if a.State.HealthPoints <= a.GetDeathThreshold() {
+		a.State.HealthPoints = a.GetDeathThreshold()
 	}
 }
 

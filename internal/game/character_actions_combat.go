@@ -7,17 +7,23 @@ import (
 )
 
 func (c *Character) TakeDamage(amount int, attacker ActorInterface, ctx *SystemContext) {
+	oldCfg := c.Config
 	c.Actor.TakeDamage(amount, attacker, ctx)
-	if c.IsAlive() && !c.IsPlayerControlled { c.handleAIReaction(attacker, ctx) }
+	if c.IsAlive() && !c.IsPlayerControlled && c.Config == oldCfg {
+		c.handleAIReaction(attacker, ctx)
+	}
 }
 
 func (c *Character) handleAIReaction(attacker ActorInterface, ctx *SystemContext) {
 	if attacker == nil || c.State.Thirst > 90 || c.State.Hunger > 90 { return }
-	act := attacker.GetActor(); c.TargetActor = act
+	act := attacker.GetActor(); fmt.Printf("DEBUG: handleAIReaction() start. Current Alignment = %v\n", c.Alignment)
+	c.TargetActor = act
 	// Flee if HP is critically low (50) or if significantly outmatched
 	if c.State.HealthPoints < 50 || float64(c.State.HealthPoints) < float64(act.State.HealthPoints)*0.2 { 
+		fmt.Printf("DEBUG: handleAIReaction() FLEE triggered for %s. HP = %d, Attacker HP = %d\n", c.Name, c.State.HealthPoints, act.State.HealthPoints)
 		c.Alignment, c.Behavior = AlignmentNeutral, BehaviorFlee
 	} else {
+		fmt.Printf("DEBUG: handleAIReaction() FIGHT triggered for %s. HP = %d, Attacker HP = %d\n", c.Name, c.State.HealthPoints, act.State.HealthPoints)
 		c.Alignment, c.Behavior = AlignmentEnemy, BehaviorKnightHunter
 		if c.Group != "" {
 			for _, other := range ctx.World.Characters {

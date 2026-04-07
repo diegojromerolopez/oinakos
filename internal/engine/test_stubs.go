@@ -37,3 +37,20 @@ var GlobalAudio *AudioManager
 func DecodeAudioRaw(assets fs.FS, path string) ([]byte, error) {
 	return nil, nil
 }
+
+// Stubs for types used in main.go and tools to allow compilation with -tags test
+type EbitenGraphics struct{ MockGraphics }
+
+func NewEbitenGraphics() *EbitenGraphics { return &EbitenGraphics{} }
+
+type EbitenInput struct{ MockInput }
+
+func NewEbitenInput() *EbitenInput { return &EbitenInput{} }
+
+type EbitenImageWrapper struct{ *MockImage }
+
+func NewEbitenImageWrapper(img interface{}) *EbitenImageWrapper {
+	return &EbitenImageWrapper{NewMockImage(0, 0)}
+}
+func (w *EbitenImageWrapper) UpdateRaw(img interface{}) {}
+func (w *EbitenImageWrapper) GetRaw() interface{}       { return nil }

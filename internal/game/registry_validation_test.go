@@ -77,6 +77,11 @@ func TestValidate_EveryMap(t *testing.T) {
 	iterateAndValidate(t, "data/maps", &target)
 }
 
+func TestValidate_EveryObstacle(t *testing.T) {
+	var target ObstacleArchetype
+	iterateAndValidate(t, "data/obstacles", &target)
+}
+
 func TestValidation_RegistryLoading(t *testing.T) {
 	// This ensures that the high-level registries correctly find and load the files
 	t.Run("ArchetypeRegistry", func(t *testing.T) {

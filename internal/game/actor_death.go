@@ -61,6 +61,7 @@ func (a *Actor) die(attacker ActorInterface, ctx *SystemContext) {
 			}
 		}
 	}
+	fmt.Printf("DEBUG: die() end. Actor %s Alignment = %v\n", a.ID, a.Alignment)
 }
 
 func (a *Actor) applyKillAction(action KillAction, attacker ActorInterface, ctx *SystemContext) {
@@ -76,12 +77,16 @@ func (a *Actor) applyKillAction(action KillAction, attacker ActorInterface, ctx 
 		}
 		if ok {
 			a.Config, a.UnconsciousTimer, a.ActionState = newConfig, 0, ActorIdle
+			if newConfig.State.MaxHealthPoints > 0 {
+				a.State.MaxHealthPoints = newConfig.State.MaxHealthPoints
+			}
 			a.State.HealthPoints = a.GetTotalMaxHealth(); a.InitBodyStatus()
 			if e.Alignment == "inherit" {
 				oldA := a.Alignment
 				a.Alignment = attacker.GetActor().Alignment
-				fmt.Printf("DEBUG: Transforming %s (addr %p) to %s | Alignment %v -> %v (Inherited from %s with alignment %v)\n", a.Name, a, targetID, oldA, a.Alignment, attacker.GetActor().Name, attacker.GetActor().Alignment)
+				fmt.Printf("DEBUG: Transforming %s (Actor addr %p) to %s | Alignment %d -> %d (Inherited from %s with alignment %d) | &a.Alignment addr = %p\n", a.Name, a, targetID, int(oldA), int(a.Alignment), attacker.GetActor().Name, int(attacker.GetActor().Alignment), &a.Alignment)
 			}
+			fmt.Printf("DEBUG: applyKillAction() end. Actor %s Alignment = %v\n", a.ID, a.Alignment)
 		}
 	}
 	if action.Type == "heal_attacker" || (action.Effect.Attacker != nil && action.Effect.Attacker.Heal > 0) {

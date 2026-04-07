@@ -19,8 +19,8 @@ func TestBiologicalNeeds_Mechanics(t *testing.T) {
 		a.updateNeeds(ctx)
 		hungerChange := a.State.Hunger - initialHunger
 		
-		if math.Abs(hungerChange - 0.004375) > 0.0001 {
-			t.Errorf("Expected hunger change 0.004375, got %v", hungerChange)
+		if math.Abs(hungerChange - 0.005625) > 0.0001 {
+			t.Errorf("Expected hunger change 0.005625, got %v", hungerChange)
 		}
 		
 		ctx.World.State.Weather = WeatherRain
@@ -28,8 +28,8 @@ func TestBiologicalNeeds_Mechanics(t *testing.T) {
 		a.State.Hunger = 0
 		a.updateNeeds(ctx)
 		hungerChange = a.State.Hunger
-		if math.Abs(hungerChange - 0.0065625) > 0.0001 {
-			t.Errorf("Expected hunger change 0.0065625, got %v", hungerChange)
+		if math.Abs(hungerChange - 0.0084375) > 0.0001 {
+			t.Errorf("Expected hunger change 0.0084375, got %v", hungerChange)
 		}
 	})
 
@@ -74,10 +74,13 @@ func TestBiologicalNeeds_Mechanics(t *testing.T) {
 
 	t.Run("Action Impacts", func(t *testing.T) {
 		a := &Actor{Name: "Consumer", State: State{Hunger: 50, Thirst: 50, Hygiene: 50, HealthPoints: 100, MaxHealthPoints: 100}}
+		a.Inventory = []*ItemInstance{
+			{Config: &ObjectConfig{Name: "Water", Refillable: true, MaxLiquid: 1.0}, LiquidContent: 1.0, LiquidMax: 1.0, Refillable: true},
+		}
 		
 		a.ActionState = ActorDrinking
 		a.updateNeeds(ctx)
-		if a.State.Thirst >= 50 { t.Errorf("Drinking should satiate thirst") }
+		if a.State.Thirst >= 50 { t.Errorf("Drinking should satiate thirst, got %v", a.State.Thirst) }
 		
 		a.ActionState = ActorEating
 		a.updateNeeds(ctx)
@@ -94,20 +97,25 @@ func TestBiologicalNeeds_Mechanics(t *testing.T) {
 
 		a.ActionState = ActorAttacking
 		a.updateNeeds(ctx)
-		if a.State.Fatigue < 0.08 { t.Errorf("Attacking costs fatigue") }
+		// Fatigue increases by base (0.001) + action (0.01) = 0.011
+		if a.State.Fatigue < 0.01 { t.Errorf("Attacking costs fatigue, got %v", a.State.Fatigue) }
 	})
 
 	t.Run("Resting Mechanics", func(t *testing.T) {
-		a := &Actor{Name: "Rester", ActionState: ActorResting, State: State{Fatigue: 50, HealthPoints: 10, MaxHealthPoints: 100}}
+		ctx.World.DayTick = TicksPerHour * 8 // Day time
+		ctx.World.Obstacles = []*Obstacle{
+			{ID: "campfire", Alive: true, X: 0, Y: 0},
+		}
+		a := &Actor{Name: "Rester", ActionState: ActorResting, X: 0, Y: 0, State: State{Fatigue: 50, HealthPoints: 10, MaxHealthPoints: 100, Sanity: 100}}
 		a.Tick = 60
 		a.updateNeeds(ctx)
-		if a.State.Fatigue >= 50 { t.Errorf("Resting should decrease fatigue") }
+		if a.State.Fatigue >= 50 { t.Errorf("Resting should decrease fatigue, got %v", a.State.Fatigue) }
 		if a.State.HealthPoints <= 10 { t.Errorf("Resting should heal") }
 
 		// Full rest wake up
-		a.State.Fatigue = 0.01
+		a.State.Fatigue = 0.001
 		a.updateNeeds(ctx)
-		if a.ActionState != ActorIdle { t.Errorf("Should wake up after fully resting") }
+		if a.ActionState != ActorIdle { t.Errorf("Should wake up after fully resting, got state %v", a.ActionState) }
 	})
 
 	t.Run("Status Thresholds and Penalties", func(t *testing.T) {

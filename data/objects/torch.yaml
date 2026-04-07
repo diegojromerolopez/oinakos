@@ -1,0 +1,19 @@
+id: torch
+name: Torch
+description: A wooden torch. Submerge in oil to light it.
+type: tool
+slot: offhand
+weight: 1.5
+value: 50
+max_hours: 2.0
+light_radius: 5.0
+is_torch: true
+footprint:
+  - x: -0.2
+    y: -0.2
+  - x: 0.2
+    y: -0.2
+  - x: 0.2
+    y: 0.2
+  - x: -0.2
+    y: 0.2

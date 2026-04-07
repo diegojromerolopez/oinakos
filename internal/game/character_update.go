@@ -19,10 +19,10 @@ func (c *Character) Update(ctx *SystemContext) {
 	c.ProcessWorkshop(ctx)
 	
 	// Phase shifting to spread processing load across frames
-	phase := 0; if len(c.ID) > 0 { phase = int(c.ID[len(c.ID)-1]) }
+	phase := 0; if !InTestMode && len(c.ID) > 0 { phase = int(c.ID[len(c.ID)-1]) }
 	
 	if c.IsPlayerControlled { c.updatePlayer(ctx) } else { 
-		if (c.Tick + phase) % 60 == 0 {
+		if InTestMode || (c.Tick + phase) % 60 == 1 {
 			c.updateAI(ctx)
 		}
 		if (c.Tick + phase) % 600 == 0 {

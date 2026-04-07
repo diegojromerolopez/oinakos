@@ -105,6 +105,52 @@ func (gr *GameRenderer) drawFog(screen engine.Image) {
 	screen.DrawImage(gr.fogImage, nil)
 }
 
+func (gr *GameRenderer) drawLightZones(screen engine.Image, offsetX, offsetY float64) {
+	g := gr.game
+	if g.World == nil { return }
+
+	// Light Color - warm yellow, semi-transparent
+	lightColor := color.RGBA{255, 200, 50, 40}
+
+	// 1. Draw light for objects on the floor
+	for _, it := range g.World.Items {
+		if it != nil && it.Config != nil && it.Config.LightRadius > 0 && it.HoursLeft > 0 {
+			isoX, isoY := engine.CartesianToIso(it.X, it.Y)
+			rx, ry := float32(it.Config.LightRadius * 32), float32(it.Config.LightRadius * 16)
+			// Character holding logic will handle "picking up" case if we check actors
+			gr.graphics.DrawFilledEllipse(screen, float32(isoX+offsetX), float32(isoY+offsetY), rx, ry, lightColor, true)
+		}
+	}
+
+	// 2. Draw light for characters holding torches
+	for _, a := range g.characters {
+		hasLitTorch := false
+		radius := 0.0
+		// Check slots first (equipped)
+		for _, it := range a.Slots {
+			if it != nil && it.Config != nil && it.Config.LightRadius > 0 && it.HoursLeft > 0 {
+				hasLitTorch = true
+				if it.Config.LightRadius > radius { radius = it.Config.LightRadius }
+			}
+		}
+		// Check inventory (just in case they are holding it without equipping, as per "picks up")
+		if !hasLitTorch {
+			for _, it := range a.Inventory {
+				if it != nil && it.Config != nil && it.Config.LightRadius > 0 && it.HoursLeft > 0 {
+					hasLitTorch = true
+					if it.Config.LightRadius > radius { radius = it.Config.LightRadius }
+				}
+			}
+		}
+
+		if hasLitTorch {
+			isoX, isoY := engine.CartesianToIso(a.X, a.Y)
+			rx, ry := float32(radius * 32), float32(radius * 16)
+			gr.graphics.DrawFilledEllipse(screen, float32(isoX+offsetX), float32(isoY+offsetY), rx, ry, lightColor, true)
+		}
+	}
+}
+
 func generateTorchImage(g engine.Graphics, radius int) engine.Image {
 	size := radius * 2
 	img := image.NewRGBA(image.Rect(0, 0, size, size))
@@ -184,7 +230,6 @@ func (gr *GameRenderer) drawDebug(screen engine.Image, offsetX, offsetY float64)
 		}
 		gr.graphics.DrawPolygon(screen, isoPoints, clr, 1.0)
 	}
-
 
 	for _, o := range gr.game.obstacles {
 		if o != nil {

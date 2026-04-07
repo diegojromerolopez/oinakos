@@ -45,7 +45,10 @@ func (a *Actor) TakeDamage(amount int, attacker ActorInterface, ctx *SystemConte
 	}
 	if a.State.HealthPoints < a.GetTotalMaxHealth()/10 && amount > 0 { a.acquireRandomTrauma(attacker) }
 	if a.State.HealthPoints < a.GetDeathThreshold() { a.State.HealthPoints = a.GetDeathThreshold() }
-	a.SyncLifeStatus(); if !a.IsAlive() { a.die(attacker, ctx) }
+	a.SyncLifeStatus()
+	if a.State.HealthPoints <= a.GetDeathThreshold() && a.ActionState != ActorDead {
+		a.die(attacker, ctx)
+	}
 }
 
 func (a *Actor) Heal(amount int) {

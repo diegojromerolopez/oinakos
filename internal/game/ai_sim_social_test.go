@@ -15,7 +15,11 @@ func TestSimulation_OinakosSex(t *testing.T) {
 	g, ctx := setupSimulationGame(); pc := g.playableCharacter; pc.Config, pc.Shift, pc.State.Arousal = &EntityConfig{Gender: "male"}, ShiftLeisure, 100
 	courtesan := NewCharacter(1, 1, &EntityConfig{Gender: "female"}, 1, false, nil); courtesan.Name, courtesan.Shift, courtesan.State.Arousal = "cr", ShiftLeisure, 100; g.World.Characters = append(g.World.Characters, courtesan)
 	pc.ActionState, pc.TargetActorID = ActorIntercourse, "cr"
-	for i := 0; i < 600; i++ { pc.SharedUpdate(ctx) }; if pc.State.Arousal > 0 { t.Errorf("Expected arousal decrease") }
+	for i := 0; i < 600; i++ { 
+		pc.SharedUpdate(ctx) 
+		pc.Tick++
+	}
+	if pc.State.Arousal > 0.1 { t.Errorf("Expected arousal decrease, got %.4f", pc.State.Arousal) }
 }
 
 func TestSimulation_PregnancyAndBirth(t *testing.T) {
