@@ -14,8 +14,23 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+func findAssetsRoot() string {
+	dir, _ := os.Getwd()
+	for i := 0; i < 5; i++ {
+		if _, err := os.Stat(filepath.Join(dir, "assets")); err == nil {
+			return dir
+		}
+		if _, err := os.Stat(filepath.Join(dir, "oinakos", "assets")); err == nil {
+			return filepath.Join(dir, "oinakos")
+		}
+		dir = filepath.Dir(dir)
+	}
+	return "."
+}
+
 func (m *MapEditor) loadLibrary() {
-	assets := os.DirFS(".")
+	root := findAssetsRoot()
+	assets := os.DirFS(root)
 
 	obsReg := game.NewObstacleRegistry()
 	if err := obsReg.LoadAll(assets); err == nil {
@@ -59,17 +74,20 @@ func (m *MapEditor) loadLibrary() {
 }
 
 func (m *MapEditor) loadFloors() {
-	assets := os.DirFS(".")
-	files, err := os.ReadDir("assets/images/floors")
+	root := findAssetsRoot()
+	assets := os.DirFS(root)
+	floorDirPath := filepath.Join(root, "assets", "images", "floors")
+	files, err := os.ReadDir(floorDirPath)
 	if err != nil {
-		log.Printf("Failed to list floors: %v", err)
+		log.Printf("Failed to list floors in %s: %v", floorDirPath, err)
 		return
 	}
 	for _, f := range files {
 		if strings.HasSuffix(f.Name(), ".png") {
 			name := f.Name()
 			m.Floors = append(m.Floors, name)
-			tex := m.Graphics.LoadSprite(assets, filepath.Join("assets/images/floors", name), true)
+			// For fs.FS we must use path.Join to ensure forward slashes on all platforms
+			tex := m.Graphics.LoadSprite(assets, "assets/images/floors/"+name, true)
 			m.FloorImages[name] = tex
 		}
 	}
@@ -84,7 +102,8 @@ func (m *MapEditor) loadFloors() {
 
 func (m *MapEditor) initializeMap() {
 	if m.InName == "" { return }
-	const mapsDir = "oinakos/data/maps"
+	root := findAssetsRoot()
+	mapsDir := filepath.Join(root, "data", "maps")
 	os.MkdirAll(mapsDir, 0755)
 	m.Filename = filepath.Join(mapsDir, m.InName+".yaml")
 

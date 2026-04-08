@@ -16,6 +16,20 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+func findAssetsRoot() string {
+	dir, _ := os.Getwd()
+	for i := 0; i < 5; i++ {
+		if _, err := os.Stat(filepath.Join(dir, "assets")); err == nil {
+			return dir
+		}
+		if _, err := os.Stat(filepath.Join(dir, "oinakos", "assets")); err == nil {
+			return filepath.Join(dir, "oinakos")
+		}
+		dir = filepath.Dir(dir)
+	}
+	return "."
+}
+
 func NewViewer(entities []*EditorEntity, g engine.Graphics, input engine.Input, w, h int) *Viewer {
 	return &Viewer{
 		entities:      entities,
@@ -132,17 +146,10 @@ func (v *Viewer) Layout(_, _ int) (int, int) {
 }
 
 func main() {
-	assets := os.DirFS(".")
+	root := findAssetsRoot()
+	localAssets := os.DirFS(root)
 	graphics := engine.NewEbitenGraphics()
 	var entities []*EditorEntity
-
-	// Try to locate oinakos subdirectory first if it exists (for flat layout compatibility)
-	localAssets := assets
-	if _, err := os.Stat("assets"); err != nil {
-		if _, err := os.Stat("oinakos/assets"); err == nil {
-			localAssets = os.DirFS("oinakos")
-		}
-	}
 
 	// Load Obstacles
 	obsReg := game.NewObstacleRegistry()
@@ -157,7 +164,7 @@ func main() {
 			}
 			entities = append(entities, &EditorEntity{
 				ID: id, Type: "Obstacle", Image: img, Footprint: &arch.Footprint,
-				YamlPath: filepath.Join("data/obstacles", id+".yaml"),
+				YamlPath: filepath.Join(root, "data", "obstacles", id+".yaml"),
 				DrawMain: func(screen engine.Image, g engine.Graphics, ox, oy float64) { obs.Draw(screen, g, ox, oy) },
 			})
 		}
@@ -176,7 +183,7 @@ func main() {
 			}
 			entities = append(entities, &EditorEntity{
 				ID: id, Type: "Object", Image: img, Footprint: &cfg.Footprint,
-				YamlPath: filepath.Join("data/objects", id+".yaml"),
+				YamlPath: filepath.Join(root, "data", "objects", id+".yaml"),
 				DrawMain: func(screen engine.Image, _ engine.Graphics, ox, oy float64) {
 					item.Draw(screen, ox, oy)
 				},
