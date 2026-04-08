@@ -3,6 +3,7 @@ package game
 import (
 	"image"
 	"oinakos/internal/engine"
+	"os"
 )
 
 // NewTestContext creates a SystemContext populated with mocks for testing.
@@ -102,4 +103,6 @@ func setupTestGame() *Game {
 func init() {
 	InTestMode = true
 	isTestingEnvironment = true
+	tmpDir, _ := os.MkdirTemp("", "oinakos-test")
+	SetOinakosDir(tmpDir)
 }
