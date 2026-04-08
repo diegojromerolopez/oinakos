@@ -34,7 +34,7 @@ Choose your champion. Each has unique primary attributes (Strength, Dexterity, H
 | Hero | Nationality | Weapon | Specialty |
 | :--- | :--- | :--- | :--- |
 | **Oinakos** | Unknown | Tizón | The mysterious lead knight forged in iron. |
-| **Boris Stronesco** | Serbian | Claws | A cursed noble from Cartagena. Speaks Serbian. |
+| **Boris Stronesco** | Serbian | Claws | A cursed noble that arrived to Cartago Nova. Speaks Serbian. |
 | **Roland** | French | Durandal | A disciplined paladin of the Carolingian court. |
 | **Conde Olinos** | Spanish | Long Sword | A tragic noble whose song moved the sea. |
 | **Gaiferos** | Spanish | Axe | A brave knight seeking his beloved Melisendra. |
