@@ -16,6 +16,14 @@
 
 ---
 
+## 📸 Screenshots
+
+<p align="center">
+  <img src=".github/assets/screenshot-0.1-alpha-01.png" alt="Oinakos Gameplay Screenshot" width="800">
+</p>
+
+---
+
 ## 📖 Game Overview
 
 In Oinakos, you aren't just playing a game; you are stepping into a living world. Survive relentless combat, manage your biological needs, and explore an infinite landscape steeped in Spanish Ballad lore and dark medieval grit.
