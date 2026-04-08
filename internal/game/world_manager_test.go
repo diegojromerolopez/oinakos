@@ -7,7 +7,9 @@ import (
 
 func TestWorldManager_LoadMapAssets(t *testing.T) {
 	fsys := fstest.MapFS{
-		"assets/audio/archetypes/orc/male/attack_1.wav": &fstest.MapFile{Data: []byte("wav")},
+		"assets/audio/archetypes/orc/male/attack_1.wav": &fstest.MapFile{
+			Data: []byte("RIFF$   WAVEfmt \x10\x00\x00\x00\x01\x00\x01\x00D\xac\x00\x00\x88X\x01\x00\x02\x00\x10\x00data\x00\x00\x00\x00"),
+		},
 	}
 	
 	g := setupTestGame()

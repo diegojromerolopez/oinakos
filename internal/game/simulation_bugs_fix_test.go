@@ -33,7 +33,7 @@ func TestGestationFix(t *testing.T) {
 	ctx := NewTestContext()
 
 	// Human pregnancy
-	mother.mate(ctx, &father.Actor, "vaginal")
+	mother.Actor.haveSex(ctx, &father.Actor, "vaginal")
 	
 	if mother.IsPregnant {
 		expectedGestation := int(TicksPerMonth * 9)
@@ -43,15 +43,23 @@ func TestGestationFix(t *testing.T) {
 	} else {
 		// Try again if random chance failed
 		for i := 0; i < 100 && !mother.IsPregnant; i++ {
-			mother.mate(ctx, &father.Actor, "vaginal")
+			mother.Actor.haveSex(ctx, &father.Actor, "vaginal")
 		}
 		if !mother.IsPregnant {
 			t.Fatalf("Failed to trigger pregnancy in 100 attempts")
 		}
-		expectedGestation := int(TicksPerMonth * 9)
-		if mother.GestationTicks != expectedGestation {
-			t.Errorf("Expected human gestation %d ticks, got %d", expectedGestation, mother.GestationTicks)
-		}
+	}
+
+	// VERIFY GESTATION SPEED: It should decrease by simStep
+	startTicks := mother.GestationTicks
+	mother.Tick = 0 // Tick % 10 == 0
+	mother.SharedUpdate(ctx)
+	
+	simStep := 10
+	if ctx.Settings != nil && ctx.Settings.SimStep > 0 { simStep = ctx.Settings.SimStep }
+	
+	if mother.GestationTicks != startTicks - simStep {
+		t.Errorf("Expected GestationTicks to decrease by simStep (%d), but went from %d to %d", simStep, startTicks, mother.GestationTicks)
 	}
 }
 

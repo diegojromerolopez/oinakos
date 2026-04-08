@@ -81,7 +81,7 @@ func (g *Game) handlePinnedCommand(cmd string, n *Character) {
 		} else { n.Alignment = AlignmentEnemy; n.Say("Nice try!", ctx); n.AddMemory(g.Tick, "failed_restrain", pc.Name, -10.0) }
 	case "HEAL": if pc.CheckAbilitySuccess("heal", 0) { n.Heal(20); n.Say("Thank you...", ctx); n.AddMemory(g.Tick, "heal", pc.Name, 20.0) }
 	case "GIVE ITEM": g.LogEvent("Use Trade screen.", LogInfo)
-	case "SEX": if dist < 2.0 { pc.Actor.mate(ctx, &n.Actor, "vaginal") }
+	case "SEX": if dist < 2.0 { pc.Actor.haveSex(ctx, &n.Actor, "vaginal") }
 	case "TORTURE": if dist < 2.0 { pc.Actor.Torture(&n.Actor, ctx) }
 	}
 }

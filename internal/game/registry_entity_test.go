@@ -15,9 +15,9 @@ func TestArchetypeRegistry_CreateLoadJobs(t *testing.T) {
 	
 	t.Run("no permit list", func(t *testing.T) {
 		jobs := reg.createLoadJobs(nil)
-		// 14 assets per archetype (static, back, corpse, attack, attack1, attack2, hit, hit1, hit2, crouch, chopping, digging, pregnant, sit)
-		if len(jobs) != 14 {
-			t.Errorf("expected 14 jobs, got %d", len(jobs))
+		// 15 assets per archetype (static, back, corpse, attack, attack1, attack2, hit, hit1, hit2, crouch, chopping, digging, pregnant, cooking, resting)
+		if len(jobs) != 15 {
+			t.Errorf("expected 15 jobs, got %d", len(jobs))
 		}
 	})
 	

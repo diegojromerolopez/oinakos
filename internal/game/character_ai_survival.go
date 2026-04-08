@@ -17,7 +17,7 @@ func (c *Character) handleSurvivalNeeds(ctx *SystemContext) bool {
 	isHungry := c.State.Hunger > 70
 	isThirsty := c.State.Thirst > 30 // Proactive threshold (lowered from 45)
 	isUrgentThirst := c.State.Thirst > 60 // Urgent survival threshold
-	isExhausted := c.State.Fatigue > 85
+	isExhausted := c.State.Fatigue > 70
 	isBursting := c.State.BladderLevel > 85 || c.State.BowelLevel > 85
 	isDirty := c.State.Hygiene < 30
 	isLowHealth := c.State.HealthPoints < c.State.MaxHealthPoints / 3
@@ -60,7 +60,25 @@ func (c *Character) handleSurvivalNeeds(ctx *SystemContext) bool {
 		}
 	}
 
-	// 2. Metabolic Consumption (Inventory first)
+	// 2. Rest
+	if isExhausted && (c.ActionState == ActorIdle || c.ActionState == ActorWalking) {
+		// CRITICAL FIX: If fatigue is extreme (>70), don't look for a bed, just rest NOW.
+		if c.State.Fatigue > 70 {
+			c.ActionState, c.Tick = ActorResting, 0; return true
+		}
+
+		var nRest *Obstacle; minDist := 50.0
+		for _, o := range ctx.World.Obstacles {
+			id := strings.ToLower(o.ID)
+			if o.Alive && (strings.Contains(id, "campfire") || strings.Contains(id, "bed") || strings.Contains(id, "tavern") || strings.Contains(id, "house")) {
+				if d := math.Sqrt(math.Pow(c.X-o.X, 2)+math.Pow(c.Y-o.Y, 2)); d < minDist { minDist, nRest = d, o }
+			}
+		}
+		if nRest != nil && minDist > 3.0 { c.MoveTo(ctx, nRest.X, nRest.Y); return true }
+		c.ActionState, c.Tick = ActorResting, 0; return true
+	}
+
+	// 3. Metabolic Consumption (Inventory first)
 	for i, item := range c.Inventory {
 		if item == nil || item.Config == nil { continue }
 		
@@ -107,7 +125,7 @@ func (c *Character) handleSurvivalNeeds(ctx *SystemContext) bool {
 		}
 	}
 
-	// 3. Hydration (Seeking Source)
+	// 4. Hydration (Seeking Source)
 	if isThirsty || isDehydrated {
 		var nDrinkSrc *Obstacle; minWDist := 400.0
 		for _, o := range ctx.World.Obstacles {
@@ -164,7 +182,7 @@ func (c *Character) handleSurvivalNeeds(ctx *SystemContext) bool {
 		}
 	}
 
-	// 4. Nutrition (Seeking Food/Cooking/Foraging)
+	// 5. Nutrition (Seeking Food/Cooking/Foraging)
 	if isHungry || isStarving {
 		// Try Cooking first
 		hasIngredients, hasPot := false, false
@@ -201,7 +219,7 @@ func (c *Character) handleSurvivalNeeds(ctx *SystemContext) bool {
 		}
 	}
 
-	// 5. Relief Needs
+	// 6. Relief Needs
 	if isBursting && c.ActionState == ActorIdle {
 		var nToilet *Obstacle; minTDist := 50.0
 		for _, o := range ctx.World.Obstacles {
@@ -216,24 +234,6 @@ func (c *Character) handleSurvivalNeeds(ctx *SystemContext) bool {
 			if minTDist > 2.0 { c.MoveTo(ctx, nToilet.X, nToilet.Y); return true }
 		}
 		c.ActionState, c.Tick = ActorRelieving, 0; return true
-	}
-
-	// 6. Rest
-	if isExhausted && c.ActionState == ActorIdle {
-		// CRITICAL FIX: If fatigue is extreme (>95), don't look for a bed, just rest NOW.
-		if c.State.Fatigue > 95 {
-			c.ActionState, c.Tick = ActorResting, 0; return true
-		}
-
-		var nRest *Obstacle; minDist := 50.0
-		for _, o := range ctx.World.Obstacles {
-			id := strings.ToLower(o.ID)
-			if o.Alive && (strings.Contains(id, "campfire") || strings.Contains(id, "bed")) {
-				if d := math.Sqrt(math.Pow(c.X-o.X, 2)+math.Pow(c.Y-o.Y, 2)); d < minDist { minDist, nRest = d, o }
-			}
-		}
-		if nRest != nil && minDist > 3.0 { c.MoveTo(ctx, nRest.X, nRest.Y); return true }
-		c.ActionState, c.Tick = ActorResting, 0; return true
 	}
 
 	// 7. Hygiene
@@ -305,20 +305,6 @@ func (c *Character) handleSurvivalNeeds(ctx *SystemContext) bool {
 			if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s is hunting %s.", c.Name, nPrey.Name), LogNPC) }
 			return true
 		}
-	}
-
-	// 8. Resting
-	if isExhausted {
-		var nRest *Obstacle; minDist := 50.0
-		for _, o := range ctx.World.Obstacles {
-			id := strings.ToLower(o.ID)
-			if o.Alive && (strings.Contains(id, "tavern") || strings.Contains(id, "house") || strings.Contains(id, "farm") || strings.Contains(id, "campfire")) {
-				if d := math.Sqrt(math.Pow(c.X-o.X, 2)+math.Pow(c.Y-o.Y, 2)); d < minDist { minDist, nRest = d, o }
-			}
-		}
-		if nRest != nil && minDist > 3.0 { c.MoveTo(ctx, nRest.X, nRest.Y); return true }
-		c.ActionState, c.Tick = ActorResting, 0
-		return true
 	}
 
 	if c.checkEconomicSeeking(ctx) { return true }

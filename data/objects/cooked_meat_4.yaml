@@ -1,0 +1,13 @@
+id: cooked_meat_4
+name: Roasted Joint
+type: consumable
+max_hours: 48
+description: A large piece of roasted animal meat.
+weight: 1.8
+effects:
+  energy:
+    increase: 25.0
+  health:
+    increase: 15.0
+  max_health:
+    increase: 0.0

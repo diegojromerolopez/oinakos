@@ -94,11 +94,11 @@ func TestIllness_CureMedicine(t *testing.T) {
 	ctx := g.GetContext()
 	
 	a := &Actor{FluTicks: 1000}
-	medicine := &ObjectConfig{ID: "medicine", ClearSick: true}
+	medicine := &ObjectConfig{ID: "medicinal_herbs", ClearSick: true}
 	med_it := NewItemInstance("med_0", medicine, 0, 0)
 	
 	if !a.ConsumeItem(med_it, ctx) {
-		t.Error("Expected ConsumeItem to return true for medicine")
+		t.Error("Expected ConsumeItem to return true for medicinal_herbs")
 	}
 	
 	if a.FluTicks != 0 {

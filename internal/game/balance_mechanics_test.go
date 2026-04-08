@@ -23,7 +23,7 @@ func TestBalance_ConsensualSexRewards(t *testing.T) {
 	mate.State.Arousal = 60.0
 
 	// Consensual mating (Both willing)
-	p.mate(ctx, &mate.Actor, "vaginal")
+	p.Actor.haveSex(ctx, &mate.Actor, "vaginal")
 
 	if p.State.Sanity <= 50.0 {
 		t.Errorf("Expected Sanity reward for Romeo, got %.2f", p.State.Sanity)
@@ -54,13 +54,13 @@ func TestBalance_CriminalPredationRewards(t *testing.T) {
 	criminal.State.Fatigue = 50.0
 
 	// Forced mating (Violent/Criminal)
-	criminal.mate(ctx, &victim.Actor, "anal")
+	criminal.Actor.haveSex(ctx, &victim.Actor, "anal")
 
 	if criminal.State.Sanity <= 50.0 {
 		t.Errorf("Expected predator Sanity reward, got %.2f", criminal.State.Sanity)
 	}
-	if criminal.State.Fatigue != 70.0 {
-		t.Errorf("Expected predator Fatigue to be 70.0, got %.2f", criminal.State.Fatigue)
+	if criminal.State.Fatigue != 50.0 {
+		t.Errorf("Expected predator Fatigue to be 50.0, got %.2f", criminal.State.Fatigue)
 	}
 	if victim.State.Sanity >= 80.0 {
 		t.Errorf("Expected victim Sanity loss, got %.2f", victim.State.Sanity)

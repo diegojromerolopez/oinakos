@@ -102,7 +102,7 @@ func TestAssetIntegrity_Objects(t *testing.T) {
 
 			imagePath := path.Join(root, "assets/images/objects", cfg.ID+".png")
 			if _, err := os.Stat(imagePath); err != nil {
-				t.Errorf("Missing image: %s", imagePath)
+				t.Errorf("Missing asset for object %s: expected %s", cfg.ID, imagePath)
 			}
 		})
 		return nil

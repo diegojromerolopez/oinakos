@@ -341,7 +341,7 @@ type Actor struct {
 	
 	Nourishment int
 	Survivalism int
-	Mate        float64
+	Mate      float64
 	Crafting    int
 	Herbalism   int
 	Trading     int

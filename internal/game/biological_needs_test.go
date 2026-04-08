@@ -19,8 +19,8 @@ func TestBiologicalNeeds_Mechanics(t *testing.T) {
 		a.updateNeeds(ctx)
 		hungerChange := a.State.Hunger - initialHunger
 		
-		if math.Abs(hungerChange - 0.005625) > 0.0001 {
-			t.Errorf("Expected hunger change 0.005625, got %v", hungerChange)
+		if math.Abs(hungerChange - 0.0016875) > 0.0001 {
+			t.Errorf("Expected hunger change 0.0016875, got %v", hungerChange)
 		}
 		
 		ctx.World.State.Weather = WeatherRain
@@ -28,8 +28,8 @@ func TestBiologicalNeeds_Mechanics(t *testing.T) {
 		a.State.Hunger = 0
 		a.updateNeeds(ctx)
 		hungerChange = a.State.Hunger
-		if math.Abs(hungerChange - 0.0084375) > 0.0001 {
-			t.Errorf("Expected hunger change 0.0084375, got %v", hungerChange)
+		if math.Abs(hungerChange - 0.00253125) > 0.0001 {
+			t.Errorf("Expected hunger change 0.00253125, got %v", hungerChange)
 		}
 	})
 

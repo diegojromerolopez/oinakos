@@ -21,13 +21,27 @@ func (a *Actor) updateBreeding(ctx *SystemContext) {
 	if ctx != nil && ctx.Settings != nil { adultMode = ctx.Settings.AdultMode }
 	if !adultMode && !a.Config.IsAnimal { return }
 
+	simStep := 10
+	if ctx != nil && ctx.Settings != nil && ctx.Settings.SimStep > 0 { simStep = ctx.Settings.SimStep }
+
 	if a.IsPregnant {
-		a.GestationTicks--
-		if a.GestationTicks <= 0 { a.giveBirth(ctx) }
+		a.GestationTicks -= simStep
+		
+		// MISCARRIAGE: High pain or critical sanity loss can end pregnancy
+		if a.State.Pain > 70 || a.State.Sanity < 10 {
+			if rand.Float64() < 0.001 * float64(simStep) {
+				a.IsPregnant = false
+				a.GestationTicks = 0
+				a.State.Sanity -= 30.0
+				if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] has suffered a MISCARRIAGE due to severe physiological or mental trauma.", a.Name), LogWarning) }
+			}
+		}
+
+		if a.IsPregnant && a.GestationTicks <= 0 { a.giveBirth(ctx) }
 		return
 	}
 	if a.MatingCooldown > 0 { 
-		a.MatingCooldown-- 
+		a.MatingCooldown -= simStep 
 		return 
 	}
 
@@ -122,8 +136,20 @@ func (a *Actor) updateBreeding(ctx *SystemContext) {
 		practice := "vaginal"
 		if a.Behavior == BehaviorCriminal && rand.Float64() < 0.5 { practice = "anal" }
 		
-		if a.Config.IsAnimal { a.mate(ctx, mate, "vaginal") } else if adultMode {
-			a.mate(ctx, mate, practice)
+		// Bestiality check
+		if (a.Config.IsAnimal && !mate.Config.IsAnimal) || (!a.Config.IsAnimal && mate.Config.IsAnimal) {
+			practice = "bestiality"
+		} else if a.GetBioSex() == mate.GetBioSex() {
+			practice = "tribadism"
+			if rand.Float64() < 0.3 { 
+				if a.GetBioSex() == "male" { practice = "fellatio" } else { practice = "cunnilingus" }
+			}
+		}
+
+		if a.Config.IsAnimal && practice == "vaginal" { 
+			a.haveSex(ctx, mate, "vaginal") 
+		} else if adultMode {
+			a.haveSex(ctx, mate, practice)
 		}
 	}
 }
@@ -148,7 +174,7 @@ func (a *Actor) GetBioSex() string {
 	return a.Config.Gender
 }
 
-func (a *Actor) mate(ctx *SystemContext, mate *Actor, practice string) {
+func (a *Actor) haveSex(ctx *SystemContext, mate *Actor, practice string) {
 	if a == nil || mate == nil { return }
 
 	// Deadlock prevention: Lock in order of memory address
@@ -199,6 +225,15 @@ func (a *Actor) mate(ctx *SystemContext, mate *Actor, practice string) {
 			mate.CausePain(30.0, ctx)
 			if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] receives physical trauma from forced intercourse", mate.Name), LogNPC) }
 		}
+	} else if practice == "fellatio" {
+		if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] and [%s] engage in fellatio.", a.Name, mate.Name), LogNPC) }
+	} else if practice == "cunnilingus" {
+		if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] and [%s] engage in cunnilingus.", a.Name, mate.Name), LogNPC) }
+	} else if practice == "tribadism" {
+		if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] and [%s] engage in tribadism.", a.Name, mate.Name), LogNPC) }
+	} else if practice == "bestiality" {
+		a.State.Sanity -= 15.0 // Psychological toll
+		if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] engages in a bestial act with %s.", a.Name, mate.Name), LogWarning) }
 	}
 
 	// BLACKOUT MEMORY LOSS: If both were drunk, they gain NO relationship from the act
@@ -207,6 +242,15 @@ func (a *Actor) mate(ctx *SystemContext, mate *Actor, practice string) {
 	} else if !isViolent {
 		a.ModifySentiment(mate.ID, 5.0)
 		mate.ModifySentiment(a.ID, 5.0)
+	}
+
+	// INCEST PENALTY: Mating with direct relatives is a social transgression
+	isIncest := (a.ParentID != "" && a.ParentID == mate.Name) || (mate.ParentID != "" && mate.ParentID == a.Name) ||
+		(a.FatherID != "" && a.FatherID == mate.Name) || (mate.FatherID != "" && mate.FatherID == a.Name)
+	if isIncest {
+		a.State.Sanity -= 25.0
+		mate.State.Sanity -= 25.0
+		if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] and [%s] engage in a transgressive incestuous act.", a.Name, mate.Name), LogWarning) }
 	}
 
 	if isViolent {
@@ -226,8 +270,8 @@ func (a *Actor) mate(ctx *SystemContext, mate *Actor, practice string) {
 		a.State.Sanity += 30.0
 		a.State.Fatigue -= 20.0
 		if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s feels empowered by their dominance over %s.", a.Name, mate.Name), LogNPC) }
-	} else {
-		// Consensual mating REWARDS sanity
+	} else if practice != "bestiality" {
+		// Consensual mating REWARDS sanity (skipped for bestiality)
 		a.State.Sanity += 15.0
 		mate.State.Sanity += 15.0
 	}
@@ -243,7 +287,7 @@ func (a *Actor) mate(ctx *SystemContext, mate *Actor, practice string) {
 	if a.State.Hygiene < 0 { a.State.Hygiene = 0 }; if mate.State.Hygiene < 0 { mate.State.Hygiene = 0 }
 
 	// POST-COITAL EXHAUSTION: Physical toll of the act
-	a.State.Fatigue += 40.0; mate.State.Fatigue += 40.0
+	a.State.Fatigue += 20.0; mate.State.Fatigue += 20.0
 	if isViolent { mate.State.Fatigue += 30.0 } // Trauma-induced exhaustion
 	
 	// Force characters into Resting state to recover
@@ -265,6 +309,26 @@ func (a *Actor) mate(ctx *SystemContext, mate *Actor, practice string) {
 	if mother.IsTransexual || father.IsTransexual { 
 		if ctx.World != nil { atomic.AddInt64(&ctx.World.Demographics.MatingActs, 1) }
 		return 
+	}
+	if mother.IsPregnant { return } // Already pregnant
+
+	// INTER-SPECIES BLOCK: No pregnancy across different biological types or different animal species.
+	// Humans are allowed different IDs (e.g., peasant_male, noble_female) as long as both are humans.
+	if mother.Config.IsAnimal != father.Config.IsAnimal {
+		if ctx.World != nil { atomic.AddInt64(&ctx.World.Demographics.MatingActs, 1) }
+		return
+	}
+	// Animals must match IDs to be considered same species.
+	if mother.Config.IsAnimal && mother.Config.ID != father.Config.ID {
+		// Special Case: sheep/ram, cow/bull, pig/boar are compatible
+		mID, fID := mother.Config.ID, father.Config.ID
+		compatible := (mID == "sheep" && fID == "ram") || (mID == "ram" && fID == "sheep") ||
+			(mID == "cow" && fID == "bull") || (mID == "bull" && fID == "cow") ||
+			(mID == "pig" && fID == "boar") || (mID == "boar" && fID == "pig")
+		if !compatible {
+			if ctx.World != nil { atomic.AddInt64(&ctx.World.Demographics.MatingActs, 1) }
+			return
+		}
 	}
 
 	// Actual pregnancy check
@@ -292,7 +356,16 @@ func (a *Actor) mate(ctx *SystemContext, mate *Actor, practice string) {
 func (a *Actor) GetFertilityMultiplier() float64 {
 	if a.GetBioSex() != "female" { return 1.0 }
 	age := a.State.Age.Current
-	if age < 18 { return 0.0 }
+	
+	// Animals are fertile as soon as they reach sexual maturity (approx 6 months in this sim)
+	if a.Config != nil && a.Config.IsAnimal {
+		if age < 0.5 { return 0.0 }
+		if age < 10 { return 1.0 }
+		return 0.0 
+	}
+
+	// Humans reach sexual maturity around age 12 (Teenager stage)
+	if age < 12 { return 0.0 }
 	if age < 35 { return 1.0 }
 	if age < 45 {
 		// Linear decline 1.0 -> 0.2
@@ -322,16 +395,34 @@ func (a *Actor) giveBirth(ctx *SystemContext) {
 
 	var father *Actor
 	for _, char := range ctx.World.Characters { if char.Name == a.FatherID { father = &char.Actor; break } }
-	if father != nil {
-		child.PrimaryAttributes.Strength = (a.PrimaryAttributes.Strength + father.PrimaryAttributes.Strength) / 2
-		child.PrimaryAttributes.Dexterity = (a.PrimaryAttributes.Dexterity + father.PrimaryAttributes.Dexterity) / 2
-		child.PrimaryAttributes.Health = (a.PrimaryAttributes.Health + father.PrimaryAttributes.Health) / 2
-		child.PrimaryAttributes.Intellect = (a.PrimaryAttributes.Intellect + father.PrimaryAttributes.Intellect) / 2
-		child.PrimaryAttributes.Wisdom = (a.PrimaryAttributes.Wisdom + father.PrimaryAttributes.Wisdom) / 2
+	
+	numChildren := 1
+	twinChance := 0.01 // 1% for humans
+	if a.Config.IsAnimal {
+		if archID == "lamb" { twinChance = 0.25 } // 25% for sheep twins
+		if archID == "piglet" { numChildren = 4 + rand.Intn(4) } // Litters for pigs
+		if archID == "calf" { twinChance = 0.02 }
 	}
-	child.SyncStats(ctx.Registries.Objects)
-	child.State.MaxHealthPoints /= 2; child.State.HealthPoints = child.State.MaxHealthPoints
-	ctx.World.Characters = append(ctx.World.Characters, child)
+	if rand.Float64() < twinChance && numChildren == 1 { numChildren = 2 }
+
+	for i := 0; i < numChildren; i++ {
+		child := NewCharacter(a.X, a.Y, arch, 1, false, ctx.Registries.Objects)
+		child.Alignment, child.ParentID, child.FatherID = a.Alignment, a.Name, a.FatherID
+		child.LifeStage, child.AgeTicks = StageBaby, 0
+		child.State.Age.Rate = 1.0 
+
+		if father != nil {
+			mutation := 0.95 + rand.Float64()*0.10 // ±5% mutation
+			child.PrimaryAttributes.Strength = int(float64((a.PrimaryAttributes.Strength+father.PrimaryAttributes.Strength)/2) * mutation)
+			child.PrimaryAttributes.Dexterity = int(float64((a.PrimaryAttributes.Dexterity+father.PrimaryAttributes.Dexterity)/2) * mutation)
+			child.PrimaryAttributes.Health = int(float64((a.PrimaryAttributes.Health+father.PrimaryAttributes.Health)/2) * mutation)
+			child.PrimaryAttributes.Intellect = int(float64((a.PrimaryAttributes.Intellect+father.PrimaryAttributes.Intellect)/2) * mutation)
+			child.PrimaryAttributes.Wisdom = int(float64((a.PrimaryAttributes.Wisdom+father.PrimaryAttributes.Wisdom)/2) * mutation)
+		}
+		child.SyncStats(ctx.Registries.Objects)
+		child.State.MaxHealthPoints /= 2; child.State.HealthPoints = child.State.MaxHealthPoints
+		ctx.World.Characters = append(ctx.World.Characters, child)
+	}
 	
 	a.IsPregnant = false
 	a.FatherID = ""

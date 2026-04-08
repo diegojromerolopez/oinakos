@@ -157,7 +157,7 @@ abilities:
 equipment:
   weapon: rolling_pin
 inventory:
-- id: meat
+- id: cooked_meat
   count: 10
 - id: raw_meat
   count: 5
@@ -166,6 +166,6 @@ dialogues:
   - Fresh cuts today! Step in.
   start_scenarios:
   - weight: 1.0
-    text: The cattle was healthy this season. Want a slab of salted meat?
+    text: The cattle was healthy this season. Want a slab of salted cooked_meat?
     next: exit
 denarii: 500

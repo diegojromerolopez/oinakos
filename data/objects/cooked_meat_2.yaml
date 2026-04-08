@@ -1,8 +1,8 @@
-id: meat
-name: Cooked Meat
+id: cooked_meat_2
+name: Cooked Ribs
 type: consumable
 max_hours: 48
-description: A savory piece of cooked animal meat. Highly nutritious.
+description: A rack of cooked pork ribs, glazed and glistening.
 weight: 1.8
 effects:
   energy:

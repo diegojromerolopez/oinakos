@@ -172,29 +172,51 @@ func (c *Character) updateAI(ctx *SystemContext) {
 		return
 	}
 
-	// 3. Behavior Layer (Map Goals / Roles)
-	// PROTECTED STATES: Do not wander if we are busy with long-running tasks or survival relief
-	isBusy := c.ActionState != ActorIdle && c.ActionState != ActorWalking && c.ActionState != ActorBerserk
+	// 3. Shift-Based Behavior Layer (Map Goals / Roles)
+	// PROTECTED STATES: Do not interrupt long-running tasks or survival relief unless shift change is urgent
+	isBusy := c.ActionState != ActorIdle && c.ActionState != ActorWalking && c.ActionState != ActorBerserk && !isLongRunning
 	if isBusy { return }
 
-	if isAIPlayer {
-		// SOCIAL MAGNET: Gravitate toward Tavern during leisure
-		isLeisure := ctx.World.DayTick >= TicksPerShift && ctx.World.DayTick < TicksPerShift*2
-		if isLeisure && (c.ActionState == ActorIdle || c.ActionState == ActorWalking) {
-			var hub *Obstacle; minD := 100.0
-			for _, o := range ctx.World.Obstacles {
-				if o.Alive && (strings.Contains(strings.ToLower(o.ID), "tavern") || strings.Contains(strings.ToLower(o.ID), "market")) {
-					d := math.Sqrt(math.Pow(c.X-o.X, 2) + math.Pow(c.Y-o.Y, 2))
-					if d < minD { minD, hub = d, o }
-				}
-			}
-			if hub != nil && minD > 4.0 {
-				if IsDebugEnabled() && c.Tick%600 == 0 { DebugLog("%s gravitating to hub %s (dist %.1f)", c.Name, hub.ID, minD) }
-				c.executeMovement(ctx, hub.X-c.X, hub.Y-c.Y, ctx.World.Obstacles, false)
-				return
+	// SHIFT OVERRIDE: Leisure and Rest shifts override standard labor
+	if c.Shift == ShiftLeisure {
+		// SOCIAL MAGNET: Graviate toward Tavern/Market during leisure
+		var hub *Obstacle; minD := 300.0
+		for _, o := range ctx.World.Obstacles {
+			if o.Alive && (strings.Contains(strings.ToLower(o.ID), "tavern") || strings.Contains(strings.ToLower(o.ID), "market") || strings.Contains(strings.ToLower(o.ID), "inn")) {
+				d := math.Sqrt(math.Pow(c.X-o.X, 2) + math.Pow(c.Y-o.Y, 2))
+				if d < minD { minD, hub = d, o }
 			}
 		}
+		if hub != nil && minD > 4.0 {
+			c.executeMovement(ctx, hub.X-c.X, hub.Y-c.Y, ctx.World.Obstacles, false)
+			return
+		}
+		// If already at hub or no hub, just wander/idle
+		c.updateWander(ctx, ctx.World.Obstacles)
+		return
+	}
 
+	if c.Shift == ShiftRest {
+		// SLEEP OVERRIDE: Head to nearest bed or campfire
+		var nRest *Obstacle; minDist := 400.0
+		for _, o := range ctx.World.Obstacles {
+			id := strings.ToLower(o.ID)
+			if o.Alive && (strings.Contains(id, "campfire") || strings.Contains(id, "bed") || strings.Contains(id, "house") || strings.Contains(id, "tavern")) {
+				if d := math.Sqrt(math.Pow(c.X-o.X, 2)+math.Pow(c.Y-o.Y, 2)); d < minDist { minDist, nRest = d, o }
+			}
+		}
+		if nRest != nil {
+			if minDist < 2.0 { 
+				c.ActionState, c.Tick = ActorResting, 0; return 
+			}
+			c.MoveTo(ctx, nRest.X, nRest.Y); return
+		}
+		// If no bed found, just rest here
+		c.ActionState, c.Tick = ActorResting, 0; return
+	}
+
+	// Standard Labor/Behavior (Only during ShiftWork or fallback)
+	if isAIPlayer {
 		if c.ActionState == ActorIdle || c.ActionState == ActorWalking {
 			if c.WanderDirX != 0 || c.WanderDirY != 0 {
 				c.executeMovement(ctx, c.WanderDirX, c.WanderDirY, ctx.World.Obstacles, false)

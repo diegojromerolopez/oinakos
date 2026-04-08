@@ -12,11 +12,15 @@ func (c *Character) Butcher(ctx *SystemContext, target *Character) {
 	qty := 1.0 + float64(int(c.GetAbilityYield("survivalism") * 0.02))
 	if qty > target.MeatQuantity { qty = target.MeatQuantity }
 
-	_, meatObj := ctx.Registries.Objects.RandomVariantID("raw_meat")
-	if meatObj == nil { meatObj = ctx.Registries.Objects.Objects["meat"] }
-
+	var meatID string
+	var meatObj *ObjectConfig
+	meatID, meatObj = ctx.Registries.Objects.RandomVariantID("raw_meat")
+	if meatObj == nil {
+		meatID, meatObj = ctx.Registries.Objects.RandomVariantID("cooked_meat")
+	}
+	
 	if meatObj != nil {
-		it := NewItemInstance(meatObj.ID, meatObj, c.X, c.Y)
+		it := NewItemInstance(meatID, meatObj, c.X, c.Y)
 		c.Inventory = append(c.Inventory, it)
 		target.MeatQuantity -= qty
 		

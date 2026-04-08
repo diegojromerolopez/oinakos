@@ -53,7 +53,7 @@ func (c *Character) ProcessCooking(ctx *SystemContext) {
 	// 4. Recipe Processing
 	if foundMeat >= 0 {
 		c.ActionState, c.Tick = ActorIdle, 0
-		cookedID := "meat" // Default cooked meat
+		cookedID := "cooked_meat" // Default cooked meat
 		msg := "prepared some Cooked Meat!"
 		floatMsg := "🍖 MEAT!"
 		if foundVeg >= 0 { 
@@ -62,7 +62,13 @@ func (c *Character) ProcessCooking(ctx *SystemContext) {
 			floatMsg = "🍜 STEW!"
 		}
 		
-		cookedConfig := ctx.Registries.Objects.Objects[cookedID]
+		var cookedConfig *ObjectConfig
+		if cookedID == "cooked_meat" {
+			cookedID, cookedConfig = ctx.Registries.Objects.RandomVariantID("cooked_meat")
+		} else {
+			cookedConfig = ctx.Registries.Objects.Objects[cookedID]
+		}
+		
 		if cookedConfig != nil {
 			yield := c.GetAbilityYield("cook")
 			

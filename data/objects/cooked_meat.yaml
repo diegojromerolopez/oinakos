@@ -1,0 +1,13 @@
+id: cooked_meat
+name: Cooked Meat
+type: consumable
+max_hours: 48
+description: A savory piece of cooked animal meat. Highly nutritious.
+weight: 1.8
+effects:
+  energy:
+    increase: 25.0
+  health:
+    increase: 15.0
+  max_health:
+    increase: 0.0

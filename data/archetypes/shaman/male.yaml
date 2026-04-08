@@ -164,7 +164,7 @@ equipment:
   weapon: staff_wood
 inventory:
 - potion_flu
-- medicine
+- medicinal_herbs
 - apple
 - bone_amulet
 dialogues:

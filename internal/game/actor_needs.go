@@ -77,7 +77,7 @@ func (a *Actor) updateNeeds(ctx *SystemContext) {
 	a.State.Fatigue += 0.0016 * decayMultiplier * weatherPenalty * fMult * circadianMult * sanityPenalty
 
 	// Forced Collapse (Natural Human Limit)
-	if a.State.Fatigue >= 95 && a.ActionState != ActorResting {
+	if a.State.Fatigue >= 70 && a.ActionState != ActorResting {
 		a.ActionState, a.Tick = ActorResting, 0
 		a.State.Hygiene -= 20 
 		a.Say("I... can't... stay... awake...", ctx)
@@ -167,6 +167,7 @@ func (a *Actor) updateNeeds(ctx *SystemContext) {
 					}
 				}
 				a.State.Thirst -= 12.5
+				a.State.HydrationBuffer = 3600 // 5 hours of satiation
 				hasSipped = true
 			} else {
 				// Consume from inventory if not at source
@@ -175,6 +176,7 @@ func (a *Actor) updateNeeds(ctx *SystemContext) {
 						sip := 0.25; if it.LiquidContent < sip { sip = it.LiquidContent }
 						it.LiquidContent -= sip
 						a.State.Thirst -= (sip / 0.25) * 12.5
+						a.State.HydrationBuffer = 3600 // 5 hours of satiation
 						hasSipped = true
 						if !isDrinking && a.ActionState == ActorIncapacitated {
 							if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s desperation-sipped from their %s.", a.Name, it.Config.Name), LogNPC) }
@@ -204,11 +206,11 @@ func (a *Actor) updateNeeds(ctx *SystemContext) {
 	} else if a.ActionState == ActorAttacking || a.ActionState == ActorChopping || a.ActionState == ActorDigging {
 		// Physical Efficiency: High Strength reduces the toll of heavy labor (up to 40% reduction).
 		strEff := 1.0 - (float64(a.PrimaryAttributes.Strength) * 0.005); if strEff < 0.6 { strEff = 0.6 }
-		a.State.Hunger += 0.01 * strEff; a.State.Thirst += 0.015 * strEff; a.State.Fatigue += 0.01 * strEff
+		a.State.Hunger += 0.005 * strEff; a.State.Thirst += 0.008 * strEff; a.State.Fatigue += 0.004 * strEff
 	} else if a.ActionState == ActorWalking {
 		// Persistence Hunter: High Strength improves walking gait efficiency.
 		strEff := 1.0 - (float64(a.PrimaryAttributes.Strength) * 0.005); if strEff < 0.6 { strEff = 0.6 }
-		a.State.Hunger += 0.0005 * strEff; a.State.Thirst += 0.001 * strEff; a.State.Fatigue += 0.00005 * strEff
+		a.State.Hunger += 0.0002 * strEff; a.State.Thirst += 0.0005 * strEff; a.State.Fatigue += 0.00001 * strEff
 	} else if a.ActionState == ActorRelieving {
 		a.State.BladderLevel -= 2.0
 		a.State.BowelLevel -= 1.0

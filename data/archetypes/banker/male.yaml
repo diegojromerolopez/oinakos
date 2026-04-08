@@ -162,8 +162,8 @@ equipment:
   head: doctor_hat
   weapon: knife_sharp
 inventory:
-- medicine
-- medicine
+- medicinal_herbs
+- medicinal_herbs
 - apple
 - orange
 - wine_bottle

@@ -45,7 +45,7 @@ func TestBreedingConstraints(t *testing.T) {
 	ctx.World.Characters = append(ctx.World.Characters, m, f, t1)
 	
 	// Case 1: Trans mother (sterile)
-	m.mate(ctx, &t1.Actor, "vaginal")
+	m.Actor.haveSex(ctx, &t1.Actor, "vaginal")
 	if t1.IsPregnant { t.Errorf("Transgender characters should be sterile in the biological procreation engine.") }
 }
 

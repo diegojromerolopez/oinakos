@@ -34,6 +34,7 @@ func TestSimulation_SocialAndPsychosis(t *testing.T) {
 
 	// 3. Psychosis (Berserk)
 	npc.State.Sanity = 0
+	npc.State.Hunger = 100 // Ensure sanity doesn't recover during SharedUpdate
 	log.Printf("NPC State before: %s, Sanity: %.2f", npc.ActionState.String(), npc.State.Sanity)
 	npc.SharedUpdate(ctx) // This should trigger berserk
 	log.Printf("NPC State after: %s", npc.ActionState.String())
