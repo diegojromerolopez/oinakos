@@ -170,7 +170,7 @@ obstacles:
 - archetype: smithery
   x: -5.0
   y: -9.0
-- archetype: well
+- archetype: well_4
   x: -2.0
   y: -9.0
 - archetype: chest

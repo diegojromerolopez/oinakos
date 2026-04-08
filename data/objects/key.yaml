@@ -4,3 +4,30 @@ type: key
 weight: 0.1
 description: A small key used to unlock a specific container.
 value: 10
+footprint:
+  - x: -1.56
+    y: -1.5
+  - x: -1.27
+    y: -1.48
+  - x: -0.97
+    y: -1.16
+  - x: -0.8
+    y: -0.83
+  - x: -0.48
+    y: -0.52
+  - x: -0.22
+    y: -0.41
+  - x: 0.03
+    y: -0.16
+  - x: -0.06
+    y: 0.0
+  - x: -0.38
+    y: -0.31
+  - x: -0.69
+    y: -0.63
+  - x: -1.03
+    y: -0.91
+  - x: -1.38
+    y: -1.06
+  - x: -1.56
+    y: -1.44

@@ -159,26 +159,24 @@ abilities:
     yield: culture * 1.0
     parent_attribute: strength
 equipment:
-  head: doctor_hat
-  weapon: knife_sharp
+  weapon: wooden_club
 inventory:
-- medicinal_herbs
-- medicinal_herbs
-- apple
-- orange
-- wine_bottle
+- lumber
+- wheat
+- bread
 dialogues:
   player_greetings:
-  - You look pale. Let me examine you.
-  - Science is the only cure for this age.
+  - Watch your step, heavy load coming through!
+  - Need a porter? I'm your man.
+  - This path is longer than it looks on the map.
   start_scenarios:
   - weight: 0.6
-    text: An outbreak in Autumn! Most unpredictable. I have herbs that will help.
-    next: herb_talk
-  herb_talk:
-    text: Stay focused, stay hydrated. Take these if the fatigue sets in.
+    text: Carrying these goods from the harbor to the city is a long journey. But someone has to do it.
+    next: haul_talk
+  haul_talk:
+    text: The pay is meager, but it's honest work. Better than starving in the fields.
     choices:
     - text: Open Trade.
       next: exit
-    - text: Goodbye.
+    - text: Good luck with your delivery.
       next: exit

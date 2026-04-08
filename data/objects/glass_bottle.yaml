@@ -7,3 +7,30 @@ description: An empty glass bottle. Can be used to store liquids.
 primary_color: "#FF1493"
 refillable: true
 max_liquid: 1.0
+footprint:
+  - x: -4.11
+    y: -3.89
+  - x: -3.47
+    y: -3.97
+  - x: -2.64
+    y: -3.3
+  - x: -1.63
+    y: -2.63
+  - x: -0.73
+    y: -1.77
+  - x: 0.13
+    y: -0.88
+  - x: 0.06
+    y: -0.13
+  - x: -0.47
+    y: 0.22
+  - x: -1.36
+    y: -0.33
+  - x: -2.25
+    y: -1.19
+  - x: -2.95
+    y: -2.17
+  - x: -3.8
+    y: -3.02
+  - x: -4.11
+    y: -3.83

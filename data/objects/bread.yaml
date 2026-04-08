@@ -8,3 +8,24 @@ description: A simple loaf of crusty, fresh bread.
 hunger: 25
 primary_color: "#F4A460"
 sprite: bread.png
+footprint:
+  - x: -0.91
+    y: -2.84
+  - x: -0.16
+    y: -1.53
+  - x: -0.42
+    y: -0.39
+  - x: -2.02
+    y: -0.3
+  - x: -3.16
+    y: -1.22
+  - x: -3.42
+    y: -1.77
+  - x: -3.64
+    y: -2.3
+  - x: -3.72
+    y: -3.28
+  - x: -2.98
+    y: -3.77
+  - x: -1.83
+    y: -3.61

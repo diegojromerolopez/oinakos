@@ -3,11 +3,11 @@ type: terrain
 destructible: false
 description: "An ancient burial mound overgrown with moss and shadows."
 footprint:
-  - x: 2.61
-    y: 2.64
-  - x: -7.47
-    y: 2.09
-  - x: -9.73
-    y: -9.02
-  - x: 2.13
-    y: -7.38
+  - x: 2.17
+    y: 2.14
+  - x: -5.91
+    y: 1.72
+  - x: -7.45
+    y: -5.8
+  - x: 1.78
+    y: -5.84

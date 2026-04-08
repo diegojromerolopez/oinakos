@@ -185,7 +185,7 @@ inhabitants:
   alignment: neutral
   behavior: wander
 obstacles:
-- archetype: well
+- archetype: well_4
   x: 0
   y: 0
 - archetype: chest

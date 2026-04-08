@@ -122,9 +122,13 @@ func (r *ObstacleRegistry) createLoadJobs(assets fs.FS, permitList map[string]bo
 			}
 			if _, err := fs.Stat(assets, growingPath); err == nil {
 				jobs = append(jobs, &SpriteLoadJob{Path: growingPath, Dest: &config.GrowingImage})
+				// Use growing as the first choice for the default Image
+				jobs = append(jobs, &SpriteLoadJob{Path: growingPath, Dest: &config.Image})
 			}
 			if _, err := fs.Stat(assets, readyPath); err == nil {
 				jobs = append(jobs, &SpriteLoadJob{Path: readyPath, Dest: &config.ReadyImage})
+				// If ready exists, it's usually better as a default/preview
+				jobs = append(jobs, &SpriteLoadJob{Path: readyPath, Dest: &config.Image})
 			}
 
 			if config.Image != nil || len(jobs) > 0 {

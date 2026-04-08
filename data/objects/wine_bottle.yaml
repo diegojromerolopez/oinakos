@@ -12,3 +12,14 @@ effects:
 primary_color: "#722F37"
 sprite: wine_bottle.png
 is_alcoholic: true
+footprint:
+  - x: -1.59
+    y: -1.59
+  - x: -0.73
+    y: -1.02
+  - x: 0.22
+    y: -0.03
+  - x: 0.05
+    y: 0.27
+  - x: -1.09
+    y: -0.84

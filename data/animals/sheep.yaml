@@ -1,26 +1,25 @@
 id: sheep
 name: Sheep
-gender: male
-archetype: sheep
-description: A fluffy sheep, source of wool and milk.
+behavior: wander
+is_animal: true
 attributes:
   strength:
-    min: 10
-    max: 10
+    min: 20
+    max: 20
     mode: normal
-    mean: 10.0
+    mean: 20.0
     sd: 0.0
   health:
-    min: 10
-    max: 10
+    min: 20
+    max: 20
     mode: normal
-    mean: 10.0
+    mean: 20.0
     sd: 0.0
   dexterity:
-    min: 60
-    max: 60
+    min: 50
+    max: 50
     mode: normal
-    mean: 60.0
+    mean: 50.0
     sd: 0.0
   intellect:
     min: 5
@@ -35,11 +34,41 @@ attributes:
     mean: 10.0
     sd: 0.0
 stats:
-  speed:
-    min: 0.8
-    max: 0.8
+  health_min:
+    min: 30
+    max: 30
     mode: normal
-    mean: 0.8
+    mean: 30.0
+    sd: 0.0
+  health_max:
+    min: 50
+    max: 50
+    mode: normal
+    mean: 50.0
+    sd: 0.0
+  speed:
+    min: 0.025
+    max: 0.025
+    mode: normal
+    mean: 0.025
+    sd: 0.0
+  base_attack:
+    min: 3
+    max: 3
+    mode: normal
+    mean: 3.0
+    sd: 0.0
+  base_defense:
+    min: 1
+    max: 1
+    mode: normal
+    mean: 1.0
+    sd: 0.0
+  attack_cooldown:
+    min: 90
+    max: 90
+    mode: normal
+    mean: 90.0
     sd: 0.0
   is_milkable: true
   milk_cooldown:
@@ -135,25 +164,12 @@ abilities:
   intimidate:
     yield: culture * 1.0
     parent_attribute: strength
-state:
-  health_points: 20
-  age:
-    current: 30
-    rate: 1.0
-    max: 100
-sprite: assets/images/archetypes/sheep/static.png
-corpse_sprite: assets/images/archetypes/sheep/corpse.png
-footprint:
-- x: -0.4
-  y: -0.2
-- x: 0.4
-  y: -0.2
-- x: 0.4
-  y: 0.2
-- x: -0.4
-  y: 0.2
-meat: 5
-tags:
-- animal
-- livestock
-- milkable
+weapon:
+  name: Headbutt
+  type: melee
+  damage:
+    min: 2
+    max: 8
+  max_distance: touch
+meat: 10
+xp: 5

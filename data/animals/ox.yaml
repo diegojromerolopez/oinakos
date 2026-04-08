@@ -1,26 +1,25 @@
 id: ox
 name: Ox
-gender: male
-archetype: ox
-description: A powerful draft animal for farming and transport.
+behavior: wander
+is_animal: true
 attributes:
   strength:
-    min: 10
-    max: 10
+    min: 90
+    max: 90
     mode: normal
-    mean: 10.0
+    mean: 90.0
     sd: 0.0
   health:
-    min: 10
-    max: 10
+    min: 80
+    max: 80
     mode: normal
-    mean: 10.0
+    mean: 80.0
     sd: 0.0
   dexterity:
-    min: 60
-    max: 60
+    min: 30
+    max: 30
     mode: normal
-    mean: 60.0
+    mean: 30.0
     sd: 0.0
   intellect:
     min: 5
@@ -35,11 +34,41 @@ attributes:
     mean: 10.0
     sd: 0.0
 stats:
-  speed:
-    min: 0.5
-    max: 0.5
+  health_min:
+    min: 150
+    max: 150
     mode: normal
-    mean: 0.5
+    mean: 150.0
+    sd: 0.0
+  health_max:
+    min: 200
+    max: 200
+    mode: normal
+    mean: 200.0
+    sd: 0.0
+  speed:
+    min: 0.015
+    max: 0.015
+    mode: normal
+    mean: 0.015
+    sd: 0.0
+  base_attack:
+    min: 10
+    max: 10
+    mode: normal
+    mean: 10.0
+    sd: 0.0
+  base_defense:
+    min: 8
+    max: 8
+    mode: normal
+    mean: 8.0
+    sd: 0.0
+  attack_cooldown:
+    min: 150
+    max: 150
+    mode: normal
+    mean: 150.0
     sd: 0.0
   is_milkable: true
   milk_cooldown:
@@ -135,25 +164,12 @@ abilities:
   intimidate:
     yield: culture * 1.0
     parent_attribute: strength
-state:
-  health_points: 80
-  age:
-    current: 30
-    rate: 1.0
-    max: 100
-sprite: assets/images/archetypes/ox/static.png
-footprint:
-- x: -0.8
-  y: -0.4
-- x: 0.8
-  y: -0.4
-- x: 0.8
-  y: 0.4
-- x: -0.8
-  y: 0.4
-meat: 15
-tags:
-- animal
-- livestock
-- draft
-- milkable
+weapon:
+  name: Stomp
+  type: melee
+  damage:
+    min: 15
+    max: 35
+  max_distance: touch
+meat: 60
+xp: 20

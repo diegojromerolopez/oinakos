@@ -12,3 +12,14 @@ effects:
     increase: 5.0
   health:
     increase: 3.0
+footprint:
+  - x: -2.09
+    y: -2.97
+  - x: -0.8
+    y: -1.52
+  - x: -1.41
+    y: -0.78
+  - x: -2.64
+    y: -1.61
+  - x: -3.13
+    y: -2.38

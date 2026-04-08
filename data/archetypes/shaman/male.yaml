@@ -160,7 +160,7 @@ abilities:
     yield: culture * 1.0
     parent_attribute: strength
 equipment:
-  head: hood_dark
+  # head: hood_dark
   weapon: staff_wood
 inventory:
 - potion_flu

@@ -1,0 +1,34 @@
+name: Healing Well
+type: resource
+destructible: false
+description: A magical well that restores health and quenches thirst when drank from.
+health: 0
+cooldown_time: 5.0
+actions:
+  - type: thirst
+    amount: 100
+    requires_interaction: true
+  - type: heal
+    amount: 999
+    requires_interaction: true
+footprint:
+  - x: 1.41
+    y: -0.09
+  - x: 0.73
+    y: 0.95
+  - x: -0.61
+    y: 1.48
+  - x: -1.75
+    y: 0.94
+  - x: -3.16
+    y: -0.53
+  - x: -3.3
+    y: -2.08
+  - x: !!float -2
+    y: -3.25
+  - x: -0.5
+    y: -3.19
+  - x: 0.16
+    y: -2.41
+  - x: 1.28
+    y: -1.22

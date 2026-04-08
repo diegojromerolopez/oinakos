@@ -12,3 +12,20 @@ actions:
     amount: 5
     aura: 0.5
     requires_interaction: false
+footprint:
+  - x: -0.95
+    y: -2.92
+  - x: -0.44
+    y: -0.81
+  - x: -1.25
+    y: -0.44
+  - x: -2.63
+    y: -0.63
+  - x: -3.09
+    y: -1.97
+  - x: -2.84
+    y: -2.66
+  - x: -2.72
+    y: -3.22
+  - x: -1.97
+    y: -3.28

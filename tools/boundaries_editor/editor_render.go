@@ -82,5 +82,9 @@ func (v *Viewer) drawUI(screen engine.Image, ee *EditorEntity) {
 
 	v.graphics.DrawFilledRect(screen, float32(v.addBtnRect.Min.X), float32(v.addBtnRect.Min.Y), float32(v.addBtnRect.Dx()), float32(v.addBtnRect.Dy()), buttonColor, false)
 	v.graphics.DebugPrintAt(screen, " ADD POINT ", v.addBtnRect.Min.X+5, v.addBtnRect.Min.Y+8, color.White)
-	v.graphics.DebugPrintAt(screen, "Drag (Move) | Shift+Click (Remove) | CTRL/CMD+Click (Add at Mouse) | ADD POINT button | Arrows (Cam) | Wheel (Sidebar) | ESC (Exit)", sidebarWidth+10, v.height-20, color.White)
+
+	v.graphics.DrawFilledRect(screen, float32(v.autoBtnRect.Min.X), float32(v.autoBtnRect.Min.Y), float32(v.autoBtnRect.Dx()), float32(v.autoBtnRect.Dy()), buttonColor, false)
+	v.graphics.DebugPrintAt(screen, " AUTO BORDER ", v.autoBtnRect.Min.X+5, v.autoBtnRect.Min.Y+8, color.White)
+
+	v.graphics.DebugPrintAt(screen, "Drag (Move) | Shift+Click (Remove) | CTRL/CMD+Click (Add at Mouse) | Buttons Above | Arrows (Cam) | Wheel (Sidebar) | ESC (Exit)", sidebarWidth+10, v.height-20, color.White)
 }

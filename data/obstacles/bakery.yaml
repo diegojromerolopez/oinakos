@@ -6,7 +6,25 @@ image: assets/images/obstacles/bakery.png
 health: 1000
 destructible: false
 footprint:
-  - {x: 0, y: 0}
-  - {x: 2, y: 0}
-  - {x: 2, y: 2}
-  - {x: 0, y: 2}
+  - x: -4.23
+    y: -4.33
+  - x: 1.09
+    y: -3.97
+  - x: 1.28
+    y: -1.47
+  - x: 0.56
+    y: -1.25
+  - x: 0.38
+    y: 0.56
+  - x: 0.0
+    y: 2.0
+  - x: -1.56
+    y: 2.13
+  - x: -1.91
+    y: 0.84
+  - x: -2.45
+    y: 0.77
+  - x: -2.22
+    y: 1.16
+  - x: -3.45
+    y: 1.39

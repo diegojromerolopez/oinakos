@@ -6,3 +6,12 @@ health_points: 1000
 collision_radius: 0.8
 sprite: oil_well.png
 tags: ["oil", "resource"]
+footprint:
+  - x: -4.7
+    y: -4.05
+  - x: -2.64
+    y: -4.36
+  - x: -1.34
+    y: -2.16
+  - x: -4.45
+    y: -2.67

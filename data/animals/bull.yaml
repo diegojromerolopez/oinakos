@@ -1,8 +1,7 @@
 id: bull
 name: Bull
-gender: male
-archetype: bull
-description: A massive, aggressive bull.
+behavior: wander
+is_animal: true
 attributes:
   strength:
     min: 80
@@ -11,10 +10,10 @@ attributes:
     mean: 80.0
     sd: 0.0
   health:
-    min: 10
-    max: 10
+    min: 60
+    max: 60
     mode: normal
-    mean: 10.0
+    mean: 60.0
     sd: 0.0
   dexterity:
     min: 60
@@ -35,11 +34,41 @@ attributes:
     mean: 10.0
     sd: 0.0
 stats:
-  speed:
-    min: 1.2
-    max: 1.2
+  health_min:
+    min: 120
+    max: 120
     mode: normal
-    mean: 1.2
+    mean: 120.0
+    sd: 0.0
+  health_max:
+    min: 150
+    max: 150
+    mode: normal
+    mean: 150.0
+    sd: 0.0
+  speed:
+    min: 0.03
+    max: 0.03
+    mode: normal
+    mean: 0.03
+    sd: 0.0
+  base_attack:
+    min: 15
+    max: 15
+    mode: normal
+    mean: 15.0
+    sd: 0.0
+  base_defense:
+    min: 5
+    max: 5
+    mode: normal
+    mean: 5.0
+    sd: 0.0
+  attack_cooldown:
+    min: 100
+    max: 100
+    mode: normal
+    mean: 100.0
     sd: 0.0
 abilities:
   punch:
@@ -128,24 +157,12 @@ abilities:
   intimidate:
     yield: culture * 1.0
     parent_attribute: strength
-state:
-  health_points: 120
-  age:
-    current: 30
-    rate: 1.0
-    max: 100
-sprite: assets/images/archetypes/bull/static.png
-footprint:
-- x: -0.9
-  y: -0.5
-- x: 0.9
-  y: -0.5
-- x: 0.9
-  y: 0.5
-- x: -0.9
-  y: 0.5
-meat: 20
-tags:
-- animal
-- dangerous
-- hostile
+weapon:
+  name: Gores
+  type: melee
+  damage:
+    min: 20
+    max: 40
+  max_distance: touch
+meat: 50
+xp: 25

@@ -1,10 +1,13 @@
 name: Healing Well
 type: resource
 destructible: false
-description: A magical well that restores health when drank from. Takes 5 minutes to replenish.
+description: A magical well that restores health and quenches thirst when drank from.
 health: 0
 cooldown_time: 5.0
 actions:
+  - type: thirst
+    amount: 100
+    requires_interaction: true
   - type: heal
     amount: 999
     requires_interaction: true

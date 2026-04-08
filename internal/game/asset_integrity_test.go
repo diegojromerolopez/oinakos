@@ -147,12 +147,16 @@ func TestAssetIntegrity_Obstacles(t *testing.T) {
 				// If not, it fallback to <id>.png or fails.
 				closedPath := path.Join(folderPath, "closed.png")
 				imagePath := path.Join(root, "assets/images/obstacles", cfg.ID+".png")
+				readyPath := path.Join(folderPath, "ready.png")
+				growingPath := path.Join(folderPath, "growing.png")
 				
 				_, errClosed := os.Stat(closedPath)
 				_, errImg := os.Stat(imagePath)
+				_, errReady := os.Stat(readyPath)
+				_, errGrowing := os.Stat(growingPath)
 				
-				if errClosed != nil && errImg != nil {
-					t.Errorf("Missing default image for obstacle %s (checked %s and %s)", cfg.ID, closedPath, imagePath)
+				if errClosed != nil && errImg != nil && errReady != nil && errGrowing != nil {
+					t.Errorf("Missing default image for obstacle %s (checked %s, %s, %s and %s)", cfg.ID, closedPath, imagePath, readyPath, growingPath)
 				}
 			} else {
 				imagePath := path.Join(root, "assets/images/obstacles", cfg.ID+".png")

@@ -4,11 +4,21 @@ destructible: true
 health: 500
 description: "A stall selling questionable meats and rot-resistant vegetables."
 footprint:
-  - x: 1.2
-    y: 1.2
-  - x: -1.2
-    y: 1.2
-  - x: -1.2
-    y: -1.2
-  - x: 1.2
-    y: -1.2
+  - x: -1.36
+    y: -7.45
+  - x: 1.38
+    y: -5.19
+  - x: 0.79
+    y: -1.99
+  - x: 0.68
+    y: 0.99
+  - x: -2.07
+    y: 0.87
+  - x: -3.63
+    y: 0.81
+  - x: -5.28
+    y: 1.34
+  - x: -6.23
+    y: 0.92
+  - x: -7.37
+    y: -0.58

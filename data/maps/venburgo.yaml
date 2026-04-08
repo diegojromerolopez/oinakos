@@ -450,25 +450,25 @@ spawns:
   probability: 0.1
 obstacles:
 # Center Area
-- archetype: well
+- archetype: well_4
   x: 0
   y: 0
-- archetype: well
+- archetype: well_4
   x: 2
   y: 14
-- archetype: well
+- archetype: well_4
   x: 35
   y: -20
-- archetype: well
+- archetype: well_4
   x: -35
   y: 20
-- archetype: well
+- archetype: well_4
   x: 15
   y: -15
-- archetype: well
+- archetype: well_4
   x: -15
   y: -15
-- archetype: well
+- archetype: well_4
   x: 25
   y: 25
 - archetype: campfire
@@ -516,10 +516,10 @@ obstacles:
 - archetype: apple_tree
   x: 0
   y: -10
-- archetype: well
+- archetype: well_4
   x: 10
   y: 10
-- archetype: well
+- archetype: well_4
   x: -10
   y: -10
 - archetype: apple_tree
