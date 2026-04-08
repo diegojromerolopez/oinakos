@@ -5,92 +5,93 @@
 ![Ebiten v2](https://img.shields.io/badge/Engine-Ebiten%20v2-orange)
 ![Version](https://img.shields.io/badge/Version-0.1--alpha-green)
 
-An infinite, isometric action combat game built with **Go** and the **Ebiten v2** 2D game library.
+**Oinakos** is a performance-optimized, infinite isometric action RPG and biological ecosystem simulation built with **Go** and **Ebiten v2**. It blends visceral combat with a deep, uncompromising simulation of life, death, and genetics.
 
 > *Feel like a kid again — loading up an RPG from a CD-ROM in late 1996.*
 
+---
+
 ## 📖 Game Overview
 
-**Oinakos** puts you in the boots of a lone knight in a vast, procedurally generated world. Survive against relentless waves of enemies, explore an infinite landscape, and carve your own path through a medieval world steeped in Spanish Ballad lore.
+In Oinakos, you aren't just playing a game; you are stepping into a living world. Survive relentless combat, manage your biological needs, and explore an infinite landscape steeped in Spanish Ballad lore and dark medieval grit.
 
 ### 🎭 Playable Characters
-Choose your knight before entering battle. Each character has unique stats, weapons, and voice lines in their native tongue:
+Choose your champion. Each has unique primary attributes (Strength, Dexterity, Health, Intellect, Wisdom) and voice lines in their native tongue:
 
-| Character | Nationality | Weapon | Flavour |
+| Hero | Nationality | Weapon | Specialty |
 | :--- | :--- | :--- | :--- |
-| **Oinakos** | Unknown | Tizón | The lead hero. A mysterious knight forged in iron and ancient duty. |
-| **Boris Stronesco** | Serbian | Claws | A noble who arrived in Cartagena carrying a cursed coffin. Speaks Serbian. |
-| **Roland** | French | Durandal | A disciplined paladin of the Carolingian court. Speaks French. |
-| **Conde Olinos** | Spanish | Long Sword | A tragic noble whose song moved the sea. Speaks Spanish. |
-| **Gaiferos** | Spanish | Axe | A brave knight on a quest to free his beloved Melisendra. Speaks Spanish. |
-| **Conde Estruch** | Catalan | Sword | A noble entangled in the mysteries of the old Catalan lands. |
-| **Princess Elvira** | Spanish | Cursed Blast | A noble sorceress seeking to cleanse her family name. |
+| **Oinakos** | Unknown | Tizón | The mysterious lead knight forged in iron. |
+| **Boris Stronesco** | Serbian | Claws | A cursed noble from Cartagena. Speaks Serbian. |
+| **Roland** | French | Durandal | A disciplined paladin of the Carolingian court. |
+| **Conde Olinos** | Spanish | Long Sword | A tragic noble whose song moved the sea. |
+| **Gaiferos** | Spanish | Axe | A brave knight seeking his beloved Melisendra. |
+| **Conde Estruch** | Catalan | Sword | A noble entangled in the mysteries of old Catalan. |
+| **Princess Elvira** | Spanish | Cursed Blast | A noble sorceress seeking family redemption. |
 
-### ⚔️ Key Gameplay Features
-- **AI-Driven Simulation Mode**: Toggle `ai_simulation_mode` in settings to watch the player character make tactical decisions (attack, flee, move to objective) using local or cloud AI.
-- **Dynamic NPC Intelligence**: NPCs possess personality! They receive their own descriptions and world context to generate character-accurate barks and tactical decisions.
-- **Campaigns & Maps**: Structured multi-map campaigns (*The Chronicles*, *Orc Invasion*, *Demonic Incursion*, *Kalot Embolot*) or freeform sandbox maps.
-- **Infinite Procedural World**: Chunk-based generation creates an endless world of forests, ruins, and villages.
-- **Dynamic Ambush System**: NPCs spawn from the edges of your view with distinct AI profiles (wander, hunter, patrol, chaotic, fighter, escort).
-- **Unique Boss NPCs**: Encounter named enemies like **Stultus** (a ranged shouter), **Marcus Ardea**, **Virculus** (a clockwork automaton), **Tragantia** (a reptile-woman), and **Staro Rovinec** — each with custom descriptions, stats, and voice lines.
-- **Save System**: Full quicksave/load support. Native saves to `.oinakos.yaml` files; WASM auto-saves to browser `localStorage`.
-- **NPC Faction System**: NPCs grouped by faction (e.g., *Peasants*, *Crimson Arm*) share hive-mind alert responses within a 20-unit radius.
-- **Dynamic Palette Swapping**: GPU shaders recolor NPC unit armbands/capes at runtime using Magenta/Yellow color masks defined in YAML.
-- **Interactive Environments**: Obstacles have an `actions` system — healing wells, damaging campfires — each with optional interaction gates.
-- **Items & Inventory**: Collect weapons, armor, and lore items. Characters have weight limits and limited backpack space. Manage your burden by unloading raw materials at designated locations.
-- **Forestry & Mining**: Use an Axe to chop trees for wood, or a Pike/Pickaxe to dig the earth for stone and minerals. Terrain is deformable and reacts to your actions.
+*...and many more, including the **Peasant King**, **Queen Urraca**, and the clockwork **Virculus**.*
 
-### 🧠 AI & NPC Intelligence
+---
 
-Oinakos features a robust AI integration layer that brings life to both NPCs and the player's counterpart.
+## 🗺️ Campaigns & Maps
 
-#### NPC Barks & Personality
-NPCs are no longer static! Based on their `description` in YAML, they generate dynamic dialogue (barks) relevant to their current situation.
-- **Talking Frequency**: Adjustable in the Settings menu (Never, Rare, Infrequent, Common, Constant).
-- **Context Awareness**: NPCs "know" about the player's presence, their own health, and the current mission objective.
+Oinakos offers both structured narrative experiences and freeform exploration.
 
-#### Player Simulation Mode
-By enabling `ai_simulation_mode` in your `settings.yml`, you handover control to the AI.
-- **Tactical Awareness**: The AI evaluates its surroundings, deciding when to engage, when to focus on the map objective (e.g., reaching a portal), and when to flee to safety.
-- **Transparent Reasoning**: All AI decisions and the "thought process" behind them are logged to the console in real-time.
+- **The Chronicles**: A multi-map journey through the heart of the kingdom.
+- **Invasion Maps**: Defend against the *Orc Invasion* or the *Demonic Incursion*.
+- **Sandbox Mode**: Explore infinite, procedurally generated chunks with no fixed objective.
+- **Venburgo**: A high-fidelity, hand-crafted map optimized for long-term biological simulation testing.
 
-#### WebGPU Local LLM (WASM Only)
-When running in the browser, Oinakos uses **WebGPU** to run a local LLM directly on your machine.
-- **Privacy & Performance**: No API keys or external server connections are required for the WASM version.
-- **Model**: `Llama-3-8B-Instruct-v0.1-q4f32_1-MLC` (via WebLLM).
-- **Rationale**: Selected for its superior balance between reasoning capabilities (essential for structured game decisions) and browser-efficient performance thanks to 4-bit quantization.
-- **First Load**: The browser will download and cache the model weights (approx. 5GB) during the first initialization.
+---
 
-#### Desktop AI (Native Builds)
-When running the desktop application, Oinakos offers maximum flexibility through multiple provider integrations.
-- **Cloud Providers**: Seamlessly connect to OpenAI, Anthropic (Claude), Google (Gemini), Mistral, and Hugging Face.
-- **Local Power**: Full support for **Ollama**, allowing you to run any local model (Llama 3, Gemma, Mistral, etc.) without leaving your machine.
-- **Dynamic Configuration**: Configure models, API keys, and base URLs via `settings.yml` to tailor the simulation to your hardware and preferences.
+## 🧬 Biological & Ecosystem Simulation
 
-### ⚔️ Combat & RPG Mechanics
+Oinakos features a state-of-the-art biological engine where every entity is subject to the laws of nature.
 
-Oinakos features a logarithmic RPG progression system:
+- **Core Needs**: Every tick simulates Hunger, Thirst, and Fatigue. Neglect leads to Dehydration, Starvation, and eventual death.
+- **Lifecycle & Aging**: Entities progress through life stages (Baby, Kid, Teenager, Adult, Elder). Natural aging begins to impact physical stats after 40 and can lead to death after 85 years.
+- **Genetics & Procreation**: Offspring inherit attributes from parents via a 50/50 genetic blend with a 5% mutation chance.
+- **Vampirism**: Immortal entities (Age Rate 0) reject normal food, satisfying their needs via **Bloodlust** (feeding on victims).
+- **Professional Archetypes**: At age 18, NPCs select a career (Man-at-Arms, Peasant, Priest, etc.) based on their dominant attributes.
 
-- **Experience & Leveling**: Earn XP per kill (defined per archetype). `Level = (XP / 100) + 1`. Leveling up fully restores health.
-- **RPG Attributes**: Health, Attack, Defense, Speed — all defined per character and scaled logarithmically.
-- **Logarithmic Scaling**:
-  $$\text{Stat} = \text{Base} + (\log_2(\text{Level}) \times 10)$$
-  This keeps early levels exciting and high levels challenging without stat inflation.
-- **Hit & Miss System**: Attack rolls are ratio-based: `hitChance = attack / (attack + defense) * 100`, clamped to [5, 95].
-- **Weapon Quality**: Starting weapon gets a random bonus roll (0–3) for variety in each run.
+### 💀 Trauma & Environmental Hazards
+- **Physical Trauma**: Combat can lead to irreversible damage, including lost limbs, blindness, or a broken spine.
+- **Grief Cascade**: The death of a partner or friend triggers a **Mourning** state, causing massive Sanity drain and potentially leading to a **Psychotic Break**.
+- **Miasma & Rot**: Fallen bodies rot after 24 hours (17,280 ticks), emitting a **Miasma Cloud** that causes Sickness and Sanity loss.
 
-### 🛡️ NPC Archetypes
-Eleven archetypes form the spine of the enemy roster, most with distinct male and female variants:
+---
 
-`Demon` · `Goblin` · `Lame Devil` · `Magi` · `Man-at-Arms` · `Mythical` · `Orc` · `Peasant` · `Slave` · `Trasgo`
+## 🧠 AI & NPC Intelligence
 
-### 🏗️ Logistics & Industry
+Every NPC in Oinakos is powered by a multi-layered intelligence system.
 
-To survive the long journey, you must manage your resources efficiently:
+- **Dynamic Barks**: NPCs generate situation-aware dialogue based on their YAML-defined personality and current world context.
+- **AI Simulation Mode**: Toggle `ai_simulation_mode` to watch the AI take full control of the player character, making tactical decisions from engagement to retreat.
+- **Agent Bridge**: The engine serializes the world into a `WorldContext` JSON, allowing external AI models to "see" and "think" about the environment.
+- **Social Drives**: NPCs seek leisure, form relationships, and respond to social impulses based on their Sanity and Arousal levels.
 
-- **Warehouses & Smitheries**: These buildings serve as drop-off points. Stand near them and press **E** to unload heavy raw materials (`wood`, `lumber`, `ore`).
-- **Weight Limit**: Carrying too much raw material will slow you down. Unloading at a warehouse instantly clears your backpack and restores your mobility.
-- **Auto-Equip**: Pressing **C** or **V** will automatically search your backpack for the required tool and equip it to your primary hand.
+---
+
+## ⚔️ Combat & Survival
+
+Combat in Oinakos uses a balanced, logarithmic scaling system to prevent stat inflation while keeping high-level gameplay challenging.
+
+- **Logarithmic RPG Progress**: `Stat = Base + (log2(Level) * 10)`. Early levels feel impactful; late levels reward mastery.
+- **Precision Combat**: Hit chances are calculated as `attack / (attack + defense) * 100`, clamped between 5% and 95%.
+- **Hunting & Butchering**: Target local wildlife (Oxen, Wolves, Boars) to survive. Success and meat yields scale with your **Survivalism** proficiency.
+- **Industry & Logistics**: Manage your weight. Use **Warehouses** and **Smitheries** to unload raw materials like wood, lumber, and ore.
+
+---
+
+## 📐 Units of Measurement
+
+Oinakos uses an Ancient Roman measurement system for consistent logic and flavor:
+
+| Roman Unit | Ratio to `pes` (Foot) | Metric (Approx) | Context |
+| :--- | :--- | :--- | :--- |
+| **pes** | 1 pes | ~296 mm | Fundamental logic unit |
+| **passus** | 5 pedes | ~1.48 m | Double step (pace) |
+| **mille passus**| 5,000 pedes | ~1.48 km | Roman Mile |
+| **libra** | 1 libra | ~329 g | Weight measurement |
 
 ---
 
@@ -98,276 +99,61 @@ To survive the long journey, you must manage your resources efficiently:
 
 ### Prerequisites
 - **Go 1.21+**
-- A system with GPU support (required by Ebiten for native desktop builds)
-- **Python 3.14** (for asset and audio tools, managed via `uv`)
+- **Python 3.14** (managed via `uv` for asset/audio tools)
+- **GPU support** (for Ebiten native builds)
 - **Ollama** (optional, for local high-performance AI)
 
-### 1. Configure your AI Provider
-The game supports multiple AI backends. Edit the `settings.yml` file in your platform's configuration directory:
-
-| Platform | Configuration Path |
-| :--- | :--- |
-| **macOS** | `/Users/<user>/.oinakos/settings.yml` |
-| **Linux** | `/home/<user>/.oinakos/settings.yml` |
-| **Windows** | `%APPDATA%\oinakos\settings.yml` |
-
-#### Full `settings.yml` Example:
-```yaml
-# AI General Settings
-ai_provider: "ollama"           # options: none, openai, claude, gemini, mistral, huggingface, ollama
-ai_simulation_mode: false       # If true, AI controls the player character
-ai_model_override: "llama3"     # Optional: Force a specific model ID (e.g., "gpt-4o")
-ai_base_url: ""                 # Optional: Override the default API endpoint
-
-# API Keys (Required for cloud providers)
-openai_api_key: "sk-..."
-claude_api_key: "..."
-gemini_api_key: "..."
-mistral_api_key: "..."
-huggingface_api_key: "..."
-
-# Gameplay Settings
-font: "medieval"                 # options: medieval, modern_antiqua, eagle_lake, default, etc.
-sound_frequency: "rare"          # options: never, rare, infrequent, half the time, frequent, always
-talking_frequency: "infrequent"  # Frequency of NPC barks
-fog_of_war: "none"               # options: none, vision, exploration
-```
-
-- **Ollama (Local)**: Highly recommended for privacy and performance. Defaults to `http://localhost:11434/v1`.
-- **Dynamic Discovery**: On startup, the game scans your provider for available models and automatically resolves the best fit (prioritizing "flash" models for fast RPG responses).
-
-> [!NOTE]
-> **WASM Version**: The browser build ignores these settings and defaults to the local WebGPU LLM. Ensure your browser supports WebGPU (Chrome 113+, Edge 113+).
-
-### 2. Play Natively (Desktop)
+### Installation & Run
 ```bash
+# Run native desktop build
 make run
-```
-To build a standalone executable to the `bin/` directory:
-```bash
-make build
-./bin/oinakos
+
+# Run in Browser (WebAssembly)
+make serve-wasm # Visit http://localhost:8000
+
+# Run in Headless Mode (CLI Simulation)
+go run -tags headless . -fast -debug
 ```
 
-### 2. Debug Mode
-```bash
-make run-debug
-# Enables collision boundary overlays (TAB key also toggles in-game)
-```
-
-### 3. Play in Browser (WebAssembly)
-```bash
-make serve-wasm
-# Then visit http://localhost:8000
-```
-The WASM distribution is optimised into just **two files** (`index.html` and `oinakos.wasm`) in `dist/`.
+### AI Configuration
+Edit your `settings.yml` (located in your platform's app data directory) to configure providers:
+- **Local**: Ollama (Recommended)
+- **Cloud**: OpenAI, Claude, Gemini, Mistral, Hugging Face
+- **WASM**: Uses **WebGPU** to run a local LLM (`Llama-3-8B`) directly in your browser.
 
 ---
 
-## 🎮 Controls
+## 🛠️ Development & Modding
 
-| Key | Action |
-| :--- | :--- |
-| **WASD / Arrow Keys** | Move character |
-| **SPACE** | Attack / Interact with Wells |
-| **C** | **Chop Trees** (Auto-equips Axe from inventory) |
-| **V** | **Dig Ground** (Auto-equips Pike/Pickaxe from inventory) |
-| **I** | **Toggle Inventory & Equipment** Menu |
-| **R** | **Toggle Resting** (Regain stamina/energy) |
-| **E** | **Unload Materials** (Near Warehouse or Smithery) |
-| **Q** | Quicksave |
-| **ESC** | Open game menu / Close Dialogue |
-| **ENTER** | Confirm selection / Advance Dialogue |
-| **TAB** | Toggle collision boundary debug view |
-| **Mouse** | Navigate menus |
-| **BACKSPACE** | Close Dialogue |
+- **Headless Mode**: Use `-tags test` or `-tags headless` to run the simulation without a window—perfect for long-term balance testing.
+- **Map Editor**: `make map-editor` - Create and edit isometric levels.
+- **Boundaries Editor**: `make boundaries-editor OBSTACLE=tree_oak` - Graphically edit collision footprints.
+- **Live Modding**: Place files in a local `oinakos/` folder to override any embedded asset or data YAML.
 
----
-
-## 📦 Deployment & Distribution
-
-| Target | Command | Output |
-| :--- | :--- | :--- |
-| macOS App Bundle | `make bundle-mac` | `dist/Oinakos.app` |
-| Windows Package | `make bundle-windows` | `dist/Oinakos_Windows.zip` |
-| Linux Package | `make bundle-linux` | `dist/Oinakos_Linux.tar.gz` |
-| All Platforms | `make bundle-all` | All of the above |
-| WASM Only | `make dist` | `dist/index.html` + `dist/oinakos.wasm` |
-
----
-
-## 🛠️ Development Tools
-
-### Map Editor
-Visual tool for creating and editing map levels with obstacles and inhabitants.
-```bash
-make map-editor
-```
-
-### Boundaries Editor
-Graphical tool for editing collision footprints in isometric space.
-```bash
-make boundaries-editor OBSTACLE=tree_oak
-make boundaries-editor NPC=stultus
-make boundaries-editor CHARACTER=oinakos
-make boundaries-editor OBJECT=iron_sword
-```
-Changes are saved automatically to the corresponding `.yaml` file in `data/`.
-
-### Asset Processor
-Utility to prepare sprites (background removal, hex-snapping to the 160×160 standard).
-```bash
-uv run tools/asset_processor/main.py input.png output.png
-```
-
-### Audio Generation
-Audio is generated using [Piper TTS](https://github.com/rhasspy/piper). Scripts live in `scripts/`. See [assets/audio/README.md](assets/audio/README.md) for the full voice model assignment registry.
-
----
-
-## 🛠️ Modding & Custom Content
-
-Oinakos supports live moddding without recompiling. Create an `oinakos/` folder next to the game executable and override any asset or data file.
-
-Loading priority:
-1. **Local**: `oinakos/data/` or `oinakos/assets/`
-2. **Embedded**: Files baked into the binary.
-
-### Local Mod Directory Tree
-
+### Mod Directory Structure
 ```text
 oinakos/
 ├── data/
-│   ├── archetypes/          # Shared unit templates (Stats, AI profiles)
-│   │   └── <category>/      # e.g., human/, orc/
-│   │       └── <id>.yaml
-│   ├── npcs/                # Unique/Named NPCs
-│   │   └── <id>.yaml
-│   ├── obstacles/           # Map objects (Trees, buildings, rocks)
-│   │   └── <id>.yaml
-│   ├── maps/                # Custom map levels
-│   │   └── <id>.yaml
-│   └── characters/          # Playable characters
-│       └── <id>.yaml
-├── assets/
-│   ├── images/
-│   │   ├── archetypes/
-│   │   │   └── <category>/<id>/
-│   │   │       ├── static.png   # Idle frame
-│   │   │       ├── attack.png   # Attack frame
-│   │   │       ├── corpse.png   # Death frame
-│   │   │       ├── hit.png      # Flinch frame
-│   │   │       ├── hit1.png     # (Optional) Random flinch variant 1
-│   │   │       └── hit2.png     # (Optional) Random flinch variant 2
-│   │   ├── obstacles/
-│   │   │   └── <id>.png
-│   │   └── characters/
-│   │       └── <id>/
-│   │           ├── static.png
-│   │           ├── attack.png
-│   │           └── corpse.png
-│   └── audio/
-│       ├── archetypes/
-│       │   └── <category>/<id>/
-│       │       ├── hit.wav
-│       │       ├── death.wav
-│       │       └── attack_*.wav
-│       ├── npcs/
-│       │   └── <npc_id>/        # Overrides archetype audio for unique NPCs
-│       │       ├── hit.wav
-│       │       └── attack_*.wav
-│       └── characters/
-│           └── <character_id>/  # Player character voice lines
-│               ├── hit.wav
-│               ├── death.wav
-│               └── attack_*.wav
-└── saves/                   # Save files (*.oinakos.yaml)
-```
-
-### Tips for Modders
-- **Nested Folders**: Data YAML in `data/archetypes/human/male/peasant.yaml` → sprites in `assets/images/archetypes/human/male/peasant/`.
-- **Palette Masking**: Paint **Magenta (#FF00FF)** for primary color and **Yellow (#FFFF00)** for secondary color on sprites. The engine swaps them at runtime using values from the YAML.
-- **Audio Fallback**: Character audio uses `MainCharacter` as prefix. NPC audio falls back to archetype if no `npcs/<id>/` folder exists.
-- **WAV Format**: All audio overrides must be WAV files.
-- **Voice Registry**: See [assets/audio/README.md](assets/audio/README.md) for all voice model assignments.
-
-### Interactive Environments (Actions System)
-
-Obstacles can have `actions` — periodic effects that trigger every **1 second (60 ticks)**:
-
-```yaml
-# Damaging aura (e.g. cursed fire)
-actions:
-  - type: harm
-    amount: 2
-    aura: 1.5          # World-unit radius. 0 = use collision footprint.
-
-# Healing well (player presses SPACE near it)
-actions:
-  - type: heal
-    amount: 10
-    requires_interaction: true
-    alignment_limit: "ally"   # "all" | "ally" | "enemy"
+│   ├── archetypes/    # Shared unit templates
+│   ├── npcs/          # Unique/Named NPC definitions
+│   ├── obstacles/     # Map objects (Trees, buildings)
+│   └── maps/          # Custom level definitions
+└── assets/
+    ├── images/        # Sprites (static.png, attack.png, etc.)
+    └── audio/         # WAV voice lines and SFX
 ```
 
 ---
 
-## 📁 Project Structure
-
-```text
-/
-├── cmd/              # Additional binary entry points
-├── internal/
-│   ├── engine/       # Low-level: Ebiten abstractions, isometric math, audio, shaders
-│   └── game/         # High-level: NPC AI, combat, HUD, save system, registries
-├── data/
-│   ├── archetypes/   # Shared unit templates
-│   ├── characters/   # Playable character definitions
-│   ├── npcs/         # Unique named NPCs
-│   ├── obstacles/    # Map object definitions
-│   ├── objects/      # Item and equipment definitions
-│   ├── maps/         # Standalone map levels
-│   └── campaigns/    # Multi-map campaign definitions
-├── assets/
-│   ├── images/       # Sprites (archetypes, characters, obstacles, tiles)
-│   └── audio/        # Voice lines and sound effects (WAV)
-├── tools/
-│   ├── boundaries_editor/  # Footprint editor tool
-│   ├── map_editor/         # Map authoring tool
-│   └── asset_processor/    # Sprite preprocessing (Python/uv)
-├── scripts/          # Audio generation, bundling, and tooling scripts
-├── models/           # Piper TTS voice model files (not committed)
-├── bin/              # Compiled development binaries
-└── dist/             # Distribution packages
-```
+## 📜 Roadmap
+- [x] **Animation System**: Initial support for animated objects (e.g., campfires). Full sheet support in progress.
+- [ ] **A\* Pathfinding**: Proper grid navigation to replace linear tracking.
+- [ ] **Dynamic Biomes**: Procedural weather and terrain changes based on exploration distance.
+- [ ] **UI Overhaul**: Textured panels and rich character portraits.
+- [ ] **Miasma Expansion**: Specialized disease mechanics for stagnant/polluted zones.
 
 ---
 
-## 🤝 Contributing
-
-1. **Read the Technical Guide**: Review [GEMINI.md](GEMINI.md) for architecture rules — especially the Strict Dependency Injection constraint and coordinate system conventions.
-2. **Test-Driven**: Run `make test` before submitting. The `internal/game` package is fully headless-testable.
-3. **Use the Tools**: Use `make map-editor` and `make boundaries-editor` for visual content adjustments rather than editing YAML footprints by hand.
-
----
-
-## 📝 Roadmap
-
-- [ ] **Animation System**: Move from static sprites to full sprite-sheet support (walk / attack / death frames).
-- [ ] **A\* Pathfinding**: Replace linear NPC tracking with proper grid navigation.
-- [ ] **Dynamic Biomes**: Procedural background and ambient weather changes based on chunk distance.
-- [ ] **UI Overhaul**: Replace debug-print HUD with textured panels and character portrait icons.
-- [ ] **Occlusion Effect**: Render entities behind obstacles as greyscale silhouettes (plan in `plans/`).
-
----
-
-## 📜 License
-This project is licensed under the MIT License. Code and assets have been developed with AI-assisted tooling.
-
-### Fonts
-- **MedievalSharp** is licensed under the [SIL Open Font License, Version 1.1](https://fonts.google.com/specimen/MedievalSharp).
-- **Modern Antiqua** is licensed under the [SIL Open Font License, Version 1.1](https://fonts.google.com/specimen/Modern+Antiqua).
-- **Uncial Antiqua** is licensed under the [SIL Open Font License, Version 1.1](https://fonts.google.com/specimen/Uncial+Antiqua).
-- **Glass Antiqua** is licensed under the [SIL Open Font License, Version 1.1](https://fonts.google.com/specimen/Glass+Antiqua).
-- **Kings** is licensed under the [SIL Open Font License, Version 1.1](https://fonts.google.com/specimen/Kings).
-- **Eagle Lake** is licensed under the [SIL Open Font License, Version 1.1](https://fonts.google.com/specimen/Eagle+Lake).
+## ⚖️ License
+Licensed under the **MIT License**.
+*Fonts used: MedievalSharp, Modern Antiqua, Uncial Antiqua, Glass Antiqua, Kings, Eagle Lake (all SIL Open Font License 1.1).*
