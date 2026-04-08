@@ -17,7 +17,7 @@ player:
   base_attack: 50
   base_defense: 30
 npcs:
-- archetype_id: demon_male
+- archetype: demon_male
   x: 5
   y: 5
   health: 500
@@ -27,7 +27,7 @@ npcs:
   name: Astaroth the Cruel
   base_attack: 80
   base_defense: 60
-- archetype_id: demon_male
+- archetype: demon_male
   x: -5
   y: -5
   health: 400

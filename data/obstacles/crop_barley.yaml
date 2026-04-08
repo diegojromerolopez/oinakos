@@ -1,0 +1,16 @@
+id: crop_barley
+name: Barley Field
+type: static
+destructible: true
+health: 8
+weight: 0.8
+plant_season: SPRING
+harvest_season: AUTUMN
+growth_duration: 34560 # 2 days
+yield: barley
+frame_count: 1
+footprint:
+- {x: -0.4, y: -0.4}
+- {x: 0.4, y: -0.4}
+- {x: 0.4, y: 0.4}
+- {x: -0.4, y: 0.4}

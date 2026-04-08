@@ -1,0 +1,21 @@
+id: oven
+name: Stone Oven
+type: workshop
+destructible: false
+description: A large stone oven for baking bread and cooking meals.
+actions:
+  - type: workshop
+    amount: 0
+    aura: 1.5
+sprite: oven.png
+primary_color: "#A52A2A"
+secondary_color: "#333333"
+footprint:
+  - x: -3.88
+    y: -3.75
+  - x: 0.34
+    y: -3.41
+  - x: 0.58
+    y: 0.55
+  - x: -3.34
+    y: 0.28

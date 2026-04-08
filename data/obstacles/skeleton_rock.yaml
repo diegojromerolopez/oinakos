@@ -3,7 +3,6 @@ description: "A gruesome warning of a skeleton pinned to a large rock."
 health: 0
 type: static
 destructible: false
-scale: 1.250
 footprint:
   - x: -0.55
     y: -6.52

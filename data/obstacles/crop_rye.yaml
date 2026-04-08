@@ -1,0 +1,16 @@
+id: crop_rye
+name: Rye Field
+type: static
+destructible: true
+health: 12
+weight: 1.2
+plant_season: AUTUMN
+harvest_season: SUMMER
+growth_duration: 69120 # 4 days
+yield: rye
+frame_count: 1
+footprint:
+- {x: -0.4, y: -0.4}
+- {x: 0.4, y: -0.4}
+- {x: 0.4, y: 0.4}
+- {x: -0.4, y: 0.4}

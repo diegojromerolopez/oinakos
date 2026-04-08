@@ -1,227 +1,136 @@
 # Oinakos — Agent Memo 🛡️
 
-Oinakos is a performance-optimized, infinite isometric action RPG built in Go. This memo is the **technical source of truth** for AI agents working on the codebase. Read this before touching any file.
+Oinakos is a performance-optimized, infinite isometric action RPG and biological ecosystem simulation built in Go. This memo is the **technical source of truth** for AI agents working on the codebase.
+
+## 🛡️ Enforcement Rules
+
+- **Strict File Limit**: **IMPERATIVE**. No source file may exceed **500 lines**. If an edit would push a file over this limit, you **MUST** refactor and split it before proceeding.
+- **Dependency Isolation**: `internal/game` MUST NEVER import `ebiten`. All graphics/input must stay behind the `engine` interfaces.
+- **YAML Integrity**: Every time you add or delete YAML files in `data/`, you MUST update or verify `TestForEachYAML` to reflect the expected file count or structure.
+- **Simulation Integrity**:
+  - All logic must be testable in **Headless Mode** (`-tags test` or `-tags headless`).
+  - When in doubt, if the simulation fails or crashes, fix it according to the behavior of the real world.
+- **Tests**:
+  - If you add a new feature, add a test for it.
+  - Tests must pass after each change.
+  - Every fix you do needs to be covered by a test.
+  - If a test fails, fix it before proceeding.
 
 ---
 
 ## ⚙️ Technical Core
 
-- **Engine**: Custom `internal/engine` wrapping [Ebiten v2](https://ebiten.org/).
-- **Coordinate Systems** (two separate spaces — never mix them):
-  - **Cartesian**: All physics, AI, collision, and game-logic coordinates live here.
-  - **Isometric**: Used **only** for rendering. Transform: `isoX = (x - y)`, `isoY = (x + y) * 0.5`.
-- **Simulation Rate**: Locked at **60 TPS** (`ebiten.SetTPS(60)`). All timers/cooldowns are in ticks.
-- **TileSize**: `engine.TileWidth = 64px`, `engine.TileHeight = 32px`. Map dimensions in pixels are divided by these to get Cartesian units.
-- **Versioning**: Current version is **0.1-alpha**.
-  - Centralized in `main.go` and injected via `-ldflags "-X main.Version=$(VERSION)"` in the `Makefile`.
-  - Passed to `game.NewGame` to be stored in the `Game` struct.
-  - Rendered dynamically in the main menu via `g.Version`.
+- **Engine**: Custom `internal/engine` wrapping **Ebiten v2**.
+- **Coordinate Systems**:
+  - **Cartesian**: Physics, AI, collision, and logic. Standard units are **pedes** (feet).
+  - **Isometric**: Rendering only. `isoX = (x - y)`, `isoY = (x + y) * 0.5`.
+- **Simulation Timing**: Locked at **60 TPS**. 1 day = 17,280 ticks. 1 year = 360 days (standard).
+- **Headless Mode**: Triggered via `go run -tags headless .` or `make run-headless`. Uses `MockGraphics` and `MockInput` to run the simulation without a window.
+- **Long-term Simulation**: To run an autonomous simulation that logs to a file for AI agent analysis:
+  `go run -tags headless . -fast -debug > simulation_1year.log 2>&1`
+  *Use `-fast` for $10\times$ speed and `-debug` for detailed biological/breeding logs.*
+- **Adult Mode**: Toggleable in `settings.yml`. Enables arousal, physical trauma, and mature interaction mechanics.
 
 ---
 
-## 📏 Units of Measurement
+## 📏 Units of Measurement (Ancient Roman)
 
-For historical accuracy and consistency in world-building, distances and lengths in Oinakos are measured in Ancient Roman units.
-
-| Roman Unit | English Name | Ratio to `pes` (Foot) | Metric Equivalent | Imperial Equivalent | Notes |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **digitus** | finger | 1/16 pes | ~18.5 mm | ~0.728 in | Smallest unit |
-| **uncia** | inch (thumb) | 1/12 pes | ~24.6 mm | ~0.971 in | |
-| **palmus** | palm (minor) | 1/4 pes | ~74 mm | ~2.912 in | |
-| **palmus maior** | palm length (major) | 3/4 pes | ~222 mm | ~8.737 in | |
-| **pes** | foot | 1 pes | ~296 mm | ~0.971 ft | Fundamental unit |
-| **palmipes** | foot and a palm | 1 1/4 pedes | ~370 mm | ~1.214 ft | |
-| **cubitum** | cubit | 1 1/2 pedes | ~444 mm | ~1.456 ft | |
-| **gradus** / **pes sestertius** | step | 2 1/2 pedes | ~0.74 m | ~2.427 ft | |
-| **passus** | pace | 5 pedes | ~1.48 m | ~4.854 ft | Double step |
-| **decempeda** / **pertica** | perch | 10 pedes | ~2.96 m | ~9.708 ft | Measuring rod |
-| **actus** | path, track | 120 pedes | ~35.5 m | ~116.496 ft | |
-| **stadium** | stade | 625 pedes | ~185 m | ~607.14 ft | 1/8 mile |
-| **mille passus** / **mille passuum** | (Roman) mile | 5,000 pedes | ~1.48 km | ~0.919 mi | 1,000 paces |
-| **leuga** / **leuca** | (Gallic) league | 7,500 pedes | ~2.22 km | ~1.379 mi | 1.5 miles |
-| **parasanga** | parasang | 18,750 pedes | ~5.55 km | ~3.45 mi | 30 stadia (Persian origin) |
-
-**Conversion Summary:**
-*   1 **pes** (foot) ≈ 296 mm.
-*   1 **passus** (pace) = 5 **pedes**.
-*   1 **mille passus** (Roman mile) = 1,000 **passus** = 5,000 **pedes**.
+| Roman Unit | Ratio to `pes` (Foot) | Metric (Approx) | Notes |
+| :--- | :--- | :--- | :--- |
+| **pes** | 1 pes | ~296 mm | Fundamental unit |
+| **passus** | 5 pedes | ~1.48 m | Double step (pace) |
+| **mille passus** | 5,000 pedes | ~1.48 km | Roman mile |
+| **libra** | 1 libra | ~329 g | Weight unit |
 
 ---
 
-### Data-Driven Registries
-All game content is defined in YAML under `data/` and loaded at startup:
-- **`ArchetypeRegistry`** — shared stats, sprites, audio dir, and AI profile for a category of NPC (e.g. `orc/male`).
-- **`NPCRegistry`** — unique named NPCs (e.g. Stultus, Virculus). They can override archetype stats and have their own audio folder.
-- **`PlayableCharacterRegistry`** — player-selectable characters. Each sets `EntityConfig.PlayableCharacter = config.ID`.
-- **`MapTypeRegistry`** — both standalone maps and individual campaign map levels.
-- **`CampaignRegistry`** — ordered sequences of map IDs.
-- **`ObjectRegistry`** — definitions for items, weapons, and equipment (loaded from `data/objects`).
+## ⚔️ Entity Attribute & Ability System
 
-### Playable Characters
-- Defined in `data/characters/`. Loaded by `PlayableCharacterRegistry`.
-- The character the **player is currently controlling** is the **Playable Character**.
-- `EntityConfig.PlayableCharacter` is set to `config.ID` for every entry in this registry (e.g. `"boris_stronesco"`).
-- This field is the **canonical token** for all character-specific runtime logic:
-  - Audio prefix: `PlayableCharacter + "/attack"` → plays from `assets/audio/characters/<id>/`
-  - Future uses: HUD portrait, dialogue triggers, quest flags, unique mechanics.
-- **Do not hardcode `"oinakos"` anywhere.** Always use `pc.Config.PlayableCharacter`.
+### Primary Attributes (`0–100`)
+- **Strength**: Melee damage, carrying capacity, chopping/digging.
+- **Dexterity**: Speed, attack cooldown, ranged accuracy, fine motor skills.
+- **Health**: Max HP, decay resistance, physical endurance.
+- **Intellect**: Crafting, trade negotiation, memory processing.
+- **Wisdom**: Foraging, taming, leadership, morale.
 
-### Y-Sorting (Z-Ordering)
-- The renderer sorts all drawable entities by `Y + X` (Cartesian) before each draw call.
-- This achieves correct depth occlusion without a Z-buffer.
+### Derived Stats (Calculated in `SyncStats()`)
+| Stat | Formula | Notes |
+| :--- | :--- | :--- |
+| `melee_attack` | `strength * 2` | Melee damage basis |
+| `ranged_attack` | `dexterity * 2` | Ranged damage basis |
+| `defense` | `dexterity * 1.5 + health * 1.0` | Damage reduction |
+| `health_points` | `health * 10` | Max HP |
+| `speed` | `dexterity * 0.02` | Cartesian units/tick |
+| `attack_cooldown`| `baseCD * (1.5 - dexterity * 0.01)` | Min clamp: 10 ticks |
+| `max_weight` | `(strength * 1.5 + health * 0.5) / 0.329` | Roman **librae** |
+| `survivalism` | `wisdom * 0.4 + intellect * 0.3 + health * 0.2 + dexterity * 0.1` | General survival proficiency (Yield basis) |
 
-### NPC Audio Fallback Chain
-1. Check `assets/audio/npcs/<npc_id>/` for WAV files → use NPC-specific audio.
-2. Else fall back to `assets/audio/archetypes/<archetype_id>/` (the archetype's voice).
-3. Player character audio always uses `PlayableCharacter` as the key prefix.
+**Age Modifiers:**
+- **Young (<25)**: Physical stats penalty up to 25%, Mental up to 30%.
+- **Elder (>40)**: Physical stats decay (up to 25% at age 85); Mental stats **improve** (5% per decade).
 
 ---
 
-## 📜 Coding Standards
+## 🧬 Biological & Temporal Simulation
 
-### Go Best Practices
-- **`gofmt`**: All code must be formatted with the standard Go formatter.
-- **Explicit Error Handling**: Check every error immediately. Keep the "happy path" on the left.
-- **Naming**: Use `CamelCase` for all names. Short names for local scope (e.g., `err`, `i`), descriptive for package/struct level.
-- **Composition**: Use struct embedding over complex heirarchies.
-- **`interface{}` vs `any`**: Do not use `interface{}`, use `any` instead.
-- **Minimize `any`**: Do not use `any` unless absolutely necessary (e.g. library requirements, generic loading). Prefer specific interfaces.
+### Core Needs (`State` Struct)
+Living entities simulate needs every tick. Decay is modified by the **Health** attribute: `decayMult = 1.25 - (health * 0.01)`.
 
-### SOLID Principles & Dependency Injection
-- **S.O.L.I.D.**: All new features and refactors must adhere to SOLID principles:
-  - **Single Responsibility**: Each struct/package should have one clear purpose.
-  - **Open/Closed**: Code should be open for extension but closed for modification (e.g., registries, interfaces).
-  - **Liskov Substitution**: Interfaces (like `engine.Graphics`) must be fully replaceable by mocks in tests.
-  - **Interface Segregation**: Prefer small, focused interfaces over large "God" interfaces.
-  - **Dependency Inversion**: High-level game logic must depend on abstractions, not Ebiten directly.
-- **Dependency Injection**: 
-  - Never use global state for game logic. 
-  - Pass dependencies through constructors or context structs (e.g., `SystemContext`). 
-  - This is non-negotiable for testability.
-  - **`internal/game` must never import `ebiten` directly**. Only `internal/engine` and `main.go` may.
-  - All Ebiten types are behind interfaces (`engine.Graphics`, `engine.Input`, `engine.Image`). This enables **100% headless unit testing** of game logic.
-- **Headless Testing**: 
-  - All unit tests must be run with `-tags test` (e.g., `go test -tags test ./internal/...`). 
-  - This build tag swaps Ebiten-dependent code in `internal/engine` for headless stubs in `internal/engine/test_stubs.go`.
-  - Use `make test` as the canonical way to run tests.
+- **Hunger/Thirst**: Base rates `0.02` and `0.03`. Dehydration/Starvation leads to HP loss.
+- **Fatigue**: Base rate `0.01`. Recovered by `ActorResting` near comforts.
+- **Vampirism**: Immortal characters (Age Rate 0) satisfy Hunger/Thirst via **"Bloodlust"** (ActorFeeding on victims). Standard food is rejected.
 
-### File Hygiene
-- **Max File Length**: No file should exceed **500 lines**. If a file grows beyond this, refactor and split it by responsibility.
-- **Package Names**: Name folders after the service they provide (e.g., `internal/game`, not `internal/utils`).
+### Lifecycle & Aging
+- **Life Stages**: `Baby` (<1y), `Kid` (1-12y), `Teenager` (12-18y), `Adult` (18-65y), `Elder` (>65y).
+- **Career Transition**: At Age 18, NPCs select a Professional Archetype (e.g., Man-at-Arms, Peasant, Priest) based on their highest Primary Attribute.
+- **Death**: Natural death chance starts at **85 years**. `Age.Max` in YAML can set hard limits (0 = immortal).
+- **Genetics**: Offspring inherit attributes from parents (50/50 blend) with stochastic variation (Mutation chance: 5%).
+
+### Procreation & Romance
+- **The Social Drive**: Intercourse occurs during `ShiftLeisure`. Triggered by **Relationship (>40)** or **Uninhibited Impulse** (Arousal > 50 or IsDrunk).
+- **Biological Constraint**: Pregnancy only for **non-transexual biological females** mated with **non-transexual biological males**. 
+- **Exclusivity**: Human procreation requires **Vaginal** intercourse.
+
+### Trauma & Environmental Hazards
+- **Physical Trauma**: Irreversible damage (Limbs, Blindness, Broken Spine).
+- **Grief Cascade**: Death of a Partner/Friend triggers **"Mourning"** (Double GriefTicks). Causes massive Sanity drain, leading to Psychotic Breaks.
+- **Miasma**: Dead bodies "Rot" after 1 day. Rotten corpses emit a **Miasma Cloud** (4 pedes radius). Causes Sanity loss and Sickness (Plague). AI will pathfind around Miasma.
+- **Hunting & Butchering**: 
+  - **Hunt**: Used to track and kill animals. Success and yields scale with `survivalism`.
+  - **Butcher**: Used to extract maximum `raw_meat` from animal corpses. Yields scale with `survivalism`.
 
 ---
 
-## 💾 Persistence System
+## 🧠 AI Simulation Layer
 
-- **Format**: YAML (`SaveData` struct). Extension: `.oinakos.yaml`.
-- **Native**: Saves to `oinakos/saves/` beside the binary. Supports multiple named saves + load dialog.
-- **WASM**: Persists to browser `localStorage` under key `quicksave`. Auto-resumes on page load.
-- **Platform bridge**: `persistence_native.go` vs `persistence_js.go`, split via Go build tags.
-- **Character identity** is stored as `player.archetype_id` in the save file and looked up in `PlayableCharacterRegistry` on load — `PlayableCharacter` is then set automatically from the registry.
+### World Serialization
+The engine serializes the environment into `WorldContext` JSON for AI reasoning:
+- **Sanity & Breakpoints**: Critical Sanity (0) triggers `ActorBerserk` (Psychotic Break).
 
----
-
-## 🎨 Asset Generation Standards
-
-### Sprites
-- **Characters & NPCs**: **160×160 px**, solid **`#00FF00`** (chroma-key green) background.
-- **Proportions**: Realistic human scale relative to the isometric tile.
-- Required frames: `static.png`, `attack.png`, `corpse.png`. 
-- Optional: `crouch.png` (required for picking up items), `back.png`, `hit.png`, `hit1.png`, `hit2.png`, `attack1.png`, `attack2.png`.
-
-### Palette Masking (Shader-Swappable Colors)
-- **Magenta (`#FF00FF`)**: Primary color zone — swapped at runtime with `primary_color` from YAML.
-- **Yellow (`#FFFF00`)**: Secondary color zone — swapped with `secondary_color`.
-- This is how faction armbands, cape colors, etc. are done without duplicate sprites.
-
-### Collision Footprints
-- Defined as `footprint: [{x, y}, ...]` polygon in the archetype/NPC/character YAML.
-- **Always** use `make boundaries-editor` to visually define footprints. Do **not** hand-edit polygon coordinates blindly.
-- `make boundaries-editor OBSTACLE=tree_oak`
-- `make boundaries-editor NPC=stultus`
-- `make boundaries-editor CHARACTER=oinakos`
-- `make boundaries-editor OBJECT=iron_sword`
-
-### Audio
-- Format: **WAV**, single-channel or stereo, any sample rate (engine resamples to 44100 Hz).
-- Generated via [Piper TTS](https://github.com/rhasspy/piper). Scripts in `scripts/`. Models in `models/` (not committed).
-- See [`assets/audio/README.md`](assets/audio/README.md) for the full voice-model registry.
-- Standard sound files per entity: `hit.wav`, `death.wav`, `attack_1.wav` … `attack_5.wav`.
+### Agent Bridge
+External AI interacts via `agent-bridge`:
+1. **Output**: Game writes `output.json` with situation and options.
+2. **Input**: AI writes `input.json` with `ChosenOption` and `Reasoning`.
 
 ---
 
-## 📁 Project Layout
+## 📜 Coding Standards (SOLID)
 
-```
-/
-├── cmd/                    # Additional binary entry points (if any)
-├── internal/
-│   ├── engine/             # Ebiten abstractions, isometric math, audio manager, shaders
-│   └── game/               # Game loop, NPC AI, combat, HUD, save, registries, world gen
-├── data/
-│   ├── archetypes/         # <category>/<gender>.yaml → shared mob templates
-│   ├── characters/         # <id>.yaml → playable character definitions
-│   ├── npcs/               # <id>.yaml → unique/named NPCs
-│   ├── obstacles/          # <id>.yaml → map object definitions
-│   ├── objects/            # <id>.yaml → items, weapons, and equipment definitions
-│   ├── maps/               # <id>.yaml → standalone sandbox maps
-│   └── campaigns/          # <id>.yaml → ordered map sequences
-│       └── <id>/           # Per-campaign map level YAMLs
-├── assets/
-│   ├── images/
-│   │   ├── archetypes/     # Sprites per archetype category/gender
-│   │   ├── characters/     # Sprites per playable character
-│   │   ├── obstacles/      # Obstacle sprites
-│   │   └── tiles/          # Floor tile textures
-│   └── audio/
-│       ├── archetypes/     # <category>/<id>/ → archetype voice lines
-│       ├── npcs/           # <npc_id>/ → unique NPC voice overrides
-│       └── characters/     # <character_id>/ → player character voice lines
-├── tools/
-│   ├── boundaries_editor/  # Footprint editor (Go + Ebiten)
-│   ├── map_editor/         # Map authoring tool (Go + Ebiten)
-│   └── asset_processor/    # Sprite preprocessing (Python, run via `uv`)
-├── scripts/                # Audio gen, platform bundling scripts
-├── models/                 # Piper TTS ONNX model files (gitignored)
-├── bin/                    # Compiled development binaries
-└── dist/                   # Production distribution packages
-```
+- **Dependency Inversion**: High-level game logic depends on `engine` interfaces, not Ebiten.
+- **Composition**: Use struct embedding. `Actor` embeds `State`, `Attributes`, and `Trauma`.
+- **Error Handling**: Check every error immediately. No panics in production code.
+- **Interface Segregation**: Keep interfaces small (e.g., `engine.Graphics`, `engine.Input`).
 
 ---
 
-## 🛠 Makefile Commands
+## 🛠 Makefile Reference
 
 | Command | Description |
 | :--- | :--- |
-| `make run` | Build & run natively |
-| `make run-debug` | Build & run with debug overlays |
-| `make test` | Run all unit tests (headless) |
-| `make build` | Compile native binary to `bin/` |
-| `make dist` | Build minimal 2-file WASM package |
-| `make serve-wasm` | Build WASM + serve on `localhost:8000` |
-| `make map-editor` | Launch the graphical map editor |
-| `make boundaries-editor OBSTACLE=id` | Launch footprint editor for an obstacle |
-| `make boundaries-editor NPC=id` | Launch footprint editor for a unique NPC |
-| `make boundaries-editor CHARACTER=id` | Launch footprint editor for a character |
-| `make boundaries-editor OBJECT=id` | Launch footprint editor for an object |
-| `make bundle-mac` | Build `dist/Oinakos.app` |
-| `make bundle-windows` | Build `dist/Oinakos_Windows.zip` |
-| `make bundle-linux` | Build `dist/Oinakos_Linux.tar.gz` |
-| `make bundle-all` | Build all platform packages |
-| `make clean` | Delete `bin/` and `dist/` |
-
----
-
-## 📝 Pending Roadmap
-
-- [ ] **Animation System**: Sprite-sheet support for walk / attack / death states.
-- [ ] **A\* Navigation**: Replace linear NPC tracking with proper grid pathfinding.
-- [ ] **Dynamic Biomes**: Procedural background changes based on chunk distance from origin.
-- [ ] **UI Refresh**: Replace debug-print HUD with textured panels and portrait icons.
-- [ ] **Occlusion Effect**: Greyscale silhouette for entities behind obstacles (plan in `plans/`).
-
----
-
-**Default Lead Character**: `Oinakos` — any character in `data/characters/` can be selected; the active one is identified at runtime by `EntityConfig.PlayableCharacter`.
-
-**Development Rule**: Always execute Python tools via `uv` in a virtual environment (`uv run …` or `.venv/bin/python`).
+| `make run` | Build & run native |
+| `make run-headless` | Run pure simulation (JSON-AI Bridge) |
+| `make test` | Run all headless unit tests |
+| `make dist` | Build WASM package with WebLLM support |
+| `make boundaries-editor` | Open collision footprint tool |
+| `make map-editor` | Open map authoring tool |
+| `make bundle-all` | Pack binaries for Mac, Win, Linux |

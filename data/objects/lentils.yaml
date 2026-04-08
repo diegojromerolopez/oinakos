@@ -1,0 +1,8 @@
+id: lentils
+name: Lentils
+type: consumable
+weight: 0.2
+value: 8
+description: A pouch of dried lentils. A vital source of protein for the common folk.
+hunger: 10
+primary_color: "#A0522D"

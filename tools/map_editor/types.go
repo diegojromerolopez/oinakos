@@ -61,4 +61,8 @@ type MapEditor struct {
 	InWidth     string
 	InHeight    string
 	ActiveField int
+
+	ElevationMode bool
+	ElevationTool string // "brush", "flatten", "slope"
+	ElevationP1   *engine.Point // Used for slope/flatten
 }

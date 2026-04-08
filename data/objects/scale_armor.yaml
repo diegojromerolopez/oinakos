@@ -1,0 +1,39 @@
+name: Scale Armor
+description: Overlapping metal scales on a durable leather backing. Flexible but heavy.
+weight: 22.0
+type: armor
+slot: body
+resistance: 1200
+value: 280
+effects:
+  protection:
+    increase: 35
+  speed:
+    increase: -0.012
+footprint:
+  - x: -3.84
+    y: -4.78
+  - x: -2.75
+    y: -4.63
+  - x: -1.64
+    y: -3.36
+  - x: -0.39
+    y: -2.23
+  - x: 0.58
+    y: -0.95
+  - x: 0.41
+    y: 0.03
+  - x: -0.25
+    y: 0.56
+  - x: -1.39
+    y: 0.27
+  - x: -2.64
+    y: -0.8
+  - x: -3.77
+    y: -2.05
+  - x: -4.72
+    y: -3.28
+  - x: -4.28
+    y: -3.97
+  - x: -3.84
+    y: -4.72

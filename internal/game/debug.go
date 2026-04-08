@@ -9,8 +9,10 @@ import (
 
 // debugEnabled is the global state for debug logging.
 var debugEnabled bool
+var fastModeEnabled bool
 var debugLogger *log.Logger
 var debugFile *os.File
+var InTestMode bool
 
 // SetDebugMode toggles the global debug state and initializes/closes the debug log file.
 func SetDebugMode(enabled bool) {
@@ -20,13 +22,15 @@ func SetDebugMode(enabled bool) {
 			initDebugFile()
 		}
 		DebugLog("Debug mode enabled")
-	} else {
-		if debugLogger != nil {
-			DebugLog("Debug mode disabled")
-			// We keep the file open until the process ends or we want to rotate,
-			// but for simplicity we'll just keep the logger instance.
-		}
 	}
+}
+
+func SetFastMode(enabled bool) {
+	fastModeEnabled = enabled
+}
+
+func IsFastMode() bool {
+	return fastModeEnabled
 }
 
 func initDebugFile() {

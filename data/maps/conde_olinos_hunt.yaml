@@ -51,7 +51,20 @@ floor_zones:
     y: 5.0
   - x: 8.0
     y: 3.0
-npcs:
+- name: Village Farm
+  type: farm_field
+  tile: mud.png
+  priority: 4
+  perimeter:
+  - x: -30.0
+    y: -15.0
+  - x: -20.0
+    y: -15.0
+  - x: -20.0
+    y: -5.0
+  - x: -30.0
+    y: -5.0
+inhabitants:
 - npc_id: conde_olinos
   x: -10.0
   y: 2.0
@@ -91,123 +104,157 @@ npcs:
   y: -2.0
   alignment: enemy
   leader_id: queen_urraca
-- archetype_id: peasant_male
+- archetype: peasant_male
   x: -8.0
   y: 4.0
   alignment: neutral
   behavior: flee
-- archetype_id: peasant_female
+- archetype: peasant_female
   x: -12.0
   y: -4.0
   alignment: neutral
   behavior: flee
-- archetype_id: peasant_male
+- archetype: peasant_male
   x: -2.0
   y: 4.5
   alignment: neutral
   behavior: flee
-- archetype_id: peasant_male
+- archetype: peasant_male
   x: 0.0
   y: -4.0
   alignment: neutral
   behavior: flee
-- archetype_id: peasant_male
+- archetype: peasant_male
   x: 2.0
   y: 5.0
   alignment: neutral
   behavior: flee
-- archetype_id: peasant_female
+- archetype: peasant_female
   x: 4.0
   y: -5.0
   alignment: neutral
   behavior: flee
+fauna:
+- archetype: sheep
+  x: -25.0
+  y: -10.0
+  alignment: neutral
+  behavior: wander
+- archetype: sheep
+  x: -26.0
+  y: -12.0
+  alignment: neutral
+  behavior: wander
+- archetype: ox
+  x: -22.0
+  y: -8.0
+  alignment: neutral
+  behavior: wander
 obstacles:
 - id: escape_portal
-  archetype_id: portal_1
+  archetype: portal_1
   x: 45.0
   y: 0.0
-- archetype_id: house_1
+- archetype: house_1
   x: -10.0
   y: 9.0
-- archetype_id: house_2
+- archetype: house_2
   x: -5.0
   y: 9.0
-- archetype_id: house_3
+- archetype: house_3
   x: 0.0
   y: 9.0
-- archetype_id: tavern
+- archetype: tavern
   x: -10.0
   y: -9.0
-- archetype_id: smithery
+- archetype: smithery
   x: -5.0
   y: -9.0
-- archetype_id: well
+- archetype: well_4
   x: -2.0
   y: -9.0
-- archetype_id: house_1
+- archetype: chest
+  x: -11.0
+  y: 1.0
+- archetype: chest
+  x: -9.0
+  y: 8.0
+- archetype: chest
+  x: -4.0
+  y: 8.0
+- archetype: crop_wheat
+  x: -25.0
+  y: -8.0
+- archetype: crop_wheat
+  x: -24.0
+  y: -8.0
+- archetype: crop_wheat
+  x: -25.0
+  y: -7.0
+- archetype: house_1
   x: 4.0
   y: -9.0
-- archetype_id: farm
+- archetype: farm
   x: 4.0
   y: 9.0
-- archetype_id: rock_4
+- archetype: rock_4
   x: -12.0
   y: -2.0
-- archetype_id: rock_5
+- archetype: rock_5
   x: -8.0
   y: 2.0
-- archetype_id: tree_1
+- archetype: tree_1
   x: 15.0
   y: 10.0
-- archetype_id: tree_2
+- archetype: tree_2
   x: 18.0
   y: 12.0
-- archetype_id: tree_3
+- archetype: tree_3
   x: 20.0
   y: 8.0
-- archetype_id: tree_4
+- archetype: tree_4
   x: 22.0
   y: 14.0
-- archetype_id: tree_1
+- archetype: tree_1
   x: 25.0
   y: 9.0
-- archetype_id: tree_2
+- archetype: tree_2
   x: 15.0
   y: -10.0
-- archetype_id: tree_3
+- archetype: tree_3
   x: 18.0
   y: -12.0
-- archetype_id: tree_4
+- archetype: tree_4
   x: 20.0
   y: -8.0
-- archetype_id: tree_1
+- archetype: tree_1
   x: 22.0
   y: -14.0
-- archetype_id: tree_2
+- archetype: tree_2
   x: 25.0
   y: -9.0
-- archetype_id: tree_3
+- archetype: tree_3
   x: 30.0
   y: -12.0
-- archetype_id: tree_4
+- archetype: tree_4
   x: 35.0
   y: -8.0
-- archetype_id: tree_1
+- archetype: tree_1
   x: 30.0
   y: 10.0
-- archetype_id: tree_2
+- archetype: tree_2
   x: 35.0
   y: 12.0
-- archetype_id: rock_1
+- archetype: rock_1
   x: 42.0
   y: 5.0
-- archetype_id: rock_2
+- archetype: rock_2
   x: 44.0
   y: 6.0
-- archetype_id: rock_3
+- archetype: rock_3
   x: 42.0
   y: -5.0
-- archetype_id: rock_1
+- archetype: rock_1
   x: 46.0
   y: -6.0
 weather: snow

@@ -90,8 +90,12 @@ func (mh *MenuHandler) updateMapWon() error {
 					g.isGameWon = true
 					g.isMapWon = false
 				} else {
+				if InTestMode {
+					g.worldManager.LoadMapLevel()
+				} else {
 					go g.worldManager.LoadMapLevel()
-					g.isMapWon = false
+				}
+				g.isMapWon = false
 				}
 			} else {
 				g.isGameWon = true

@@ -1,0 +1,94 @@
+map:
+    id: ""
+    width_px: 0
+    height_px: 0
+    level: 0
+    play_time: 0
+player:
+    archetype: ""
+    x: 0
+    "y": 0
+    health_points: 93
+    max_health_points: 93
+    sanity: 100
+    hunger: 0
+    thirst: 0
+    fatigue: 0
+    bladder_level: 0
+    bowel_level: 0
+    hygiene: 100
+    arousal: 0
+    is_drunk: false
+    alcohol_level: 0
+    pain: 0
+    is_sick: false
+    is_septic: false
+    is_poisoned: false
+    is_conscious: true
+    age:
+        current: 0
+        max: 0
+        rate: 1
+    is_angry: false
+    is_hypersexual: false
+    thirst_max: 193
+    hydration_buffer: 0
+    xp: 0
+    level: 1
+    kills: 0
+    map_kills: {}
+    strength: 100
+    dexterity: 100
+    health: 100
+    intellect: 100
+    wisdom: 100
+    base_attack: 9
+    base_defense: 4
+    base_protection: 0
+    denarii: 0
+    weapon:
+        name: Fists
+        type: melee
+        max_distance: touch
+        damage:
+            min: 1
+            max: 2
+characters:
+    - x: 0
+      "y": 0
+      health_points: 93
+      max_health_points: 93
+      sanity: 100
+      hunger: 0
+      thirst: 0
+      fatigue: 0
+      bladder_level: 0
+      bowel_level: 0
+      hygiene: 100
+      arousal: 0
+      is_drunk: false
+      alcohol_level: 0
+      pain: 0
+      is_sick: false
+      is_septic: false
+      is_poisoned: false
+      is_conscious: true
+      age:
+        current: 0
+        max: 0
+        rate: 1
+      is_angry: false
+      is_hypersexual: false
+      thirst_max: 193
+      hydration_buffer: 0
+      level: 1
+      behavior: ""
+      alignment: 1
+      strength: 100
+      dexterity: 100
+      health: 100
+      intellect: 100
+      wisdom: 100
+      base_attack: 9
+      base_defense: 4
+obstacles: []

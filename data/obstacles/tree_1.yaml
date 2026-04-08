@@ -2,15 +2,15 @@ name: Tree 1
 type: tree
 destructible: true
 description: A sturdy tall tree. It can be chopped down.
-health: 1000
 footprint:
-  - x: -0.33
-    y: 0.45
-  - x: 0.44
-    y: -0.25
-  - x: 1.78
-    y: 0.47
-  - x: 1.25
-    y: 1.25
-  - x: -0.13
-    y: 1.69
+- x: -0.33
+  y: 0.45
+- x: 0.44
+  y: -0.25
+- x: 1.78
+  y: 0.47
+- x: 1.25
+  y: 1.25
+- x: -0.13
+  y: 1.69
+weight: 1000

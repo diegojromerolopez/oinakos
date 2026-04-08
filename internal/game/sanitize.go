@@ -3,6 +3,7 @@ package game
 import (
 	"log"
 	"strconv"
+	"strings"
 )
 
 // HexToRGBA converts a hex string like "#FF00FF" to [4]float32 RGBA components (0.0 to 1.0).
@@ -44,51 +45,47 @@ func sanitizeEntityConfig(c *EntityConfig, source string) {
 		c.Name = c.ID
 		changed = true
 	}
-	if c.Stats.HealthMin <= 0 {
-		log.Printf("Warning [%s]: archetype %q has health_min=%d, clamping to 1", source, c.ID, c.Stats.HealthMin)
-		c.Stats.HealthMin = 1
+	if c.Stats.HealthPoints.Min < 1 {
+		c.Stats.HealthPoints.Min = 1
+	}
+	if c.Stats.HealthPoints.Max < c.Stats.HealthPoints.Min {
+		c.Stats.HealthPoints.Max = c.Stats.HealthPoints.Min
+	}
+	if c.Stats.Speed.Min <= 0 {
+		c.Stats.Speed = FloatInterval{Min: 0.01, Max: 0.01}
 		changed = true
 	}
-	if c.Stats.HealthMax < c.Stats.HealthMin {
-		log.Printf("Warning [%s]: archetype %q has health_max=%d < health_min=%d, clamping to health_min",
-			source, c.ID, c.Stats.HealthMax, c.Stats.HealthMin)
-		c.Stats.HealthMax = c.Stats.HealthMin
+	if c.Stats.Speed.Max > 2.0 {
+		c.Stats.Speed.Max = 0.5
+		if c.Stats.Speed.Min > 0.5 { c.Stats.Speed.Min = 0.5 }
 		changed = true
 	}
-	if c.Stats.Speed <= 0 {
-		log.Printf("Warning [%s]: archetype %q has speed=%v, clamping to 0.01", source, c.ID, c.Stats.Speed)
-		c.Stats.Speed = 0.01
+	if c.Stats.BaseAttack.Min < 0 {
+		c.Stats.BaseAttack.Min = 0
+		if c.Stats.BaseAttack.Max < 0 { c.Stats.BaseAttack.Max = 0 }
 		changed = true
 	}
-	if c.Stats.Speed > 1.0 {
-		log.Printf("Warning [%s]: archetype %q has speed=%v (suspiciously high), clamping to 0.5", source, c.ID, c.Stats.Speed)
-		c.Stats.Speed = 0.5
+	if c.Stats.BaseDefense.Min < 0 {
+		c.Stats.BaseDefense.Min = 0
+		if c.Stats.BaseDefense.Max < 0 { c.Stats.BaseDefense.Max = 0 }
 		changed = true
 	}
-	if c.Stats.BaseAttack < 0 {
-		log.Printf("Warning [%s]: archetype %q has base_attack=%d, clamping to 0", source, c.ID, c.Stats.BaseAttack)
-		c.Stats.BaseAttack = 0
+	if c.Stats.AttackCooldown.Min <= 0 {
+		c.Stats.AttackCooldown = IntInterval{Min: 30, Max: 30}
 		changed = true
 	}
-	if c.Stats.BaseDefense < 0 {
-		log.Printf("Warning [%s]: archetype %q has base_defense=%d, clamping to 0", source, c.ID, c.Stats.BaseDefense)
-		c.Stats.BaseDefense = 0
+	if c.Stats.AttackRange.Min < 0 {
+		c.Stats.AttackRange.Min = 0
+		if c.Stats.AttackRange.Max < 0 { c.Stats.AttackRange.Max = 0 }
 		changed = true
 	}
-	if c.Stats.AttackCooldown <= 0 {
-		log.Printf("Warning [%s]: archetype %q has attack_cooldown=%d, clamping to 30", source, c.ID, c.Stats.AttackCooldown)
-		c.Stats.AttackCooldown = 30
+	if c.Stats.ProjectileSpeed.Min < 0 {
+		c.Stats.ProjectileSpeed.Min = 0
+		if c.Stats.ProjectileSpeed.Max < 0 { c.Stats.ProjectileSpeed.Max = 0 }
 		changed = true
 	}
-	if c.Stats.AttackRange < 0 {
-		log.Printf("Warning [%s]: archetype %q has attack_range=%v, clamping to 0", source, c.ID, c.Stats.AttackRange)
-		c.Stats.AttackRange = 0
-		changed = true
-	}
-	if c.Stats.ProjectileSpeed < 0 {
-		log.Printf("Warning [%s]: archetype %q has projectile_speed=%v, clamping to 0", source, c.ID, c.Stats.ProjectileSpeed)
-		c.Stats.ProjectileSpeed = 0
-		changed = true
+	if c.Stats.Age.Rate.IsZero() && c.Stats.Age.Current.IsZero() {
+		c.Stats.Age.Rate = FloatInterval{Min: 1.0, Max: 1.0} 
 	}
 	_ = changed
 }
@@ -102,16 +99,16 @@ func sanitizeObstacleArchetype(c *ObstacleArchetype, source string) {
 		log.Printf("Warning [%s]: obstacle %q has empty name, using id", source, c.ID)
 		c.Name = c.ID
 	}
-	if c.Health < -1 {
-		log.Printf("Warning [%s]: obstacle %q has negative health (%d), clamping to 0", source, c.ID, c.Health)
-		c.Health = 0
+	if c.HealthPoints < -1 {
+		log.Printf("Warning [%s]: obstacle %q has negative health (%d), clamping to 0", source, c.ID, c.HealthPoints)
+		c.HealthPoints = 0
 	}
 	if c.CooldownTime < 0 {
 		log.Printf("Warning [%s]: obstacle %q has cooldown_time=%v, clamping to 0", source, c.ID, c.CooldownTime)
 		c.CooldownTime = 0
 	}
-	if c.Scale <= 0 {
-		c.Scale = 1.0
+	if strings.HasPrefix(c.ID, "crop_") {
+		c.IsCrop = true
 	}
 }
 
@@ -155,17 +152,17 @@ func sanitizeMapType(m *MapType, source string) {
 
 // sanitizePlayerSaveData validates fields from a player save block.
 func sanitizePlayerSaveData(p *PlayerSaveData, source string) {
-	if p.Health < 0 {
-		log.Printf("Warning [%s]: player health=%d is negative, clamping to 1", source, p.Health)
-		p.Health = 1
+	if p.HealthPoints <= 0 {
+		log.Printf("Warning [%s]: player health=%d is invalid, clamping to 1", source, p.HealthPoints)
+		p.HealthPoints = 1
 	}
-	if p.MaxHealth <= 0 {
-		log.Printf("Warning [%s]: player max_health=%d is invalid, clamping to 100", source, p.MaxHealth)
-		p.MaxHealth = 100
+	if p.MaxHealthPoints <= 0 {
+		log.Printf("Warning [%s]: player max_health=%d is invalid, clamping to 100", source, p.MaxHealthPoints)
+		p.MaxHealthPoints = 100
 	}
-	if p.Health > p.MaxHealth {
-		log.Printf("Warning [%s]: player health=%d exceeds max_health=%d, clamping to max", source, p.Health, p.MaxHealth)
-		p.Health = p.MaxHealth
+	if p.HealthPoints > p.MaxHealthPoints {
+		log.Printf("Warning [%s]: player health=%d exceeds max_health=%d, clamping to max", source, p.HealthPoints, p.MaxHealthPoints)
+		p.HealthPoints = p.MaxHealthPoints
 	}
 	if p.Level <= 0 {
 		log.Printf("Warning [%s]: player level=%d is invalid, clamping to 1", source, p.Level)
@@ -191,19 +188,19 @@ func sanitizePlayerSaveData(p *PlayerSaveData, source string) {
 
 // sanitizeNPCSaveData validates NPC save data fields.
 func sanitizeNPCSaveData(n *NPCSaveData, idx int, source string) {
-	if n.ArchetypeID == "" && n.NPCID == "" {
-		log.Printf("Warning [%s]: NPC[%d] has empty archetype_id and npc_id, will be skipped", source, idx)
+	if n.Archetype == "" && n.NPCID == "" {
+		log.Printf("Warning [%s]: NPC[%d] has empty archetype and npc_id, will be skipped", source, idx)
 	}
-	if n.Health < 0 {
-		log.Printf("Warning [%s]: NPC[%d] %q health=%d is negative, clamping to 0", source, idx, n.Name, n.Health)
-		n.Health = 0
+	if n.HealthPoints < 0 {
+		log.Printf("Warning [%s]: NPC[%d] %q health=%d is negative, clamping to 0", source, idx, n.Name, n.HealthPoints)
+		n.HealthPoints = 0
 	}
-	if n.MaxHealth <= 0 {
-		if n.Health > 0 {
-			n.MaxHealth = n.Health
-			log.Printf("Warning [%s]: NPC[%d] %q max_health invalid, setting to health=%d", source, idx, n.Name, n.Health)
+	if n.MaxHealthPoints <= 0 {
+		if n.HealthPoints > 0 {
+			n.MaxHealthPoints = n.HealthPoints
+			log.Printf("Warning [%s]: NPC[%d] %q max_health invalid, setting to health=%d", source, idx, n.Name, n.HealthPoints)
 		} else {
-			n.MaxHealth = 1
+			n.MaxHealthPoints = 1
 			log.Printf("Warning [%s]: NPC[%d] %q max_health invalid, clamping to 1", source, idx, n.Name)
 		}
 	}

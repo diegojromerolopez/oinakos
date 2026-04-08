@@ -1,0 +1,22 @@
+name: Wood
+description: A sturdy piece of timber chopped from a tree.
+weight: 1.5
+type: material
+value: 2
+footprint:
+  - x: -1.44
+    y: -3.5
+  - x: -0.3
+    y: -2.2
+  - x: -0.78
+    y: -1.22
+  - x: -1.55
+    y: 0.05
+  - x: -3.0
+    y: -0.88
+  - x: -3.77
+    y: -1.98
+  - x: -3.36
+    y: -2.58
+  - x: -2.36
+    y: -3.83

@@ -1,0 +1,39 @@
+name: Chainmail Armor
+description: A mesh of interlocking iron rings. Offers superb protection against cuts. Heavy.
+weight: 18.0
+type: armor
+slot: body
+resistance: 1000
+value: 200
+effects:
+  protection:
+    increase: 25
+  speed:
+    increase: -0.01
+footprint:
+  - x: -3.55
+    y: -4.02
+  - x: -2.56
+    y: -3.88
+  - x: -1.38
+    y: -3.13
+  - x: -1.52
+    y: -2.42
+  - x: -0.53
+    y: -1.47
+  - x: -0.03
+    y: -0.59
+  - x: -0.48
+    y: -0.08
+  - x: -1.31
+    y: -0.25
+  - x: -2.22
+    y: -1.28
+  - x: -2.91
+    y: -1.28
+  - x: -3.77
+    y: -2.36
+  - x: -4.0
+    y: -3.38
+  - x: -3.55
+    y: -3.89

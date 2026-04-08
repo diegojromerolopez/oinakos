@@ -16,15 +16,36 @@ type ObstacleArchetype struct {
 	Type           ObstacleType           `yaml:"type"`
 	Destructible   bool                   `yaml:"destructible"` // If false, cannot be damaged
 	Description    string                 `yaml:"description"`
-	Health         int                    `yaml:"health"`        // Base health (ignored if Destructible is false)
+	HealthPoints   int                    `yaml:"health"`        // Base health (ignored if Destructible is false)
+	Timber         int                    `yaml:"timber"`        // Available timber resources for harvesting
+	Weight         float64                `yaml:"weight"`        // Total resource weight (game units)
 	CooldownTime   float64                `yaml:"cooldown_time"` // Base cooldown in minutes
 	Footprint      []FootprintPoint       `yaml:"footprint"`
 	FrameCount     int                    `yaml:"frame_count"`     // Total number of frames
 	FramesPerRow   int                    `yaml:"frames_per_row"`  // For grid-based spritesheets (default 0 = single row)
 	AnimationSpeed int                    `yaml:"animation_speed"` // Ticks per frame
-	Scale          float64                `yaml:"scale,omitempty"`  // Scaling factor for rendering (default 1.0)
 	Actions        []ObstacleActionConfig `yaml:"actions,omitempty"`
-	Image          engine.Image           `yaml:"-"`
+
+	IsCrop         bool   `yaml:"-"`
+	PlantSeason    string `yaml:"plant_season"`   // e.g. "SPRING"
+	HarvestSeason  string `yaml:"harvest_season"` // e.g. "AUTUMN"
+	GrowthDuration int    `yaml:"growth_duration"`
+	Yield          string `yaml:"yield"`           // Object ID to drop when harvested
+
+	// Container & Ownership System
+	MaxCapacity    float64 `yaml:"max_capacity"` // Max weight it can hold
+	OwnerID        string  `yaml:"owner_id"`     // Optional default owner
+	LockResistance int     `yaml:"lock_resistance"`
+
+	// Environmental Hazard System
+	Passable       bool   `yaml:"passable"`  // If true, characters can walk over it
+	IsHazard       bool   `yaml:"is_hazard"` // If true, it can affect actor states (hygiene, health)
+
+	Image       engine.Image `yaml:"-"`
+	OpenImage   engine.Image `yaml:"-"`
+	ClosedImage engine.Image `yaml:"-"`
+	GrowingImage engine.Image `yaml:"-"`
+	ReadyImage   engine.Image `yaml:"-"`
 }
 
 func (a *ObstacleArchetype) IsWell() bool {
@@ -60,7 +81,7 @@ func (r *ObstacleRegistry) LoadAll(assets fs.FS) error {
 		}
 
 		sanitizeObstacleArchetype(&config, fpath)
-
+		if _, exists := r.Archetypes[config.ID]; exists { return nil }
 		r.Archetypes[config.ID] = &config
 		r.IDs = append(r.IDs, config.ID)
 		return nil
@@ -68,13 +89,13 @@ func (r *ObstacleRegistry) LoadAll(assets fs.FS) error {
 }
 
 func (r *ObstacleRegistry) LoadAssets(assets fs.FS, graphics engine.Graphics, permitList map[string]bool, ls *LoadingState) {
-	jobs := r.createLoadJobs(permitList)
+	jobs := r.createLoadJobs(assets, permitList)
 	if len(jobs) > 0 {
 		loadSpritesParallel(assets, jobs, graphics, ls)
 	}
 }
 
-func (r *ObstacleRegistry) createLoadJobs(permitList map[string]bool) []*SpriteLoadJob {
+func (r *ObstacleRegistry) createLoadJobs(assets fs.FS, permitList map[string]bool) []*SpriteLoadJob {
 	var jobs []*SpriteLoadJob
 	for _, config := range r.Archetypes {
 		if config.Image != nil {
@@ -83,6 +104,38 @@ func (r *ObstacleRegistry) createLoadJobs(permitList map[string]bool) []*SpriteL
 		if permitList != nil && !permitList[config.ID] && !config.IsWell() {
 			continue
 		}
+		// Generic support for obstacles with multiple states (e.g. chest/open.png and chest/closed.png)
+		folderPath := path.Join("assets/images/obstacles", config.ID)
+		if info, err := fs.Stat(assets, folderPath); err == nil && info.IsDir() {
+			openPath := path.Join(folderPath, "open.png")
+			closedPath := path.Join(folderPath, "closed.png")
+			growingPath := path.Join(folderPath, "growing.png")
+			readyPath := path.Join(folderPath, "ready.png")
+
+			if _, err := fs.Stat(assets, openPath); err == nil {
+				jobs = append(jobs, &SpriteLoadJob{Path: openPath, Dest: &config.OpenImage})
+			}
+			if _, err := fs.Stat(assets, closedPath); err == nil {
+				jobs = append(jobs, &SpriteLoadJob{Path: closedPath, Dest: &config.ClosedImage})
+				// Use closed as default
+				jobs = append(jobs, &SpriteLoadJob{Path: closedPath, Dest: &config.Image})
+			}
+			if _, err := fs.Stat(assets, growingPath); err == nil {
+				jobs = append(jobs, &SpriteLoadJob{Path: growingPath, Dest: &config.GrowingImage})
+				// Use growing as the first choice for the default Image
+				jobs = append(jobs, &SpriteLoadJob{Path: growingPath, Dest: &config.Image})
+			}
+			if _, err := fs.Stat(assets, readyPath); err == nil {
+				jobs = append(jobs, &SpriteLoadJob{Path: readyPath, Dest: &config.ReadyImage})
+				// If ready exists, it's usually better as a default/preview
+				jobs = append(jobs, &SpriteLoadJob{Path: readyPath, Dest: &config.Image})
+			}
+
+			if config.Image != nil || len(jobs) > 0 {
+				continue
+			}
+		}
+
 		imagePath := path.Join("assets/images/obstacles", config.ID+".png")
 		jobs = append(jobs, &SpriteLoadJob{
 			Path: imagePath,
@@ -92,6 +145,6 @@ func (r *ObstacleRegistry) createLoadJobs(permitList map[string]bool) []*SpriteL
 	return jobs
 }
 
-func (r *ObstacleRegistry) CountAssets(permitList map[string]bool) int {
-	return len(r.createLoadJobs(permitList))
+func (r *ObstacleRegistry) CountAssets(assets fs.FS, permitList map[string]bool) int {
+	return len(r.createLoadJobs(assets, permitList))
 }

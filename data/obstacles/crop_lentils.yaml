@@ -1,0 +1,16 @@
+id: crop_lentils
+name: Lentil Patch
+type: static
+destructible: true
+health: 5
+weight: 0.5
+plant_season: SPRING
+harvest_season: SUMMER
+growth_duration: 25920 # 1.5 days
+yield: lentils
+frame_count: 1
+footprint:
+- {x: -0.3, y: -0.3}
+- {x: 0.3, y: -0.3}
+- {x: 0.3, y: 0.3}
+- {x: -0.3, y: 0.3}

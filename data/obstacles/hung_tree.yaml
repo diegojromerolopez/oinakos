@@ -2,13 +2,18 @@ name: "The Gallowtree"
 type: terrain
 destructible: false
 description: "An ancient, withered oak with a heavy branch that has seen many a final judgment."
-scale: 1.250
 footprint:
-  - x: 1.0
-    y: 1.0
-  - x: -5.2
-    y: 0.89
-  - x: -5.33
-    y: -4.73
-  - x: 0.66
-    y: -5.22
+  - x: -2.34
+    y: -4.53
+  - x: 0.13
+    y: -3.81
+  - x: 0.14
+    y: -2.33
+  - x: -1.02
+    y: -0.8
+  - x: -1.91
+    y: -0.47
+  - x: -3.48
+    y: -1.27
+  - x: -3.98
+    y: -2.77

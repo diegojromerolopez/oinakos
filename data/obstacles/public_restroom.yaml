@@ -1,0 +1,20 @@
+id: public_restroom
+name: Public Latrines
+description: A place to alleviate bodily needs in a structured manner.
+type: building
+destructible: false
+image: obstacles/well.png # Fallback image
+actions:
+  - type: alleviate
+    amount: 100
+    requires_interaction: true
+cooldown_time: 0.05 # Real hours ~ 3 minutes
+footprint:
+  - x: -5.41
+    y: -6.09
+  - x: 0.75
+    y: -5.44
+  - x: 1.0
+    y: 1.0
+  - x: -5.22
+    y: 0.84

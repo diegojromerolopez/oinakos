@@ -25,19 +25,9 @@ func TestSanitizeEntityConfig(t *testing.T) {
 			name: "invalid health and speed",
 			input: EntityConfig{
 				ID: "orc",
-				Stats: struct {
-					HealthMin       int     `yaml:"health_min"`
-					HealthMax       int     `yaml:"health_max"`
-					Speed           float64 `yaml:"speed"`
-					BaseAttack      int     `yaml:"base_attack"`
-					BaseDefense     int     `yaml:"base_defense"`
-					AttackCooldown  int     `yaml:"attack_cooldown"`
-					AttackRange          float64 `yaml:"attack_range"`
-					ProjectileSpeed      float64 `yaml:"projectile_speed"`
-				}{
-					HealthMin: -5,
-					HealthMax: -10,
-					Speed:     -1.0,
+				Stats: EntityStatsConfig{
+					HealthPoints: IntInterval{Min: -5, Max: -5},
+					Speed:     FloatInterval{Min: -1.0, Max: -1.0},
 				},
 			},
 			wantID:  "orc",
@@ -49,19 +39,9 @@ func TestSanitizeEntityConfig(t *testing.T) {
 			name: "speed too high",
 			input: EntityConfig{
 				ID: "hero",
-				Stats: struct {
-					HealthMin       int     `yaml:"health_min"`
-					HealthMax       int     `yaml:"health_max"`
-					Speed           float64 `yaml:"speed"`
-					BaseAttack      int     `yaml:"base_attack"`
-					BaseDefense     int     `yaml:"base_defense"`
-					AttackCooldown  int     `yaml:"attack_cooldown"`
-					AttackRange          float64 `yaml:"attack_range"`
-					ProjectileSpeed      float64 `yaml:"projectile_speed"`
-				}{
-					HealthMin: 100,
-					HealthMax: 100,
-					Speed:     5.0,
+				Stats: EntityStatsConfig{
+					HealthPoints: IntInterval{Min: 100, Max: 100},
+					Speed:     FloatInterval{Min: 5.0, Max: 5.0},
 				},
 			},
 			wantID:  "hero",
@@ -78,14 +58,14 @@ func TestSanitizeEntityConfig(t *testing.T) {
 			if config.ID != tt.wantID {
 				t.Errorf("ID: got %s, want %s", config.ID, tt.wantID)
 			}
-			if config.Stats.HealthMin != tt.wantHP {
-				t.Errorf("HealthMin: got %d, want %d", config.Stats.HealthMin, tt.wantHP)
+			if config.Stats.HealthPoints.Min != tt.wantHP {
+				t.Errorf("HealthPoints: got %d, want %d", config.Stats.HealthPoints.Min, tt.wantHP)
 			}
-			if config.Stats.HealthMax != tt.wantMax {
-				t.Errorf("HealthMax: got %d, want %d", config.Stats.HealthMax, tt.wantMax)
+			if config.Stats.HealthPoints.Max != tt.wantMax {
+				t.Errorf("HealthPoints: got %d, want %d", config.Stats.HealthPoints.Max, tt.wantMax)
 			}
-			if config.Stats.Speed != tt.wantSpd {
-				t.Errorf("Speed: got %f, want %f", config.Stats.Speed, tt.wantSpd)
+			if config.Stats.Speed.Min != tt.wantSpd {
+				t.Errorf("Speed: got %f, want %f", config.Stats.Speed.Min, tt.wantSpd)
 			}
 		})
 	}
@@ -102,7 +82,6 @@ func TestSanitizeObstacleArchetype(t *testing.T) {
 			name: "invalid values",
 			input: ObstacleArchetype{
 				ID:     "",
-				Health: -10,
 			},
 			wantID: "unknown",
 			wantHP: 0,
@@ -116,8 +95,8 @@ func TestSanitizeObstacleArchetype(t *testing.T) {
 			if config.ID != tt.wantID {
 				t.Errorf("ID: got %s, want %s", config.ID, tt.wantID)
 			}
-			if config.Health != tt.wantHP {
-				t.Errorf("Health: got %d, want %d", config.Health, tt.wantHP)
+			if config.HealthPoints != tt.wantHP {
+				t.Errorf("HealthPoints: got %d, want %d", config.HealthPoints, tt.wantHP)
 			}
 		})
 	}
@@ -143,16 +122,17 @@ func TestSanitizeMapType(t *testing.T) {
 
 func TestSanitizeSaveData(t *testing.T) {
 	p := PlayerSaveData{
-		Health:    -10,
-		MaxHealth: 0,
+		State: State{
+			MaxHealthPoints: 0,
+		},
 		Level:     -1,
 	}
 	sanitizePlayerSaveData(&p, "test")
-	if p.Health != 1 {
-		t.Errorf("Player Health: got %d, want 1", p.Health)
+	if p.State.HealthPoints != 1 {
+		t.Errorf("Player HealthPoints: got %d, want 1", p.State.HealthPoints)
 	}
-	if p.MaxHealth != 100 {
-		t.Errorf("Player MaxHealth: got %d, want 100", p.MaxHealth)
+	if p.State.MaxHealthPoints != 100 {
+		t.Errorf("Player MaxHealthPoints: got %d, want 100", p.State.MaxHealthPoints)
 	}
 	if p.Level != 1 {
 		t.Errorf("Player Level: got %d, want 1", p.Level)
@@ -160,12 +140,12 @@ func TestSanitizeSaveData(t *testing.T) {
 
 	n := NPCSaveData{
 		Name:   "Orc",
-		Health: -5,
+		State: State{HealthPoints: -5},
 		Level:  0,
 	}
 	sanitizeNPCSaveData(&n, 0, "test")
-	if n.Health != 0 {
-		t.Errorf("NPC Health: got %d, want 0", n.Health)
+	if n.State.HealthPoints != 0 {
+		t.Errorf("NPC HealthPoints: got %d, want 0", n.State.HealthPoints)
 	}
 	if n.Level != 1 {
 		t.Errorf("NPC Level: got %d, want 1", n.Level)

@@ -79,16 +79,16 @@ obstacles:
 - archetype: house_1
   x: -8
   y: -8
-- archetype_id: house_2
+- archetype: house_2
   x: 0
   y: -9
 - archetype: house_3
   x: 8
   y: -8
-- archetype_id: warehouse
+- archetype: warehouse
   x: -12
   y: 8
-- archetype_id: house_1
+- archetype: house_1
   x: 12
   y: 8
 - archetype: burned_corpse_male

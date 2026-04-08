@@ -1,0 +1,25 @@
+id: wine_bottle
+name: Bottle of Wine
+type: consumable
+weight: 1.5
+value: 50
+description: A dark bottle filled with vintage local wine.
+effects:
+  thirst:
+    increase: 20.0
+  energy:
+    increase: 30.0
+primary_color: "#722F37"
+sprite: wine_bottle.png
+is_alcoholic: true
+footprint:
+  - x: -1.59
+    y: -1.59
+  - x: -0.73
+    y: -1.02
+  - x: 0.22
+    y: -0.03
+  - x: 0.05
+    y: 0.27
+  - x: -1.09
+    y: -0.84

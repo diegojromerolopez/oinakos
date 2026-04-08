@@ -1,0 +1,35 @@
+id: denarius
+name: Denarius
+type: currency
+description: A silver Roman denarius. The standard currency of the world.
+weight: 0.01
+image: assets/images/objects/denarius.png
+value: 1
+consumable: false
+footprint:
+  - x: -1.42
+    y: -1.39
+  - x: -1.2
+    y: -1.48
+  - x: -0.81
+    y: -1.38
+  - x: -0.45
+    y: -1.11
+  - x: -0.16
+    y: -0.78
+  - x: 0.0
+    y: -0.38
+  - x: -0.03
+    y: -0.09
+  - x: -0.22
+    y: 0.03
+  - x: -0.59
+    y: -0.03
+  - x: -0.97
+    y: -0.28
+  - x: -1.28
+    y: -0.59
+  - x: -1.48
+    y: -1.02
+  - x: -1.45
+    y: -1.3

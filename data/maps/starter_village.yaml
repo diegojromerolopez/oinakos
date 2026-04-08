@@ -1,11 +1,11 @@
 name: Starter Village
-map:
-  id: safe_zone
-  width_px: 5120
-  height_px: 5120
-  level: 1
-  play_time: 0
-  floor_tile: grass.png
+id: safe_zone
+type: sandbox
+width_px: 5120
+height_px: 5120
+level: 1
+play_time: 0
+floor_tile: grass.png
 player:
   x: 3
   y: 3
@@ -77,193 +77,196 @@ floor_zones:
     y: 2
   - x: -30
     y: 2
-npcs:
-- archetype_id: queens_guard
+inhabitants:
+- archetype: queens_guard
   x: -2
   y: -8
   alignment: neutral
   behavior: patrol
-- archetype_id: queens_guard
+- archetype: queens_guard
   x: 2
   y: -8
   alignment: neutral
   behavior: patrol
-- archetype_id: golden_guard
+- archetype: golden_guard
   x: 0
   y: 8
   alignment: neutral
   behavior: patrol
-- archetype_id: golden_guard
+- archetype: golden_guard
   x: 8
   y: 0
   alignment: neutral
   behavior: patrol
-- archetype_id: golden_guard
+- archetype: golden_guard
   x: -8
   y: 0
   alignment: neutral
   behavior: patrol
-- archetype_id: peasant_male
+- archetype: peasant_male
   name: Mayor Farris
   x: -2
   y: -2
   alignment: neutral
   behavior: wander
-- archetype_id: peasant_female
+- archetype: peasant_female
   x: 2
   y: 2
   alignment: neutral
   behavior: wander
-- archetype_id: peasant_male
+- archetype: peasant_male
   x: -4
   y: 4
   alignment: neutral
   behavior: wander
-- archetype_id: peasant_male
+- archetype: peasant_male
   x: 4
   y: -4
   alignment: neutral
   behavior: wander
-- archetype_id: peasant_male
+- archetype: peasant_male
   x: 1
   y: -5
   alignment: neutral
   behavior: wander
-- archetype_id: peasant_female
+- archetype: peasant_female
   x: -1
   y: 5
   alignment: neutral
   behavior: wander
-- archetype_id: peasant_male
+- archetype: peasant_male
   x: 5
   y: 1
   alignment: neutral
   behavior: wander
-- archetype_id: peasant_female
+- archetype: peasant_female
   x: -5
   y: -1
   alignment: neutral
   behavior: wander
-- archetype_id: peasant_male
+- archetype: peasant_male
   x: 0
   y: -15
   alignment: neutral
   behavior: wander
-- archetype_id: peasant_female
+- archetype: peasant_female
   x: 0
   y: -20
   alignment: neutral
   behavior: wander
-- archetype_id: peasant_male
+- archetype: peasant_male
   x: 0
   y: 15
   alignment: neutral
   behavior: wander
-- archetype_id: peasant_male
+- archetype: peasant_male
   x: 0
   y: 20
   alignment: neutral
   behavior: wander
-- archetype_id: peasant_male
+- archetype: peasant_male
   x: -15
   y: 0
   alignment: neutral
   behavior: wander
-- archetype_id: peasant_female
+- archetype: peasant_female
   x: -20
   y: 0
   alignment: neutral
   behavior: wander
-- archetype_id: peasant_male
+- archetype: peasant_male
   x: 15
   y: 0
   alignment: neutral
   behavior: wander
-- archetype_id: peasant_female
+- archetype: peasant_female
   x: 20
   y: 0
   alignment: neutral
   behavior: wander
 obstacles:
-- archetype_id: well
+- archetype: well_4
   x: 0
   y: 0
-- archetype_id: house_1
+- archetype: chest
+  x: 2
+  y: 3
+- archetype: house_1
   x: -6
   y: -10
-- archetype_id: house_2
+- archetype: house_2
   x: -6
   y: -15
-- archetype_id: house_3
+- archetype: house_3
   x: 6
   y: -10
-- archetype_id: house_1
+- archetype: house_1
   x: 6
   y: -15
-- archetype_id: tavern
+- archetype: tavern
   x: -6
   y: -22
-- archetype_id: smithery
+- archetype: smithery
   x: 6
   y: -22
-- archetype_id: house_2
+- archetype: house_2
   x: -6
   y: 10
-- archetype_id: house_3
+- archetype: house_3
   x: -6
   y: 15
-- archetype_id: house_1
+- archetype: house_1
   x: 6
   y: 10
-- archetype_id: house_2
+- archetype: house_2
   x: 6
   y: 15
-- archetype_id: temple
+- archetype: temple
   x: 0
   y: 20
-- archetype_id: farm
+- archetype: farm
   x: 12
   y: 6
-- archetype_id: house_3
+- archetype: house_3
   x: 15
   y: -4
-- archetype_id: house_1
+- archetype: house_1
   x: -15
   y: 6
-- archetype_id: house_2
+- archetype: house_2
   x: -15
   y: -4
-- archetype_id: tree_6
+- archetype: tree_6
   x: -12
   y: -12
-- archetype_id: tree_5
+- archetype: tree_5
   x: -16
   y: -10
-- archetype_id: tree_6
+- archetype: tree_6
   x: 12
   y: -12
-- archetype_id: tree_5
+- archetype: tree_5
   x: 16
   y: -10
-- archetype_id: tree_6
+- archetype: tree_6
   x: -12
   y: 12
-- archetype_id: tree_5
+- archetype: tree_5
   x: -16
   y: 10
-- archetype_id: tree_6
+- archetype: tree_6
   x: 20
   y: 10
-- archetype_id: bush_1
+- archetype: bush_1
   x: -8
   y: -6
-- archetype_id: bush_2
+- archetype: bush_2
   x: 8
   y: -6
-- archetype_id: bush_3
+- archetype: bush_3
   x: -8
   y: 6
-- archetype_id: bush_4
+- archetype: bush_4
   x: 8
   y: 6
 objects:

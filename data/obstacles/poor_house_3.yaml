@@ -3,7 +3,6 @@ type: building
 destructible: true
 description: "A half-collapsed cabin."
 health: 800
-scale: 1.250
 footprint:
   - x: 0.59
     y: 1.34

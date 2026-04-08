@@ -1,0 +1,102 @@
+id: teenager_male
+name: Teenager
+gender: male
+names:
+- Jofrey
+- Hal
+- Simon
+- Peter
+- Toby
+behavior: wander
+group: Peasants
+state:
+  health_points: 100
+  hunger: 0.0
+  thirst: 0.0
+  fatigue: 0.0
+  sanity: 100.0
+  pain: 0.0
+  arousal: 0.0
+  hygiene: 70.0
+  bladder_level: 0.0
+  bowel_level: 0.0
+  age:
+    current: 15.0
+    rate: 1.0
+    max: 100
+attributes:
+  strength:
+    min: 12
+    max: 18
+    mode: normal
+    mean: 15.0
+    sd: 1.0
+  health:
+    min: 20
+    max: 30
+    mode: normal
+    mean: 25.0
+    sd: 1.67
+  dexterity:
+    min: 30
+    max: 50
+    mode: normal
+    mean: 40.0
+    sd: 3.33
+  intellect:
+    min: 30
+    max: 60
+    mode: normal
+    mean: 45.0
+    sd: 5.0
+  wisdom:
+    min: 20
+    max: 40
+    mode: normal
+    mean: 30.0
+    sd: 3.33
+stats:
+  speed:
+    min: 0.045
+    max: 0.045
+    mode: normal
+    mean: 0.04
+    sd: 0.0
+  health_points:
+    min: 30
+    max: 30
+    mode: normal
+    mean: 30.0
+  max_weight:
+    min: 150
+    max: 150
+    mode: normal
+    mean: 150.0
+    sd: 0.0
+abilities:
+  rest:
+    yield: nourishment * 0.2
+    parent_attribute: health
+  eat:
+    yield: nourishment * 1.0
+    parent_attribute: health
+  drink:
+    yield: nourishment * 1.0
+    parent_attribute: health
+  punch:
+    damage: melee_attack * 0.8
+    parent_attribute: strength
+  slap:
+    damage: melee_attack * 0.6
+    parent_attribute: dexterity
+  forage:
+    yield: survivalism * 0.5
+    parent_attribute: wisdom
+  chop:
+    damage: melee_attack * 0.6
+    yield: survivalism * 0.4
+    parent_attribute: strength
+  dig:
+    damage: melee_attack * 0.6
+    yield: survivalism * 0.4
+    parent_attribute: strength

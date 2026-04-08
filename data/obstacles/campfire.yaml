@@ -1,21 +1,11 @@
-name: "Campfire"
-type: decoration
-destructible: true
-health: 10
-description: "A flickering fire that provides warmth and a small amount of light."
-footprint:
-  - x: 0.5
-    y: 0.5
-  - x: -0.5
-    y: 0.5
-  - x: -0.5
-    y: -0.5
-  - x: 0.5
-    y: -0.5
+id: campfire
+name: Campfire
+description: A crackling fire perfect for cooking and warmth.
+health_points: 100
+collision_radius: 0.5
+sprite: campfire.png
 frame_count: 4
-frames_per_row: 2
-animation_speed: 10
-actions:
-  - type: harm
-    amount: 2
-    aura: 1.5
+animation_speed: 8
+primary_color: "#FF4500"
+light_radius: 5.0
+tags: ["heat", "light"]

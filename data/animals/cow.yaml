@@ -1,0 +1,168 @@
+id: cow
+name: Cow
+behavior: wander
+is_animal: true
+attributes:
+  strength:
+    min: 40
+    max: 40
+    mode: normal
+    mean: 40.0
+    sd: 0.0
+  health:
+    min: 40
+    max: 40
+    mode: normal
+    mean: 40.0
+    sd: 0.0
+  dexterity:
+    min: 40
+    max: 40
+    mode: normal
+    mean: 40.0
+    sd: 0.0
+  intellect:
+    min: 5
+    max: 5
+    mode: normal
+    mean: 5.0
+    sd: 0.0
+  wisdom:
+    min: 10
+    max: 10
+    mode: normal
+    mean: 10.0
+    sd: 0.0
+stats:
+  health_min:
+    min: 80
+    max: 80
+    mode: normal
+    mean: 80.0
+    sd: 0.0
+  health_max:
+    min: 120
+    max: 120
+    mode: normal
+    mean: 120.0
+    sd: 0.0
+  speed:
+    min: 0.02
+    max: 0.02
+    mode: normal
+    mean: 0.02
+    sd: 0.0
+  base_attack:
+    min: 5
+    max: 5
+    mode: normal
+    mean: 5.0
+    sd: 0.0
+  base_defense:
+    min: 2
+    max: 2
+    mode: normal
+    mean: 2.0
+    sd: 0.0
+  attack_cooldown:
+    min: 120
+    max: 120
+    mode: normal
+    mean: 120.0
+    sd: 0.0
+abilities:
+  punch:
+    damage: melee_attack * 1.0
+    parent_attribute: strength
+  slap:
+    damage: melee_attack * 0.4
+    parent_attribute: dexterity
+    effects:
+    - stun_chance: 0.2
+      duration: 1.0
+  kick:
+    damage: melee_attack * 1.3
+    parent_attribute: strength
+    effects:
+    - knockback_distance: 2.0
+  rest:
+    yield: nourishment * 0.25
+    parent_attribute: health
+  eat:
+    yield: nourishment * 1.0
+    parent_attribute: health
+  drink:
+    yield: nourishment * 0.8
+    parent_attribute: health
+  slash:
+    damage: melee_attack * 1.5
+    parent_attribute: dexterity
+    required_weapon: sword
+    effects:
+    - armor_break_percentage: 0.2
+      duration: 3.0
+  heavy_strike:
+    damage: melee_attack * 1.8
+    parent_attribute: strength
+    required_weapon: sword
+    effects:
+    - armor_break_percentage: 0.3
+      duration: 3.0
+  knockout:
+    damage: melee_attack * 0.3
+    parent_attribute: strength
+    effects:
+    - stun_chance: 0.85
+      duration: 10.0
+  grapple:
+    damage: melee_attack * 0.1
+    parent_attribute: strength
+    effects:
+    - immobilise: true
+  shoot_arrow:
+    damage: ranged_attack * 1.2
+    parent_attribute: dexterity
+    required_weapon: bow
+  power_shot:
+    damage: ranged_attack * 1.7
+    parent_attribute: dexterity
+    required_weapon: bow
+    effects:
+    - pierce_targets: 2
+  throw:
+    damage: ranged_attack * 0.8
+    parent_attribute: strength
+  chop:
+    damage: melee_attack * 1.0
+    yield: survivalism * 1.0
+    parent_attribute: strength
+    required_weapon: axe
+  dig:
+    damage: melee_attack * 1.0
+    yield: survivalism * 1.0
+    parent_attribute: strength
+    required_weapon: pike
+  butcher:
+    yield: survivalism * 0.5
+    parent_attribute: strength
+  build:
+    yield: crafting * 1.0
+    parent_attribute: strength
+  haul:
+    yield: strength * 0.01
+    parent_attribute: strength
+  stash:
+    yield: strength * 0.005
+    parent_attribute: strength
+  intimidate:
+    yield: culture * 1.0
+    parent_attribute: strength
+weapon:
+  name: Kick
+  type: melee
+  damage:
+    min: 10
+    max: 30
+  max_distance: touch
+meat: 40
+xp: 15

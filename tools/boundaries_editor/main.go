@@ -27,6 +27,7 @@ func NewViewer(entities []*EditorEntity, g engine.Graphics, input engine.Input, 
 		draggingIdx:   -1,
 		hoverIdx:      -1,
 		addBtnRect:    image.Rect(sidebarWidth+10, 60, sidebarWidth+110, 90),
+		autoBtnRect:   image.Rect(sidebarWidth+120, 60, sidebarWidth+240, 90),
 	}
 }
 
@@ -89,13 +90,19 @@ func (v *Viewer) Update() error {
 
 	if v.input.IsMouseButtonJustPressed(engine.MouseButtonLeft) && mx >= sidebarWidth {
 		if v.input.IsKeyPressed(engine.KeyControl) || v.input.IsKeyPressed(engine.KeyMeta) {
-			cx, cy := engine.IsoToCartesian(float64(mx)-offsetX, float64(my)-offsetY)
-			*ee.Footprint = append(*ee.Footprint, game.FootprintPoint{X: math.Round(cx*100)/100, Y: math.Round(cy*100)/100})
-			v.saveToYAML(ee)
+			if !v.InsertPointOnSegment(ee, mx, my, offsetX, offsetY) {
+				cx, cy := engine.IsoToCartesian(float64(mx)-offsetX, float64(my)-offsetY)
+				*ee.Footprint = append(*ee.Footprint, game.FootprintPoint{X: math.Round(cx*100)/100, Y: math.Round(cy*100)/100})
+				v.saveToYAML(ee)
+			}
 			return nil
 		}
 		if image.Pt(mx, my).In(v.addBtnRect) {
 			v.addPoint(ee)
+			return nil
+		}
+		if image.Pt(mx, my).In(v.autoBtnRect) {
+			v.AutoPerimeter(ee)
 			return nil
 		}
 		if v.hoverIdx != -1 {
@@ -177,44 +184,6 @@ func main() {
 		}
 	}
 
-	// Load Archetypes
-	archReg := game.NewArchetypeRegistry()
-	if err := archReg.LoadAll(localAssets); err == nil {
-		archReg.LoadAssets(localAssets, graphics, nil, nil)
-		for _, id := range archReg.IDs {
-			cfg := archReg.Archetypes[id]
-			npc := game.NewCharacter(0, 0, cfg, 1, false)
-			entities = append(entities, &EditorEntity{
-				ID: id, Type: "Archetype", Image: cfg.StaticImage, Footprint: &cfg.Footprint,
-				YamlPath: findArchetypeYAML(id),
-				DrawMain: func(screen engine.Image, g engine.Graphics, ox, oy float64) {
-					npc.Draw(screen, g, g, nil, ox, oy)
-				},
-			})
-		}
-	}
-
-	// Load Characters
-	charReg := game.NewCharacterRegistry()
-	if err := charReg.LoadAll(localAssets); err == nil {
-		charReg.LoadAssets(localAssets, graphics, archReg, nil, nil)
-		for _, id := range charReg.IDs {
-			cfg := charReg.Characters[id]
-			npc := game.NewCharacter(0, 0, cfg, 1, false)
-			charType := "NPC"
-			if cfg.Playable {
-				charType = "Character"
-			}
-			entities = append(entities, &EditorEntity{
-				ID: id, Type: charType, Image: cfg.StaticImage, Footprint: &cfg.Footprint,
-				YamlPath: filepath.Join("data/characters", id+".yaml"),
-				DrawMain: func(screen engine.Image, g engine.Graphics, ox, oy float64) {
-					npc.Draw(screen, g, g, nil, ox, oy)
-				},
-			})
-		}
-	}
-
 	sort.Slice(entities, func(i, j int) bool {
 		if entities[i].Type != entities[j].Type {
 			return entities[i].Type < entities[j].Type
@@ -226,14 +195,12 @@ func main() {
 	var targetType string
 	flag.StringVar(&targetID, "obstacle", "", "ID of the obstacle to select")
 	flag.StringVar(&targetID, "object", "", "ID of the object to select")
-	flag.StringVar(&targetID, "npc", "", "ID of the NPC to select")
-	flag.StringVar(&targetID, "character", "", "ID of the character to select")
 	flag.Parse()
 
 	if targetID == "" {
 		// Try to find if any other flag was used (for backward compatibility or convenience)
 		flag.Visit(func(f *flag.Flag) {
-			if f.Name == "obstacle" || f.Name == "object" || f.Name == "npc" || f.Name == "character" {
+			if f.Name == "obstacle" || f.Name == "object" {
 				targetID = f.Value.String()
 				targetType = strings.Title(f.Name)
 			}

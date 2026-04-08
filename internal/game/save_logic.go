@@ -65,31 +65,39 @@ func (g *Game) serialize() ([]byte, error) {
 	data.Map.HeightPixels = g.currentMapType.HeightPixels
 	data.Map.Level = g.mapLevel
 	data.Map.PlayTime = g.playTime
+	data.Map.Heightmap = g.currentMapType.Heightmap
 	for pt := range g.ExploredTiles {
 		data.Map.ExploredTiles = append(data.Map.ExploredTiles, pt)
 	}
 
 	data.Player = PlayerSaveData{
-		ArchetypeID: g.playableCharacter.Config.ID,
+		Archetype: g.playableCharacter.Config.ID,
 		X:           g.playableCharacter.X,
 		Y:           g.playableCharacter.Y,
-		Health:      g.playableCharacter.Health,
-		MaxHealth:   g.playableCharacter.MaxHealth,
+		State: g.playableCharacter.State,
 		XP:          g.playableCharacter.XP,
 		Level:       g.playableCharacter.Level,
 		Kills:       g.playableCharacter.Kills,
 		MapKills:    g.playableCharacter.MapKills,
+		
+		PrimaryAttributes: g.playableCharacter.PrimaryAttributes,
+
 		BaseAttack:  g.playableCharacter.BaseAttack,
 		BaseDefense: g.playableCharacter.BaseDefense,
-		Inventory:   []string{},
-		Slots:       make(map[string]string),
+		BaseProtection: g.playableCharacter.BaseProtection,
+		Submission:     g.playableCharacter.Submission,
+		Denarii:     g.playableCharacter.Denarii,
+		Inventory:   []ItemInstanceSaveData{},
+		Slots:       make(map[string]ItemInstanceSaveData),
+		SelectedModel: g.playableCharacter.SelectedModel,
 	}
 	for _, item := range g.playableCharacter.Inventory {
-		data.Player.Inventory = append(data.Player.Inventory, item.ID)
+		if item == nil || item.Config == nil { continue }
+		data.Player.Inventory = append(data.Player.Inventory, ItemInstanceSaveData{ID: item.Config.ID, Resistance: item.Resistance})
 	}
 	for slot, item := range g.playableCharacter.Slots {
-		if item != nil {
-			data.Player.Slots[slot] = item.ID
+		if item != nil && item.Config != nil {
+			data.Player.Slots[slot] = ItemInstanceSaveData{ID: item.Config.ID, Resistance: item.Resistance}
 		}
 	}
 	if g.playableCharacter.Weapon != nil {
@@ -118,8 +126,7 @@ func (g *Game) serialize() ([]byte, error) {
 		npcSave := NPCSaveData{
 			X:           n.X,
 			Y:           n.Y,
-			Health:      n.Health,
-			MaxHealth:   n.MaxHealth,
+			State: n.State,
 			Level:       n.Level,
 			Behavior:    behaviorStr,
 			Name:        n.Name,
@@ -127,24 +134,32 @@ func (g *Game) serialize() ([]byte, error) {
 			Group:       n.Group,
 			LeaderID:    n.LeaderID,
 			MustSurvive: n.MustSurvive,
+
+			PrimaryAttributes: n.PrimaryAttributes,
+
 			BaseAttack:  n.BaseAttack,
 			BaseDefense: n.BaseDefense,
-			Inventory:   []string{},
-			Slots:       make(map[string]string),
+			BaseProtection: n.BaseProtection,
+			Submission:     n.Submission,
+			Denarii:     n.Denarii,
+			SelectedModel: n.SelectedModel,
+			Inventory:   []ItemInstanceSaveData{},
+			Slots:       make(map[string]ItemInstanceSaveData),
 		}
 		for _, item := range n.Inventory {
-			npcSave.Inventory = append(npcSave.Inventory, item.ID)
+			if item == nil || item.Config == nil { continue }
+			npcSave.Inventory = append(npcSave.Inventory, ItemInstanceSaveData{ID: item.Config.ID, Resistance: item.Resistance})
 		}
 		for slot, item := range n.Slots {
-			if item != nil {
-				npcSave.Slots[slot] = item.ID
+			if item != nil && item.Config != nil {
+				npcSave.Slots[slot] = ItemInstanceSaveData{ID: item.Config.ID, Resistance: item.Resistance}
 			}
 		}
 		if n.Config != nil {
 			if n.Config.Unique {
 				npcSave.NPCID = n.Config.ID
 			} else {
-				npcSave.ArchetypeID = n.Config.ID
+				npcSave.Archetype = n.Config.ID
 			}
 		}
 		data.Characters = append(data.Characters, npcSave)
@@ -157,19 +172,21 @@ func (g *Game) serialize() ([]byte, error) {
 		xVal, yVal := o.X, o.Y
 		data.Obstacles = append(data.Obstacles, ObstacleSaveData{
 			ID:            o.ID,
-			ArchetypeID:   o.Archetype.ID,
+			Archetype:   o.Archetype.ID,
 			X:             &xVal,
 			Y:             &yVal,
-			Health:        o.Health,
+			HealthPoints:  o.HealthPoints,
 			CooldownTicks: o.CooldownTicks,
 		})
 	}
 
 	for _, it := range g.World.Items {
+		if it == nil { continue }
 		data.Items = append(data.Items, ItemSaveData{
-			ID: it.ID,
-			X:  it.X,
-			Y:  it.Y,
+			ID:         it.ID,
+			Resistance: it.Resistance,
+			X:          it.X,
+			Y:          it.Y,
 		})
 	}
 

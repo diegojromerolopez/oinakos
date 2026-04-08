@@ -1,0 +1,20 @@
+id: bucket_milk
+name: Bucket of Milk
+description: Fresh frothy milk in a wooden bucket.
+type: food
+nutritional_value: 15
+thirst_quench: 25
+weight_kg: 5.0
+is_consumable: true
+tags: ["milk", "dairy", "food"]
+footprint:
+  - x: -1.16
+    y: -0.59
+  - x: -1.45
+    y: -1.48
+  - x: -0.66
+    y: -1.22
+  - x: 0.19
+    y: -0.31
+  - x: -0.34
+    y: 0.16

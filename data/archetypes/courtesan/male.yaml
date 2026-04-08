@@ -1,0 +1,53 @@
+id: courtesan_male
+name: Courtesan
+description: "A male courtesan, skilled in the arts of pleasure, conversation, and social manipulation. Attractive and dangerous."
+archetype: courtesan
+gender: male
+behavior: wander
+state:
+  health_points: 100
+  hunger: 0.0
+  thirst: 0.0
+  fatigue: 0.0
+  sanity: 100.0
+  pain: 0.0
+  arousal: 0.0
+  hygiene: 95.0
+  bladder_level: 0.0
+  bowel_level: 0.0
+  age:
+    current: 30
+    rate: 1.0
+    max: 100
+attributes:
+  strength: { min: 30, max: 50 }
+  dexterity: { min: 60, max: 80 }
+  health: { min: 40, max: 60 }
+  intellect: { min: 70, max: 90 }
+  wisdom: { min: 50, max: 70 }
+stats:
+  health_points: { min: 60, max: 80 }
+  speed: { min: 0.022, max: 0.026 }
+  attack_cooldown: { min: 50, max: 60 }
+skills:
+  art: { min: 80, max: 95 }
+  social: { min: 85, max: 100 }
+abilities:
+  seduce:
+    yield: "art * 1.5"
+    parent_attribute: "art"
+  stiletto_strike:
+    damage: "melee_attack * 1.5"
+    parent_attribute: "dexterity"
+weapon:
+  inline:
+    name: Stiletto
+    damage_min: 5
+    damage_max: 9
+    range: 0.8
+    resistance: 50
+    slot: weapon
+xp: 50
+primary_color: "#E91E63"
+secondary_color: "#FCE4EC"
+# Models are loaded from assets/images/archetypes/courtesan/male/models/

@@ -3,30 +3,29 @@ type: building
 destructible: true
 description: "A luxurious and well-defended residence."
 health: 8000
-scale: 1.250
 footprint:
   - x: 3.17
     y: -3.36
   - x: 2.92
     y: -4.42
-  - x: -6.03
-    y: -5.66
-  - x: -4.44
-    y: 2.94
-  - x: 0.72
-    y: 2.84
+  - x: -4.38
+    y: -4.88
+  - x: -3.7
+    y: 2.33
+  - x: 0.64
+    y: 2.36
   - x: 0.58
     y: 0.8
   - x: 0.89
     y: 0.61
-  - x: 2.83
-    y: 0.3
-  - x: 3.13
-    y: -0.44
-  - x: 3.23
-    y: -0.92
-  - x: 2.59
-    y: -1.59
+  - x: 2.39
+    y: 0.55
+  - x: 2.5
+    y: -0.81
+  - x: 2.31
+    y: -1.25
+  - x: 2.39
+    y: -2.14
   - x: 2.7
     y: -2.95
   - x: 3.05

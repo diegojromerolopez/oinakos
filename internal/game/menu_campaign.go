@@ -92,14 +92,22 @@ func (mh *MenuHandler) updateCampaignSelect() error {
 			g.isCampaign = true
 			g.campaignIndex = 0
 			g.isCampaignSelect = false
-			go g.worldManager.LoadMapLevel()
+			if InTestMode {
+				g.worldManager.LoadMapLevel()
+			} else {
+				go g.worldManager.LoadMapLevel()
+			}
 		} else if g.campaignMenuIndex < nC+nM {
 			mapID := g.mapTypeRegistry.IDs[g.campaignMenuIndex-nC]
 			g.currentMapType = *g.mapTypeRegistry.Types[mapID]
 			g.isCampaign = false
 			g.isCampaignSelect = false
 			g.initialMapID = mapID
-			go g.worldManager.LoadMapLevel()
+			if InTestMode {
+				g.worldManager.LoadMapLevel()
+			} else {
+				go g.worldManager.LoadMapLevel()
+			}
 		} else {
 			g.CloseWindow()
 		}

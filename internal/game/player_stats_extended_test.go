@@ -4,11 +4,11 @@ import "testing"
 
 // TestPlayerAddXP_LevelUp verifies that gaining enough XP increases the player's level and heals them.
 func TestPlayerAddXP_LevelUp(t *testing.T) {
-	mc := NewCharacter(0, 0, nil, 1, true)
+	mc := NewCharacter(0, 0, nil, 1, true, nil)
 	mc.XP = 90
 	mc.Level = 1
-	mc.MaxHealth = 100
-	mc.Health = 20 // Wounded
+	mc.State.MaxHealthPoints = 100
+	mc.State.HealthPoints = 20 // Wounded
 
 	// Gaining 10 XP → Total 100. Level = 100/100 + 1 = 2
 	mc.AddXP(10)
@@ -16,14 +16,14 @@ func TestPlayerAddXP_LevelUp(t *testing.T) {
 	if mc.Level != 2 {
 		t.Errorf("Expected Level 2, got %d", mc.Level)
 	}
-	if mc.Health != 100 {
-		t.Errorf("Expected full health on level up, got %d", mc.Health)
+	if mc.State.HealthPoints != 100 {
+		t.Errorf("Expected full health on level up, got %d", mc.State.HealthPoints)
 	}
 }
 
 // TestPlayerAddXP_MultipleLevels verifies gaining a large amount of XP at once works correctly.
 func TestPlayerAddXP_MultipleLevels(t *testing.T) {
-	mc := NewCharacter(0, 0, nil, 1, true)
+	mc := NewCharacter(0, 0, nil, 1, true, nil)
 	mc.XP = 0
 	mc.Level = 1
 
@@ -40,12 +40,12 @@ func TestPlayerAddXP_MultipleLevels(t *testing.T) {
 
 // TestPlayerStats_Reset verifies that NewCharacter sets sensible defaults.
 func TestPlayerStats_Defaults(t *testing.T) {
-	mc := NewCharacter(0, 0, nil, 1, true)
-	if mc.MaxHealth <= 0 {
-		t.Errorf("Expected positive MaxHealth, got %d", mc.MaxHealth)
+	mc := NewCharacter(0, 0, nil, 1, true, nil)
+	if mc.State.MaxHealthPoints <= 0 {
+		t.Errorf("Expected positive MaxHealth, got %d", mc.State.MaxHealthPoints)
 	}
-	if mc.Health != mc.MaxHealth {
-		t.Errorf("Expected full health at start, got %d/%d", mc.Health, mc.MaxHealth)
+	if mc.State.HealthPoints != mc.State.MaxHealthPoints {
+		t.Errorf("Expected full health at start, got %d/%d", mc.State.HealthPoints, mc.State.MaxHealthPoints)
 	}
 	if mc.Level != 1 {
 		t.Errorf("Expected start level 1, got %d", mc.Level)

@@ -3,23 +3,20 @@ description: "A dark throne embedded in a jagged rock, with the remains of an an
 health: 0
 type: static
 destructible: false
-scale: 1.250
 footprint:
-  - x: -4.0
-    y: -10.56
-  - x: 1.13
-    y: -6.94
-  - x: 1.5
-    y: 1.5
-  - x: -6.63
-    y: 0.94
-  - x: -8.92
-    y: -2.39
-  - x: -9.83
-    y: -4.42
-  - x: -10.41
-    y: -6.47
-  - x: -8.09
-    y: -8.53
-  - x: -7.63
-    y: -8.94
+  - x: -1.72
+    y: -6.98
+  - x: 0.81
+    y: -5.38
+  - x: 1.06
+    y: -1.63
+  - x: 0.09
+    y: 1.09
+  - x: -3.66
+    y: 1.03
+  - x: -6.91
+    y: -1.41
+  - x: -7.33
+    y: -3.18
+  - x: -8.6
+    y: -5.98

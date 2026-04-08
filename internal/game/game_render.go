@@ -1,13 +1,16 @@
 package game
 
 import (
+	"fmt"
 	"image/color"
 	"io/fs"
 	"log"
+	"math"
 	"path"
 	"time"
 	"runtime"
 	"sort"
+	"strings"
 
 	"oinakos/internal/engine"
 	"sync/atomic"
@@ -67,7 +70,7 @@ func (gr *GameRenderer) LoadAssets(assets fs.FS) {
 			obstacleFilter[o.Archetype.ID] = true
 		}
 	}
-	total += g.obstacleRegistry.CountAssets(obstacleFilter)
+	total += g.obstacleRegistry.CountAssets(assets, obstacleFilter)
 	// Filtered NPCs
 	npcFilter := make(map[string]bool)
 	if g.World != nil {
@@ -174,6 +177,8 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 		gr.drawAboutScreen(screen)
 	} else if g.isSettingsScreen {
 		gr.drawSettingsScreen(screen)
+	} else if g.isKeymapScreen {
+		gr.drawKeymapScreen(screen)
 	} else {
 		if g.currentMapType.FloorTile != "" && g.currentMapType.FloorTile != gr.lastFloorPath {
 			gr.coordCache = make(map[string]string)
@@ -182,6 +187,8 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 
 		gr.renderer.DrawTileMap(screen, offsetX, offsetY, func(x, y int) engine.Image {
 			return gr.getTileAt(x, y)
+		}, func(x, y int) float64 {
+			return g.currentMapType.GetElevationAt(float64(x), float64(y))
 		})
 
 		// 1. Dedicated Object Pass (Floor Items)
@@ -192,7 +199,7 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 				}
 				if g.debug {
 					// Draw green silhouette
-					isoX, isoY := engine.CartesianToIso(it.X, it.Y)
+					isoX, isoY := engine.CartesianToIsoZ(it.X, it.Y, it.Z)
 					if it.Config != nil && it.Config.Sprite != nil {
 						w, h := it.Config.Sprite.Size()
 						op := engine.NewDrawImageOptions()
@@ -223,7 +230,7 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 			}
 			sw, sh := img.Size()
 
-			isoX, isoY := engine.CartesianToIso(o.X, o.Y)
+			isoX, isoY := engine.CartesianToIsoZ(o.X, o.Y, o.Z)
 			drawX := isoX + offsetX
 			drawY := isoY + offsetY
 
@@ -245,7 +252,7 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 		}
 
 		for _, n := range g.characters {
-			isoX, isoY := engine.CartesianToIso(n.X, n.Y)
+			isoX, isoY := engine.CartesianToIsoZ(n.X, n.Y, n.Z)
 			drawX := isoX + offsetX
 			drawY := isoY + offsetY
 			if drawX < -256 || drawX > float64(g.width)+256 || drawY < -256 || drawY > float64(g.height)+256 {
@@ -257,7 +264,7 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 			tasks = append(tasks, drawTask{
 				y: sortY,
 				draw: func() {
-					DrawActor(&npc.Actor, screen, gr.graphics, gr.graphics, gr.PaletteShader, offsetX, offsetY, npc.IsPlayerControlled)
+					DrawActor(&npc.Actor, screen, gr.graphics, gr.graphics, gr.PaletteShader, offsetX, offsetY, npc.IsPlayerControlled, g.settings.AdultMode)
 				},
 			})
 		}
@@ -266,7 +273,7 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 		tasks = append(tasks, drawTask{
 			y: mcSortY,
 			draw: func() {
-				DrawActor(&g.playableCharacter.Actor, screen, gr.graphics, gr.graphics, gr.PaletteShader, offsetX, offsetY, true)
+				DrawActor(&g.playableCharacter.Actor, screen, gr.graphics, gr.graphics, gr.PaletteShader, offsetX, offsetY, true, g.settings.AdultMode)
 			},
 		})
 
@@ -288,9 +295,12 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 			t.draw()
 		}
 
+		// Light zones pass
+		gr.drawLightZones(screen, offsetX, offsetY)
+
 		// UI Pass: Draw character and NPC UI on top (always visible)
 		for _, n := range g.characters {
-			isoX, isoY := engine.CartesianToIso(n.X, n.Y)
+			isoX, isoY := engine.CartesianToIsoZ(n.X, n.Y, n.Z)
 			drawX := isoX + offsetX
 			drawY := isoY + offsetY
 			if drawX < -256 || drawX > float64(g.width)+256 || drawY < -256 || drawY > float64(g.height)+256 {
@@ -299,6 +309,61 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 			DrawActorUI(g, &n.Actor, screen, gr.graphics, gr.graphics, offsetX, offsetY, n.IsPlayerControlled, g.debug)
 		}
 		DrawActorUI(g, &g.playableCharacter.Actor, screen, gr.graphics, gr.graphics, offsetX, offsetY, true, g.debug)
+
+		// Forestry UI Pass: Draw healthbars and tooltips over trees
+		mouseX, mouseY := g.input.MousePosition()
+		mx, my := float64(mouseX), float64(mouseY)
+
+		tr, hasText := gr.graphics.(engine.TextRenderer)
+		vr, hasVec := gr.graphics.(engine.VectorRenderer)
+
+		for _, obj := range g.obstacles {
+			if !obj.Alive || obj.Archetype == nil {
+				continue
+			}
+			if strings.Contains(strings.ToLower(string(obj.Archetype.Type)), "tree") {
+				if obj.MaxHealthPoints <= 0 {
+					continue // Ignore things without health limits
+				}
+
+				isoX, isoY := obj.GetIsoPos()
+				drawX := isoX + offsetX
+				drawY := isoY + offsetY
+
+				// Check screen boundaries
+				if drawX < -256 || drawX > float64(g.width)+256 || drawY < -256 || drawY > float64(g.height)+256 {
+					continue
+				}
+
+				// Simple Bounding box hover for tall trees
+				isHovered := mx >= drawX-40 && mx <= drawX+40 && my >= drawY-140 && my <= drawY
+
+				if obj.HealthPoints < obj.MaxHealthPoints || isHovered {
+					barW := 40.0
+					barH := 4.0
+					barX := drawX - barW/2
+					barY := drawY - 140.0
+
+					healthRatio := float64(obj.HealthPoints) / float64(obj.MaxHealthPoints)
+					if healthRatio < 0 {
+						healthRatio = 0
+					}
+
+					if hasVec {
+						// Healthbar BG (Dark Red)
+						vr.DrawFilledRect(screen, float32(barX), float32(barY), float32(barW), float32(barH), color.RGBA{150, 0, 0, 255}, false)
+						// Healthbar FG (Bright Green)
+						vr.DrawFilledRect(screen, float32(barX), float32(barY), float32(barW*healthRatio), float32(barH), color.RGBA{0, 255, 0, 255}, false)
+					}
+
+					// Text
+					if isHovered && hasText {
+						textStr := fmt.Sprintf("Timber: %d/%d", obj.HealthPoints, obj.MaxHealthPoints)
+						tr.DrawTextAt(screen, textStr, int(barX-10), int(barY-5), color.RGBA{255, 255, 255, 255}, 12.0)
+					}
+				}
+			}
+		}
 
 		if g.debug || g.showBoundaries {
 			gr.drawDebug(screen, offsetX, offsetY)
@@ -318,8 +383,12 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 			gr.drawPauseMenu(screen)
 		} else if g.isInventoryOpen {
 			gr.drawInventoryScreen(screen)
+		} else if g.isTradeOpen {
+			gr.drawTradeScreen(screen)
 		} else {
 			gr.drawFog(screen)
+			gr.drawTimeOverlay(screen)
+			gr.drawLightZones(screen, offsetX, offsetY) // Light cuts through darkness
 			gr.drawWeather(screen)
 			gr.drawHUD(screen)
 			gr.drawDialogueBox(screen)
@@ -350,12 +419,12 @@ func (gr *GameRenderer) Draw(screen engine.Image) {
 
 func (gr *GameRenderer) drawWeather(screen engine.Image) {
 	g := gr.game
-	if g.CurrentWeather == WeatherClear {
+	if g.World == nil || g.World.State.Weather == WeatherClear {
 		return
 	}
 
 	// 1. World Overlay (Tint)
-	if g.CurrentWeather == WeatherRain || g.CurrentWeather == WeatherStorm {
+	if g.World.State.Weather == WeatherRain || g.World.State.Weather == WeatherStorm {
 		// Slight grey/blue tint
 		gr.emptyImage.Fill(color.NRGBA{50, 50, 80, 40}) // Semi-transparent tint
 		op := engine.NewDrawImageOptions()
@@ -364,7 +433,7 @@ func (gr *GameRenderer) drawWeather(screen engine.Image) {
 	}
 
 	// 2. Lightning Flash
-	if g.CurrentWeather == WeatherStorm && g.Tick%600 < 5 {
+	if g.World.State.Weather == WeatherStorm && g.Tick%600 < 5 {
 		// Flash for 5 frames every 10 seconds approx
 		alpha := uint8(100 - (g.Tick%600)*20)
 		gr.emptyImage.Fill(color.NRGBA{255, 255, 255, alpha})
@@ -391,4 +460,22 @@ func (gr *GameRenderer) drawWeather(screen engine.Image) {
 		}
 		screen.DrawImage(gr.emptyImage, op)
 	}
+}
+
+func (gr *GameRenderer) drawTimeOverlay(screen engine.Image) {
+	g := gr.game
+	if g.World == nil { return }
+	hour := g.World.State.Hour
+	
+	// Light Level (0.0 to 0.7 max darkness)
+	// Darkest at 00:00, Brightest at 12:00
+	// 0.35 * (1 + cos(H * pi / 12)) => 0 at noon, 0.7 at midnight
+	lightLevel := 0.35 * (1.0 + math.Cos(float64(hour)*math.Pi/12.0))
+	alpha := uint8(lightLevel * 255)
+	
+	// Color of overlay: Deep blue/purple for night
+	gr.emptyImage.Fill(color.NRGBA{10, 10, 40, alpha})
+	op := engine.NewDrawImageOptions()
+	op.Scale(float64(g.width)/3, float64(g.height)/3)
+	screen.DrawImage(gr.emptyImage, op)
 }

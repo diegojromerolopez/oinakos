@@ -1,0 +1,25 @@
+id: bandage
+name: Clean Bandage
+description: Clean strips of linen used to stop bleeding and protect wounds.
+type: medical
+max_stack: 20
+weight: 0.1
+heal_amount: 5
+stop_bleeding: true
+---
+id: ointment
+name: Herbal Ointment
+description: A soothing paste made from crushed herbs and oil. Speeds up skin recovery.
+type: medical
+max_stack: 10
+weight: 0.2
+heal_amount: 15
+---
+id: surgical_kit
+name: Surgical Kit
+description: A roll of primitive steel tools. Essential for resetting bones and removing projectiles.
+type: tool
+max_stack: 1
+weight: 2.0
+durability: 10
+medical_power: 50

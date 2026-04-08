@@ -1,0 +1,40 @@
+id: cooked_meat_2
+name: Cooked Ribs
+type: consumable
+max_hours: 48
+description: A rack of cooked pork ribs, glazed and glistening.
+weight: 1.8
+effects:
+  energy:
+    increase: 25.0
+  health:
+    increase: 15.0
+  max_health:
+    increase: 0.0
+footprint:
+  - x: -1.34
+    y: -1.41
+  - x: -1.08
+    y: -1.3
+  - x: -0.92
+    y: -1.27
+  - x: -0.7
+    y: -1.3
+  - x: -0.41
+    y: -0.97
+  - x: -0.27
+    y: -0.67
+  - x: -0.23
+    y: -0.33
+  - x: -0.25
+    y: -0.06
+  - x: -0.58
+    y: -0.17
+  - x: -0.83
+    y: -0.23
+  - x: -1.14
+    y: -0.55
+  - x: -1.27
+    y: -0.86
+  - x: -1.36
+    y: -1.27

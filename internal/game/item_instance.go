@@ -5,19 +5,49 @@ import (
 )
 
 type ItemInstance struct {
-	ID       string
-	Config   *ObjectConfig
-	X, Y     float64
-	Pickable bool
+	ID         string
+	Config     *ObjectConfig
+	Resistance int
+	Weight     float64 `json:"weight"`
+	HoursLeft  float64 `json:"hours_left"` // Runtime hours until expiration
+	LiquidContent float64 `json:"liquid_content"` // Volume of liquid stored (Leters)
+	LiquidMax     float64 `json:"liquid_max"`     // Maximum volume (Leters)
+	Refillable    bool    `json:"refillable"`     // Can be refilled at water sources
+	DroppedBy  string  `json:"dropped_by,omitempty"`
+	TargetID   string  `json:"target_id,omitempty"`
+	X, Y, Z    float64
+	Pickable   bool
 }
 
 func NewItemInstance(id string, config *ObjectConfig, x, y float64) *ItemInstance {
+	res := 0
+	weight := 0.0
+	hours := 0.0
+	liquidMax := 0.0
+	refillable := false
+	if config != nil {
+		res = config.Resistance
+		weight = config.Weight
+		hours = config.MaxHours
+		if config.IsTorch {
+			hours = 0 // Starts unlit
+		}
+		liquidMax = config.MaxLiquid
+		refillable = config.Refillable
+	}
 	return &ItemInstance{
-		ID:       id,
-		Config:   config,
-		X:        x,
-		Y:        y,
-		Pickable: true,
+		ID:         id,
+		Config:     config,
+		Resistance: res,
+		Weight:     weight,
+		HoursLeft:  hours,
+		LiquidMax:  liquidMax,
+		LiquidContent: liquidMax, // Default to full
+		Refillable: refillable,
+		X:          x,
+		Y:          y,
+		Z:          0,
+		Pickable:   true,
 	}
 }
 
@@ -25,7 +55,7 @@ func (it *ItemInstance) Draw(screen engine.Image, offsetX, offsetY float64) {
 	if it.Config == nil || it.Config.Sprite == nil {
 		return
 	}
-	isoX, isoY := engine.CartesianToIso(it.X, it.Y)
+	isoX, isoY := engine.CartesianToIsoZ(it.X, it.Y, it.Z)
 	
 	w, h := it.Config.Sprite.Size()
 	op := engine.NewDrawImageOptions()
@@ -51,4 +81,17 @@ func (it *ItemInstance) GetFootprint() engine.Polygon {
 		}}
 	}
 	return poly.Transformed(it.X, it.Y)
+}
+
+func (it *ItemInstance) Update(ctx *SystemContext) {
+	if it.Config == nil || it.Config.MaxHours <= 0 {
+		return
+	}
+
+	// 1 Hour = 720 ticks (DayCycle threshold in game_loop.go)
+	// it.HoursLeft -= 1.0 / 720.0
+	it.HoursLeft -= (1.0 / 720.0)
+	if it.HoursLeft < 0 {
+		it.HoursLeft = 0
+	}
 }

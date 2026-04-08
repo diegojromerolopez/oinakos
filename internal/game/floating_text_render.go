@@ -10,7 +10,7 @@ func (ft *FloatingText) Draw(screen engine.Image, textRenderer engine.TextRender
 		return
 	}
 	// Convert to Iso
-	isoX, isoY := engine.CartesianToIso(ft.X, ft.Y)
+	isoX, isoY := engine.CartesianToIsoZ(ft.X, ft.Y, ft.Z)
 
 	// Fade out based on life
 	alpha := uint8(255)

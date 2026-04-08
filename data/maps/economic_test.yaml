@@ -1,0 +1,13 @@
+id: economic_test
+name: "Venburgo Frontier (5-Year Rich Simulation)"
+type: survive
+description: "A high-fidelity survival map for multi-year social and economic simulation."
+player:
+  x: 5.0
+  y: 5.0
+  behavior: hunter
+  denarii: 500
+obstacles:
+  - id: well_01
+    x: 6.0
+    y: 5.0

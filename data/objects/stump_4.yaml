@@ -1,0 +1,17 @@
+id: stump_4
+name: Wood Stump
+description: A heavy wooden tree stump.
+weight: 5.0
+type: material
+value: 1
+footprint:
+  - x: -0.95
+    y: -2.3
+  - x: 0.42
+    y: -1.73
+  - x: -1.23
+    y: 0.48
+  - x: -1.89
+    y: 0.02
+  - x: -2.34
+    y: -0.91

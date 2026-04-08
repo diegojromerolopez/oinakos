@@ -9,7 +9,7 @@ func (p *Projectile) Draw(screen engine.Image, vectorRenderer engine.VectorRende
 	if screen == nil || !p.Alive {
 		return
 	}
-	isoX, isoY := engine.CartesianToIso(p.X, p.Y)
+	isoX, isoY := engine.CartesianToIsoZ(p.X, p.Y, p.Z)
 
 	// Since we don't have a global asset manager for projectiles yet,
 	// we'll use procedural drawing or a placeholder for now.
@@ -24,4 +24,3 @@ func (p *Projectile) Draw(screen engine.Image, vectorRenderer engine.VectorRende
 	}
 }
 
-var isTestingEnvironment = false

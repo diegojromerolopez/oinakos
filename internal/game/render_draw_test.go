@@ -8,7 +8,7 @@ import (
 )
 
 func TestMainCharacterDraw(t *testing.T) {
-	mc := NewCharacter(0, 0, nil, 1, true)
+	mc := NewCharacter(0, 0, nil, 1, true, nil)
 	graphics := &engine.MockGraphics{}
 	screen := graphics.NewImage(100, 100)
 
@@ -21,18 +21,18 @@ func TestMainCharacterDraw(t *testing.T) {
 	// Test drawing in various states
 	states := []ActorState{ActorIdle, ActorWalking, ActorAttacking, ActorDead}
 	for _, s := range states {
-		mc.State = s
+		mc.ActionState = s
 		mc.Facing = DirSE // Trigger flip
 		mc.Tick = 10
-		mc.Draw(screen, graphics, graphics, nil, 0, 0)
+		mc.Draw(screen, graphics, graphics, nil, 0, 0, true)
 
 		mc.Facing = DirNW // No flip
-		mc.Draw(screen, graphics, graphics, nil, 0, 0)
+		mc.Draw(screen, graphics, graphics, nil, 0, 0, true)
 	}
 }
 
 func TestNPCDraw(t *testing.T) {
-	n := NewCharacter(0, 0, nil, 1, true)
+	n := NewCharacter(0, 0, nil, 1, true, nil)
 	graphics := &engine.MockGraphics{}
 	screen := graphics.NewImage(100, 100)
 	sprite := graphics.NewImage(32, 32)
@@ -45,12 +45,12 @@ func TestNPCDraw(t *testing.T) {
 
 	states := []ActorState{ActorIdle, ActorWalking, ActorAttacking, ActorDead}
 	for _, s := range states {
-		n.State = s
+		n.ActionState = s
 		n.Facing = DirSE
-		n.Draw(screen, graphics, graphics, nil, 0, 0)
+		n.Draw(screen, graphics, graphics, nil, 0, 0, true)
 
 		n.Facing = DirNW
-		n.Draw(screen, graphics, graphics, nil, 0, 0)
+		n.Draw(screen, graphics, graphics, nil, 0, 0, true)
 	}
 }
 

@@ -55,7 +55,7 @@ height_px: 1000
 	}
 
 	// 5. Test Entity Cleanup (Corpses should be retained, others cleaned up)
-	g.characters = []*Character{{Actor: Actor{State: ActorDead}}}
+	g.characters = []*Character{{Actor: Actor{ActionState: ActorDead}}}
 	g.projectiles = []*Projectile{{Alive: false}}
 	g.floatingTexts = []*FloatingText{{Life: 0}}
 
@@ -70,20 +70,21 @@ height_px: 1000
 
 func TestPlayableCharacterUpdate_Detailed(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewCharacter(0, 0, nil, 1, true)
+	mc := NewCharacter(0, 0, nil, 1, true, nil)
 	mc.Weapon = WeaponTizon
 	ctx.World.PlayableCharacter = mc
 
 	// Test drinking state
-	mc.State = ActorDrinking
+	mc.ActionState = ActorDrinking
 	mc.Tick = 0
+	mc.State.Thirst = 50.0 // Ensure it doesn't immediately finish
 	mc.Update(ctx)
-	if mc.State != ActorDrinking {
+	if mc.ActionState != ActorDrinking {
 		t.Error("Should stay in drinking state")
 	}
 	mc.Tick = 60
 	mc.Update(ctx)
-	if mc.State != ActorIdle {
+	if mc.ActionState != ActorIdle {
 		t.Error("Should transition to idle after drinking")
 	}
 }
@@ -151,12 +152,12 @@ height_px: 1000
 
 func TestNPCUpdate_Detailed(t *testing.T) {
 	ctx := NewTestContext()
-	n := NewCharacter(0, 0, nil, 1, false)
-	n.Health = 100
+	n := NewCharacter(0, 0, nil, 1, false, nil)
+	n.State.HealthPoints = 100
 	n.Weapon = WeaponTizon
 	n.Speed = 1.0 // Manually set speed since Archetype is nil
-	mc := NewCharacter(10, 10, nil, 1, true)
-	mc.Health = 100
+	mc := NewCharacter(10, 10, nil, 1, true, nil)
+	mc.State.HealthPoints = 100
 	ctx.World.PlayableCharacter = mc
 	ctx.World.Characters = []*Character{n}
 
@@ -169,7 +170,7 @@ func TestNPCUpdate_Detailed(t *testing.T) {
 	}
 
 	// Test fighter behavior with other NPCs
-	otherNpc := NewCharacter(5, 5, nil, 1, false)
+	otherNpc := NewCharacter(5, 5, nil, 1, false, nil)
 	otherNpc.Alignment = AlignmentAlly // Different alignment from n (Enemy)
 	ctx.World.Characters = []*Character{otherNpc, n}        // allNPCs includes self
 	n.Behavior = BehaviorNpcFighter
@@ -187,13 +188,13 @@ func TestNPCUpdate_Detailed(t *testing.T) {
 	n.TargetActor = &otherNpc.Actor // Ensure it still targets otherNpc
 	n.AttackTimer = 0
 	n.Update(ctx)
-	if n.State != ActorAttacking {
-		t.Errorf("NPC should be attacking, got state %v", n.State)
+	if n.ActionState != ActorAttacking {
+		t.Errorf("NPC should be attacking, got state %v", n.ActionState)
 	}
 }
 
 func TestCollisionDetailed(t *testing.T) {
-	mc := NewCharacter(0, 0, nil, 1, true)
+	mc := NewCharacter(0, 0, nil, 1, true, nil)
 	obs := []*Obstacle{NewObstacle("test_obs_1", 1, 0, &ObstacleArchetype{ID: "test", Footprint: []FootprintPoint{{-1, -1}, {1, -1}, {1, 1}, {-1, 1}}})}
 
 	// Test collision detection
@@ -205,7 +206,7 @@ func TestCollisionDetailed(t *testing.T) {
 func TestNoSlidingMovement(t *testing.T) {
 	ctx := NewTestContext()
 	// Place character at 0,0
-	mc := NewCharacter(0, 0, nil, 1, true)
+	mc := NewCharacter(0, 0, nil, 1, true, nil)
 	mc.Speed = 1.0
 	ctx.World.PlayableCharacter = mc
 
@@ -234,8 +235,8 @@ func TestNoSlidingMovement(t *testing.T) {
 		t.Errorf("Character should have stopped at (%f, %f), but moved to (%f, %f)", oldX, oldY, mc.X, mc.Y)
 	}
 
-	if mc.State != ActorIdle {
-		t.Errorf("Character should be ActorIdle on collision, got %v", mc.State)
+	if mc.ActionState != ActorIdle {
+		t.Errorf("Character should be ActorIdle on collision, got %v", mc.ActionState)
 	}
 	
 	if mc.Tick != 0 {
@@ -245,17 +246,17 @@ func TestNoSlidingMovement(t *testing.T) {
 
 func TestNPCHitBranch_Detailed(t *testing.T) {
 	ctx := NewTestContext()
-	n := NewCharacter(0, 0, nil, 1, false)
-	n.Health = 100
+	n := NewCharacter(0, 0, nil, 1, false, nil)
+	n.State.HealthPoints = 100
 	n.Weapon = WeaponTizon
-	mc := NewCharacter(1, 0, nil, 1, true)
-	mc.Health = 100
+	mc := NewCharacter(1, 0, nil, 1, true, nil)
+	mc.State.HealthPoints = 100
 	ctx.World.PlayableCharacter = mc
 	ctx.World.Characters = []*Character{n}
 
 	// Force a hit
 	n.AttackTimer = 0
-	n.State = ActorIdle
+	n.ActionState = ActorIdle
 	n.BaseAttack = 1000
 	mc.BaseDefense = 0
 
@@ -264,21 +265,21 @@ func TestNPCHitBranch_Detailed(t *testing.T) {
 
 func TestPlayableCharacterTakeDamageDetailed(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewCharacter(0, 0, nil, 1, true)
-	mc.Health = 100
-	mc.MaxHealth = 100
+	mc := NewCharacter(0, 0, nil, 1, true, nil)
+	mc.State.HealthPoints = 100
+	mc.State.MaxHealthPoints = 100
 	mc.TakeDamage(150, nil, ctx)
-	if mc.Health != -10 || mc.State != ActorDead {
-		t.Errorf("Should be dead, health=%d, state=%v", mc.Health, mc.State)
+	if mc.State.HealthPoints != -10 || mc.ActionState != ActorDead {
+		t.Errorf("Should be dead, health=%d, state=%v", mc.State.HealthPoints, mc.ActionState)
 	}
 
 	// Take damage while dead
 	mc.TakeDamage(10, nil, ctx)
-	if mc.Health != -10 { // Health should stay at the dead threshold
-		t.Errorf("Health should stay at -10 (dead threshold), got %d", mc.Health)
+	if mc.State.HealthPoints != -10 { // Health should stay at the dead threshold
+		t.Errorf("Health should stay at -10 (dead threshold), got %d", mc.State.HealthPoints)
 	}
-	if mc.State != ActorDead {
-		t.Errorf("State should remain ActorDead, got %v", mc.State)
+	if mc.ActionState != ActorDead {
+		t.Errorf("State should remain ActorDead, got %v", mc.ActionState)
 	}
 }
 
@@ -296,14 +297,14 @@ func TestObstacleUpdate_Detailed(t *testing.T) {
 func TestProjectileUpdate_Detailed(t *testing.T) {
 	ctx := NewTestContext()
 	p := NewProjectile(0, 0, 1, 0, 1.0, 10, true, 100.0)
-	mc := NewCharacter(0, 0, nil, 1, true)
+	mc := NewCharacter(0, 0, nil, 1, true, nil)
 	ctx.World.PlayableCharacter = mc
 
 	// Update until it hits nothing or expires
 	p.Update(ctx)
 
 	// Update with entities
-	targetMc := NewCharacter(2, 0, nil, 1, true)
+	targetMc := NewCharacter(2, 0, nil, 1, true, nil)
 	ctx.World.PlayableCharacter = targetMc
 	obstacles := []*Obstacle{NewObstacle("test_obs_3", 5, 0, &ObstacleArchetype{ID: "test", Footprint: []FootprintPoint{{-0.5, -0.5}, {0.5, -0.5}, {0.5, 0.5}, {-0.5, 0.5}}})}
 	ctx.World.Obstacles = obstacles
@@ -354,7 +355,7 @@ spawn_frequency: 0
 	g.isCharacterSelect = false
 
 	// Spawn a boss (VIP)
-	boss := NewCharacter(5, 5, nil, 10, false)
+	boss := NewCharacter(5, 5, nil, 10, false, nil)
 	g.characters = []*Character{boss}
 
 	if err := g.Update(); err != nil {
@@ -365,7 +366,7 @@ spawn_frequency: 0
 	}
 
 	// Kill the boss
-	boss.State = ActorDead
+	boss.ActionState = ActorDead
 	if err := g.Update(); err != nil {
 		t.Fatal(err)
 	}
@@ -391,19 +392,13 @@ difficulty: 1
 
 	npc := NewCharacter(0, 0, &EntityConfig{
 		ID: "test_npc",
-		Stats: struct {
-			HealthMin       int     `yaml:"health_min"`
-			HealthMax       int     `yaml:"health_max"`
-			Speed           float64 `yaml:"speed"`
-			BaseAttack      int     `yaml:"base_attack"`
-			BaseDefense     int     `yaml:"base_defense"`
-			AttackCooldown  int     `yaml:"attack_cooldown"`
-			AttackRange     float64 `yaml:"attack_range"`
-			ProjectileSpeed float64 `yaml:"projectile_speed"`
-		}{HealthMin: 5, HealthMax: 5, BaseDefense: 0},
-	}, 1, false)
+		Stats: EntityStatsConfig{
+			HealthPoints: IntInterval{Min: 5, Max: 5},
+			BaseDefense: IntInterval{Min: 0, Max: 0},
+		},
+	}, 1, false, nil)
 
-	npc.Health = 5
+	npc.State.HealthPoints = 5
 	g.characters = []*Character{npc}
 
 	// Deal fatal damage
@@ -413,7 +408,7 @@ difficulty: 1
 	}
 	npc.TakeDamage(100, mc, ctx)
 
-	if npc.State != ActorDead {
+	if npc.ActionState != ActorDead {
 		t.Fatalf("NPC should be dead")
 	}
 

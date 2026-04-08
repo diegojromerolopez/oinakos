@@ -7,11 +7,11 @@ value: 5
 content: "Day 42:\nThe woods have grown restless. The wolves no longer \nhowl at the moon, but at the shadows that creeping \nfrom the capital. I saw the Crimson Guard today. \nThey were marching prisoners toward the cliffs.\n\nDay 43:\nI must leave this place. The cursed King's madness\nis spreading to the soil itself.\n"
 consumable: false
 footprint:
-  - x: -1.84
-    y: -1.66
-  - x: -0.94
-    y: -2.0
+  - x: -4.23
+    y: -3.83
+  - x: -2.0
+    y: -4.25
   - x: 0.16
     y: -0.09
-  - x: -1.05
-    y: 0.11
+  - x: -2.14
+    y: 0.08

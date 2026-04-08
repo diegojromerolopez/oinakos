@@ -1,0 +1,16 @@
+id: crop_turnip
+name: Turnip Row
+type: static
+destructible: true
+health: 6
+weight: 0.4
+plant_season: SUMMER
+harvest_season: AUTUMN
+growth_duration: 17280 # 1 day (fast growth)
+yield: turnip
+frame_count: 1
+footprint:
+- {x: -0.2, y: -0.2}
+- {x: 0.2, y: -0.2}
+- {x: 0.2, y: 0.2}
+- {x: -0.2, y: 0.2}

@@ -1,0 +1,25 @@
+id: apple
+name: Apple
+type: consumable
+max_hours: 72
+description: A crisp, red apple foraged from a nearby orchard.
+weight: 0.5
+image: assets/images/objects/apple.png
+effects:
+  energy:
+    increase: 8.0
+  thirst:
+    increase: 5.0
+  health:
+    increase: 3.0
+footprint:
+  - x: -2.09
+    y: -2.97
+  - x: -0.8
+    y: -1.52
+  - x: -1.41
+    y: -0.78
+  - x: -2.64
+    y: -1.61
+  - x: -3.13
+    y: -2.38

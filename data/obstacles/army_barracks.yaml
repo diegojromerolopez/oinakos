@@ -3,7 +3,6 @@ type: building
 destructible: true
 description: "A solid building where soldiers sleep and train."
 health: 10000
-scale: 1.250
 footprint:
   - x: 0.11
     y: 0.95

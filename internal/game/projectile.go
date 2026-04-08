@@ -10,8 +10,8 @@ import (
 )
 
 type Projectile struct {
-	X, Y             float64
-	Dx, Dy           float64
+	X, Y, Z          float64
+	Dx, Dy, Dz       float64
 	Speed            float64
 	Damage           int
 	Alive            bool
@@ -30,8 +30,10 @@ func NewProjectile(x, y, dx, dy, speed float64, damage int, isPlayer bool, maxRa
 	return &Projectile{
 		X:        x,
 		Y:        y,
+		Z:        0, // Update this inside game_update or at spawn if 3D targeting is implemented
 		Dx:       dx,
 		Dy:       dy,
+		Dz:       0,
 		Speed:    speed,
 		Damage:   damage,
 		Alive:    true,

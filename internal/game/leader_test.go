@@ -10,17 +10,17 @@ func TestLeaderDeathConsequence(t *testing.T) {
 	leaderArch := &EntityConfig{ID: "queen_leader", Name: "Queen"}
 	followerArch := &EntityConfig{ID: "guard_follower", Name: "Guard", LeaderID: "queen_leader"}
 	
-	leader := NewCharacter(0, 0, leaderArch, 1, false)
-	follower := NewCharacter(1, 1, followerArch, 1, false)
-	leader.Health = 100
-	leader.MaxHealth = 100
-	follower.Health = 100
-	follower.MaxHealth = 100
+	leader := NewCharacter(0, 0, leaderArch, 1, false, nil)
+	follower := NewCharacter(1, 1, followerArch, 1, false, nil)
+	leader.State.HealthPoints = 100
+	leader.State.MaxHealthPoints = 100
+	follower.State.HealthPoints = 100
+	follower.State.MaxHealthPoints = 100
 	
 	ctx.World.Characters = []*Character{leader, follower}
-	mc := NewCharacter(10, 10, nil, 1, true)
-	mc.Health = 100
-	mc.MaxHealth = 100
+	mc := NewCharacter(10, 10, nil, 1, true, nil)
+	mc.State.HealthPoints = 100
+	mc.State.MaxHealthPoints = 100
 	ctx.World.PlayableCharacter = mc
 	
 	// Initial state
@@ -35,8 +35,8 @@ func TestLeaderDeathConsequence(t *testing.T) {
 	}
 	
 	// Kill leader (irremediably)
-	leader.Health = -10
-	leader.State = ActorDead
+	leader.State.HealthPoints = -10
+	leader.ActionState = ActorDead
 	
 	// Update follower after leader death
 	follower.Update(ctx)
@@ -56,27 +56,27 @@ func TestTraitorTargeting(t *testing.T) {
 	leaderArch := &EntityConfig{ID: "queen", Name: "Queen"}
 	followerArch := &EntityConfig{ID: "guard", Name: "Guard", LeaderID: "queen"}
 
-	leader := NewCharacter(0, 0, leaderArch, 1, false)
+	leader := NewCharacter(0, 0, leaderArch, 1, false, nil)
 	leader.Alignment = AlignmentEnemy
 
-	peer := NewCharacter(1, 1, followerArch, 1, false)
+	peer := NewCharacter(1, 1, followerArch, 1, false, nil)
 	peer.Alignment = AlignmentEnemy
 	peer.Behavior = BehaviorNpcFighter
 
-	traitor := NewCharacter(2, 2, followerArch, 1, false)
+	traitor := NewCharacter(2, 2, followerArch, 1, false, nil)
 	traitor.Alignment = AlignmentNeutral // Switched!
-
-	leader.Health = 100
-	leader.MaxHealth = 100
-	peer.Health = 100
-	peer.MaxHealth = 100
-	traitor.Health = 100
-	traitor.MaxHealth = 100
-
+	
+	leader.State.HealthPoints = 100
+	leader.State.MaxHealthPoints = 100
+	peer.State.HealthPoints = 100
+	peer.State.MaxHealthPoints = 100
+	traitor.State.HealthPoints = 100
+	traitor.State.MaxHealthPoints = 100
+	
 	ctx.World.Characters = []*Character{leader, peer, traitor}
-	mc := NewCharacter(10, 10, nil, 1, true)
-	mc.Health = 100
-	mc.MaxHealth = 100
+	mc := NewCharacter(10, 10, nil, 1, true, nil)
+	mc.State.HealthPoints = 100
+	mc.State.MaxHealthPoints = 100
 	ctx.World.PlayableCharacter = mc
 
 	// Peer should normally ignore Neutral NPCs if they weren't traitors,

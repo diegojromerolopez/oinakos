@@ -8,6 +8,9 @@ on:
       - 'v*'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-desktop:
     name: Build Desktop Binary
@@ -61,6 +64,12 @@ jobs:
         with:
           name: ${{ matrix.artifact_name }}
           path: bin/${{ matrix.asset_name }}
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: bin/${{ matrix.asset_name }}
+          generate_release_notes: true
 
   build-wasm:
     name: Build WASM
@@ -84,3 +93,14 @@ jobs:
           name: oinakos-wasm
           path: dist/
           retention-days: 30
+      - name: Package WASM
+        run: |
+          cd dist
+          zip -r ../oinakos-wasm.zip .
+
+      - name: Release WASM
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: oinakos-wasm.zip
+          generate_release_notes: true

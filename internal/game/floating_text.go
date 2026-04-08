@@ -8,6 +8,7 @@ var (
 	ColorHarm = color.RGBA{220, 20, 60, 255}   // Crimson
 	ColorHeal = color.RGBA{0, 255, 0, 255}     // Green
 	ColorMiss = color.RGBA{200, 200, 200, 255} // Gray
+	ColorWarn = color.RGBA{255, 140, 0, 255}   // DarkOrange
 
 	// Indicators (Ellipses)
 	ColorAlly          = color.RGBA{0, 255, 0, 150}
@@ -17,8 +18,8 @@ var (
 )
 
 type FloatingText struct {
-	Text  string
-	X, Y  float64 // Cartesian coordinates
+	Text     string
+	X, Y, Z  float64 // Cartesian coordinates
 	Life  int     // Frames remaining
 	Color color.Color
 }

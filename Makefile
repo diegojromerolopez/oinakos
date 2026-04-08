@@ -22,13 +22,13 @@ LDFLAGS=-ldflags "-s -w -X main.Version=$(VERSION)"
 build:
 	@echo "Building native binary $(VERSION)..."
 	@mkdir -p $(BIN_DIR)
-	$(GOBUILD) $(LDFLAGS) -o $(BIN_DIR)/$(APP_NAME) main.go
+	$(GOBUILD) $(LDFLAGS) -o $(BIN_DIR)/$(APP_NAME) .
 	@echo "Built: $(BIN_DIR)/$(APP_NAME)"
 
 build-wasm:
 	@echo "Building WebAssembly binary $(VERSION)..."
 	@mkdir -p $(DIST_DIR)
-	GOOS=js GOARCH=wasm $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/$(APP_NAME).wasm main.go
+	GOOS=js GOARCH=wasm $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/$(APP_NAME).wasm .
 	@echo "Built: $(DIST_DIR)/$(APP_NAME).wasm"
 
 build-tools: $(BIN_DIR)/boundaries_editor $(BIN_DIR)/map_editor
@@ -89,10 +89,13 @@ dist: build-wasm
 	@echo "Dist files prepared in $(DIST_DIR)/: index.html (inlined JS) and oinakos.wasm"
 
 run: build
-	./$(BIN_DIR)/$(APP_NAME)
+	./$(BIN_DIR)/$(APP_NAME) $(if $(MAP),-map $(MAP)) $(if $(MAP_TYPE),-map-type $(MAP_TYPE)) $(if $(HERO),-hero $(HERO))
 
 run-debug: build
-	./$(BIN_DIR)/$(APP_NAME) -debug
+	./$(BIN_DIR)/$(APP_NAME) -debug $(if $(MAP),-map $(MAP)) $(if $(MAP_TYPE),-map-type $(MAP_TYPE)) $(if $(HERO),-hero $(HERO))
+run-headless:
+	@echo "Running Headless Simulation..."
+	$(GORUN) -tags headless .
 
 boundaries-editor: build-tools
 	@if [ -z "$(OBSTACLE)$(NPC)$(CHARACTER)$(OBJECT)" ]; then ./$(BIN_DIR)/boundaries_editor; else \

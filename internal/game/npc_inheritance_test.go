@@ -69,30 +69,22 @@ gender: male
 	// 2. Add the base archetype manually
 	archReg.Archetypes["man_at_arms_male"] = &EntityConfig{
 		ID: "man_at_arms_male",
-		Stats: struct {
-			HealthMin       int     `yaml:"health_min"`
-			HealthMax       int     `yaml:"health_max"`
-			Speed           float64 `yaml:"speed"`
-			BaseAttack      int     `yaml:"base_attack"`
-			BaseDefense     int     `yaml:"base_defense"`
-			AttackCooldown  int     `yaml:"attack_cooldown"`
-			AttackRange     float64 `yaml:"attack_range"`
-			ProjectileSpeed float64 `yaml:"projectile_speed"`
-		}{HealthMin: 100},
+		Stats: EntityStatsConfig{HealthPoints: IntInterval{Min: 100, Max: 100}},
 	}
 
 	// 3. Load the NPC from YAML
 	configs := map[string]*EntityConfig{}
 	configs["crimson_guard"] = &EntityConfig{
 		ID:          "crimson_guard",
-		ArchetypeID: "man_at_arms",
+		Archetype: "man_at_arms",
 		Gender:      "male",
 		AudioDir:    "assets/audio/npcs/crimson_guard",
 	}
 	npcReg.Characters = configs
 
-	// 4. Run LoadAssets to exercise inheritance logic
+	// 4. Run inheritance and assets loading
 	graphics := &MockGraphicsInheritance{}
+	npcReg.ProcessInheritance(archReg)
 	npcReg.LoadAssets(fsys, graphics, archReg, nil, nil)
 
 	npc := npcReg.Characters["crimson_guard"]
@@ -104,18 +96,19 @@ gender: male
 	}
 
 	// VERIFY: Did it inherit stats from the composite ID?
-	if npc.Stats.HealthMin != 100 {
-		t.Errorf("Expected inherited health 100, got %d", npc.Stats.HealthMin)
+	if npc.Stats.HealthPoints.Min != 100 {
+		t.Errorf("Expected inherited health 100, got %v", npc.Stats.HealthPoints)
 	}
 
 	// TEST 2: Inherited audio (no local wav)
 	npc2 := &EntityConfig{
 		ID:          "golden_guard",
-		ArchetypeID: "man_at_arms",
+		Archetype: "man_at_arms",
 		Gender:      "male",
 		AudioDir:    "assets/audio/npcs/golden_guard", // Empty in mock FS
 	}
 	npcReg.Characters["golden_guard"] = npc2
+	npcReg.ProcessInheritance(archReg)
 	npcReg.LoadAssets(fsys, graphics, archReg, nil, nil)
 
 	if npc2.SoundID != "man_at_arms_male" {
@@ -131,7 +124,7 @@ func TestNPC_GenderFallback(t *testing.T) {
 	npcReg := NewCharacterRegistry()
 	npcReg.Characters["virculus"] = &EntityConfig{
 		ID:          "virculus",
-		ArchetypeID: "virculus",
+		Archetype: "virculus",
 		Gender:      "none",
 	}
 

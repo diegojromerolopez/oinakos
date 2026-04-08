@@ -1,0 +1,32 @@
+name: Iron Ore
+description: A lump of unrefined iron. Quite heavy.
+weight: 0.16
+type: material
+value: 15
+footprint:
+  - x: -3.48
+    y: -3.89
+  - x: -2.86
+    y: -4.14
+  - x: -1.83
+    y: -3.48
+  - x: -0.89
+    y: -2.8
+  - x: -0.27
+    y: -1.8
+  - x: -0.31
+    y: -1.0
+  - x: -0.41
+    y: -0.28
+  - x: -1.03
+    y: -0.09
+  - x: -2.0
+    y: -0.31
+  - x: -2.91
+    y: -1.03
+  - x: -3.63
+    y: -2.0
+  - x: -3.72
+    y: -2.91
+  - x: -3.53
+    y: -3.59

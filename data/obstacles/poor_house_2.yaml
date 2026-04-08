@@ -3,7 +3,6 @@ type: building
 destructible: true
 description: "A tiny shack barely standing."
 health: 1000
-scale: 1.250
 footprint:
   - x: 0.81
     y: 0.38

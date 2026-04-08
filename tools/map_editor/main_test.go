@@ -50,7 +50,7 @@ func TestMapEditor_Selection(t *testing.T) {
 	// Mock data with one NPC
 	me.MapData = &game.SaveData{
 		Characters: []game.NPCSaveData{
-			{ArchetypeID: "peasant_male", X: 5.0, Y: 5.0},
+			{Archetype: "peasant_male", X: 5.0, Y: 5.0},
 		},
 	}
 	me.Mode = "EDITOR"

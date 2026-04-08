@@ -1,0 +1,39 @@
+name: Rusty Iron Armor
+description: Old iron plates showing deep pitting and rust. Decent protection, but heavy and fragile.
+weight: 25.0
+type: armor
+slot: body
+resistance: 200
+value: 120
+effects:
+  protection:
+    increase: 18
+  speed:
+    increase: -0.015
+footprint:
+  - x: -3.8
+    y: -4.89
+  - x: -2.73
+    y: -4.2
+  - x: -1.53
+    y: -3.16
+  - x: -0.45
+    y: -1.98
+  - x: 0.39
+    y: -0.83
+  - x: 0.28
+    y: 0.16
+  - x: -0.55
+    y: 0.42
+  - x: -1.66
+    y: -0.16
+  - x: -2.91
+    y: -1.16
+  - x: -3.91
+    y: -2.41
+  - x: -4.59
+    y: -3.47
+  - x: -4.0
+    y: -4.0
+  - x: -3.78
+    y: -4.84

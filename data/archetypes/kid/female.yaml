@@ -1,0 +1,94 @@
+id: kid_female
+name: Kid
+gender: female
+names:
+- Urraca
+- Sancha
+- Elvira
+- Teresa
+- "Do\xF1a"
+behavior: wander
+group: Peasants
+state:
+  health_points: 100
+  hunger: 0.0
+  thirst: 0.0
+  fatigue: 0.0
+  sanity: 100.0
+  pain: 0.0
+  arousal: 0.0
+  hygiene: 70.0
+  bladder_level: 0.0
+  bowel_level: 0.0
+  age:
+    current: 6.0
+    rate: 1.0
+    max: 100
+attributes:
+  strength:
+    min: 5
+    max: 12
+    mode: normal
+    mean: 8.5
+    sd: 1.17
+  health:
+    min: 12
+    max: 18
+    mode: normal
+    mean: 15.0
+    sd: 1.0
+  dexterity:
+    min: 15
+    max: 25
+    mode: normal
+    mean: 20.0
+    sd: 1.67
+  intellect:
+    min: 15
+    max: 30
+    mode: normal
+    mean: 22.5
+    sd: 2.5
+  wisdom:
+    min: 10
+    max: 20
+    mode: normal
+    mean: 15.0
+    sd: 1.67
+stats:
+  speed:
+    min: 0.03
+    max: 0.03
+    mode: normal
+    mean: 0.03
+    sd: 0.0
+  health_points:
+    min: 15
+    max: 15
+    mode: normal
+    mean: 15.0
+  max_weight:
+    min: 20
+    max: 20
+    mode: normal
+    mean: 20.0
+    sd: 0.0
+abilities:
+  rest:
+    yield: nourishment * 0.3
+    parent_attribute: health
+  eat:
+    yield: nourishment * 1.2
+    parent_attribute: health
+  drink:
+    yield: nourishment * 1.1
+    parent_attribute: health
+  punch:
+    damage: melee_attack * 0.4
+    parent_attribute: strength
+  slap:
+    damage: melee_attack * 0.3
+    parent_attribute: dexterity
+  forage:
+    yield: survivalism * 0.2
+    parent_attribute: wisdom

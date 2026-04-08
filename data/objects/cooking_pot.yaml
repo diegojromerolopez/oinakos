@@ -1,0 +1,35 @@
+id: cooking_pot
+name: Cooking Pot
+type: tool
+weight: 2.5
+value: 120
+description: A heavy iron pot used for cooking meals over a fire.
+primary_color: "#333333"
+sprite: cooking_pot.png
+footprint:
+  - x: -4.14
+    y: -4.67
+  - x: -3.64
+    y: -5.11
+  - x: -2.73
+    y: -4.08
+  - x: -1.59
+    y: -3.28
+  - x: -0.5
+    y: -2.13
+  - x: 0.25
+    y: -0.88
+  - x: -0.09
+    y: -0.09
+  - x: -0.88
+    y: 0.25
+  - x: -2.11
+    y: -0.52
+  - x: -3.3
+    y: -1.58
+  - x: -3.81
+    y: -2.88
+  - x: -3.95
+    y: -3.48
+  - x: -4.17
+    y: -4.52

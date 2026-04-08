@@ -111,34 +111,34 @@ func TestSanitizePlayerSaveData(t *testing.T) {
 	}{
 		{
 			name:  "negative health clamped to 1",
-			input: PlayerSaveData{Health: -5, MaxHealth: 100, Level: 1},
+			input: PlayerSaveData{State: State{HealthPoints: -5, MaxHealthPoints: 100}, Level: 1},
 			check: func(t *testing.T, p *PlayerSaveData) {
-				if p.Health != 1 {
-					t.Errorf("Health: got %d, want 1", p.Health)
+				if p.State.HealthPoints != 1 {
+					t.Errorf("HealthPoints: got %d, want 1", p.State.HealthPoints)
 				}
 			},
 		},
 		{
 			name:  "zero max_health clamped to 100",
-			input: PlayerSaveData{Health: 10, MaxHealth: 0, Level: 1},
+			input: PlayerSaveData{State: State{HealthPoints: 10, MaxHealthPoints: 0}, Level: 1},
 			check: func(t *testing.T, p *PlayerSaveData) {
-				if p.MaxHealth != 100 {
-					t.Errorf("MaxHealth: got %d, want 100", p.MaxHealth)
+				if p.State.MaxHealthPoints != 100 {
+					t.Errorf("MaxHealthPoints: got %d, want 100", p.State.MaxHealthPoints)
 				}
 			},
 		},
 		{
 			name:  "health exceeds max_health clamped to max",
-			input: PlayerSaveData{Health: 500, MaxHealth: 100, Level: 1},
+			input: PlayerSaveData{State: State{HealthPoints: 500, MaxHealthPoints: 100}, Level: 1},
 			check: func(t *testing.T, p *PlayerSaveData) {
-				if p.Health != 100 {
-					t.Errorf("Health: got %d, want 100", p.Health)
+				if p.State.HealthPoints != 100 {
+					t.Errorf("HealthPoints: got %d, want 100", p.State.HealthPoints)
 				}
 			},
 		},
 		{
 			name:  "zero level clamped to 1",
-			input: PlayerSaveData{Health: 10, MaxHealth: 100, Level: 0},
+			input: PlayerSaveData{State: State{HealthPoints: 10, MaxHealthPoints: 100}, Level: 0},
 			check: func(t *testing.T, p *PlayerSaveData) {
 				if p.Level != 1 {
 					t.Errorf("Level: got %d, want 1", p.Level)
@@ -147,7 +147,7 @@ func TestSanitizePlayerSaveData(t *testing.T) {
 		},
 		{
 			name:  "negative XP clamped to 0",
-			input: PlayerSaveData{Health: 10, MaxHealth: 100, Level: 1, XP: -50},
+			input: PlayerSaveData{State: State{HealthPoints: 10, MaxHealthPoints: 100}, Level: 1, XP: -50},
 			check: func(t *testing.T, p *PlayerSaveData) {
 				if p.XP != 0 {
 					t.Errorf("XP: got %d, want 0", p.XP)
@@ -156,7 +156,7 @@ func TestSanitizePlayerSaveData(t *testing.T) {
 		},
 		{
 			name:  "negative kills clamped to 0",
-			input: PlayerSaveData{Health: 10, MaxHealth: 100, Level: 1, Kills: -1},
+			input: PlayerSaveData{State: State{HealthPoints: 10, MaxHealthPoints: 100}, Level: 1, Kills: -1},
 			check: func(t *testing.T, p *PlayerSaveData) {
 				if p.Kills != 0 {
 					t.Errorf("Kills: got %d, want 0", p.Kills)
@@ -165,7 +165,7 @@ func TestSanitizePlayerSaveData(t *testing.T) {
 		},
 		{
 			name:  "negative base_attack clamped to 0",
-			input: PlayerSaveData{Health: 10, MaxHealth: 100, Level: 1, BaseAttack: -3},
+			input: PlayerSaveData{State: State{HealthPoints: 10, MaxHealthPoints: 100}, Level: 1, BaseAttack: -3},
 			check: func(t *testing.T, p *PlayerSaveData) {
 				if p.BaseAttack != 0 {
 					t.Errorf("BaseAttack: got %d, want 0", p.BaseAttack)
@@ -174,7 +174,7 @@ func TestSanitizePlayerSaveData(t *testing.T) {
 		},
 		{
 			name:  "negative base_defense clamped to 0",
-			input: PlayerSaveData{Health: 10, MaxHealth: 100, Level: 1, BaseDefense: -2},
+			input: PlayerSaveData{State: State{HealthPoints: 10, MaxHealthPoints: 100}, Level: 1, BaseDefense: -2},
 			check: func(t *testing.T, p *PlayerSaveData) {
 				if p.BaseDefense != 0 {
 					t.Errorf("BaseDefense: got %d, want 0", p.BaseDefense)
@@ -183,9 +183,9 @@ func TestSanitizePlayerSaveData(t *testing.T) {
 		},
 		{
 			name:  "valid data unchanged",
-			input: PlayerSaveData{Health: 50, MaxHealth: 100, Level: 5, XP: 200, Kills: 10},
+			input: PlayerSaveData{State: State{HealthPoints: 50, MaxHealthPoints: 100}, Level: 5, XP: 200, Kills: 10},
 			check: func(t *testing.T, p *PlayerSaveData) {
-				if p.Health != 50 || p.MaxHealth != 100 || p.Level != 5 || p.XP != 200 || p.Kills != 10 {
+				if p.State.HealthPoints != 50 || p.State.MaxHealthPoints != 100 || p.Level != 5 || p.XP != 200 || p.Kills != 10 {
 					t.Errorf("Valid data was unexpectedly modified: %+v", *p)
 				}
 			},
@@ -203,28 +203,28 @@ func TestSanitizePlayerSaveData(t *testing.T) {
 
 func TestSanitizeNPCSaveData(t *testing.T) {
 	// Negative health → clamped to 0
-	n := NPCSaveData{ArchetypeID: "orc", Health: -5, MaxHealth: 10, Level: 1}
+	n := NPCSaveData{X: 0, Y: 0, State: State{HealthPoints: -5, MaxHealthPoints: 10}, Level: 1}
 	sanitizeNPCSaveData(&n, 0, "test")
-	if n.Health != 0 {
-		t.Errorf("Health: got %d, want 0", n.Health)
+	if n.State.HealthPoints != 0 {
+		t.Errorf("HealthPoints: got %d, want 0", n.State.HealthPoints)
 	}
 
 	// Zero max_health with health > 0 → max_health set to health
-	n2 := NPCSaveData{ArchetypeID: "orc", Health: 8, MaxHealth: 0, Level: 1}
+	n2 := NPCSaveData{X: 0, Y: 0, State: State{HealthPoints: 8, MaxHealthPoints: 0}, Level: 1}
 	sanitizeNPCSaveData(&n2, 1, "test")
-	if n2.MaxHealth != 8 {
-		t.Errorf("MaxHealth: got %d, want 8", n2.MaxHealth)
+	if n2.State.MaxHealthPoints != 8 {
+		t.Errorf("MaxHealthPoints: got %d, want 8", n2.State.MaxHealthPoints)
 	}
 
 	// Zero max_health with health == 0 → max_health clamped to 1
-	n3 := NPCSaveData{ArchetypeID: "orc", Health: 0, MaxHealth: 0, Level: 1}
+	n3 := NPCSaveData{X: 0, Y: 0, State: State{HealthPoints: 0, MaxHealthPoints: 0}, Level: 1}
 	sanitizeNPCSaveData(&n3, 2, "test")
-	if n3.MaxHealth != 1 {
-		t.Errorf("MaxHealth: got %d, want 1", n3.MaxHealth)
+	if n3.State.MaxHealthPoints != 1 {
+		t.Errorf("MaxHealthPoints: got %d, want 1", n3.State.MaxHealthPoints)
 	}
 
 	// Zero level → clamped to 1
-	n4 := NPCSaveData{ArchetypeID: "orc", Health: 5, MaxHealth: 10, Level: 0}
+	n4 := NPCSaveData{X: 0, Y: 0, State: State{HealthPoints: 5, MaxHealthPoints: 10}, Level: 0}
 	sanitizeNPCSaveData(&n4, 3, "test")
 	if n4.Level != 1 {
 		t.Errorf("Level: got %d, want 1", n4.Level)
@@ -233,7 +233,6 @@ func TestSanitizeNPCSaveData(t *testing.T) {
 
 func TestSanitizeObstacleArchetype_Clamping(t *testing.T) {
 	o := &ObstacleArchetype{
-		Health:       -5,
 		CooldownTime: -1.0,
 	}
 	sanitizeObstacleArchetype(o, "test")
@@ -241,25 +240,25 @@ func TestSanitizeObstacleArchetype_Clamping(t *testing.T) {
 	if o.ID != "unknown" {
 		t.Errorf("ID: got %q, want 'unknown'", o.ID)
 	}
-	if o.Health != 0 {
-		t.Errorf("Health: got %d, want 0", o.Health)
+	if o.HealthPoints != 0 {
+		t.Errorf("HealthPoints: got %d, want 0", o.HealthPoints)
 	}
 	if o.CooldownTime != 0 {
 		t.Errorf("CooldownTime: got %f, want 0", o.CooldownTime)
 	}
 }
 
-func TestSanitizeObstacleArchetype_HealthMinusOne(t *testing.T) {
+func TestSanitizeObstacleArchetype_HealthPointsusOne(t *testing.T) {
 	// Health == -1 is valid (indestructible), below -1 is clamped
-	o := &ObstacleArchetype{ID: "wall", Health: -1}
+	o := &ObstacleArchetype{ID: "wall", HealthPoints: -1}
 	sanitizeObstacleArchetype(o, "test")
-	if o.Health != -1 {
-		t.Errorf("Health -1 should be unchanged, got %d", o.Health)
+	if o.HealthPoints != -1 {
+		t.Errorf("Health -1 should be unchanged, got %d", o.HealthPoints)
 	}
 
-	o2 := &ObstacleArchetype{ID: "wall", Health: -2}
+	o2 := &ObstacleArchetype{ID: "wall", HealthPoints: -2}
 	sanitizeObstacleArchetype(o2, "test")
-	if o2.Health != 0 {
-		t.Errorf("Health -2 should be clamped to 0, got %d", o2.Health)
+	if o2.HealthPoints != 0 {
+		t.Errorf("Health -2 should be clamped to 0, got %d", o2.HealthPoints)
 	}
 }

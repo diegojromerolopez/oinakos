@@ -7,7 +7,7 @@ import (
 // GetActorSortY returns the value used for depth sorting actors.
 func GetActorSortY(a *Actor) float64 {
 	sortY := a.X + a.Y
-	if a.State == ActorDead {
+	if a.ActionState == ActorDead {
 		sortY -= 100.0
 	}
 	return sortY

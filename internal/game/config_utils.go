@@ -11,44 +11,58 @@ import (
 // forEachYAML iterates over YAML files in a base directory from both the embedded FS
 // and the local oinakos/data override directory.
 func forEachYAML(assets fs.FS, baseDir string, callback func(fpath string, data []byte) error) error {
+	visitedPaths := make(map[string]bool)
+
 	// 1. Embedded assets
 	if assets != nil {
 		fs.WalkDir(assets, baseDir, func(fpath string, d fs.DirEntry, err error) error {
-			if err != nil {
-				return nil // Skip if not found in embedded
-			}
-			if d.IsDir() || (filepath.Ext(fpath) != ".yaml" && filepath.Ext(fpath) != ".yml") {
+			if err != nil || d.IsDir() || (filepath.Ext(fpath) != ".yaml" && filepath.Ext(fpath) != ".yml") {
 				return nil
 			}
+			fbase := filepath.Base(fpath)
+			if visitedPaths[fbase] { return nil }
+
 			data, err := fs.ReadFile(assets, fpath)
 			if err == nil {
+				visitedPaths[fbase] = true
 				callback(fpath, data)
 			}
 			return nil
 		})
 	}
 
-	// 2. Local oinakos/data overrides
-	localBaseDir := filepath.Join("oinakos", baseDir)
-	if _, err := os.Stat(localBaseDir); err == nil {
-		filepath.WalkDir(localBaseDir, func(fpath string, d fs.DirEntry, err error) error {
-			if err != nil || d.IsDir() || (filepath.Ext(fpath) != ".yaml" && filepath.Ext(fpath) != ".yml") {
+	// Candidates for local search
+	candidates := []string{
+		baseDir,
+		filepath.Join("..", baseDir),
+		filepath.Join("../..", baseDir),
+		filepath.Join("oinakos", baseDir),
+		filepath.Join("..", "oinakos", baseDir),
+		filepath.Join("../..", "oinakos", baseDir),
+	}
+
+	for _, cand := range candidates {
+		if _, err := os.Stat(cand); err == nil {
+			filepath.WalkDir(cand, func(fpath string, d fs.DirEntry, err error) error {
+				if err != nil || d.IsDir() || (filepath.Ext(fpath) != ".yaml" && filepath.Ext(fpath) != ".yml") {
+					return nil
+				}
+				fbase := filepath.Base(fpath)
+				if visitedPaths[fbase] { return nil }
+
+				data, err := os.ReadFile(fpath)
+				if err == nil {
+					visitedPaths[fbase] = true
+					callback(fpath, data)
+				}
 				return nil
-			}
-			data, err := os.ReadFile(fpath)
-			if err == nil {
-				callback(fpath, data)
-			}
-			return nil
-		})
+			})
+		}
 	}
 	return nil
 }
 
 func LoadPlayableCharacterConfig(assets fs.FS) (*EntityConfig, error) {
-	if assets == nil {
-		return &EntityConfig{}, nil
-	}
 	const configPath = "data/characters/oinakos.yaml"
 	localPath := filepath.Join("oinakos", configPath)
 
@@ -59,7 +73,7 @@ func LoadPlayableCharacterConfig(assets fs.FS) (*EntityConfig, error) {
 	if _, errStat := os.Stat(localPath); errStat == nil {
 		data, err = os.ReadFile(localPath)
 	}
-	if data == nil {
+	if data == nil && assets != nil {
 		data, err = fs.ReadFile(assets, configPath)
 	}
 	if err != nil {

@@ -1,0 +1,28 @@
+id: canteen
+name: Large Canteen
+type: tool
+category: survival
+weight: 0.5
+value: 120
+description: A large leather-wrapped canteen reinforced with bronze. It can hold up to 1.5 liters of water.
+max_liquid: 1.5
+refillable: true
+footprint:
+  - x: -0.59
+    y: -2.09
+  - x: 0.31
+    y: -0.88
+  - x: 0.15
+    y: 0.15
+  - x: -1.41
+    y: -0.09
+  - x: -2.97
+    y: -1.47
+  - x: -4.13
+    y: -3.94
+  - x: -3.84
+    y: -4.22
+  - x: -2.86
+    y: -3.52
+  - x: -1.95
+    y: -3.17

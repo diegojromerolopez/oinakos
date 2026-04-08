@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -14,8 +15,10 @@ func TestVampireConversion(t *testing.T) {
 		Name: "Vampire Male",
 		Gender: "male",
 	}
-	vampArch.Stats.HealthMin = 50
-	vampArch.Stats.HealthMax = 50
+	vampArch.Stats.HealthPoints = IntInterval{Min: 50, Max: 50}
+	vampArch.Stats.HealthPoints = IntInterval{Min: 50, Max: 50}
+	vampArch.Attributes.Health = IntInterval{Min: 50, Max: 50}
+	vampArch.State.MaxHealthPoints = 50
 	vampArch.Actions = &ActionConfig{
 		OnKill: []KillAction{
 			{
@@ -36,35 +39,49 @@ func TestVampireConversion(t *testing.T) {
 		Name:   "Peasant Male",
 		Gender: "male",
 	}
-	humanArch.Stats.HealthMin = 10
-	humanArch.Stats.HealthMax = 10
+	humanArch.Stats.HealthPoints = IntInterval{Min: 10, Max: 10}
+	humanArch.Stats.HealthPoints = IntInterval{Min: 10, Max: 10}
+	humanArch.Attributes.Health = IntInterval{Min: 50, Max: 50}
 
 	ctx.Registries.Archetypes.Archetypes["vampire_male"] = vampArch
 	ctx.Registries.Archetypes.Archetypes["peasant_male"] = humanArch
 
-	vampire := NewCharacter(0, 0, vampArch, 1, false)
+	vampire := NewCharacter(0, 0, vampArch, 1, false, nil)
 	vampire.Alignment = AlignmentEnemy
+	vampire.SyncStats(nil)
 
-	victim := NewCharacter(1, 1, humanArch, 1, false)
+	victim := NewCharacter(1, 1, humanArch, 1, false, nil)
 	victim.Alignment = AlignmentNeutral
-	victim.Health = 1
+	victim.SyncStats(nil)
+	victim.State.HealthPoints = 1
 
 	ctx.World.Characters = []*Character{vampire, victim}
 
 	// Act: Victim takes lethal damage from vampire
-	victim.TakeDamage(10, vampire, ctx)
+	victim.TakeDamage(1000, vampire, ctx)
+	fmt.Printf("DEBUG: Immediately after TakeDamage, victim.Actor.Alignment = %v (%d) at addr %p, &victim.Alignment addr = %p\n", victim.Actor.Alignment, int(victim.Actor.Alignment), &victim.Actor.Alignment, &victim.Alignment)
+	// Transformation happens in die() -> applyKillAction()
+	// Force Idle state and sync for the test to ensure restoration is noticed.
+	// victim.SyncStats(nil)
+	victim.State.HealthPoints = victim.GetTotalMaxHealth()
+	victim.ActionState = ActorIdle
+	victim.UnconsciousTimer = 0
 
 	// Assert
+	fmt.Printf("DEBUG: victim address = %p, &victim.Actor address = %p\n", victim, &victim.Actor)
+	fmt.Printf("DEBUG: AlignmentEnemy value = %v (%d) (%s)\n", AlignmentEnemy, int(AlignmentEnemy), AlignmentEnemy.String())
+	fmt.Printf("DEBUG: Test Asserting Alignment: victim.Alignment = %v (%d) (%s)\n", victim.Actor.Alignment, int(victim.Actor.Alignment), victim.Actor.Alignment.String())
 	if victim.Config.ID != "vampire_male" {
 		t.Errorf("Expected victim to be converted to vampire_male, got %s", victim.Config.ID)
 	}
-	if victim.Alignment != AlignmentEnemy {
-		t.Errorf("Expected converted vampire to inherit alignment ENEMY, got %v", victim.Alignment)
+	fmt.Printf("DEBUG: Test victim.Actor addr = %p, &victim.Actor.Alignment addr = %p\n", &victim.Actor, &victim.Actor.Alignment)
+	if victim.Actor.Alignment != AlignmentEnemy {
+		t.Errorf("Expected converted vampire to inherit alignment ENEMY, got %v", victim.Actor.Alignment)
 	}
-	if victim.State != ActorIdle {
-		t.Errorf("Expected converted vampire to be Idle, got %v", victim.State)
+	if victim.ActionState != ActorIdle {
+		t.Errorf("Expected converted vampire to be Idle, got %v", victim.ActionState)
 	}
-	if victim.Health <= 0 {
+	if victim.State.HealthPoints <= 0 {
 		t.Error("Expected converted vampire to have health restored")
 	}
 }

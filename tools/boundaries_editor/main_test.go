@@ -7,6 +7,8 @@ import (
 
 	"oinakos/internal/engine"
 	"oinakos/internal/game"
+
+	"gopkg.in/yaml.v3"
 )
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -407,3 +409,12 @@ func contains(s, sub string) bool {
 			return false
 		}())
 }
+
+func containsID(data []byte, id string) bool {
+	var m struct {
+		ID string `yaml:"id"`
+	}
+	yaml.Unmarshal(data, &m)
+	return m.ID == id
+}
+

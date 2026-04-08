@@ -6,26 +6,25 @@ import (
 
 // TestNPCAlly_VisionRange verifies that allies only notice enemies within a specific range (15.0).
 func TestNPCAlly_VisionRange(t *testing.T) {
-	t.Skip("Flaky in bulk runs, investigation pending")
 	ctx := NewTestContext()
-	mc := NewCharacter(100, 100, nil, 1, true) // Far away
+	mc := NewCharacter(100, 100, nil, 1, true, nil) // Far away
 	ctx.World.PlayableCharacter = mc
 
-	ally := NewCharacter(0, 0, &EntityConfig{ID: "ally"}, 1, false)
+	ally := NewCharacter(0, 0, &EntityConfig{ID: "ally"}, 1, false, nil)
 	ally.Alignment = AlignmentAlly
 
 	// Enemy just outside vision (16 units)
-	farEnemy := NewCharacter(16, 0, &EntityConfig{ID: "far"}, 1, false)
+	farEnemy := NewCharacter(16, 0, &EntityConfig{ID: "far"}, 1, false, nil)
 	farEnemy.Alignment = AlignmentEnemy
 
 	// Enemy just inside vision (14 units)
-	nearEnemy := NewCharacter(14, 0, &EntityConfig{ID: "near"}, 1, false)
+	nearEnemy := NewCharacter(14, 0, &EntityConfig{ID: "near"}, 1, false, nil)
 	nearEnemy.Alignment = AlignmentEnemy
 
 	// Ensure all have health so they are considered 'alive'
-	ally.Health = 100
-	farEnemy.Health = 100
-	nearEnemy.Health = 100
+	ally.State.HealthPoints = 100
+	farEnemy.State.HealthPoints = 100
+	nearEnemy.State.HealthPoints = 100
 
 	ctx.World.Characters = []*Character{ally, farEnemy, nearEnemy}
 
@@ -46,23 +45,22 @@ func TestNPCAlly_VisionRange(t *testing.T) {
 
 // TestNPCAlly_TargetPriority verifies that allies pick the NEAREST enemy.
 func TestNPCAlly_TargetPriority(t *testing.T) {
-	t.Skip("Flaky in bulk runs, investigation pending")
 	ctx := NewTestContext()
-	mc := NewCharacter(100, 100, nil, 1, true)
+	mc := NewCharacter(100, 100, nil, 1, true, nil)
 	ctx.World.PlayableCharacter = mc
 
-	ally := NewCharacter(0, 0, &EntityConfig{ID: "ally"}, 1, false)
+	ally := NewCharacter(0, 0, &EntityConfig{ID: "ally"}, 1, false, nil)
 	ally.Alignment = AlignmentAlly
 
-	enemy1 := NewCharacter(10, 0, &EntityConfig{ID: "e1"}, 1, false)
+	enemy1 := NewCharacter(10, 0, &EntityConfig{ID: "e1"}, 1, false, nil)
 	enemy1.Alignment = AlignmentEnemy
-	enemy2 := NewCharacter(5, 0, &EntityConfig{ID: "e2"}, 1, false)
+	enemy2 := NewCharacter(5, 0, &EntityConfig{ID: "e2"}, 1, false, nil)
 	enemy2.Alignment = AlignmentEnemy
 
 	// Ensure all have health
-	ally.Health = 100
-	enemy1.Health = 100
-	enemy2.Health = 100
+	ally.State.HealthPoints = 100
+	enemy1.State.HealthPoints = 100
+	enemy2.State.HealthPoints = 100
 
 	ctx.World.Characters = []*Character{ally, enemy1, enemy2}
 
@@ -76,13 +74,13 @@ func TestNPCAlly_TargetPriority(t *testing.T) {
 // TestNPCNeutral_Retaliation verifies that neutral NPCs become hostile when attacked.
 func TestNPCNeutral_Retaliation(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewCharacter(0, 0, nil, 1, true)
+	mc := NewCharacter(0, 0, nil, 1, true, nil)
 	ctx.World.PlayableCharacter = mc
 
-	npc := NewCharacter(5, 0, &EntityConfig{ID: "villager"}, 1, false)
+	npc := NewCharacter(5, 0, &EntityConfig{ID: "villager"}, 1, false, nil)
 	npc.Alignment = AlignmentNeutral
 	npc.Behavior = BehaviorWander
-	npc.Health = 100
+	npc.State.HealthPoints = 100
 	ctx.World.Characters = []*Character{npc}
 
 	// Hit the NPC
@@ -102,47 +100,50 @@ func TestNPCNeutral_Retaliation(t *testing.T) {
 // TestNPCVision_IgnoreDeadTarget verifies NPCs don't track dead units.
 func TestNPCVision_IgnoreDeadTarget(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewCharacter(0, 0, nil, 1, true)
-	mc.MaxHealth = 100
-	mc.Health = -10
-	mc.State = ActorDead
+	mc := NewCharacter(0, 0, nil, 1, true, nil)
+	mc.State.MaxHealthPoints = 100
+	mc.State.HealthPoints = -10
+	mc.ActionState = ActorDead
 	ctx.World.PlayableCharacter = mc
 
-	npc := NewCharacter(5, 0, &EntityConfig{ID: "hunter"}, 1, false)
-	npc.Health = 100
-	npc.MaxHealth = 100
+	npc := NewCharacter(5, 0, &EntityConfig{ID: "hunter"}, 1, false, nil)
+	npc.State.HealthPoints = 100
+	npc.State.MaxHealthPoints = 100
 	npc.Behavior = BehaviorKnightHunter
 	npc.Alignment = AlignmentEnemy
 	ctx.World.Characters = []*Character{npc}
 
 	npc.Update(ctx)
 
-	if npc.State != ActorIdle {
-		t.Error("Enemy NPC should be Idle if the target (player) is dead")
+	if npc.TargetActor != nil {
+		t.Error("Enemy NPC should clear its TargetActor if the target (player) is dead")
 	}
 }
 
 // TestNPCVision_SwitchTargetOnDeath verifies NPCs pick new targets when current one dies.
 func TestNPCVision_SwitchTargetOnDeath(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewCharacter(100, 100, nil, 1, true)
+	mc := NewCharacter(100, 100, nil, 1, true, nil)
 	ctx.World.PlayableCharacter = mc
 
-	fighter := NewCharacter(0, 0, &EntityConfig{ID: "fighter"}, 1, false)
+	fighter := NewCharacter(0, 0, &EntityConfig{ID: "fighter"}, 1, false, nil)
 	fighter.Behavior = BehaviorNpcFighter
 	fighter.Alignment = AlignmentEnemy
 
-	victim1 := NewCharacter(2, 0, &EntityConfig{ID: "v1"}, 1, false)
+	victim1 := NewCharacter(2, 0, &EntityConfig{ID: "v1"}, 1, false, nil)
 	victim1.Alignment = AlignmentAlly
-	victim1.Health = 100
+	victim1.State.HealthPoints = 100
+	victim1.Name = "victim1"
 
-	victim2 := NewCharacter(5, 0, &EntityConfig{ID: "v2"}, 1, false)
+	victim2 := NewCharacter(5, 0, &EntityConfig{ID: "v2"}, 1, false, nil)
 	victim2.Alignment = AlignmentAlly
-	victim2.Health = 100
+	victim2.State.HealthPoints = 100
+	victim2.Name = "victim2"
 
 	ctx.World.Characters = []*Character{fighter, victim1, victim2}
-	fighter.Health = 100
-	mc.Health = 100
+	fighter.State.HealthPoints = 100
+	mc.State.HealthPoints = 100
+	mc.X, mc.Y = 100, 100 // Move very far away
 
 	// 1. Target v1
 	fighter.Update(ctx)
@@ -151,8 +152,12 @@ func TestNPCVision_SwitchTargetOnDeath(t *testing.T) {
 	}
 
 	// 2. v1 dies
-	victim1.State = ActorDead
-	fighter.Update(ctx)
+	victim1.ActionState = ActorDead
+	// Advance the tick to 30 so the fighter finishes its attack animation
+	for i := 0; i <= 30; i++ {
+		fighter.Tick++
+		fighter.Update(ctx)
+	}
 
 	if fighter.TargetActor != &victim2.Actor {
 		t.Errorf("Fighter should switch target to v2 after v1 is dead, got %v", fighter.TargetActor)
@@ -162,10 +167,10 @@ func TestNPCVision_SwitchTargetOnDeath(t *testing.T) {
 // TestNPC_RetaliationNPC verifies that NPCs retaliate against other NPCs.
 func TestNPC_RetaliationNPC(t *testing.T) {
 	ctx := NewTestContext()
-	npcA := NewCharacter(0, 0, &EntityConfig{ID: "a"}, 1, false)
-	npcB := NewCharacter(2, 0, &EntityConfig{ID: "b"}, 1, false)
-	npcA.Health = 100
-	npcB.Health = 100
+	npcA := NewCharacter(0, 0, &EntityConfig{ID: "a"}, 1, false, nil)
+	npcB := NewCharacter(2, 0, &EntityConfig{ID: "b"}, 1, false, nil)
+	npcA.State.HealthPoints = 100
+	npcB.State.HealthPoints = 100
 	ctx.World.Characters = []*Character{npcA, npcB}
 
 	// Initial state: no targets
@@ -184,19 +189,19 @@ func TestNPC_RetaliationNPC(t *testing.T) {
 // TestNPCChaotic_TargetSwitch verifies that a Chaotic NPC switches to the closest available target.
 func TestNPCChaotic_TargetSwitch(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewCharacter(5, 0, nil, 1, true) // player at dist 5
+	mc := NewCharacter(5, 0, nil, 1, true, nil) // player at dist 5
 	ctx.World.PlayableCharacter = mc
 
-	chaotic := NewCharacter(0, 0, &EntityConfig{ID: "chaotic"}, 1, false)
+	chaotic := NewCharacter(0, 0, &EntityConfig{ID: "chaotic"}, 1, false, nil)
 	chaotic.Behavior = BehaviorChaotic
 	chaotic.Alignment = AlignmentEnemy
 
-	npc := NewCharacter(10, 0, &EntityConfig{ID: "npc"}, 1, false) // npc at dist 10
+	npc := NewCharacter(10, 0, &EntityConfig{ID: "npc"}, 1, false, nil) // npc at dist 10
 	npc.Alignment = AlignmentAlly
 	
-	chaotic.Health = 100
-	mc.Health = 100
-	npc.Health = 100
+	chaotic.State.HealthPoints = 100
+	mc.State.HealthPoints = 100
+	npc.State.HealthPoints = 100
 
 	ctx.World.Characters = []*Character{chaotic, npc}
 
@@ -217,12 +222,12 @@ func TestNPCChaotic_TargetSwitch(t *testing.T) {
 // TestNPCAlly_RetaliationHostile verifies that an Ally becomes an Enemy when hit by the player.
 func TestNPCAlly_RetaliationHostile(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewCharacter(0, 0, nil, 1, true)
+	mc := NewCharacter(0, 0, nil, 1, true, nil)
 	ctx.World.PlayableCharacter = mc
 
-	ally := NewCharacter(5, 0, &EntityConfig{ID: "ally"}, 1, false)
+	ally := NewCharacter(5, 0, &EntityConfig{ID: "ally"}, 1, false, nil)
 	ally.Alignment = AlignmentAlly
-	ally.Health = 100
+	ally.State.HealthPoints = 100
 	ctx.World.Characters = []*Character{ally}
 
 	// Hit the ally
@@ -239,10 +244,10 @@ func TestNPCAlly_RetaliationHostile(t *testing.T) {
 // TestNPC_PathingObstacle verifies that NPCs use sliding collision when moving.
 func TestNPC_PathingObstacle(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewCharacter(10, 0, nil, 1, true)
+	mc := NewCharacter(10, 0, nil, 1, true, nil)
 	ctx.World.PlayableCharacter = mc
 
-	npc := NewCharacter(0, 0, &EntityConfig{ID: "orc"}, 1, false)
+	npc := NewCharacter(0, 0, &EntityConfig{ID: "orc"}, 1, false, nil)
 	npc.Speed = 1.0
 	npc.Alignment = AlignmentEnemy
 	npc.Behavior = BehaviorKnightHunter

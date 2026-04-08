@@ -64,6 +64,7 @@ func (mm *MechanicsManager) UpdateProximityEffects(ctx *SystemContext) {
 				}
 				if !inRange { continue }
 				if action.Type == ActionHarm {
+					if o.EffectTimers == nil { o.EffectTimers = make(map[ActorInterface]int) }
 					if o.EffectTimers[entity] <= 0 {
 						switch e := entity.(type) {
 						case *Character: e.TakeDamage(action.Amount, nil, ctx)
@@ -82,6 +83,7 @@ func (mm *MechanicsManager) UpdateProximityEffects(ctx *SystemContext) {
 							allowed = false
 						}
 					}
+					if o.EffectTimers == nil { o.EffectTimers = make(map[ActorInterface]int) }
 					if allowed && o.EffectTimers[entity] <= 0 {
 						switch e := entity.(type) {
 						case *Character: e.Heal(action.Amount)
@@ -142,6 +144,8 @@ func (mm *MechanicsManager) CheckWinConditions(ctx *SystemContext) bool {
 		for _, kills := range world.PlayableCharacter.MapKills { if kills > 0 { /* handle game over externally */ break } }
 	case ObjDestroyBuilding:
 		if world.CurrentMapType.TargetObstacle != nil && !world.CurrentMapType.TargetObstacle.Alive { mapWon = true }
+	case ObjSandbox:
+		mapWon = false
 	}
 	return mapWon
 }

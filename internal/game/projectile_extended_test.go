@@ -7,7 +7,7 @@ import (
 // TestProjectileLifecycle_Range verifies that projectiles despawn after traveling their maximum range.
 func TestProjectileLifecycle_Range(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewCharacter(0, 0, nil, 1, true)
+	mc := NewCharacter(0, 0, nil, 1, true, nil)
 	ctx.World.PlayableCharacter = mc
 
 	// NewProjectile(x, y, dx, dy, speed, damage, isPlayer, maxRange)
@@ -33,8 +33,8 @@ func TestProjectileLifecycle_Range(t *testing.T) {
 // TestProjectileCollision_MC verifies mc collision.
 func TestProjectileCollision_MC(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewCharacter(2, 0, nil, 1, true)
-	mc.Health = 100
+	mc := NewCharacter(2, 0, nil, 1, true, nil)
+	mc.State.HealthPoints = 100
 	ctx.World.PlayableCharacter = mc
 
 	// Projectile at (0,0) moving East (+X) toward MC at (2,0)
@@ -43,8 +43,8 @@ func TestProjectileCollision_MC(t *testing.T) {
 
 	// Update 1: p moves to (1,0). No collision yet (MC is at 2,0, dist is 1.0, threshold is 0.6)
 	p.Update(ctx)
-	if !p.Alive || mc.Health != 100 {
-		t.Errorf("P should be alive at (1,0), mc health %d", mc.Health)
+	if !p.Alive || mc.State.HealthPoints != 100 {
+		t.Errorf("P should be alive at (1,0), mc health %d", mc.State.HealthPoints)
 	}
 
 	// Update 2: p moves to (2,0). Collides.
@@ -53,15 +53,15 @@ func TestProjectileCollision_MC(t *testing.T) {
 	if p.Alive {
 		t.Error("Projectile should be dead after hitting MC")
 	}
-	if mc.Health >= 100 {
-		t.Errorf("MC should have taken damage, health is %d", mc.Health)
+	if mc.State.HealthPoints >= 100 {
+		t.Errorf("MC should have taken damage, health is %d", mc.State.HealthPoints)
 	}
 }
 
 // TestProjectileCollision_Obstacle verifies that projectiles are blocked by solid obstacles.
 func TestProjectileCollision_Obstacle(t *testing.T) {
 	ctx := NewTestContext()
-	mc := NewCharacter(0, 0, nil, 1, true)
+	mc := NewCharacter(0, 0, nil, 1, true, nil)
 	ctx.World.PlayableCharacter = mc
 	p := NewProjectile(0, 0, 1, 0, 1.0, 10, true, 100.0)
 

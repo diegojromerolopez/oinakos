@@ -17,7 +17,7 @@ player:
   base_attack: 25
   base_defense: 15
 npcs:
-- archetype_id: orc_male
+- archetype: orc_male
   x: 10
   y: 10
   health: 100
@@ -25,7 +25,7 @@ npcs:
   level: 15
   behavior: hunter
   name: Ugluk
-- archetype_id: orc_male
+- archetype: orc_male
   x: 12
   y: 8
   health: 80
@@ -33,7 +33,7 @@ npcs:
   level: 12
   behavior: patrol
   name: Grunt
-- archetype_id: orc_male
+- archetype: orc_male
   x: 8
   y: 12
   health: 80
@@ -42,31 +42,31 @@ npcs:
   behavior: patrol
   name: Snagga
 obstacles:
-- archetype_id: tree_1
+- archetype: tree_1
   x: 5
   y: 5
-- archetype_id: tree_2
+- archetype: tree_2
   x: -5
   y: 5
-- archetype_id: tree_3
+- archetype: tree_3
   x: 5
   y: -5
-- archetype_id: tree_4
+- archetype: tree_4
   x: -5
   y: -5
-- archetype_id: rock_1
+- archetype: rock_1
   x: 7
   y: 6
-- archetype_id: rock_2
+- archetype: rock_2
   x: -7
   y: -6
-- archetype_id: well
+- archetype: well
   x: 0
   y: 10
-- archetype_id: bush_1
+- archetype: bush_1
   x: 2
   y: 2
-- archetype_id: bush_2
+- archetype: bush_2
   x: -2
   y: -2
 weather: random

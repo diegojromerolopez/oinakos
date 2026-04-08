@@ -11,10 +11,10 @@ func TestAlignmentString(t *testing.T) {
 		alignment Alignment
 		want      string
 	}{
-		{AlignmentEnemy, "ENEMY"},
-		{AlignmentNeutral, "NEUTRAL"},
-		{AlignmentAlly, "ALLY"},
-		{Alignment(99), "UNKNOWN"},
+		{AlignmentEnemy, "hostile"},
+		{AlignmentNeutral, "neutral"},
+		{AlignmentAlly, "friendly"},
+		{Alignment(99), "unknown"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.want, func(t *testing.T) {
@@ -33,9 +33,9 @@ func TestAlignmentUnmarshalYAML(t *testing.T) {
 		{"enemy", AlignmentEnemy},
 		{"neutral", AlignmentNeutral},
 		{"ally", AlignmentAlly},
-		{"0", AlignmentEnemy},   // numeric form
-		{"1", AlignmentNeutral}, // numeric form
-		{"2", AlignmentAlly},    // numeric form
+		{"0", AlignmentNeutral},   // numeric form
+		{"1", AlignmentFriendly}, // numeric form
+		{"2", AlignmentHostile},    // numeric form
 	}
 	for _, tc := range cases {
 		t.Run(tc.input, func(t *testing.T) {

@@ -21,7 +21,7 @@ type AIManager struct {
 	provider         AIProvider
 	conversations    map[string]*NPCConversation
 	pendingDecisions []PendingDecision
-	mu              sync.Mutex
+	mu               sync.Mutex
 }
 
 func NewAIManager(provider AIProvider) *AIManager {
@@ -29,6 +29,12 @@ func NewAIManager(provider AIProvider) *AIManager {
 		provider:      provider,
 		conversations: make(map[string]*NPCConversation),
 	}
+}
+
+func (m *AIManager) SetProvider(p AIProvider) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.provider = p
 }
 
 type AppliedDecision struct {
@@ -58,6 +64,52 @@ func (m *AIManager) RequestDecision(ctx context.Context, npcID string, worldCtx 
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
+	if m.provider == nil { return }
 	resCh := m.provider.Decide(ctx, worldCtx, options)
 	m.pendingDecisions = append(m.pendingDecisions, PendingDecision{NPCID: npcID, ResCh: resCh})
+}
+
+func (g *Game) getAIModelForCurrentProvider() string {
+	if g.settings == nil { return "" }
+	switch g.settings.AIProvider {
+	case "openai":
+		return g.settings.OpenAIModel
+	case "claude":
+		return g.settings.ClaudeModel
+	case "gemini":
+		return g.settings.GeminiModel
+	case "ollama (local)":
+		return g.settings.OllamaLocalModel
+	case "ollama (service)":
+		return g.settings.OllamaModel
+	case "mistral":
+		return g.settings.MistralModel
+	case "huggingface":
+		return g.settings.HuggingFaceModel
+	case "webgpu":
+		return g.settings.WebGPUModel
+	}
+	return ""
+}
+
+func (g *Game) setAIModelForCurrentProvider(model string) {
+	if g.settings == nil { return }
+	switch g.settings.AIProvider {
+	case "openai":
+		g.settings.OpenAIModel = model
+	case "claude":
+		g.settings.ClaudeModel = model
+	case "gemini":
+		g.settings.GeminiModel = model
+	case "ollama (local)":
+		g.settings.OllamaLocalModel = model
+	case "ollama (service)":
+		g.settings.OllamaModel = model
+	case "mistral":
+		g.settings.MistralModel = model
+	case "huggingface":
+		g.settings.HuggingFaceModel = model
+	case "webgpu":
+		g.settings.WebGPUModel = model
+	}
 }

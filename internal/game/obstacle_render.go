@@ -14,9 +14,24 @@ func (o *Obstacle) Draw(screen engine.Image, vectorRenderer engine.VectorRendere
 	isoX, isoY := engine.CartesianToIso(o.X, o.Y)
 
 	op := engine.NewDrawImageOptions()
-	scale := o.Archetype.Scale
 
 	img := o.Archetype.Image
+	// Generic support for state-specific images (e.g. open/closed)
+	if o.Archetype.IsCrop {
+		if o.GrowthStage >= 2 && o.Archetype.ReadyImage != nil {
+			img = o.Archetype.ReadyImage
+		} else if o.Archetype.GrowingImage != nil {
+			img = o.Archetype.GrowingImage
+		}
+	} else if o.Locked {
+		if o.Archetype.ClosedImage != nil {
+			img = o.Archetype.ClosedImage
+		}
+	} else {
+		if o.Archetype.OpenImage != nil {
+			img = o.Archetype.OpenImage
+		}
+	}
 	if img == nil {
 		return
 	}
@@ -35,15 +50,18 @@ func (o *Obstacle) Draw(screen engine.Image, vectorRenderer engine.VectorRendere
 	}
 
 	currentFrame := 0
-	if o.Archetype.FrameCount > 1 && o.Archetype.AnimationSpeed > 0 {
+	if o.Archetype.IsCrop {
+		currentFrame = o.GrowthStage
+		// Safety: ensure currentFrame doesn't exceed loaded frames
+		if currentFrame >= o.Archetype.FrameCount { currentFrame = o.Archetype.FrameCount - 1 }
+	} else if o.Archetype.FrameCount > 1 && o.Archetype.AnimationSpeed > 0 {
 		currentFrame = (o.TickCounter / o.Archetype.AnimationSpeed) % o.Archetype.FrameCount
 	}
 
 	// Pivot point for isometric depth
-	pivotX := float64(frameWidth) * scale / 2
-	pivotY := float64(frameHeight) * scale * 0.85
+	pivotX := float64(frameWidth) / 2
+	pivotY := float64(frameHeight) * 0.85
 
-	op.Scale(scale, scale)
 	op.Translate(isoX+offsetX-pivotX, isoY+offsetY-pivotY)
 
 	if o.Archetype.FrameCount > 1 {

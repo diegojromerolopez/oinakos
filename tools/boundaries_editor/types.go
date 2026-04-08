@@ -63,4 +63,5 @@ type Viewer struct {
 	scrollOffset  int
 	input         engine.Input
 	addBtnRect    image.Rectangle
+	autoBtnRect   image.Rectangle
 }

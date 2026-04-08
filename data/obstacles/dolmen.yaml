@@ -3,13 +3,24 @@ type: static
 destructible: false
 description: "A mysterious prehistoric stone structure."
 health: 0
-scale: 1.250
 footprint:
-  - x: 2.5
-    y: 2.5
-  - x: 2.5
-    y: -2.5
-  - x: -2.5
-    y: -2.5
-  - x: -2.5
-    y: 2.5
+  - x: -6.82
+    y: -10.19
+  - x: -3.18
+    y: -7.15
+  - x: -2.41
+    y: -5.28
+  - x: -3.76
+    y: -5.32
+  - x: -6.77
+    y: -6.74
+  - x: -6.15
+    y: -5.87
+  - x: -2.72
+    y: -2.6
+  - x: -2.64
+    y: -1.17
+  - x: -5.59
+    y: -1.34
+  - x: -7.6
+    y: -3.66

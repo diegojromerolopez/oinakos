@@ -25,6 +25,13 @@ const (
 	KeyBackspace
 	KeyDelete
 	KeyI
+	KeyE
+	KeyB
+	KeyF
+	KeyR
+	KeyC
+	KeyV
+	KeyT
 )
 
 // Input defines an interface for all input operations to allow mocking.
