@@ -14,6 +14,11 @@
 
 > *Feel like a kid again — loading up an RPG from a CD-ROM in late 1996.*
 
+## 🎮 Play in Browser
+
+Experience Oinakos directly in your browser without any installation:
+👉 **[Play Oinakos (WASM)](https://diegojromerolopez.github.io/oinakos/index.html)**
+
 ---
 
 ## 📸 Screenshots
