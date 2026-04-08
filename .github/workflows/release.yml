@@ -57,7 +57,7 @@ jobs:
       - name: Build
         run: |
           mkdir -p bin
-          go build -o bin/${{ matrix.asset_name }} main.go
+          go build -ldflags "-s -w -X main.Version=0.1-alpha" -o bin/${{ matrix.asset_name }} .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

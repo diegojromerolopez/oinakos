@@ -49,44 +49,29 @@ test:
 	@echo "Running tests..."
 	$(GOCMD) test -tags test ./internal/...
 
+# Portable sed -i
+ifeq ($(shell uname), Darwin)
+  SED_I = sed -i ''
+else
+  SED_I = sed -i
+endif
+
 dist: build-wasm
 	@echo "Preparing distribution files..."
 	@mkdir -p $(DIST_DIR)
+	@cp assets/images/logo.png $(DIST_DIR)/
 	@# Copy wasm_exec.js for reference, but we will also inline it
-	cp "$$(go env GOROOT)/lib/wasm/wasm_exec.js" $(DIST_DIR)/
-	@# Generate index.html with WebLLM support and inlined wasm_exec.js
-	@echo "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>Oinakos</title><style>body { margin: 0; background: #000; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; color: #daa520; flex-direction: column; } #status { font-size: 24px; margin-bottom: 10px; } #llm-status { font-size: 14px; color: #888; }</style></head><body><div id=\"status\">Loading Oinakos...</div><div id=\"llm-status\">Initializing Local WebGPU LLM...</div><script type=\"module\">" > $(DIST_DIR)/index.html
-	@echo "import * as webllm from 'https://esm.run/@mlc-ai/web-llm';" >> $(DIST_DIR)/index.html
-	@echo "window.oinakosWebLLM = {" >> $(DIST_DIR)/index.html
-	@echo "  engine: null," >> $(DIST_DIR)/index.html
-	@echo "  async init() {" >> $(DIST_DIR)/index.html
-	@echo "    try {" >> $(DIST_DIR)/index.html
-	@echo "      this.engine = await webllm.CreateMLCEngine('Llama-3-8B-Instruct-v0.1-q4f32_1-MLC', { initProgressCallback: (p) => { document.getElementById('llm-status').innerText = 'LLM: ' + p.text; } });" >> $(DIST_DIR)/index.html
-	@echo "      document.getElementById('llm-status').innerText = 'Local LLM Ready (WebGPU)'; " >> $(DIST_DIR)/index.html
-	@echo "    } catch (e) { console.error('WebGPU LLM failed:', e); document.getElementById('llm-status').innerText = 'Local LLM Failed (Using Noop)'; }" >> $(DIST_DIR)/index.html
-	@echo "  }," >> $(DIST_DIR)/index.html
-	@echo "  async chat(system, user, history) {" >> $(DIST_DIR)/index.html
-	@echo "    if (!this.engine) return '...';" >> $(DIST_DIR)/index.html
-	@echo "    const messages = [{role: 'system', content: system}, ...history, {role: 'user', content: user}];" >> $(DIST_DIR)/index.html
-	@echo "    const reply = await this.engine.chat.completions.create({ messages });" >> $(DIST_DIR)/index.html
-	@echo "    return reply.choices[0].message.content;" >> $(DIST_DIR)/index.html
-	@echo "  }," >> $(DIST_DIR)/index.html
-	@echo "  async decide(situation, options) {" >> $(DIST_DIR)/index.html
-	@echo "    if (!this.engine) return {choice: options[0], reasoning: 'LLM not loaded'};" >> $(DIST_DIR)/index.html
-	@echo "    const prompt = 'Situation: ' + situation + '\\\\nOptions: ' + options.join(', ') + '\\\\nPick one option and provide a short reasoning. Format: CHOICE: <option>\\\\nREASONING: <reasoning>';" >> $(DIST_DIR)/index.html
-	@echo "    const reply = await this.engine.chat.completions.create({ messages: [{role: 'user', content: prompt}] });" >> $(DIST_DIR)/index.html
-	@echo "    const text = reply.choices[0].message.content;" >> $(DIST_DIR)/index.html
-	@echo "    const choiceMatch = text.match(/CHOICE:\\\\s*(.*)/i);" >> $(DIST_DIR)/index.html
-	@echo "    const reasoningMatch = text.match(/REASONING:\\\\s*(.*)/i);" >> $(DIST_DIR)/index.html
-	@echo "    return { choice: choiceMatch ? choiceMatch[1].trim() : options[0], reasoning: reasoningMatch ? reasoningMatch[1].trim() : '' };" >> $(DIST_DIR)/index.html
-	@echo "  }" >> $(DIST_DIR)/index.html
-	@echo "};" >> $(DIST_DIR)/index.html
-	@echo "window.oinakosWebLLM.init();" >> $(DIST_DIR)/index.html
-	@echo "</script><script>" >> $(DIST_DIR)/index.html
-	@cat $(DIST_DIR)/wasm_exec.js >> $(DIST_DIR)/index.html
-	@echo "</script><script>console.time('WASM Load'); const go = new Go(); WebAssembly.instantiateStreaming(fetch('oinakos.wasm'), go.importObject).then((result) => { console.timeEnd('WASM Load'); console.time('WASM Run'); document.getElementById('status').style.display = 'none'; go.run(result.instance); });</script></body></html>" >> $(DIST_DIR)/index.html
-	rm $(DIST_DIR)/wasm_exec.js
-	@echo "Dist files prepared in $(DIST_DIR)/: index.html (inlined JS) and oinakos.wasm"
+	@cp "$$(go env GOROOT)/lib/wasm/wasm_exec.js" $(DIST_DIR)/
+	@# Use the template from assets/wasm/index.html
+	@cp assets/wasm/index.html $(DIST_DIR)/index.html
+	@# Inline wasm_exec.js into index.html
+	@$(SED_I) '/\/\*WASM_EXEC_JS\*\//r $(DIST_DIR)/wasm_exec.js' $(DIST_DIR)/index.html
+	@# Inject version
+	@$(SED_I) 's/{{VERSION}}/$(VERSION)/g' $(DIST_DIR)/index.html
+	@rm $(DIST_DIR)/wasm_exec.js
+	@echo "Dist files prepared in $(DIST_DIR)/: index.html (inlined JS), logo.png and oinakos.wasm"
+
+
 
 run: build
 	./$(BIN_DIR)/$(APP_NAME) $(if $(MAP),-map $(MAP)) $(if $(MAP_TYPE),-map-type $(MAP_TYPE)) $(if $(HERO),-hero $(HERO))

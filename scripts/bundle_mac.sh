@@ -13,7 +13,7 @@ mkdir -p "${RES_DIR}"
 
 echo "Building native binary for macOS..."
 # Use -ldflags="-s -w" to reduce size and -X main.Version to inject version.
-go build -ldflags "-s -w -X main.Version=${VERSION:-1.0}" -o "${MAC_DIR}/oinakos" main.go
+go build -ldflags "-s -w -X main.Version=${VERSION:-1.0}" -o "${MAC_DIR}/oinakos" .
 
 echo "Generating Info.plist..."
 cat > "${CONTENTS_DIR}/Info.plist" <<EOF
