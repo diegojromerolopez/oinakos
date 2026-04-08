@@ -147,10 +147,16 @@ oinakos/
 
 ## 📜 Roadmap
 - [x] **Animation System**: Initial support for animated objects (e.g., campfires). Full sheet support in progress.
-- [ ] **A\* Pathfinding**: Proper grid navigation to replace linear tracking.
-- [ ] **Dynamic Biomes**: Procedural weather and terrain changes based on exploration distance.
-- [ ] **UI Overhaul**: Textured panels and rich character portraits.
-- [ ] **Miasma Expansion**: Specialized disease mechanics for stagnant/polluted zones.
+- [x] **A\* Pathfinding**: Advanced grid-based navigation logic implemented for complex NPC movement.
+- [x] **UI Overhaul**: Textured panels, rich inventory management, and immersive character portraits.
+- [x] **Dynamic Biomes**: Procedural weather cycles and terrain-specific logic based on world coordinates.
+- [x] **Miasma & Trauma**: Implemented infectious diseases and irreversible physical/mental trauma mechanics.
+- [ ] **Legacy & Lineage**: Marriage, family surnames, and land inheritance across multiple generations.
+- [ ] **Dynamic Global Economy**: Resource prices reacting to local harvests, bandit raids, and trade caravans.
+- [ ] **Alchemy & Crafting**: Deep crafting tree for refining raw ores into alloys and brewing medical potions.
+- [ ] **Naval Navigation**: Implementation of boat travel, fishing at sea, and mysterious coastal biomes.
+- [ ] **Campaign Editor**: A visual tool for defining multi-map progression, quest triggers, and branching dialogue.
+- [ ] **Official Scripting API**: Formal Lua or JavaScript-based hooks for external modding control.
 
 ---
 
