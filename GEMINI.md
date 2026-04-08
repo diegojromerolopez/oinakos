@@ -6,7 +6,9 @@ Oinakos is a performance-optimized, infinite isometric action RPG and biological
 
 - **Strict File Limit**: **IMPERATIVE**. No source file may exceed **500 lines**. If an edit would push a file over this limit, you **MUST** refactor and split it before proceeding.
 - **Dependency Isolation**: `internal/game` MUST NEVER import `ebiten`. All graphics/input must stay behind the `engine` interfaces.
-- **YAML Integrity**: Every time you add or delete YAML files in `data/`, you MUST update or verify `TestForEachYAML` to reflect the expected file count or structure.
+- **YAML & Asset Integrity**: 
+  - Every time you add or delete YAML files in `data/`, you MUST update or verify `TestForEachYAML` to reflect the expected file count or structure.
+  - Assets must follow strict naming: `<id>.png` for obstacles, or a folder `<id>/` containing `static.png`, `attack.png`, etc., for archetypes.
 - **Simulation Integrity**:
   - All logic must be testable in **Headless Mode** (`-tags test` or `-tags headless`).
   - When in doubt, if the simulation fails or crashes, fix it according to the behavior of the real world.
@@ -24,23 +26,38 @@ Oinakos is a performance-optimized, infinite isometric action RPG and biological
 - **Coordinate Systems**:
   - **Cartesian**: Physics, AI, collision, and logic. Standard units are **pedes** (feet).
   - **Isometric**: Rendering only. `isoX = (x - y)`, `isoY = (x + y) * 0.5`.
-- **Simulation Timing**: Locked at **60 TPS**. 1 day = 17,280 ticks. 1 year = 360 days (standard).
-- **Headless Mode**: Triggered via `go run -tags headless .` or `make run-headless`. Uses `MockGraphics` and `MockInput` to run the simulation without a window.
-- **Long-term Simulation**: To run an autonomous simulation that logs to a file for AI agent analysis:
+- **Simulation Timing**: Locked at **60 TPS**. 
+  - 1 hour = 720 ticks.
+  - 1 day = 17,280 ticks. 
+  - 1 year = 360 days (6,220,800 ticks).
+- **Headless Mode**: Triggered via `go run -tags headless .` or `make run-headless`. Uses `MockGraphics` and `MockInput`.
+- **Long-term Simulation**: 
   `go run -tags headless . -fast -debug > simulation_1year.log 2>&1`
   *Use `-fast` for $10\times$ speed and `-debug` for detailed biological/breeding logs.*
-- **Adult Mode**: Toggleable in `settings.yml`. Enables arousal, physical trauma, and mature interaction mechanics.
+- **Versioning**: Distributed via `LDFLAGS=-ldflags "-X main.Version=$(VERSION)"`.
 
 ---
 
-## 📏 Units of Measurement (Ancient Roman)
+## 📏 Units & Conversions (Ancient Roman)
 
-| Roman Unit | Ratio to `pes` (Foot) | Metric (Approx) | Notes |
+| Roman Unit | Ratio to `pes` (Foot) | Metric (Approx) | Context |
 | :--- | :--- | :--- | :--- |
-| **pes** | 1 pes | ~296 mm | Fundamental unit |
-| **passus** | 5 pedes | ~1.48 m | Double step (pace) |
-| **mille passus** | 5,000 pedes | ~1.48 km | Roman mile |
-| **libra** | 1 libra | ~329 g | Weight unit |
+| **pes** | 1 pes | ~296 mm | Logic fundamental |
+| **passus** | 5 pedes | ~1.48 m | Pace (Double step) |
+| **mille passus**| 5,000 pedes | ~1.48 km | Roman Mile |
+| **libra** | 1 libra | ~329 g | Weight (R. Pound) |
+
+---
+
+## 🖼️ Asset Standards & Loading
+
+- **Green Screen**: Assets use **Lime Green (`#00FF00`)** as a transparency key. The `engine.Transparentize()` function handles this at runtime.
+- **Obstacle States**: Registries look for specific files in `assets/images/obstacles/<id>/`:
+  - `open.png`, `closed.png` (Chests/Doors)
+  - `growing.png`, `ready.png` (Crops)
+- **Archetype Sprites**: Found in `assets/images/archetypes/<id>/` or `animals/<id>/`:
+  - `static.png`, `back.png`, `attack.png`, `hit.png`, `corpse.png`, `crouch.png`, `pregnant.png`, `resting.png`.
+- **Object Footprints**: Obstacles and large objects require a `footprint` (list of `x,y` points) in their YAML for proper collision.
 
 ---
 
@@ -63,74 +80,78 @@ Oinakos is a performance-optimized, infinite isometric action RPG and biological
 | `speed` | `dexterity * 0.02` | Cartesian units/tick |
 | `attack_cooldown`| `baseCD * (1.5 - dexterity * 0.01)` | Min clamp: 10 ticks |
 | `max_weight` | `(strength * 1.5 + health * 0.5) / 0.329` | Roman **librae** |
-| `survivalism` | `wisdom * 0.4 + intellect * 0.3 + health * 0.2 + dexterity * 0.1` | General survival proficiency (Yield basis) |
+| `survivalism` | `wisdom * 0.4 + intellect * 0.3 + health * 0.2 + dexterity * 0.1` | Survival proficiency |
 
-**Age Modifiers:**
-- **Young (<25)**: Physical stats penalty up to 25%, Mental up to 30%.
-- **Elder (>40)**: Physical stats decay (up to 25% at age 85); Mental stats **improve** (5% per decade).
+**Combat Mechanics:**
+- **Hit Chance**: `attack / (attack + defense) * 100` (Clamped 5%–95%).
+- **RPG Scaling**: `Stat = Base + (log2(Level) * 10)` (Prevents inflation).
 
 ---
 
 ## 🧬 Biological & Temporal Simulation
 
 ### Core Needs (`State` Struct)
-Living entities simulate needs every tick. Decay is modified by the **Health** attribute: `decayMult = 1.25 - (health * 0.01)`.
-
-- **Hunger/Thirst**: Base rates `0.02` and `0.03`. Dehydration/Starvation leads to HP loss.
-- **Fatigue**: Base rate `0.01`. Recovered by `ActorResting` near comforts.
-- **Vampirism**: Immortal characters (Age Rate 0) satisfy Hunger/Thirst via **"Bloodlust"** (ActorFeeding on victims). Standard food is rejected.
+Living entities simulate needs every `SimStep` (default 10 ticks). Decay mult: `1.25 - (health * 0.01)`.
+- **Hunger**: Base rate `0.02`. **Thirst**: Base rate `0.03`. **Fatigue**: Base rate `0.01`.
+- **Vampirism**: satisfy Hunger/Thirst via **"Bloodlust"** (feeding). Normal food rejected.
 
 ### Lifecycle & Aging
-- **Life Stages**: `Baby` (<1y), `Kid` (1-12y), `Teenager` (12-18y), `Adult` (18-65y), `Elder` (>65y).
-- **Career Transition**: At Age 18, NPCs select a Professional Archetype (e.g., Man-at-Arms, Peasant, Priest) based on their highest Primary Attribute.
-- **Death**: Natural death chance starts at **85 years**. `Age.Max` in YAML can set hard limits (0 = immortal).
-- **Genetics**: Offspring inherit attributes from parents (50/50 blend) with stochastic variation (Mutation chance: 5%).
+- **Stages**: `Baby` (<1y), `Kid` (1-12y), `Teenager` (12-18y), `Adult` (18-65y), `Elder` (>65y).
+- **Death**: Natural death chance starts at **85 years**. `Age.Max` in YAML can set hard limits.
+- **Genetics**: 50/50 parental blend + 5% mutation chance.
 
-### Procreation & Romance
-- **The Social Drive**: Intercourse occurs during `ShiftLeisure`. Triggered by **Relationship (>40)** or **Uninhibited Impulse** (Arousal > 50 or IsDrunk).
-- **Biological Constraint**: Pregnancy only for **non-transexual biological females** mated with **non-transexual biological males**. 
-- **Exclusivity**: Human procreation requires **Vaginal** intercourse.
-
-### Trauma & Environmental Hazards
-- **Physical Trauma**: Irreversible damage (Limbs, Blindness, Broken Spine).
-- **Grief Cascade**: Death of a Partner/Friend triggers **"Mourning"** (Double GriefTicks). Causes massive Sanity drain, leading to Psychotic Breaks.
-- **Miasma**: Dead bodies "Rot" after 1 day. Rotten corpses emit a **Miasma Cloud** (4 pedes radius). Causes Sanity loss and Sickness (Plague). AI will pathfind around Miasma.
-- **Hunting & Butchering**: 
-  - **Hunt**: Used to track and kill animals. Success and yields scale with `survivalism`.
-  - **Butcher**: Used to extract maximum `raw_meat` from animal corpses. Yields scale with `survivalism`.
+### Adult Mode & Trauma
+- **Procreation**: Triggered during `ShiftLeisure`. Requires **Relationship (>40)** or **Arousal (>50)**.
+- **Physical Trauma**: Irreversible (Limbs, Blindness, Broken Spine).
+- **Miasma**: Dead bodies "Rot" after 1 day, emitting a **4 pedes** radius cloud causing Sickness/Sanity drain.
 
 ---
 
-## 🧠 AI Simulation Layer
+## 🧠 AI & NPC Intelligence
 
-### World Serialization
-The engine serializes the environment into `WorldContext` JSON for AI reasoning:
-- **Sanity & Breakpoints**: Critical Sanity (0) triggers `ActorBerserk` (Psychotic Break).
+### AI Providers
+- **Native**: Local models (native to Go or via local services).
+- **Cloud**: OpenAI, Claude, Gemini, Mistral, Hugging Face.
+- **WASM**: WebGPU-accelerated models (e.g., `Llama-3-8B`) running in-browser.
+- **Bridge**: Polls `~/.oinakos/headless/output.json` for situation and waits for `input.json` decision.
 
-### Agent Bridge
-External AI interacts via `agent-bridge`:
-1. **Output**: Game writes `output.json` with situation and options.
-2. **Input**: AI writes `input.json` with `ChosenOption` and `Reasoning`.
+### External Interaction (`agent-bridge`)
+1. **Output**: Game writes current `WorldContext` and valid options.
+2. **Input**: AI writes `ChosenOption` and `Reasoning`.
+
+---
+
+## 🛠 Developer Tooling
+
+- **Boundaries Editor**: `make boundaries-editor OBSTACLE=tree_oak`
+  - Edit collision footprints visually.
+  - Supports `--obstacle`, `--npc`, `--character`, `--object`.
+- **Map Editor**: `make map-editor`
+  - Paint tiles, place obstacles, and define spawn points.
+- **Headless Profiling**: Use `-fast` for high-speed simulation testing.
 
 ---
 
 ## 📜 Coding Standards (SOLID)
 
-- **Dependency Inversion**: High-level game logic depends on `engine` interfaces, not Ebiten.
-- **Composition**: Use struct embedding. `Actor` embeds `State`, `Attributes`, and `Trauma`.
-- **Error Handling**: Check every error immediately. No panics in production code.
-- **Interface Segregation**: Keep interfaces small (e.g., `engine.Graphics`, `engine.Input`).
+- **Dependency Inversion**: High-level game logic depends on `engine` interfaces.
+- **Composition**: `Actor` embeds `State`, `Attributes`, and `Trauma`.
+- **Error Handling**: Check every error immediately. No panics in production.
+- **Package Separation**: `internal/engine` for infra, `internal/game` for logic.
 
 ---
 
-## 🛠 Makefile Reference
+## 📂 Repository Structure (Modding)
 
-| Command | Description |
-| :--- | :--- |
-| `make run` | Build & run native |
-| `make run-headless` | Run pure simulation (JSON-AI Bridge) |
-| `make test` | Run all headless unit tests |
-| `make dist` | Build WASM package with WebLLM support |
-| `make boundaries-editor` | Open collision footprint tool |
-| `make map-editor` | Open map authoring tool |
-| `make bundle-all` | Pack binaries for Mac, Win, Linux |
+```text
+oinakos/ (or root)
+├── data/              # Simulation Definitions (YAML)
+│   ├── animals/       # Animal species and stats
+│   ├── archetypes/    # Shared human/NPC templates
+│   ├── obstacles/     # Buildings, Trees, Containers
+│   └── maps/          # Level and Chunk definitions
+├── assets/            # Multimedia Assets
+│   ├── images/        # Sprites (Lime Green #00FF00 background)
+│   ├── audio/         # Voice lines and SFX
+│   └── fonts/         # TTF Medieval/Antique fonts
+```
