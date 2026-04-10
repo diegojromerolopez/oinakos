@@ -8,6 +8,28 @@ player:
   behavior: hunter
   denarii: 500
 obstacles:
-  - id: well_01
+  - archetype: well_4
     x: 6.0
     y: 5.0
+inhabitants:
+  - npc_id: marca
+    x: 10.0
+    y: 10.0
+    alignment: neutral
+    behavior: trader
+  - archetype: peasant_male
+    x: 15.0
+    y: 15.0
+    behavior: wander
+  - archetype: peasant_female
+    x: 15.0
+    y: 10.0
+    behavior: wander
+  - archetype: smith_merchant
+    x: 20.0
+    y: 5.0
+    behavior: trader
+  - archetype: doctor_male
+    x: 0.0
+    y: 0.0
+    behavior: trader

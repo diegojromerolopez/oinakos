@@ -25,5 +25,15 @@ obstacles:
   id: target_portal
   x: 50
   y: 50
-inhabitants: []
+inhabitants:
+  - archetype: peasant_male
+    name: Tester Bob
+    x: 10
+    y: 10
+    behavior: wander
+  - archetype: golden_guard
+    x: 40
+    y: 40
+    alignment: neutral
+    behavior: patrol
 weather: clear

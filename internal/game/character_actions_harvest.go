@@ -35,6 +35,26 @@ func (c *Character) CheckAttackHits(ctx *SystemContext, skill string) {
 		}
 	}
 	if closestTarget != nil {
+		if c.Weapon != nil && c.Weapon.IsRanged() && skill == "" {
+			// Fire projectile instead of instant hit
+			dx, dy := 0.0, 0.0
+			switch c.Facing {
+			case DirSE: dx, dy = 1, 0.5
+			case DirSW: dx, dy = -1, 0.5
+			case DirNE: dx, dy = 1, -0.5
+			case DirNW: dx, dy = -1, -0.5
+			case DirE: dx = 1
+			case DirW: dx = -1
+			case DirN: dy = -1
+			case DirS: dy = 1
+			}
+			mag := math.Sqrt(dx*dx + dy*dy)
+			if mag > 0 {
+				pSpd := c.RawStats.ProjectileSpeed; if pSpd <= 0 { pSpd = 0.5 }
+				ctx.World.AddProjectile(NewProjectile(c.X, c.Y, dx/mag, dy/mag, pSpd, c.GetTotalAttack(), false, 100.0))
+				return
+			}
+		}
 		c.hitCharacter(&closestTarget.Actor, skill, ctx)
 		hitSomething = true
 	}

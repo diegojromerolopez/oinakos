@@ -68,25 +68,44 @@ func (p *Projectile) Update(ctx *SystemContext) {
 		}
 	}
 
-	// For now, projectiles are enemy arrows aiming at player
-	mc := ctx.World.PlayableCharacter
-	if !p.IsPlayer && mc.IsAlive() {
-		dist := math.Sqrt(math.Pow(mc.X-p.X, 2) + math.Pow(mc.Y-p.Y, 2))
-		if dist < 0.6 {
-			// Hit!
-			protection := mc.GetTotalProtection()
-			finalDmg := int(math.Max(1, float64(p.Damage-protection)))
-			DebugLog("Projectile HIT Player for %d damage", finalDmg)
-			mc.TakeDamage(finalDmg, nil, ctx)
-
-			ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{
-				Text:  fmt.Sprintf("-%d", finalDmg),
-				X:     mc.X,
-				Y:     mc.Y,
-				Life:  45,
-				Color: ColorHarm,
-			})
-			p.Alive = false
+	// Projectile collision with characters
+	if p.IsPlayer {
+		for _, n := range ctx.World.Characters {
+			if n != nil && n.IsAlive() && !n.IsPlayerControlled {
+				dist := math.Sqrt(math.Pow(n.X-p.X, 2) + math.Pow(n.Y-p.Y, 2))
+				if dist < 0.8 {
+					protection := n.GetTotalProtection()
+					finalDmg := int(math.Max(1, float64(p.Damage-protection)))
+					n.TakeDamage(finalDmg, ctx.World.PlayableCharacter, ctx)
+					ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{
+						Text:  fmt.Sprintf("-%d", finalDmg),
+						X:     n.X,
+						Y:     n.Y,
+						Life:  45,
+						Color: ColorHarm,
+					})
+					p.Alive = false
+					return
+				}
+			}
+		}
+	} else {
+		mc := ctx.World.PlayableCharacter
+		if mc != nil && mc.IsAlive() {
+			dist := math.Sqrt(math.Pow(mc.X-p.X, 2) + math.Pow(mc.Y-p.Y, 2))
+			if dist < 0.6 {
+				protection := mc.GetTotalProtection()
+				finalDmg := int(math.Max(1, float64(p.Damage-protection)))
+				mc.TakeDamage(finalDmg, nil, ctx)
+				ctx.World.FloatingTexts = append(ctx.World.FloatingTexts, &FloatingText{
+					Text:  fmt.Sprintf("-%d", finalDmg),
+					X:     mc.X,
+					Y:     mc.Y,
+					Life:  45,
+					Color: ColorHarm,
+				})
+				p.Alive = false
+			}
 		}
 	}
 }

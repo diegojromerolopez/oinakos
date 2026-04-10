@@ -32,18 +32,26 @@ obstacles:
   x: 30.0
   y: 15.0
 inhabitants:
-- archetype: man_at_arms_female
-  x: 10.0
-  y: 12.0
-  alignment: enemy
-- archetype: orc_male
-  x: 20.0
-  y: 20.0
-  alignment: enemy
-- archetype: peasant_male
-  x: 5.0
-  y: 15.0
-  alignment: enemy
+  - archetype: peasant_king
+    name: King Alfonso
+    x: 0.0
+    y: 2.0
+    alignment: friendly
+    behavior: escort
+    must_survive: true
+    is_target: false
+  - archetype: man_at_arms_female
+    x: 10.0
+    y: 12.0
+    alignment: enemy
+  - archetype: orc_male
+    x: 20.0
+    y: 20.0
+    alignment: enemy
+  - archetype: peasant_male
+    x: 5.0
+    y: 15.0
+    alignment: enemy
 spawns:
 - archetype: man_at_arms_male
   alignment: enemy
