@@ -7,10 +7,15 @@ import (
 )
 
 func TestDebugMode(t *testing.T) {
-	// Use a local directory for testing
-	testDir := "test_oinakos"
+	// Use a proper temporary directory for testing
+	testDir := t.TempDir()
+	
+	// Backup and restore global state
+	oldDir := GetOinakosDir()
 	SetOinakosDir(testDir)
-	defer os.RemoveAll(testDir)
+	t.Cleanup(func() {
+		SetOinakosDir(oldDir)
+	})
 
 	// Start disabled
 	SetDebugMode(false)
@@ -35,7 +40,4 @@ func TestDebugMode(t *testing.T) {
 	if IsDebugEnabled() {
 		t.Error("Debug should be disabled again")
 	}
-
-	// Clean up
-	os.Remove("oinakos/debug.log")
 }
