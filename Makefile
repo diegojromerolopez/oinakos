@@ -1,4 +1,4 @@
-.PHONY: all build build-wasm build-tools test run run-debug boundaries-editor map-editor serve-wasm bundle-mac bundle-windows bundle-linux bundle-all clean
+.PHONY: all build build-wasm build-tools test run run-debug boundaries-editor map-editor serve-wasm bundle-mac bundle-windows bundle-linux bundle-all release clean
 
 # Default name for the native binary
 APP_NAME=oinakos
@@ -115,6 +115,14 @@ bundle-linux:
 
 bundle-all: bundle-mac bundle-windows bundle-linux
 	@echo "All platforms bundled successfully."
+
+release: test
+	@echo "Releasing version $(VERSION)..."
+	@if git rev-parse $(VERSION) >/dev/null 2>&1; then echo "Error: Tag $(VERSION) already exists."; exit 1; fi
+	@git diff-index --quiet HEAD -- || (echo "Error: Uncommitted changes in repository. Please commit or stash them before releasing." && exit 1)
+	git tag -a $(VERSION) -m "Release version $(VERSION)"
+	git push origin $(VERSION)
+	@echo "Version $(VERSION) released and pushed successfully."
 
 clean:
 	@echo "Cleaning up..."
