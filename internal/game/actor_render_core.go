@@ -5,7 +5,7 @@ import (
 	"oinakos/internal/engine"
 )
 
-func DrawActorGetSprite(a *Actor) engine.Image {
+func DrawActorGetSprite(a *Actor, adultMode bool) engine.Image {
 	if a.Config == nil { return nil }
 	conf, mod := a.Config, (*ModelConfig)(nil)
 	if a.SelectedModel != "" && conf.Models != nil { mod = conf.Models[a.SelectedModel] }
@@ -21,14 +21,25 @@ func DrawActorGetSprite(a *Actor) engine.Image {
 	if a.ActionState == ActorAttacking { if mod != nil && mod.AttackImage != nil { return mod.AttackImage }; if img := conf.PickAttackImage(a.Tick / 30); img != nil { return img } }
 	if a.ActionState == ActorChopping { if conf.ChoppingImage != nil { return conf.ChoppingImage }; if mod != nil && mod.AttackImage != nil { return mod.AttackImage }; if img := conf.PickAttackImage(a.Tick / 30); img != nil { return img } }
 	if a.ActionState == ActorDigging { if conf.DiggingImage != nil { return conf.DiggingImage }; if mod != nil && mod.AttackImage != nil { return mod.AttackImage }; if img := conf.PickAttackImage(a.Tick / 30); img != nil { return img } }
-	if a.ActionState == ActorResting { if mod != nil && mod.RestingImage != nil { return mod.RestingImage }; if img := conf.RestingImage; img != nil { return img }; if mod != nil && mod.CrouchImage != nil { return mod.CrouchImage }; if img := conf.CrouchImage; img != nil { return img }; if mod != nil && mod.StaticImage != nil { return mod.StaticImage }; return conf.StaticImage }
+	if a.ActionState == ActorResting {
+		if adultMode {
+			if mod != nil && mod.RestingAdultImage != nil { return mod.RestingAdultImage }
+			if conf.RestingAdultImage != nil { return conf.RestingAdultImage }
+		}
+		if mod != nil && mod.RestingImage != nil { return mod.RestingImage }
+		if img := conf.RestingImage; img != nil { return img }
+		if mod != nil && mod.CrouchImage != nil { return mod.CrouchImage }
+		if img := conf.CrouchImage; img != nil { return img }
+		if mod != nil && mod.StaticImage != nil { return mod.StaticImage }
+		return conf.StaticImage
+	}
 	if a.ActionState == ActorCrouching { if mod != nil && mod.CrouchImage != nil { return mod.CrouchImage }; if img := conf.CrouchImage; img != nil { return img }; if mod != nil && mod.StaticImage != nil { return mod.StaticImage }; return conf.StaticImage }
 	if a.ActionState == ActorCooking { if mod != nil && mod.CookingImage != nil { return mod.CookingImage }; if conf.CookingImage != nil { return conf.CookingImage }; if mod != nil && mod.StaticImage != nil { return mod.StaticImage }; return conf.StaticImage }
 	return dS
 }
 
-func DrawActorGetOptions(a *Actor, offsetX, offsetY float64, isPC bool) *engine.DrawImageOptions {
-	isoX, isoY := engine.CartesianToIsoZ(a.X, a.Y, a.Z); dS := DrawActorGetSprite(a); if dS == nil { return engine.NewDrawImageOptions() }
+func DrawActorGetOptions(a *Actor, offsetX, offsetY float64, isPC bool, adultMode bool) *engine.DrawImageOptions {
+	isoX, isoY := engine.CartesianToIsoZ(a.X, a.Y, a.Z); dS := DrawActorGetSprite(a, adultMode); if dS == nil { return engine.NewDrawImageOptions() }
 	w, h := dS.Size(); flip, op := 1.0, engine.NewDrawImageOptions()
 	if a.Facing == DirSE || a.Facing == DirNE { flip = -1.0 }; op.Scale(flip, 1.0)
 	tx, ty := isoX+offsetX, isoY+offsetY-float64(h)*0.85; if flip < 0 { tx += float64(w) / 2 } else { tx -= float64(w) / 2 }
@@ -40,7 +51,7 @@ func DrawActorGetOptions(a *Actor, offsetX, offsetY float64, isPC bool) *engine.
 
 func DrawActor(a *Actor, screen engine.Image, textRenderer engine.TextRenderer, vectorRenderer engine.VectorRenderer, paletteShader engine.Shader, offsetX, offsetY float64, isPlayableCharacter bool, adultMode bool) {
 	if screen == nil || a.Config == nil { return }
-	dS := DrawActorGetSprite(a); if dS == nil { return }; op := DrawActorGetOptions(a, offsetX, offsetY, isPlayableCharacter)
+	dS := DrawActorGetSprite(a, adultMode); if dS == nil { return }; op := DrawActorGetOptions(a, offsetX, offsetY, isPlayableCharacter, adultMode)
 	if !a.IsOccluded { DrawAlignmentIndicator(screen, vectorRenderer, a, offsetX, offsetY, false) }
 	hasP, hasT := a.Config.PrimaryColor != "" || a.Config.SecondaryColor != "", a.Trauma != (PhysicalTrauma{})
 	if (hasP || hasT) && paletteShader != nil {

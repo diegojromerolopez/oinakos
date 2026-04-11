@@ -96,9 +96,8 @@ func TestCharacterAI_Flee(t *testing.T) {
 	ctx.World.Characters = ctx.characters
 	ctx.World.PlayableCharacter = mc
 	
-	sysCtx := &SystemContext{
-		World: ctx.World,
-	}
+	sysCtx := NewTestContext()
+	sysCtx.World = ctx.World
 	
 	initialDist := math.Sqrt(math.Pow(npc.X-mc.X, 2) + math.Pow(npc.Y-mc.Y, 2))
 	t.Logf("Initial dist: %f", initialDist)

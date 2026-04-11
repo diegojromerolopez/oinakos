@@ -62,6 +62,22 @@ func (a *Actor) Kill(reason string) {
 
 func (a *Actor) GetTotalMaxHealth() int { return a.State.MaxHealthPoints + a.MaxHealthBonus }
 
+func (a *Actor) AddDenarii(amount int, world *World) {
+	if a.Behavior == BehaviorSlave && a.MasterID != "" && world != nil {
+		if world.PlayableCharacter != nil && world.PlayableCharacter.UID == a.MasterID {
+			world.PlayableCharacter.Denarii += amount
+			return
+		}
+		for _, other := range world.Characters {
+			if other.UID == a.MasterID {
+				other.Denarii += amount
+				return
+			}
+		}
+	}
+	a.Denarii += amount
+}
+
 type ActorInterface interface {
 	GetActor() *Actor
 	Heal(amount int)

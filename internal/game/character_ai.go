@@ -8,6 +8,42 @@ import (
 )
 
 func (c *Character) updateAI(ctx *SystemContext) {
+	if !ctx.Settings.AdultMode {
+		if c.Behavior == BehaviorSlave || c.Behavior == BehaviorSlaver {
+			c.Behavior = BehaviorWander
+			c.MasterID = ""
+			c.Alignment = AlignmentNeutral
+		}
+	}
+
+	// DEBT DEFAULT LEDGER: If any independent debt is due and unpaid, become a slave to the specific lender
+	if ctx.Settings.AdultMode && len(c.Debts) > 0 {
+		stillInDebt := make([]Loan, 0)
+		enslaved := false
+		for _, loan := range c.Debts {
+			if ctx.World.State.Ticks > loan.Deadline && !enslaved {
+				if c.Denarii >= loan.Amount {
+					// Auto-pay if possible
+					c.Denarii -= loan.Amount
+					if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s auto-paid a loan of %d denarii.", c.Name, loan.Amount), LogInfo) }
+				} else {
+					// Default: Enslavement to the SPECIFIC lender
+					c.Behavior = BehaviorSlave
+					c.MasterID = loan.LenderUID
+					if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s was enslaved to UID %s for defaulting on %d debt.", c.Name, loan.LenderUID, loan.Amount), LogWarning) }
+					enslaved = true
+				}
+			} else if !enslaved {
+				stillInDebt = append(stillInDebt, loan)
+			}
+		}
+		if enslaved {
+			c.Debts = nil // Clear all debts as they are now a slave
+		} else {
+			c.Debts = stillInDebt
+		}
+	}
+
 	// Emergency Hydration: If incapacitated but at a source, drink anyway (Last Gasp)
 	if c.IsAlive() && c.State.Thirst > 80 && c.ActionState == ActorIncapacitated {
 		atSource := false
@@ -224,46 +260,64 @@ func (c *Character) updateAI(ctx *SystemContext) {
 				c.ActionState = ActorIdle
 			}
 		}
-	} else {
-		obstacles := ctx.World.Obstacles
-		switch c.Behavior {
-		case BehaviorHauler: c.updateHauler(ctx, obstacles)
-		case BehaviorLumberjack: c.updateLumberjack(ctx, obstacles)
-		case BehaviorFarmer: c.updateFarmer(ctx, obstacles)
-		case BehaviorArtisan: c.updateArtisan(ctx, obstacles)
-		case BehaviorPatrol: c.updatePatrol(ctx, obstacles)
-		case BehaviorChaos: c.updateChaotic(ctx, obstacles)
-		case BehaviorTrader: c.updateWander(ctx, obstacles)
-		case BehaviorCriminal: c.updateCriminal(ctx, obstacles)
-		case BehaviorHunter: c.updateChaotic(ctx, obstacles) // Fallback for hunters searching
-		case BehaviorWander: 
-			if c.Alignment == AlignmentAlly && ctx.World.PlayableCharacter != nil {
-				pc := ctx.World.PlayableCharacter
-				dx, dy := pc.X-c.X, pc.Y-c.Y
-				dist := math.Sqrt(dx*dx+dy*dy)
-				if dist > 8.0 {
-					c.TargetActor = &pc.Actor
-					c.executeMovement(ctx, dx, dy, obstacles, false)
-					return 
-				}
+	}
+	
+	obstacles := ctx.World.Obstacles
+	if !c.IsPlayerControlled && c.Behavior == BehaviorWander && c.checkSlaverySeeking(ctx, obstacles) {
+		return
+	}
+
+	switch c.Behavior {
+	case BehaviorHauler:
+		c.updateHauler(ctx, obstacles)
+	case BehaviorLumberjack:
+		c.updateLumberjack(ctx, obstacles)
+	case BehaviorFarmer:
+		c.updateFarmer(ctx, obstacles)
+	case BehaviorArtisan:
+		c.updateArtisan(ctx, obstacles)
+	case BehaviorPatrol:
+		c.updatePatrol(ctx, obstacles)
+	case BehaviorChaos:
+		c.updateChaotic(ctx, obstacles)
+	case BehaviorTrader:
+		c.updateWander(ctx, obstacles)
+	case BehaviorCriminal:
+		c.updateCriminal(ctx, obstacles)
+	case BehaviorSlave:
+		c.updateSlave(ctx, obstacles)
+	case BehaviorSlaver:
+		c.updateSlaver(ctx, obstacles)
+	case BehaviorHunter:
+		c.updateChaotic(ctx, obstacles)
+	case BehaviorWander:
+		if c.Alignment == AlignmentAlly && ctx.World.PlayableCharacter != nil {
+			pc := ctx.World.PlayableCharacter
+			dx, dy := pc.X-c.X, pc.Y-c.Y
+			dist := math.Sqrt(dx*dx + dy*dy)
+			if dist > 8.0 {
+				c.TargetActor = &pc.Actor
+				c.executeMovement(ctx, dx, dy, obstacles, false)
+				return
 			}
-			c.updateWander(ctx, obstacles)
-		case BehaviorNpcFighter, BehaviorFlee, BehaviorEscort: c.updateChaotic(ctx, obstacles) // Handled as chaotic for combat/movement
-		default:
-			if c.Alignment == AlignmentAlly && ctx.World.PlayableCharacter != nil {
-				pc := ctx.World.PlayableCharacter
-				dx, dy := pc.X-c.X, pc.Y-c.Y
-				if math.Sqrt(dx*dx+dy*dy) > 8.0 && c.TargetActor == nil {
-					c.TargetActor = &pc.Actor
-					c.executeMovement(ctx, dx, dy, obstacles, false)
-				} else {
-					c.updateWander(ctx, obstacles)
-				}
-			} else if rand.Float64() < 0.05 && c.checkEconomicSeeking(ctx) {
-				// Handled by economic seeking
+		}
+		c.updateWander(ctx, obstacles)
+	case BehaviorNpcFighter, BehaviorFlee, BehaviorEscort:
+		c.updateChaotic(ctx, obstacles)
+	default:
+		if c.Alignment == AlignmentAlly && ctx.World.PlayableCharacter != nil {
+			pc := ctx.World.PlayableCharacter
+			dx, dy := pc.X-c.X, pc.Y-c.Y
+			if math.Sqrt(dx*dx+dy*dy) > 8.0 && c.TargetActor == nil {
+				c.TargetActor = &pc.Actor
+				c.executeMovement(ctx, dx, dy, obstacles, false)
 			} else {
 				c.updateWander(ctx, obstacles)
 			}
+		} else if rand.Float64() < 0.05 && c.checkEconomicSeeking(ctx) {
+			// Handled by economic seeking
+		} else {
+			c.updateWander(ctx, obstacles)
 		}
 	}
 

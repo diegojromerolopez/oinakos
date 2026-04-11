@@ -13,13 +13,11 @@ func (a *Actor) isWilling() bool {
 	if a.SexualOrientation == "asexual" { return false }
 	return a.IsAlive() && a.State.Sanity >= 0 && a.MatingCooldown <= 0 && !a.IsPregnant
 }
-
 func (a *Actor) updateBreeding(ctx *SystemContext) {
 	if !a.IsAlive() || a.Config == nil { return }
 	
 	adultMode := true
 	if ctx != nil && ctx.Settings != nil { adultMode = ctx.Settings.AdultMode }
-	if !adultMode && !a.Config.IsAnimal { return }
 
 	simStep := 10
 	if ctx != nil && ctx.Settings != nil && ctx.Settings.SimStep > 0 { simStep = ctx.Settings.SimStep }
@@ -64,6 +62,14 @@ func (a *Actor) updateBreeding(ctx *SystemContext) {
 		}
 
 		if isPreferred || (adultMode && !a.Config.IsAnimal) {
+			// INCEST CHECK: Skip relatives if Adult Mode is OFF
+			isIncest := (a.ParentID != "" && a.ParentID == other.Name) || (other.ParentID != "" && other.ParentID == a.Name) ||
+				(a.FatherID != "" && a.FatherID == other.Name) || (other.FatherID != "" && other.FatherID == a.Name)
+			if !adultMode && !a.Config.IsAnimal && isIncest { continue }
+			
+			// BESTIALITY CHECK: Skip inter-species if Adult Mode is OFF
+			isBestiality := (a.Config.IsAnimal && !other.Config.IsAnimal) || (!a.Config.IsAnimal && other.Config.IsAnimal)
+			if !adultMode && isBestiality { continue }
 			sentiment := 0.0
 			if a.Relationships != nil { sentiment = a.Relationships[other.ID] }
 
@@ -73,7 +79,7 @@ func (a *Actor) updateBreeding(ctx *SystemContext) {
 			isService := other.Config != nil && strings.Contains(other.Config.ID, "courtesan")
 			isViolent := a.ActionState == ActorBerserk || a.Behavior == BehaviorCriminal
 
-			if isService && !isViolent {
+			if isService && !isViolent && (adultMode || other.isWilling()) {
 				// Non-violent mating with courtesans REQUIRES money.
 				if a.Denarii >= 2 && other.isWilling() { canMate = true }
 			} else {
@@ -86,38 +92,41 @@ func (a *Actor) updateBreeding(ctx *SystemContext) {
 				if !canMate && a.isWilling() && other.isWilling() && sentiment > 40 {
 					canMate = true
 				}
-				// 3. Incapacitated (if allowed)
-				if !canMate && a.isWilling() && (other.ActionState == ActorIncapacitated) {
+				// 3. Incapacitated (Locked behind Adult Mode)
+				if !canMate && adultMode && a.isWilling() && (other.ActionState == ActorIncapacitated) {
 					canMate = true
 				}
-				// 4. Hostile/Violent (Psychotic break bypasses social/economic rules)
-				if !canMate && isViolent && other.IsAlive() {
+				// 4. Hostile/Violent (Psychotic break - Locked behind Adult Mode)
+				if !canMate && adultMode && isViolent && other.IsAlive() {
 					canMate = true
 				}
-				// 5. BLACKOUT MATING (Uninhibited drunk logic)
-				if !canMate && a.State.IsDrunk && other.State.IsDrunk && a.isBioOpposite(other) && sentiment > 10 {
+				// 5. BLACKOUT MATING (Uninhibited drunk logic - Consensual only if Adult Mode is OFF)
+				if !canMate && (adultMode || (a.isWilling() && other.isWilling())) && a.State.IsDrunk && other.State.IsDrunk && a.isBioOpposite(other) && sentiment > 10 {
 					if rand.Float64() < 0.5 { canMate = true }
 				}
-				// 6. CRIMINAL PREDATION
-				if !canMate && a.Behavior == BehaviorCriminal && other.IsAlive() && a.Name != other.Name {
+				// 6. CRIMINAL PREDATION (Locked behind Adult Mode)
+				if !canMate && adultMode && a.Behavior == BehaviorCriminal && other.IsAlive() && a.Name != other.Name {
 					if a.Config.IsAnimal == other.Config.IsAnimal { canMate = true }
 				}
-				// 7. HYPERSEXUAL COMPULSION (Mental Break result)
-				if !canMate && a.State.IsHypersexual && other.IsAlive() && a.Name != other.Name {
+				// 7. HYPERSEXUAL COMPULSION (Mental Break - Locked behind Adult Mode)
+				if !canMate && adultMode && a.State.IsHypersexual && other.IsAlive() && a.Name != other.Name {
 					if a.Config.IsAnimal == other.Config.IsAnimal { canMate = true }
+				}
+				// 8. SLAVE SUBMISSION (Locked behind Adult Mode)
+				if !canMate && adultMode && other.Behavior == BehaviorSlave && other.MasterID == a.UID && other.UID != a.UID {
+					canMate = true
 				}
 			}
 
 			if canMate {
 				dist := math.Sqrt(math.Pow(a.X-other.X, 2)+math.Pow(a.Y-other.Y, 2))
-				if IsDebugEnabled() && a.Tick%600 == 0 { DebugLog("BREEDING-CANDIDATE: %s found %s at %.1f pedes", a.Name, other.Name, dist) }
-				if dist < minDist { mate = other; break }
-				
-				// IMPROVEMENT: If searching and found a mate, move towards them!
-				if a.Config.IsAnimal && dist < 100.0 && a.ActionState == ActorIdle {
-					a.TargetActor = other
-					// Setting target to move towards
+				if ctx.Log != nil { ctx.Log(fmt.Sprintf("DEBUG: %s candidate found: %s at dist %.2f", a.Name, other.Name, dist), LogNPC) }
+				if dist < minDist { 
+					if ctx.Log != nil { ctx.Log(fmt.Sprintf("DEBUG: %s selected mate: %s", a.Name, other.Name), LogNPC) }
+					mate = other; break 
 				}
+			} else {
+				if ctx.Log != nil && a.Tick%100 == 0 { ctx.Log(fmt.Sprintf("DEBUG: %s cannot mate with %s (canMate=false)", a.Name, other.Name), LogNPC) }
 			}
 		}
 	}
@@ -148,8 +157,11 @@ func (a *Actor) updateBreeding(ctx *SystemContext) {
 
 		if a.Config.IsAnimal && practice == "vaginal" { 
 			a.haveSex(ctx, mate, "vaginal") 
-		} else if adultMode {
+		} else if adultMode || (a.isWilling() && mate.isWilling()) {
+			if ctx.Log != nil { ctx.Log(fmt.Sprintf("DEBUG: %s is having sex with %s (willing and uninhibited)", a.Name, mate.Name), LogNPC) }
 			a.haveSex(ctx, mate, practice)
+		} else {
+			if ctx.Log != nil { ctx.Log(fmt.Sprintf("DEBUG: %s cannot have sex with %s (AdultMode OFF and not both willing)", a.Name, mate.Name), LogNPC) }
 		}
 	}
 }
@@ -176,6 +188,22 @@ func (a *Actor) GetBioSex() string {
 
 func (a *Actor) haveSex(ctx *SystemContext, mate *Actor, practice string) {
 	if a == nil || mate == nil { return }
+	
+	// Adult mode check for non-animal interactions
+	adultMode := true
+	if ctx != nil && ctx.Settings != nil { adultMode = ctx.Settings.AdultMode }
+
+	// Specialized check: if Adult Mode is OFF and we aren't an animal, block non-consensual paths
+	isSlaveAcceptance := adultMode && mate.Behavior == BehaviorSlave && mate.MasterID == a.UID
+	if !adultMode && !a.Config.IsAnimal && !isSlaveAcceptance && (!mate.isWilling() || a.ActionState == ActorBerserk || a.Behavior == BehaviorCriminal) { return }
+
+	// Specialized check: Incest and Bestiality are Adult Mode only
+	if !adultMode && !a.Config.IsAnimal {
+		isIncest := (a.ParentID != "" && a.ParentID == mate.Name) || (mate.ParentID != "" && mate.ParentID == a.Name) ||
+			(a.FatherID != "" && a.FatherID == mate.Name) || (mate.FatherID != "" && mate.FatherID == a.Name)
+		isBestiality := (a.Config.IsAnimal && !mate.Config.IsAnimal) || (!a.Config.IsAnimal && mate.Config.IsAnimal)
+		if isIncest || isBestiality { return }
+	}
 
 	// Deadlock prevention: Lock in order of memory address
 	if uintptr(unsafe.Pointer(a)) < uintptr(unsafe.Pointer(mate)) {
@@ -207,13 +235,19 @@ func (a *Actor) haveSex(ctx *SystemContext, mate *Actor, practice string) {
 		if a.State.IsDrunk || mate.State.IsDrunk { relStr += " UNINHIBITED" }
 		if isService { relStr = "PROFESSIONAL-SERVICE" }
 		if isViolent { relStr = "HOSTILE-FORCED" }
-		ctx.Log(fmt.Sprintf("[%s]: initiates %s mating with %s", a.Name, relStr, mate.Name), LogNPC) 
+		
+		msg := fmt.Sprintf("[%s]: initiates %s mating with %s", a.Name, relStr, mate.Name)
+		if !adultMode && !a.Config.IsAnimal {
+			msg = fmt.Sprintf("[%s] is spending intimate time with %s", a.Name, mate.Name)
+		}
+		ctx.Log(msg, LogNPC) 
 	}
 
 	if practice == "vaginal" {
 		f := a; if a.GetBioSex() == "male" { f = mate }
-		// Only cause pain/trauma if the participant was UNWILLING.
-		if f.State.Arousal < 30 && !a.Config.IsAnimal && !f.isWilling() {
+		// Only cause pain/trauma if the participant was UNWILLING and not a submissive slave.
+		isSlaveSubmission := adultMode && f.Behavior == BehaviorSlave && f.MasterID == a.UID
+		if f.State.Arousal < 30 && !a.Config.IsAnimal && !f.isWilling() && !isSlaveSubmission {
 			f.CausePain(40.0, ctx)
 			if ctx.Log != nil { ctx.Log(fmt.Sprintf("[%s] receives severe physical trauma (assault)", f.Name), LogNPC) }
 		}
@@ -270,6 +304,11 @@ func (a *Actor) haveSex(ctx *SystemContext, mate *Actor, practice string) {
 		a.State.Sanity += 30.0
 		a.State.Fatigue -= 20.0
 		if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s feels empowered by their dominance over %s.", a.Name, mate.Name), LogNPC) }
+	} else if isSlaveAcceptance {
+		// SLAVE DISPOSITION: Master takes what is theirs
+		if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s has breeded their slave %s.", a.Name, mate.Name), LogNPC) }
+		mate.ModifySubmission(a.UID, 5.0)
+		mate.State.Sanity -= 5.0 // Minor mental toll from resignation
 	} else if practice != "bestiality" {
 		// Consensual mating REWARDS sanity (skipped for bestiality)
 		a.State.Sanity += 15.0
@@ -338,7 +377,10 @@ func (a *Actor) haveSex(ctx *SystemContext, mate *Actor, practice string) {
 		chance = 0.8 * fertility // Animals conceive more reliably
 	}
 
-	if rand.Float64() < chance {
+	roll := rand.Float64()
+	if IsDebugEnabled() || ctx.Log != nil { ctx.Log(fmt.Sprintf("DEBUG: %s mating with %s, fertility=%.2f, chance=%.2f, roll=%.2f", mother.Name, father.Name, fertility, chance, roll), LogNPC) }
+	
+	if roll < chance {
 		mother.IsPregnant = true
 		if mother.Config.IsAnimal { 
 			mother.GestationTicks = int(TicksPerMonth) // 1 month for animals
@@ -410,6 +452,12 @@ func (a *Actor) giveBirth(ctx *SystemContext) {
 		child.Alignment, child.ParentID, child.FatherID = a.Alignment, a.Name, a.FatherID
 		child.LifeStage, child.AgeTicks = StageBaby, 0
 		child.State.Age.Rate = 1.0 
+		
+		if a.Behavior == BehaviorSlave {
+			child.Behavior = BehaviorSlave
+			child.MasterID = a.MasterID
+			child.Alignment = AlignmentAlly
+		}
 
 		if father != nil {
 			mutation := 0.95 + rand.Float64()*0.10 // ±5% mutation

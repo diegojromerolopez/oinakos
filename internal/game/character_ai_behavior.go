@@ -410,3 +410,94 @@ func (c *Character) updateBabyAI(ctx *SystemContext, obstacles []*Obstacle) {
 }
 
 
+func (c *Character) updateSlave(ctx *SystemContext, obstacles []*Obstacle) {
+	if c.MasterID == "" {
+		c.updateWander(ctx, obstacles)
+		return
+	}
+
+	var master *Character
+	// Check if master is PC
+	if ctx.World.PlayableCharacter != nil && ctx.World.PlayableCharacter.UID == c.MasterID {
+		master = ctx.World.PlayableCharacter
+	} else {
+		for _, other := range ctx.World.Characters {
+			if other.UID == c.MasterID { master = other; break }
+		}
+	}
+
+	if master == nil || master.Behavior == BehaviorSlave {
+		c.MasterID = ""
+		c.Behavior = BehaviorWander
+		c.Alignment = AlignmentNeutral
+		c.updateWander(ctx, obstacles)
+		return
+	}
+
+	// Sanity Drain: The misery of slavery
+	decay := 0.005 // Base decay per tick
+	rel := c.Relationships[master.ID]
+	if rel > 50 {
+		decay *= 0.2
+	} else if rel < -30 {
+		decay *= 2.0
+	}
+	if c.State.IsDrunk { decay = 0 } // Alcohol provides temporary escapism
+	c.State.Sanity -= decay
+	if c.State.Sanity < 0 { c.State.Sanity = 0 }
+
+	if c.State.Sanity <= 0 {
+		c.ActionState = ActorCrouching
+		return
+	}
+
+	if c.State.Sanity <= 0 {
+		c.ActionState = ActorCrouching
+		return
+	}
+
+	// 1. Defend Master: If Master is attacking someone, help!
+	if master.TargetActor != nil && master.TargetActor.IsAlive() {
+		c.TargetActor = master.TargetActor
+		dx, dy := c.TargetActor.X-c.X, c.TargetActor.Y-c.Y
+		dist := math.Sqrt(dx*dx + dy*dy)
+		if dist < 1.4 {
+			if c.ActionState != ActorAttacking { c.ActionState, c.Tick = ActorAttacking, 0 }
+		} else {
+			c.executeMovement(ctx, dx, dy, obstacles, false)
+		}
+		return
+	}
+
+	// 2. Stay close to Master
+	dx, dy := master.X-c.X, master.Y-c.Y
+	dist := math.Sqrt(dx*dx + dy*dy)
+	if dist > 8.0 {
+		c.executeMovement(ctx, dx, dy, obstacles, false)
+		return
+	}
+	
+	// 3. Versatile Labor: If near master and idle, look for work
+	if c.ActionState == ActorIdle || c.ActionState == ActorWalking {
+		// Priority: Harvesting > Farming > Crafting
+		c.updateLumberjack(ctx, obstacles)
+		if c.ActionState != ActorIdle { return }
+		
+		c.updateFarmer(ctx, obstacles)
+		if c.ActionState != ActorIdle { return }
+		
+		c.updateArtisan(ctx, obstacles)
+		if c.ActionState != ActorIdle { return }
+	}
+
+	if dist < 2.0 {
+		c.ActionState = ActorIdle
+	} else if dist > 3.0 {
+		c.executeMovement(ctx, dx, dy, obstacles, false)
+	}
+}
+
+func (c *Character) updateSlaver(ctx *SystemContext, obstacles []*Obstacle) {
+	// Slavers gravitate toward markets but mostly wander near their wares
+	c.updateWander(ctx, obstacles)
+}

@@ -54,6 +54,18 @@ func (w *World) AddFloatingText(f *FloatingText) {
 	w.FloatingTexts = append(w.FloatingTexts, f)
 }
 
+func (w *World) GetCharacterByUID(uid string) *Character {
+	for _, c := range w.Characters {
+		if c.UID == uid {
+			return c
+		}
+	}
+	if w.PlayableCharacter != nil && w.PlayableCharacter.UID == uid {
+		return w.PlayableCharacter
+	}
+	return nil
+}
+
 type Season int
 
 const (

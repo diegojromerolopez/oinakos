@@ -160,7 +160,17 @@ func (g *Game) InitiateDialogue(npc *Character) {
 	g.LogEvent(fmt.Sprintf("%s: %s", g.playableCharacter.Name, greeting), LogPlayer)
 	start := dr.PickStart()
 	if start == nil { return }
-	g.ActiveDialogue = &DialogueState{ SpeakerNPC: npc, CurrentText: start.Text, Choices: start.Choices, IsActive: true, UIState: DialogueMaximized }
+
+	// Adult Mode Filtering for Slavery
+	filteredChoices := make([]Choice, 0)
+	for _, c := range start.Choices {
+		isSlavery := false
+		for _, e := range c.Effects { if e.Type == "buy_slave" || e.Value == "slave" { isSlavery = true; break } }
+		if isSlavery && !g.settings.AdultMode { continue }
+		filteredChoices = append(filteredChoices, c)
+	}
+
+	g.ActiveDialogue = &DialogueState{ SpeakerNPC: npc, CurrentText: start.Text, Choices: filteredChoices, IsActive: true, UIState: DialogueMaximized }
 	if start.Next != "" {
 		if node, ok := dr.Nodes[start.Next]; ok { g.ActiveDialogue.Choices = node.Choices }
 	}
@@ -197,7 +207,16 @@ func (g *Game) AdvanceDialogue() {
 	}
 	dr := g.ActiveDialogue.SpeakerNPC.Config.Dialogues
 	if node, ok := dr.Nodes[choice.Next]; ok {
-		g.ActiveDialogue.CurrentText, g.ActiveDialogue.Choices, g.ActiveDialogue.SelectedChoice = node.Text, node.Choices, 0
+		// Adult Mode Filtering for Slavery
+		filteredChoices := make([]Choice, 0)
+		for _, c := range node.Choices {
+			isSlavery := false
+			for _, e := range c.Effects { if e.Type == "buy_slave" || e.Value == "slave" { isSlavery = true; break } }
+			if isSlavery && !g.settings.AdultMode { continue }
+			filteredChoices = append(filteredChoices, c)
+		}
+
+		g.ActiveDialogue.CurrentText, g.ActiveDialogue.Choices, g.ActiveDialogue.SelectedChoice = node.Text, filteredChoices, 0
 		g.LogEvent(fmt.Sprintf("%s: %s", g.ActiveDialogue.SpeakerNPC.Name, node.Text), LogNPC)
 	} else { g.CloseDialogue() }
 }
@@ -217,6 +236,152 @@ func (g *Game) ApplyDialogueEffect(npc *Character, effect DialogueEffect) {
 		case "flee": npc.Behavior = BehaviorFlee
 		case "patrol": npc.Behavior = BehaviorPatrol
 		case "follow": npc.Behavior = BehaviorEscort
+		case "slave": npc.Behavior = BehaviorSlave; npc.MasterID = g.playableCharacter.Name; npc.Alignment = AlignmentAlly
+		}
+	case "buy_slave":
+		// Find nearest Slave near the SPECIFIC NPC we are talking to.
+		var nearestSlave *Character
+		minDist := 10.0 // Larger range for slaver rows
+		for _, n := range g.characters {
+			if n.Behavior == BehaviorSlave && n.MasterID == "" {
+				dist := math.Sqrt(math.Pow(n.X-npc.X, 2) + math.Pow(n.Y-npc.Y, 2))
+				if dist < minDist { minDist, nearestSlave = dist, n }
+			}
+		}
+
+		if nearestSlave != nil {
+			purchasePrice := 100
+			if nearestSlave.GetBioSex() == "female" { purchasePrice = 150 }
+
+			if g.playableCharacter.Denarii >= purchasePrice {
+				g.playableCharacter.Denarii -= purchasePrice
+				nearestSlave.MasterID = g.playableCharacter.UID
+				nearestSlave.Alignment = AlignmentAlly
+				g.LogEvent(fmt.Sprintf("Purchased %s from %s for %d Denarii.", nearestSlave.Name, npc.Name, purchasePrice), LogInfo)
+			} else {
+				g.LogEvent(fmt.Sprintf("Not enough Denarii to purchase %s (%d needed).", nearestSlave.Name, purchasePrice), LogWarning)
+			}
+		} else {
+			g.LogEvent(fmt.Sprintf("%s has no stock available right now.", npc.Name), LogWarning)
+		}
+	case "sell_slave":
+		// Sell the nearest slave owned by the player to the NPC slaver
+		salePrice := 50
+		var nearestOwnedSlave *Character
+		minDist := 5.0
+		for _, n := range g.characters {
+			if n.Behavior == BehaviorSlave && n.MasterID == g.playableCharacter.UID {
+				dist := math.Sqrt(math.Pow(n.X-npc.X, 2) + math.Pow(n.Y-npc.Y, 2))
+				if dist < minDist { minDist, nearestOwnedSlave = dist, n }
+			}
+		}
+		if nearestOwnedSlave != nil {
+			g.playableCharacter.Denarii += salePrice
+			nearestOwnedSlave.MasterID = ""
+			nearestOwnedSlave.Alignment = AlignmentNeutral
+			g.LogEvent(fmt.Sprintf("Sold %s to %s for %d Denarii.", nearestOwnedSlave.Name, npc.Name, salePrice), LogInfo)
+		} else {
+			g.LogEvent("No owned slaves nearby to sell.", LogWarning)
+		}
+	case "buy_liberty":
+		// Slave buys their own freedom from the player
+		libertyPrice := 300
+		if npc.Denarii >= libertyPrice {
+			npc.Denarii -= libertyPrice
+			g.playableCharacter.Denarii += libertyPrice
+			npc.MasterID = ""
+			npc.Behavior = BehaviorWander
+			npc.Alignment = AlignmentNeutral
+			g.LogEvent(fmt.Sprintf("%s has purchased their freedom for %d Denarii!", npc.Name, libertyPrice), LogInfo)
+		} else {
+			g.LogEvent(fmt.Sprintf("%s does not have enough savings to buy their liberty.", npc.Name), LogWarning)
+		}
+	case "free_slave":
+		// Player frees the slave for no cost
+		npc.MasterID = ""
+		npc.Behavior = BehaviorWander
+		npc.Alignment = AlignmentNeutral
+		g.LogEvent(fmt.Sprintf("%s has been granted freedom by their master.", npc.Name), LogInfo)
+	case "give_denarii_to_slave":
+		// Player gives money to slave's personal savings (bypassing master redirection)
+		amount := 20
+		if g.playableCharacter.Denarii >= amount {
+			g.playableCharacter.Denarii -= amount
+			npc.Denarii += amount
+			npc.State.Sanity += 30.0
+			if npc.State.Sanity > 100 { npc.State.Sanity = 100 }
+			g.LogEvent(fmt.Sprintf("Gave %d Denarii to %s. Their hope is restored (+30 Sanity).", amount, npc.Name), LogInfo)
+		}
+	case "borrow_100":
+		if len(g.playableCharacter.Debts) >= 2 {
+			g.LogEvent("The guild has deemed you a high-risk borrower. Settle your current ledger first.", LogWarning)
+			return
+		}
+		amount, interest := 100, 20
+		g.playableCharacter.Debts = append(g.playableCharacter.Debts, Loan{
+			LenderUID: npc.UID,
+			Amount:    amount + interest,
+			Deadline:  g.World.State.Ticks + 34560,
+		})
+		g.playableCharacter.Denarii += amount
+		g.LogEvent(fmt.Sprintf("Borrowed %d Denarii from %s. You owe %d including interest. Due in 2 days.", amount, npc.Name, amount+interest), LogInfo)
+	case "borrow_500":
+		if len(g.playableCharacter.Debts) >= 2 {
+			g.LogEvent("You have reached your local credit limit. We cannot extend further funds.", LogWarning)
+			return
+		}
+		amount, interest := 500, 150
+		g.playableCharacter.Debts = append(g.playableCharacter.Debts, Loan{
+			LenderUID: npc.UID,
+			Amount:    amount + interest,
+			Deadline:  g.World.State.Ticks + 51840,
+		})
+		g.playableCharacter.Denarii += amount
+		g.LogEvent(fmt.Sprintf("Borrowed %d Denarii from %s. You owe %d including interest. Due in 3 days.", amount, npc.Name, amount+interest), LogInfo)
+	case "repay_debt":
+		found := false
+		newDebts := make([]Loan, 0)
+		for _, loan := range g.playableCharacter.Debts {
+			if loan.LenderUID == npc.UID && !found {
+				if g.playableCharacter.Denarii >= loan.Amount {
+					g.playableCharacter.Denarii -= loan.Amount
+					g.LogEvent(fmt.Sprintf("Repaid debt of %d Denarii to %s.", loan.Amount, npc.Name), LogInfo)
+					found = true
+				} else {
+					g.LogEvent("Not enough Denarii to clear this specific debt.", LogWarning)
+					newDebts = append(newDebts, loan)
+				}
+			} else {
+				newDebts = append(newDebts, loan)
+			}
+		}
+		g.playableCharacter.Debts = newDebts
+		if !found && g.playableCharacter.Denarii < 0 { g.LogEvent("You have no outstanding debt with this banker.", LogInfo) }
+	case "repay_50":
+		amount := 50
+		found := false
+		for i, loan := range g.playableCharacter.Debts {
+			if loan.LenderUID == npc.UID {
+				if g.playableCharacter.Denarii >= amount {
+					g.playableCharacter.Denarii -= amount
+					g.playableCharacter.Debts[i].Amount -= amount
+					if g.playableCharacter.Debts[i].Amount < 0 { g.playableCharacter.Debts[i].Amount = 0 }
+					g.LogEvent(fmt.Sprintf("Repaid partial debt (50 Denarii) to %s. Remaining: %d", npc.Name, g.playableCharacter.Debts[i].Amount), LogInfo)
+					found = true
+					break
+				}
+			}
+		}
+		if !found { g.LogEvent("You have no outstanding debt with this banker to pay.", LogWarning) }
+	case "check_debt":
+		total := 0
+		for _, loan := range g.playableCharacter.Debts {
+			total += loan.Amount
+		}
+		if total > 0 {
+			g.LogEvent(fmt.Sprintf("You have %d active loans totaling %d Denarii.", len(g.playableCharacter.Debts), total), LogInfo)
+		} else {
+			g.LogEvent("You have no outstanding debts.", LogInfo)
 		}
 	}
 }

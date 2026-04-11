@@ -126,7 +126,7 @@ func (a *Actor) updateNeeds(ctx *SystemContext) {
 				}
 			}
 		}
-		a.State.Fatigue -= recoveryRate
+		a.State.Fatigue -= recoveryRate * 10.0
 		if a.State.Fatigue <= 0 { a.State.Fatigue, a.ActionState = 0, ActorIdle }
 		if a.Tick%60 == 0 {
 			healthFactor := 0.20; if isComfy { 

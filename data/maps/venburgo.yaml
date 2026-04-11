@@ -366,6 +366,43 @@ inhabitants:
   y: -27
   alignment: neutral
   behavior: wander
+- name: Marcus the Slaver
+  archetype: slaver
+  x: -2
+  y: 18
+  alignment: neutral
+  behavior: slaver
+  adult_mode: true
+- archetype: slave/female
+  x: -3
+  y: 19
+  alignment: neutral
+  behavior: slave
+  adult_mode: true
+- archetype: slave/male
+  x: -2
+  y: 19
+  alignment: neutral
+  behavior: slave
+  adult_mode: true
+- archetype: slave/female
+  x: -1
+  y: 19
+  alignment: neutral
+  behavior: slave
+  adult_mode: true
+- name: Lucius the Banker
+  archetype: banker/male
+  x: -8
+  y: -8
+  alignment: neutral
+  behavior: trader
+- name: Argentarius the Banker
+  archetype: banker/male
+  x: 4
+  y: 14
+  alignment: neutral
+  behavior: trader
 fauna:
 - archetype: cow
   x: 5

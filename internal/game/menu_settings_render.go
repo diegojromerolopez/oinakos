@@ -16,7 +16,7 @@ func (gr *GameRenderer) drawSettingsScreen(screen engine.Image) {
 
 	rows := []string{"Font Style", "Sound Effects", "Fog of War", "AI Provider"}
 	if g.settings.AIProvider != "none" { rows = append(rows, "AI Model") }
-	rows = append(rows, "Time Pace", "Simulation Mode", "Talking Frequency", "Measurement Units", "Keymap", "Save and Back")
+	rows = append(rows, "Time Pace", "Simulation Mode", "Talking Frequency", "Measurement Units", "Adult Mode", "Keymap", "Save and Back")
 
 	for i, row := range rows {
 		var clr color.Color = color.White; prefix := "  "
@@ -33,6 +33,7 @@ func (gr *GameRenderer) drawSettingsScreen(screen engine.Image) {
 		case "Simulation Mode": val := "OFF"; if g.settings.AISimulationMode { val = "ON" }; label += fmt.Sprintf(": [%s]", val)
 		case "Talking Frequency": label += fmt.Sprintf(": [%s]", strings.ToUpper(g.settings.TalkingFrequency))
 		case "Measurement Units": label += fmt.Sprintf(": [%s]", strings.ToUpper(g.settings.Units))
+		case "Adult Mode": val := "OFF"; if g.settings.AdultMode { val = "ON" }; label += fmt.Sprintf(": [%s]", val)
 		}
 		lw, _ := gr.graphics.MeasureText(label, 18)
 		gr.graphics.DrawTextAt(screen, label, (g.width-int(lw))/2, 200+i*40, clr, 18)

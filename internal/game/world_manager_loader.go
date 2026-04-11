@@ -167,6 +167,7 @@ func (wm *WorldManager) LoadMapLevel() {
 
 	allInhabs := append(append(g.currentMapType.Inhabitants, g.currentMapType.Fauna...), g.currentMapType.Characters...)
 	for _, ps := range allInhabs {
+		if ps.AdultMode && !g.settings.AdultMode { continue }
 		var config *EntityConfig; var ok bool
 		id := ps.NPC; if ps.NPCID != "" { id = ps.NPCID }
 		if id != "" { config, ok = g.characterRegistry.Characters[id] } else if ps.Archetype != "" { config, ok = g.archetypeRegistry.Archetypes[ps.Archetype] }
@@ -189,6 +190,8 @@ func (wm *WorldManager) LoadMapLevel() {
 			case "hauler": npc.Behavior = BehaviorHauler
 			case "lumberjack": npc.Behavior = BehaviorLumberjack
 			case "behavior_criminal": npc.Behavior = BehaviorCriminal
+			case "slave": npc.Behavior = BehaviorSlave
+			case "slaver": npc.Behavior = BehaviorSlaver
 			}
 			g.characters = append(g.characters, npc)
 			if IsDebugEnabled() && len(g.characters) < 10 { DebugLog("NPC-LOADED: %s (%s)", npc.Name, ps.Archetype) }

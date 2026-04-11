@@ -6,6 +6,7 @@ import (
 
 func TestActor_CoverageAdditions(t *testing.T) {
 	ctx := NewTestContext()
+	ctx.Settings.AdultMode = true
 	p := NewCharacter(0, 0, nil, 1, true, nil)
 	p.Relationships = make(map[string]float64)
 	p.RomanticInterest = make(map[string]float64)

@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"math/rand"
 	"strings"
 )
@@ -75,6 +76,7 @@ func NewCharacter(x, y float64, config *EntityConfig, level int, isPlayer bool, 
 			BaseAttackCooldown: stats.AttackCooldown,
 			Speed: stats.Speed,
 			MaxWeight: stats.MaxWeight,
+			UID: fmt.Sprintf("%s-%d-%d", config.ID, level, rand.Int31()),
 		},
 		IsPlayerControlled: isPlayer,
 	}

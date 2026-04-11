@@ -59,7 +59,10 @@ func (gr *GameRenderer) drawNPCStatusBox(screen engine.Image, n *Character, x, y
 	}
 	yCmds := int(by) + int(boxH) - 120; gr.graphics.DrawLine(screen, bx+5, float32(yCmds-5), bx+float32(boxW)-5, float32(yCmds-5), gray, 1)
 	gr.graphics.DrawTextAt(screen, "-- COMMANDS --", int(bx)+10, yCmds, gray, 11); yCmds += 20
-	commands := []string{"TALK", "ATTACK", "TRADE", "SEDUCE", "INTIMIDATE", "STEAL", "RESTRAIN", "HEAL", "GIVE", "SEX", "TORTURE"}
+	commands := []string{"TALK", "ATTACK", "TRADE", "SEDUCE", "INTIMIDATE", "STEAL", "RESTRAIN", "HEAL", "GIVE"}
+	if gr.game.settings.AdultMode {
+		commands = append(commands, "SEX", "TORTURE")
+	}
 	for i, cmd := range commands {
 		cx, cy, clr := int(bx)+10+(i%3)*100, yCmds+(i/3)*25, color.RGBA{255, 255, 255, 255}
 		if mx >= cx && mx <= cx+85 && my >= cy-12 && my <= cy+8 { clr = color.RGBA{255, 255, 0, 255} }

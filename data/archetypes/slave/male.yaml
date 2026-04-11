@@ -171,3 +171,29 @@ abilities:
 xp: 5
 equipment: null
 inventory: []
+dialogues:
+  player_greetings:
+    - "Yes, master?"
+    - "The work is hard today."
+  start:
+    text: "What do you need of me?"
+    choices:
+      - text: "Back to it."
+        next: end
+      - text: "Take this for your savings (20 Denarii)."
+        next: give_coin
+        effects:
+          - type: give_denarii_to_slave
+      - text: "I want to buy my freedom (300 Denarii)."
+        next: buy_liberty
+      - text: "You are no longer a slave. Leave. (Grant Freedom)"
+        next: end
+        effects:
+          - type: free_slave
+  give_coin:
+    text: "Every bit counts. Thank you."
+    next: start
+  buy_liberty:
+    text: "The price of my life is paid. Thank you, master."
+    effects:
+      - type: buy_liberty

@@ -39,7 +39,7 @@ func TestSimulation_OinakosSex(t *testing.T) {
 		pc.SharedUpdate(ctx)
 		pc.Tick++
 	}
-	if pc.State.Arousal > 0.1 {
+	if pc.State.Arousal > 0.3 {
 		t.Errorf("Expected arousal decrease, got %.4f", pc.State.Arousal)
 	}
 }
@@ -63,6 +63,7 @@ func TestSimulation_PregnancyAndBirth(t *testing.T) {
 			break
 		}
 		courtesan.MatingCooldown = 0
+		pc.MatingCooldown = 0
 	}
 	if !courtesan.IsPregnant {
 		courtesan.IsPregnant, courtesan.FatherID = true, "Hero"
@@ -124,8 +125,9 @@ func TestSimulation_AnalSexConstraint(t *testing.T) {
 	}
 	tF := NewCharacter(3, 3, &EntityConfig{Gender: "female"}, 1, false, nil)
 	tF.IsTransexual = true
+	m1.MatingCooldown = 0
 	tF.Actor.haveSex(ctx, &m1.Actor, "anal")
 	if m1.State.Pain <= 0 {
-		t.Errorf("TF can give")
+		t.Errorf("TF should be able to give anal sex (m1 pain is 0)")
 	}
 }

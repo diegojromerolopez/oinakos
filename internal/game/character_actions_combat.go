@@ -14,7 +14,8 @@ func (c *Character) TakeDamage(amount int, attacker ActorInterface, ctx *SystemC
 		c.triggerParentRetaliation(attacker.GetActor(), ctx)
 	}
 
-	if c.IsAlive() && !c.IsPlayerControlled && c.Config == oldCfg {
+	isSlaveHitByMaster := c.Behavior == BehaviorSlave && c.MasterID != "" && attacker != nil && attacker.GetActor() != nil && attacker.GetActor().UID == c.MasterID
+	if c.IsAlive() && !c.IsPlayerControlled && c.Config == oldCfg && !isSlaveHitByMaster {
 		if c.LifeStage != StageBaby {
 			c.handleAIReaction(attacker, ctx)
 		}

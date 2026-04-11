@@ -164,7 +164,19 @@ abilities:
     yield: culture * 1.0
     parent_attribute: strength
 inventory:
-- id: wine_bottle
-  count: 1
-- id: denarii
-  count: 20
+  - id: wine_bottle
+    count: 1
+  - id: denarii
+    count: 20
+dialogues:
+  player_greetings:
+    - "A fine day for company, isn't it?"
+    - "You look like someone who appreciates the finer things."
+  start:
+    text: "I offer conversation, comfort, and more for those who can afford it (2 Denarii)."
+    choices:
+      - text: "I'll pay for your company (2 Denarii)."
+        effects:
+          - type: sex_with_courtesan
+      - text: "Just passing through."
+        next: end

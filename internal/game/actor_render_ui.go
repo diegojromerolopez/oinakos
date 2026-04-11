@@ -10,8 +10,9 @@ func DrawActorUI(g *Game, a *Actor, screen engine.Image, textRenderer engine.Tex
 	isoX, isoY := engine.CartesianToIsoZ(a.X, a.Y, a.Z)
 	if a.IsOccluded { DrawAlignmentIndicator(screen, vectorRenderer, a, offsetX, offsetY, true)
 		if sb := g.GetSilhouetteBuffer(); sb != nil {
-			sb.Clear(); sOp := *DrawActorGetOptions(a, offsetX, offsetY, isPlayableCharacter); sOp.SetColorScale(0, 0, 0, 1)
-			if sprite := DrawActorGetSprite(a); sprite != nil {
+			adultMode := false; if g != nil && g.settings != nil { adultMode = g.settings.AdultMode }
+			sb.Clear(); sOp := *DrawActorGetOptions(a, offsetX, offsetY, isPlayableCharacter, adultMode); sOp.SetColorScale(0, 0, 0, 1)
+			if sprite := DrawActorGetSprite(a, adultMode); sprite != nil {
 				sb.DrawImage(sprite, &sOp); aSortY := a.GetSortY()
 				for _, o := range g.obstacles { if o.GetSortY() > aSortY { oOp := engine.NewDrawImageOptions(); ox, oy := o.GetIsoPos(); oOp.Translate(ox+offsetX, oy+offsetY); oOp.Blend = engine.BlendDestinationIn; if o.Archetype != nil && o.Archetype.Image != nil { sb.DrawImage(o.Archetype.Image, oOp) } } }
 				screen.DrawImage(sb, engine.NewDrawImageOptions())

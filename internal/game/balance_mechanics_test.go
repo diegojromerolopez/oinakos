@@ -38,6 +38,7 @@ func TestBalance_ConsensualSexRewards(t *testing.T) {
 
 func TestBalance_CriminalPredationRewards(t *testing.T) {
 	ctx := NewTestContext()
+	ctx.Settings.AdultMode = true
 	
 	criminal := NewCharacter(0, 0, nil, 1, false, nil)
 	criminal.Name = "Marca"; criminal.Behavior = BehaviorCriminal

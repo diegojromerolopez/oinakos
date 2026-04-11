@@ -34,6 +34,7 @@ type Inhabitant struct {
 	Behavior    string    `yaml:"behavior,omitempty"`
 	MustSurvive bool      `yaml:"must_survive,omitempty"`
 	IsTarget    bool      `yaml:"is_target,omitempty"`
+	AdultMode   bool      `yaml:"adult_mode,omitempty"`
 }
 type PreSpawnObstacle struct { ID string `yaml:"id"`; Archetype string `yaml:"archetype"`; Actions *ActionConfig `yaml:"actions,omitempty"`; Weapon WeaponConfig `yaml:"weapon"`; CollisionRadius float64 `yaml:"collision_radius,omitempty"`; X *float64 `yaml:"x,omitempty"`; Y *float64 `yaml:"y,omitempty"`; Disabled bool `yaml:"disabled,omitempty"` }
 

@@ -33,13 +33,13 @@ func (r *ArchetypeRegistry) createLoadJobs(permitList map[string]bool) []*Sprite
 	for _, c := range r.Archetypes {
 		if (permitList != nil && !permitList[c.ID]) || c.AssetDir == "" { continue }
 		add := func(p string, t *engine.Image) { jobs = append(jobs, &SpriteLoadJob{Path: p, Dest: t}) }
-		files := []string{"static.png", "back.png", "corpse.png", "attack.png", "attack1.png", "attack2.png", "hit.png", "hit1.png", "hit2.png", "crouch.png", "chopping.png", "digging.png", "pregnant.png", "cooking.png", "resting.png"}
-		dests := []*engine.Image{&c.StaticImage, &c.BackImage, &c.CorpseImage, &c.AttackImage, &c.Attack1Image, &c.Attack2Image, &c.HitImage, &c.Hit1Image, &c.Hit2Image, &c.CrouchImage, &c.ChoppingImage, &c.DiggingImage, &c.PregnantImage, &c.CookingImage, &c.RestingImage}
+		files := []string{"static.png", "back.png", "corpse.png", "attack.png", "attack1.png", "attack2.png", "hit.png", "hit1.png", "hit2.png", "crouch.png", "chopping.png", "digging.png", "pregnant.png", "cooking.png", "resting.png", "resting_adult.png"}
+		dests := []*engine.Image{&c.StaticImage, &c.BackImage, &c.CorpseImage, &c.AttackImage, &c.Attack1Image, &c.Attack2Image, &c.HitImage, &c.Hit1Image, &c.Hit2Image, &c.CrouchImage, &c.ChoppingImage, &c.DiggingImage, &c.PregnantImage, &c.CookingImage, &c.RestingImage, &c.RestingAdultImage}
 		for i, f := range files { add(path.Join(c.AssetDir, f), dests[i]) }
 		for mID, mod := range c.Models {
 			mDir := path.Join(c.AssetDir, "models", mID)
-			mFiles := []string{"static.png", "back.png", "corpse.png", "attack.png", "hit.png", "crouch.png", "pregnant.png", "cooking.png", "resting.png"}
-			mDests := []*engine.Image{&mod.StaticImage, &mod.BackImage, &mod.CorpseImage, &mod.AttackImage, &mod.HitImage, &mod.CrouchImage, &mod.PregnantImage, &mod.CookingImage, &mod.RestingImage}
+			mFiles := []string{"static.png", "back.png", "corpse.png", "attack.png", "hit.png", "crouch.png", "pregnant.png", "cooking.png", "resting.png", "resting_adult.png"}
+			mDests := []*engine.Image{&mod.StaticImage, &mod.BackImage, &mod.CorpseImage, &mod.AttackImage, &mod.HitImage, &mod.CrouchImage, &mod.PregnantImage, &mod.CookingImage, &mod.RestingImage, &mod.RestingAdultImage}
 			for i, f := range mFiles { add(path.Join(mDir, f), mDests[i]) }
 		}
 	}

@@ -31,6 +31,7 @@ func TestReproductionCycle(t *testing.T) {
 			break
 		}
 		mother.MatingCooldown = 0
+		father.MatingCooldown = 0
 	}
 
 	if !pregnant {
@@ -86,6 +87,7 @@ func TestAnimalReproduction(t *testing.T) {
 			break
 		}
 		mother.MatingCooldown = 0
+		father.MatingCooldown = 0
 	}
 
 	if !pregnant {
@@ -112,6 +114,7 @@ func TestAnimalReproduction(t *testing.T) {
 
 func TestSameSexIntercourse(t *testing.T) {
 	ctx := NewTestContext()
+	ctx.Settings.AdultMode = true
 	female1 := NewCharacter(10, 10, &EntityConfig{ID: "f1", Gender: "female"}, 25, false, nil)
 	female2 := NewCharacter(11, 11, &EntityConfig{ID: "f2", Gender: "female"}, 25, false, nil)
 
@@ -121,6 +124,7 @@ func TestSameSexIntercourse(t *testing.T) {
 			t.Errorf("Pregnancy occurred in female-female encounter")
 		}
 		female1.MatingCooldown = 0
+		female2.MatingCooldown = 0
 	}
 }
 
@@ -139,6 +143,7 @@ func TestUnderagePregnancy(t *testing.T) {
 			t.Errorf("Pregnancy occurred in pre-pubescent character (age 10)")
 		}
 		childMother.MatingCooldown = 0
+		adultFather.MatingCooldown = 0
 	}
 
 	// 2. Teenager (Age 13) - Now fertile
@@ -153,6 +158,7 @@ func TestUnderagePregnancy(t *testing.T) {
 			break
 		}
 		teenMother.MatingCooldown = 0
+		adultFather.MatingCooldown = 0
 	}
 
 	if !pregnant {
@@ -173,6 +179,7 @@ func TestElderlyIntercourse(t *testing.T) {
 			t.Errorf("Pregnancy occurred in elderly character (age 60)")
 		}
 		elderMother.MatingCooldown = 0
+		adultFather.MatingCooldown = 0
 	}
 }
 
@@ -190,6 +197,7 @@ func TestTransexualReproduction(t *testing.T) {
 			t.Errorf("Pregnancy occurred in transexual character")
 		}
 		tsMother.MatingCooldown = 0
+		adultFather.MatingCooldown = 0
 	}
 }
 
@@ -219,11 +227,13 @@ func TestTribadismConstraints(t *testing.T) {
 			t.Errorf("Pregnancy occurred after tribadism")
 		}
 		f1.MatingCooldown = 0
+		f2.MatingCooldown = 0
 	}
 }
 
 func TestBestialityConstraints(t *testing.T) {
 	ctx := NewTestContext()
+	ctx.Settings.AdultMode = true
 	human := NewCharacter(10, 10, &EntityConfig{ID: "human", Gender: "female", IsAnimal: false}, 25, false, nil)
 	animal := NewCharacter(11, 11, &EntityConfig{ID: "animal", Gender: "male", IsAnimal: true}, 5, false, nil)
 	human.State.Age.Current = 25.0
@@ -235,6 +245,7 @@ func TestBestialityConstraints(t *testing.T) {
 			t.Errorf("Pregnancy occurred after bestiality")
 		}
 		human.MatingCooldown = 0
+		animal.MatingCooldown = 0
 	}
 
 	if human.State.Sanity >= startSanity {
@@ -254,6 +265,7 @@ func TestAnalSexConstraints(t *testing.T) {
 			t.Errorf("Pregnancy occurred after anal sex")
 		}
 		father.MatingCooldown = 0
+		mother.MatingCooldown = 0
 	}
 }
 
@@ -309,6 +321,7 @@ func TestGeneticMutation(t *testing.T) {
 
 func TestIncestPenalty(t *testing.T) {
 	ctx := NewTestContext()
+	ctx.Settings.AdultMode = true
 	parent := NewCharacter(10, 10, &EntityConfig{ID: "parent", Name: "Parent", Gender: "male"}, 40, false, nil)
 	child := NewCharacter(11, 11, &EntityConfig{ID: "child", Name: "Child", Gender: "female"}, 20, false, nil)
 	child.ParentID = "Parent"

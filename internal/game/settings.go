@@ -135,7 +135,7 @@ func DefaultSettings() *Settings {
 		OllamaModel:      "llama3",
 		OllamaLocalModel: "llama3",
 		WebGPUModel:      "tiny-llama-1.1b",
-		AdultMode:        true,
+		AdultMode:        false,
 		SimStep:          10,
 		AIPerceptionStep: 30,
 		Keymap: map[string]string{

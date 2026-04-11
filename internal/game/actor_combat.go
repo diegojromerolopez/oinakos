@@ -27,6 +27,16 @@ func (a *Actor) TakeDamage(amount int, attacker ActorInterface, ctx *SystemConte
 	if attacker != nil && attacker.GetActor() != nil {
 		attn := attacker.GetActor(); a.AddMemory(a.Tick, "attack", attn.Name, -5.0)
 		a.Relationships[attn.Name] -= 2.0; a.ModifyGroupSentiment(ctx, attn.Group, -5.0)
+
+		// SLAVE LOGIC: Resignation if attacked by Master
+		if a.Behavior == BehaviorSlave && a.MasterID != "" && attn.UID == a.MasterID {
+			a.TargetActor = nil
+			a.LastReaction = "... please, master..."
+			a.State.Sanity -= 5.0
+			a.ModifySubmission(attn.Name, 10.0)
+			if a.ActionState != ActorCrouching { a.ActionState = ActorCrouching }
+			return // Character does not fight back
+		}
 	}
 	a.State.HealthPoints -= amount; a.CausePain(float64(amount)*0.8, ctx); a.HitTimer = 30; a.DegradeArmor(ctx)
 	if a.BodyStatus == nil { a.InitBodyStatus() }
@@ -43,7 +53,11 @@ func (a *Actor) TakeDamage(amount int, attacker ActorInterface, ctx *SystemConte
 		risk := 0.05; if attacker != nil && attacker.GetActor() != nil && attacker.GetActor().Config != nil && attacker.GetActor().Config.IsAnimal { risk = 0.20 }
 		if rand.Float64() < risk && !a.State.IsSeptic { a.State.IsSeptic = true }
 	}
-	if a.State.HealthPoints < a.GetTotalMaxHealth()/10 && amount > 0 { a.acquireRandomTrauma(attacker) }
+	if a.State.HealthPoints < a.GetTotalMaxHealth()/10 && amount > 0 {
+		if ctx != nil && ctx.Settings != nil && ctx.Settings.AdultMode {
+			a.acquireRandomTrauma(attacker)
+		}
+	}
 	if a.State.HealthPoints < a.GetDeathThreshold() { a.State.HealthPoints = a.GetDeathThreshold() }
 	a.SyncLifeStatus()
 	if a.State.HealthPoints <= a.GetDeathThreshold() && a.ActionState != ActorDead {
@@ -102,6 +116,7 @@ func (a *Actor) rollDamage() int {
 }
 
 func (a *Actor) Torture(target *Actor, ctx *SystemContext) {
+	if ctx != nil && ctx.Settings != nil && !ctx.Settings.AdultMode { return }
 	if !target.IsAlive() || (!target.IsIncapacitated() && target.UnconsciousTimer <= 0 && !target.Trauma.SpineBroken) { return }
 	target.CausePain(20.0+rand.Float64()*10.0, ctx); target.Relationships[a.Name] -= 10.0; target.AddMemory(a.Tick, "torture", a.Name, -20.0)
 	target.LastReaction = "MERCY! PLEASE! STOP!!"

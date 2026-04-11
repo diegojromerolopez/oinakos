@@ -30,7 +30,10 @@ func (g *Game) handleInteractionInput() {
 		if g.pinnedCharacter != nil && !g.isDraggingPinnedUI {
 			bx, by, boxW, boxH := g.pinnedUIX, g.pinnedUIY, 320, 480
 			yCmds := by + boxH - 120 + 20
-			commands := []string{"TALK", "ATTACK", "TRADE", "SEDUCE", "INTIMIDATE", "STEAL", "RESTRAIN", "HEAL", "GIVE ITEM", "SEX", "TORTURE"}
+			commands := []string{"TALK", "ATTACK", "TRADE", "SEDUCE", "INTIMIDATE", "STEAL", "RESTRAIN", "HEAL", "GIVE ITEM"}
+			if g.settings.AdultMode {
+				commands = append(commands, "SEX", "TORTURE")
+			}
 			for i, cmd := range commands {
 				cx, cy := bx+10+(i%3)*100, yCmds+(i/3)*25
 				if mx >= cx && mx <= cx+85 && my >= cy-15 && my <= cy+10 { g.handlePinnedCommand(cmd, g.pinnedCharacter); return }

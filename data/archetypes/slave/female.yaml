@@ -171,3 +171,30 @@ abilities:
 xp: 4
 equipment: null
 inventory: []
+dialogues:
+  player_greetings:
+    - "Yes, master?"
+    - "Only more work awaits me."
+    - "I am tired, master."
+  start:
+    text: "How can I serve you today?"
+    choices:
+      - text: "Continue working."
+        next: end
+      - text: "Give some coin for your savings (20 Denarii)."
+        next: give_coin
+        effects:
+          - type: give_denarii_to_slave
+      - text: "I wish to buy my freedom (300 Denarii)."
+        next: buy_liberty
+      - text: "You are free to go. (Grant Freedom)"
+        next: end
+        effects:
+          - type: free_slave
+  give_coin:
+    text: "Thank you... This will help me one day."
+    next: start
+  buy_liberty:
+    text: "I have saved enough. Here is the coin, master. Thank you for this mercy."
+    effects:
+      - type: buy_liberty

@@ -23,9 +23,35 @@ func (a *Actor) die(attacker ActorInterface, ctx *SystemContext) {
 		for _, char := range ctx.World.Characters { if char.ParentID == a.Name && char.IsAlive() { heir = char; break } }
 		if heir != nil {
 			heir.Denarii += a.Denarii
+			heir.Debts = append(heir.Debts, a.Debts...)
 			if a.OwnedChestID != "" && heir.OwnedChestID == "" { heir.OwnedChestID = a.OwnedChestID }
-			if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s has inherited %d denarii from parent %s.", heir.Name, a.Denarii, a.Name), LogNPC) }
-			a.Denarii = 0
+			if ctx.Log != nil { 
+				ctx.Log(fmt.Sprintf("%s has inherited %d denarii and %d loans from parent %s.", heir.Name, a.Denarii, len(a.Debts), a.Name), LogNPC) 
+			}
+			a.Denarii, a.Debts = 0, nil
+		}
+
+		// Automatic Freedom for Slaves
+		for _, char := range ctx.World.Characters {
+			if char.Behavior == BehaviorSlave && char.MasterID == a.UID {
+				// Master inherits slave's saved Denarii before they gain liberty (though here they die)
+				if masterChar := ctx.World.GetCharacterByUID(a.UID); masterChar != nil {
+					masterChar.Denarii += char.Denarii
+					char.Denarii = 0
+				}
+				char.MasterID = ""
+				char.Behavior = BehaviorWander
+				char.Alignment = AlignmentNeutral
+				if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s has gained liberty after the death of their master %s.", char.Name, a.Name), LogInfo) }
+			}
+		}
+
+		// IF THE DECEASED IS A SLAVE: The master gets their remaining money
+		if a.Behavior == BehaviorSlave && a.MasterID != "" {
+			if masterChar := ctx.World.GetCharacterByUID(a.MasterID); masterChar != nil {
+				masterChar.Denarii += a.Denarii
+				a.Denarii = 0
+			}
 		}
 	}
 	if ctx != nil && ctx.World != nil && ctx.World.Game != nil { 
@@ -80,6 +106,7 @@ func (a *Actor) applyKillAction(action KillAction, attacker ActorInterface, ctx 
 			if newConfig.State.MaxHealthPoints > 0 {
 				a.State.MaxHealthPoints = newConfig.State.MaxHealthPoints
 			}
+			a.State.HealthPoints = a.GetTotalMaxHealth(); a.InitBodyStatus()
 			a.State.HealthPoints = a.GetTotalMaxHealth(); a.InitBodyStatus()
 			if e.Alignment == "inherit" {
 				oldA := a.Alignment

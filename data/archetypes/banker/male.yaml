@@ -169,16 +169,34 @@ inventory:
 - wine_bottle
 dialogues:
   player_greetings:
-  - You look pale. Let me examine you.
-  - Science is the only cure for this age.
-  start_scenarios:
-  - weight: 0.6
-    text: An outbreak in Autumn! Most unpredictable. I have herbs that will help.
-    next: herb_talk
-  herb_talk:
-    text: Stay focused, stay hydrated. Take these if the fatigue sets in.
-    choices:
-    - text: Open Trade.
-      next: exit
-    - text: Goodbye.
-      next: exit
+  - Gold is the only thing that never rots.
+  - Seeking a loan? Our interest rates are... competitive.
+  - Wealth is a responsibility. Do not squander it.
+  nodes:
+    start:
+      text: "How can the bank of Venburgo assist you today?"
+      choices:
+        - text: "I need to borrow some coin."
+          next: loans
+        - text: "I wish to repay my outstanding debt."
+          next: repay
+          effects: [{type: repay_debt}]
+        - text: "Just passing through."
+          next: end
+    loans:
+      text: "We can provide credit, but be warned: our collectors are very thorough. You have mere days to return the principal plus favor."
+      choices:
+        - text: "Borrow 100 Denarii (Due in 2 days)."
+          next: loan_success
+          effects: [{type: borrow_100}]
+        - text: "Borrow 500 Denarii (Due in 3 days)."
+          next: loan_success
+          effects: [{type: borrow_500}]
+        - text: "I changed my mind."
+          next: start
+    loan_success:
+      text: "The coin is yours. Do not forget the deadline, or your name will be entered into our ledgers of servitude."
+      next: end
+    repay:
+      text: "Your account is square. May your future ventures be as profitable."
+      next: end

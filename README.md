@@ -8,7 +8,7 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Go Version](https://img.shields.io/badge/Go-1.21%2B-blue)
 ![Ebiten v2](https://img.shields.io/badge/Engine-Ebiten%20v2-orange)
-![Version](https://img.shields.io/badge/Version-0.1--alpha-green)
+![Version](https://img.shields.io/badge/Version-0.2--alpha-green)
 
 **Oinakos** is a performance-optimized, infinite isometric action RPG and biological ecosystem simulation built with **Go** and **Ebiten v2**. It blends visceral combat with a deep, uncompromising simulation of life, death, and genetics.
 
@@ -70,6 +70,7 @@ Oinakos features a state-of-the-art biological engine where every entity is subj
 - **Genetics & Procreation**: Offspring inherit attributes from parents via a 50/50 genetic blend with a 5% mutation chance.
 - **Vampirism**: Immortal entities (Age Rate 0) reject normal food, satisfying their needs via **Bloodlust** (feeding on victims).
 - **Professional Archetypes**: At age 18, NPCs select a career (Man-at-Arms, Peasant, Priest, etc.) based on their dominant attributes.
+- **Adult Mode**: A restricted simulation layer for advanced social and population mechanics with some explicit content. This mode is **disabled by default** and must be explicitly enabled in the configuration.
 
 ### 💀 Trauma & Environmental Hazards
 - **Physical Trauma**: Combat can lead to irreversible damage, including lost limbs, blindness, or a broken spine.

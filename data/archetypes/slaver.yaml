@@ -1,0 +1,40 @@
+id: slaver
+name: Slaver
+gender: male
+behavior: slaver
+description: A cold-eyed individual dressed in fine but traveled clothes. He carries a whip at his belt and watches the crowd for potential buyers or merchandise. He deals in human misfortune.
+attributes:
+  strength: { min: 60, max: 80, mode: normal }
+  dexterity: { min: 50, max: 70, mode: normal }
+  health: { min: 50, max: 70, mode: normal }
+  intellect: { min: 70, max: 90, mode: normal }
+  wisdom: { min: 40, max: 60, mode: normal }
+stats:
+  speed: { min: 0.1, max: 0.1, mode: normal }
+  attack_cooldown: { min: 50, max: 70, mode: normal }
+denarii: 500
+inventory:
+  - id: slave_contract
+    name: Slave Contract
+    description: A legal (or semi-legal) document certifying the ownership of a human being. Using this near a slave will finalize the purchase.
+    value: 100
+    type: utility
+dialogues:
+  player_greetings:
+    - "Looking for strength? Or perhaps beauty?"
+    - "The market is ripe today."
+  start:
+    text: "I have the finest selection in the province. Care to browse?"
+    choices:
+      - text: "I wish to buy a slave (250 Denarii)."
+        next: purchase_confirm
+      - text: "Maybe later."
+        next: end
+  purchase_confirm:
+    text: "A fine choice. Durable, obedient, and worth every coin. Do we have a deal?"
+    choices:
+      - text: "Yes, I'll take one (250 Denarii)."
+        effects:
+          - type: purchase_slave
+      - text: "Too expensive."
+        next: end

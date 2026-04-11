@@ -262,7 +262,7 @@ func TestMenu_Settings(t *testing.T) {
 
 	// test Save and Back (last index - usually 9)
 	mockInput.JustPressedKeys[engine.KeyRight] = false
-	g.settingsMenuIndex = 9
+	g.settingsMenuIndex = 10
 	mockInput.JustPressedKeys[engine.KeyEnter] = true
 	g.Update()
 	mockInput.JustPressedKeys = make(map[engine.Key]bool)

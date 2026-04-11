@@ -31,6 +31,7 @@ func TestGestationFix(t *testing.T) {
 	father.State.Age.Current = 25.0
 
 	ctx := NewTestContext()
+	ctx.Settings.AdultMode = true
 
 	// Human pregnancy
 	mother.Actor.haveSex(ctx, &father.Actor, "vaginal")

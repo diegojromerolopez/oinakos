@@ -81,7 +81,7 @@ func (c *Character) HandleSocial(ctx *SystemContext) {
 						price := int(float64(it.Config.Value) * (1.2 - (c.GetAbilityYield("trade") * 0.002)))
 						if price < 1 { price = 1 }
 						if c.Denarii >= price {
-							c.Denarii -= price; other.Denarii += price
+							c.Denarii -= price; other.AddDenarii(price, ctx.World)
 							other.Inventory = append(other.Inventory[:i], other.Inventory[i+1:]...)
 							c.Inventory = append(c.Inventory, it)
 							c.ModifySentiment(other.Name, 2.0); other.ModifySentiment(c.Name, 2.0)
@@ -97,7 +97,7 @@ func (c *Character) HandleSocial(ctx *SystemContext) {
 						price := int(float64(it.Config.Value) * (0.8 + (other.GetAbilityYield("trade") * 0.002)))
 						if price < 1 { price = 1 }
 						if other.Denarii >= price {
-							other.Denarii -= price; c.Denarii += price
+							other.Denarii -= price; c.AddDenarii(price, ctx.World)
 							c.Inventory = append(c.Inventory[:i], c.Inventory[i+1:]...)
 							other.Inventory = append(other.Inventory, it)
 							c.ModifySentiment(other.Name, 1.0); other.ModifySentiment(c.Name, 1.0)
@@ -166,7 +166,62 @@ func playerNear(c *Character, ctx *SystemContext) bool {
 	if pc == nil { return false }
 	return math.Sqrt(math.Pow(c.X-pc.X, 2) + math.Pow(c.Y-pc.Y, 2)) < 15.0
 }
+
+func (c *Character) checkSlaverySeeking(ctx *SystemContext, obstacles []*Obstacle) bool {
+	if !ctx.Settings.AdultMode { return false }
+	if c.Behavior == BehaviorSlave { return false } // Slaves cannot own slaves
+	if c.Denarii < 200 { return false }
+
+
+	// Look for a Slaver
+	var nSlaver *Character; minDist := 150.0
+	for _, other := range ctx.World.Characters {
+		if other.Behavior == BehaviorSlaver && other.IsAlive() {
+			dist := math.Sqrt(math.Pow(c.X-other.X, 2)+math.Pow(c.Y-other.Y, 2))
+			if dist < minDist { minDist, nSlaver = dist, other }
+		}
+	}
+	if nSlaver == nil {
+		return false
+	}
+
+
+	if nSlaver != nil {
+		if minDist < 2.5 {
+			// Try to find a slave near the slaver
+			var targetSlave *Character; sMinDist := 8.0
+			for _, n := range ctx.World.Characters {
+				if n.Behavior == BehaviorSlave && n.MasterID == "" {
+					d := math.Sqrt(math.Pow(n.X-nSlaver.X, 2)+math.Pow(n.Y-nSlaver.Y, 2))
+					if d < sMinDist { sMinDist, targetSlave = d, n }
+				}
+			}
+			if targetSlave != nil {
+				price := 100
+
+				if targetSlave.GetBioSex() == "female" { price = 150 }
+				if c.Denarii >= price {
+					c.Denarii -= price
+					nSlaver.AddDenarii(price, ctx.World)
+					targetSlave.MasterID = c.UID
+					targetSlave.Alignment = AlignmentNeutral
+					if ctx.Log != nil { ctx.Log(fmt.Sprintf("%s purchased slave %s from %s.", c.Name, targetSlave.Name, nSlaver.Name), LogNPC) }
+					return true
+				}
+			}
+		} else {
+			c.MoveTo(ctx, nSlaver.X, nSlaver.Y)
+			return true
+		}
+	}
+	return false
+}
 func (c *Character) PickIdleBark() string {
+	if c.Behavior == BehaviorSlave {
+		barks := []string{"Yes, master...", "Only more work awaits.", "The chains are heavy today.", "My life is not my own.", "As you command.", "I must keep moving."}
+		if c.State.Hunger > 60 { barks = append(barks, "A scrap of bread would be a mercy.") }
+		return barks[rand.Intn(len(barks))]
+	}
 	barks := []string{"Beautiful day, isn't it?", "I'm quite hungry...", "Need to get back to work soon.", "Have you seen the latest trade prices?", "I hope the weather holds up."}
 	if c.State.Hunger > 50 { barks = append(barks, "My stomach is growling.") }
 	if c.State.Thirst > 50 { barks = append(barks, "A cup of wine would be lovely right now.") }

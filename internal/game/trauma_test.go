@@ -6,6 +6,7 @@ import (
 
 func TestTrauma_IncapacitationThreshold(t *testing.T) {
 	ctx := NewTestContext()
+	ctx.Settings.AdultMode = true
 	c := &Character{Actor: Actor{
 		State: State{
 			HealthPoints:    100,
@@ -70,6 +71,7 @@ func TestTrauma_BleedOutAndDeath(t *testing.T) {
 
 func TestTrauma_DeterministicLimbLoss(t *testing.T) {
 	ctx := NewTestContext()
+	ctx.Settings.AdultMode = true
 	c := &Character{Actor: Actor{
 		State: State{
 			MaxHealthPoints: 100,
@@ -95,6 +97,7 @@ func TestTrauma_DeterministicLimbLoss(t *testing.T) {
 
 func TestTrauma_CumulativeTrauma(t *testing.T) {
 	ctx := NewTestContext()
+	ctx.Settings.AdultMode = true
 	c := &Character{Actor: Actor{
 		State: State{
 			MaxHealthPoints: 100,

@@ -19,6 +19,12 @@ func (c *Character) findTarget(player *Character, others []*Character, playerDis
 			return true
 		}
 		
+		if c.Behavior == BehaviorSlave && c.MasterID != "" {
+			if other.UID == c.MasterID { return false } // Never target master!
+			// Defend master! If other is targeting master, they are a target.
+			if other.TargetActor != nil && other.TargetActor.UID == c.MasterID { return true }
+		}
+
 		if c.Behavior == BehaviorCriminal && other.IsAlive() {
 			isVulnerable := other.State.Hunger > 60 || other.State.Thirst > 60 || other.State.Fatigue > 60 || other.State.IsDrunk
 			isAlone := true

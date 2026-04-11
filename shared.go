@@ -15,7 +15,7 @@ import (
 )
 
 // Version is the current build version, injected at compile time via -ldflags
-var Version = "0.1-alpha"
+var Version = "0.2-alpha"
 
 //go:embed assets data
 var assets embed.FS

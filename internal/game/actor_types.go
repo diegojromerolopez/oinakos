@@ -166,6 +166,8 @@ const (
     BehaviorFarmer
     BehaviorArtisan
     BehaviorCriminal
+    BehaviorSlave
+    BehaviorSlaver
     BehaviorChaotic      = BehaviorChaos
     BehaviorNpcFighter   = BehaviorFighter
     BehaviorKnightHunter = BehaviorHunter
@@ -241,6 +243,12 @@ type EntityStats struct {
 	Survivalism string
 }
 
+type Loan struct {
+	LenderUID string `yaml:"lender_uid"`
+	Amount    int    `yaml:"amount"`
+	Deadline  int    `yaml:"deadline"`
+}
+
 type Actor struct {
 	X, Y   float64
 	Z      float64
@@ -278,6 +286,9 @@ type Actor struct {
 	IsTransexual     bool
 	ParentID         string 
 	FatherID         string 
+	MasterID         string 
+	UID              string 
+	Debts            []Loan 
 	
 	AgeTicks         float64
 	LifeStage        string 

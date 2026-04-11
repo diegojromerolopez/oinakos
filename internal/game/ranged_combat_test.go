@@ -57,7 +57,11 @@ func TestRangedHitScenarios(t *testing.T) {
 			} // prevent zero vector
 
 			// Fire projectile from (0,0) towards NPC
-			p := NewProjectile(0, 0, dx, dy, 1.0, 10, true, tt.maxRange)
+			pX, pY := dx, dy
+			if tt.name == "Ranged Miss - Off-Axis" {
+				pX, pY = 1.0, 0.0 // Fire along X axis, NPC is at (5,2), should miss
+			}
+			p := NewProjectile(0, 0, pX, pY, 1.0, 10, true, tt.maxRange)
 
 			npc := NewCharacter(tt.npcX, tt.npcY, &EntityConfig{ID: "target"}, 1, false, nil)
 			npc.State.HealthPoints = 100

@@ -58,6 +58,18 @@ func (gr *GameRenderer) drawHUD(screen engine.Image) {
 	gr.graphics.DrawTextAt(screen, fmt.Sprintf("STR:%d DEX:%d HEA:%d INT:%d WIS:%d", p.PrimaryAttributes.Strength, p.PrimaryAttributes.Dexterity, p.PrimaryAttributes.Health, p.PrimaryAttributes.Intellect, p.PrimaryAttributes.Wisdom), 20, yPos, color.RGBA{200, 200, 255, 255}, 12); yPos += 15
 	gr.graphics.DrawTextAt(screen, fmt.Sprintf("ATK:%d DEF:%d SHD:%d WT:%s/%s", p.GetTotalAttack(), p.GetTotalDefense(), p.GetTotalProtection(), g.settings.FormatWeight(p.GetTotalWeight()), g.settings.FormatWeight(p.MaxWeight)), 20, yPos, color.White, 12)
 	
+	if len(p.Debts) > 0 {
+		yPos += 15
+		total := 0
+		nearest := -1
+		for _, l := range p.Debts {
+			total += l.Amount
+			if nearest == -1 || l.Deadline < nearest { nearest = l.Deadline }
+		}
+		daysLeft := (nearest - g.World.State.Ticks) / 17280
+		gr.graphics.DrawTextAt(screen, fmt.Sprintf("DEBT: %d (DUE: %d DAYS)", total, daysLeft), 20, yPos, color.RGBA{255, 100, 100, 255}, 12)
+	}
+	
 	if g.isMenuOpen { gr.drawMenu(screen) }
 	if g.saveMessageTimer > 0 { sttw, _ := gr.graphics.MeasureText(g.saveMessage, 18); gr.graphics.DrawTextAt(screen, g.saveMessage, (g.width-int(sttw))/2, g.height-40, color.RGBA{218, 165, 32, 255}, 18) }
 	gr.drawMinimap(screen); gr.drawObjectiveArrow(screen)

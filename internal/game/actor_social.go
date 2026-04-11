@@ -22,7 +22,8 @@ func (a *Actor) GetRelationshipTier(otherID string) string {
 // GetEffectiveSentiment returns the relationship sentiment adjusted for external factors like hygiene.
 func (a *Actor) GetEffectiveSentiment(other *Actor) float64 {
 	if a.Relationships == nil { a.Relationships = make(map[string]float64) }
-	sentiment := a.Relationships[other.Name]
+	sentiment := a.Relationships[other.UID]
+	if sentiment == 0 && other.UID == "" { sentiment = a.Relationships[other.Name] }
 	
 	// Hygiene penalty: if hygiene is below 50, it starts affecting how others like you
 	if other.State.Hygiene < 50 {

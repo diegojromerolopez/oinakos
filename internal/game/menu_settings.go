@@ -12,7 +12,7 @@ func (mh *MenuHandler) updateSettingsScreen() error {
 	if showAIModel {
 		rows = append(rows, "AI Model")
 	}
-	rows = append(rows, "Time Pace", "Simulation Mode", "Talking Frequency", "Measurement Units", "Keymap", "Save and Back")
+	rows = append(rows, "Time Pace", "Simulation Mode", "Talking Frequency", "Measurement Units", "Adult Mode", "Keymap", "Save and Back")
 	nRows := len(rows)
 
 	// 1. Mouse Detection (Prioritize mouse for selection/hover)
@@ -240,6 +240,11 @@ func (mh *MenuHandler) updateSettingsScreen() error {
 			found++
 			if found >= len(UnitsOptions) { found = 0 }
 			g.settings.Units = UnitsOptions[found]
+		}
+	case "Adult Mode":
+		if g.input.IsKeyJustPressed(engine.KeyLeft) || g.input.IsKeyJustPressed(engine.KeyA) ||
+			g.input.IsKeyJustPressed(engine.KeyRight) || g.input.IsKeyJustPressed(engine.KeyD) || (mouseClicked && hoverIdx == g.settingsMenuIndex) {
+			g.settings.AdultMode = !g.settings.AdultMode
 		}
 	case "Keymap":
 		if g.input.IsKeyJustPressed(engine.KeyEnter) || (mouseClicked && hoverIdx == g.settingsMenuIndex) {
